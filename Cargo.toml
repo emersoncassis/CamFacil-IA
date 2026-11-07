@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["crates/camfacil", "crates/cf-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+repository = "https://github.com/emersoncassis/CamFacil-IA"
+authors = ["Emerson de Carvalho Assis"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+# O núcleo (benchmark e, depois, pré-processamento de imagem) precisa de velocidade;
+# o resto do binário continua otimizado para tamanho.
+[profile.release.package.cf-core]
+opt-level = 3
