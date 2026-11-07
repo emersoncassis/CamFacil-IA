@@ -9,6 +9,7 @@ mod autoinicio;
 mod elo;
 mod painel;
 mod resumo;
+mod tailscale;
 mod video;
 
 use cf_core::{paths, ports, store::Store};
@@ -19,6 +20,7 @@ pub struct App {
     pub store: Arc<Store>,
     pub elo: Arc<elo::Elo>,
     pub video: Arc<video::Video>,
+    pub tailscale: tailscale::Estado,
 }
 
 pub type Shared = Arc<App>;
@@ -99,13 +101,20 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     elo.iniciar_se_ativo();
     let video = video::Video::new(store.clone());
     video.iniciar_todas();
-    let app: Shared = Arc::new(App { store, elo, video });
+    let app: Shared = Arc::new(App {
+        store,
+        elo,
+        video,
+        tailscale: tailscale::Estado::default(),
+    });
     app.elo.definir_resumo(resumo::montar(Arc::downgrade(&app)));
     let rede = lan
         .then(|| cf_core::conectar::ip_local().map(|ip| format!("http://{ip}:{}", chosen.port)))
         .flatten();
     painel::iniciar(app.clone(), url, rede);
-    let router = api::router(app);
+    let router = api::router(app.clone());
+    // Acesso de fora: escuta também no IP Tailscale quando ele existir (ADR-0005).
+    tailscale::vigiar(app, router.clone(), chosen.port, lan);
     let r = axum::serve(listener, router)
         .with_graceful_shutdown(async {
             let _ = tokio::signal::ctrl_c().await;

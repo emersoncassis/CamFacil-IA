@@ -309,6 +309,37 @@
           </div>
           <p class="msg" id="elo-msg" role="status"></p>
         </div>
+        <div class="block" id="ts">
+          <h2 data-i18n="ts.titulo"></h2>
+          <p class="hint" data-i18n="ts.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="ts.situacao"></dt><dd><span class="state"><span class="dot" id="ts-dot"></span><span id="ts-status"></span></span></dd>
+            <dt data-i18n="ts.endereco"></dt><dd id="ts-endereco">—</dd>
+            <dt data-i18n="ts.nome"></dt><dd class="mono" id="ts-nome">—</dd>
+          </dl>
+          <div class="qr-area" id="ts-qr-area" hidden>
+            <div class="qr"><img id="ts-qr" alt="" width="200" height="200"></div>
+            <div>
+              <p data-i18n="ts.qr_passo"></p>
+              <p class="hint" data-i18n="ts.mesma_rede"></p>
+              <p class="hint" data-i18n="ts.sem_nuvem"></p>
+            </div>
+          </div>
+          <div id="ts-instalar" hidden>
+            <p class="hint" id="ts-instalar-texto"></p>
+            <div class="result"><code class="mono" id="ts-comando"></code><button class="btn ghost sm" id="ts-copiar-cmd" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="cam.copiar"></span></button></div>
+            <details class="avancado mt">
+              <summary data-i18n="ts.outros"></summary>
+              <dl class="rows mt">
+                <dt>Windows</dt><dd class="mono">winget install tailscale.tailscale</dd>
+                <dt>Linux / Raspberry Pi</dt><dd class="mono">curl -fsSL https://tailscale.com/install.sh | sh<br>sudo tailscale up</dd>
+                <dt>macOS</dt><dd class="mono">brew install --cask tailscale</dd>
+                <dt data-i18n="ts.celular"></dt><dd data-i18n="ts.celular_desc"></dd>
+              </dl>
+            </details>
+          </div>
+          <p class="msg" id="ts-msg" role="status"></p>
+        </div>
         <div class="block">
           <ul class="list">
             <li><div><strong>Telegram</strong><p data-i18n="int.telegram"></p></div><span class="badge" data-i18n="em_breve"></span></li>
