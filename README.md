@@ -76,17 +76,28 @@ Tudo roda localmente, sem nuvem obrigatória. A IA só analisa o stream leve da 
 
 ## <img src="docs/assets/icons/raio.svg" width="22" alt=""/> Instale em um comando
 
-```sh
-# Linux / Raspberry Pi (em breve)
-curl -fsSL https://raw.githubusercontent.com/emersoncassis/CamFacil-IA/main/install.sh | sh
-```
+<img src="docs/assets/icons/windows.svg" width="20" alt=""/> **Windows** (em breve)
 
 ```powershell
-# Windows (em breve)
 irm https://raw.githubusercontent.com/emersoncassis/CamFacil-IA/main/install.ps1 | iex
 ```
 
-Ou baixe o `camfacil.exe` em **[Releases](https://github.com/emersoncassis/CamFacil-IA/releases)**, dê dois cliques e abra `http://localhost:7070`.
+<img src="docs/assets/icons/linux.svg" width="20" alt=""/> **Linux** · <img src="docs/assets/icons/framboesa.svg" width="20" alt=""/> **Raspberry Pi** (em breve)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/emersoncassis/CamFacil-IA/main/install.sh | sh
+```
+
+<img src="docs/assets/icons/download.svg" width="20" alt=""/> **Sem comando:** baixe o `camfacil.exe` em [Releases](https://github.com/emersoncassis/CamFacil-IA/releases), dê dois cliques e o navegador abre a dashboard.
+
+> O CamFácil IA escolhe sozinho uma porta livre (começando pela 7070) e nunca usa portas de PDV, ERP, banco de dados ou NVR do cliente. O endereço aparece na tela ao iniciar.
+
+**Rodar a partir do código** (para quem programa):
+
+```sh
+git clone https://github.com/emersoncassis/CamFacil-IA && cd CamFacil-IA
+cargo run --release -p camfacil
+```
 
 ## <img src="docs/assets/icons/chip.svg" width="22" alt=""/> Níveis de IA
 
