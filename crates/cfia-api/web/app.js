@@ -230,8 +230,10 @@ function montarDownload(alvo) {
       el("p", { class: "tiny mt" }, "Para mostrar o vídeo, o programa usa o ffmpeg (gratuito). Se faltar, ele mesmo instala ou mostra como."));
     ligarCopiar(corpo);
   };
+  // Um nome de grupo só por seletor, para os botões se alternarem.
+  const grupo = "so-" + Math.random().toString(36).slice(2);
   for (const [id, s] of Object.entries(SISTEMAS)) {
-    const input = el("input", { type: "radio", name: "so-" + (alvo.id || Math.random()), value: id });
+    const input = el("input", { type: "radio", name: grupo, value: id });
     input.checked = id === atual;
     input.onchange = () => { atual = id; desenhar(); };
     abas.append(el("label", {}, input, el("span", {}, icone(s.ico, "ico sm"), s.nome)));

@@ -6,6 +6,7 @@
 mod api;
 mod assets;
 mod elo;
+mod painel;
 mod video;
 
 use cf_core::{paths, ports, store::Store};
@@ -90,12 +91,18 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let video = video::Video::new(store.clone());
     video.iniciar_todas();
     let app: Shared = Arc::new(App { store, elo, video });
+    let rede = lan
+        .then(|| cf_core::conectar::ip_local().map(|ip| format!("http://{ip}:{}", chosen.port)))
+        .flatten();
+    painel::iniciar(app.clone(), url, rede);
     let router = api::router(app);
-    axum::serve(listener, router)
+    let r = axum::serve(listener, router)
         .with_graceful_shutdown(async {
             let _ = tokio::signal::ctrl_c().await;
         })
-        .await?;
+        .await;
+    painel::encerrar();
+    r?;
     Ok(())
 }
 
