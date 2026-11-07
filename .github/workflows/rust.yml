@@ -14,6 +14,17 @@ jobs:
   check:
     name: fmt · clippy · testes
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: teste
+          POSTGRES_DB: cfia_teste
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgres://postgres:teste@localhost:5432/cfia_teste
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
@@ -60,3 +71,18 @@ jobs:
         with:
           name: camfacil-${{ matrix.name }}
           path: target/release/${{ matrix.bin }}
+
+  imagem-api:
+    name: imagem Docker da API
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -f deploy/Dockerfile.api -t cfia-api:ci .
+      - name: Sobe e responde em /api/saude
+        run: |
+          docker network create t
+          docker run -d --name db --network t -e POSTGRES_PASSWORD=x -e POSTGRES_USER=cfia -e POSTGRES_DB=cfia postgres:16-alpine
+          docker run -d --name api --network t -p 8080:8080 -e DATABASE_URL=postgres://cfia:x@db:5432/cfia -e BASE_URL=http://localhost:8080 cfia-api:ci
+          for i in $(seq 1 40); do curl -fsS localhost:8080/api/saude && exit 0; sleep 2; done
+          docker logs api; exit 1

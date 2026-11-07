@@ -1,0 +1,15 @@
+# CamFácil IA · API da nuvem (https://cfia.ysafe.com.br)
+# Imagem final mínima: só o binário, sem shell.
+FROM rust:1-bookworm AS build
+WORKDIR /src
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+COPY web ./web
+RUN cargo build --release --locked -p cfia-api
+
+FROM gcr.io/distroless/cc-debian12:nonroot
+COPY --from=build /src/target/release/cfia-api /usr/local/bin/cfia-api
+ENV PORT=8080
+EXPOSE 8080
+USER nonroot
+ENTRYPOINT ["/usr/local/bin/cfia-api"]
