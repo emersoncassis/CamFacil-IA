@@ -52,6 +52,7 @@ function showTab(id) {
   document.querySelectorAll("[role=tabpanel]").forEach((p) => { p.hidden = p.id !== id; });
   try { localStorage.setItem("cf-tab", id); } catch (_) { /* opcional */ }
   if (id === "modulos") renderLevels();
+  saudeAtivar(id === "inicio");
   eloAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
   ligarAtivar(id === "cameras");
@@ -231,11 +232,52 @@ async function carregarFfmpeg() {
 
 function situacaoCam(e) {
   if (!e) return [false, t("estado.conectando")];
-  if (e.online) {
-    const extra = e.saude ? ` · ${t("saude." + e.saude)}` : "";
-    return [true, `${t("estado.online")} · ${e.fps} q/s${extra}`];
-  }
+  if (e.online) return [true, `${t("estado.online")} · ${e.fps} q/s`];
   return [false, e.erro || t("estado.conectando")];
+}
+
+// ---------- Saúde da câmera (indicador, balão, bloco do Início) ----------
+const SAUDE_PROBLEMA = ["escura", "coberta", "desfocada", "sem_sinal"];
+function saudeClasse(k) { return k === "ok" ? "ok" : k === "sem_sinal" ? "off" : "warn"; }
+function saudeTag(k) { return el("span", { class: "tag " + saudeClasse(k) }, t("saude." + k)); }
+
+/// "agora", "40 s", "5 min", "2 h", "3 d".
+function tempoRelativo(seg) {
+  if (seg == null) return "—";
+  if (seg < 5) return t("tempo.agora");
+  if (seg < 60) return `${seg} ${t("tempo.s")}`;
+  if (seg < 3600) return `${Math.floor(seg / 60)} ${t("tempo.min")}`;
+  if (seg < 86400) return `${Math.floor(seg / 3600)} ${t("tempo.h")}`;
+  return `${Math.floor(seg / 86400)} ${t("tempo.d")}`;
+}
+
+let saudeTimer = null;
+async function renderSaude() {
+  let r;
+  try { r = await api("/api/saude"); } catch (_) { return; }
+  $("#saude-desligado").hidden = r.ligado;
+  const corpo = $("#saude-cameras");
+  if (!r.cameras.length) {
+    corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "4" }, t("saude.sem_cameras"))));
+  } else {
+    corpo.replaceChildren(...r.cameras.map((c) => el("tr", {},
+      el("td", {}, c.nome),
+      el("td", {}, saudeTag(c.saude)),
+      el("td", {}, tempoRelativo(c.saude_desde_s)),
+      el("td", {}, c.ultimo_problema_s == null ? t("saude.nunca") : `${tempoRelativo(c.ultimo_problema_s)} ${t("tempo.atras")}`))));
+  }
+  const ev = $("#saude-eventos");
+  const agora = Math.floor(Date.now() / 1000);
+  ev.replaceChildren(...(r.eventos.length
+    ? r.eventos.map((e) => el("li", {},
+      el("div", { class: "actions" }, el("strong", {}, e.camera), saudeTag(e.situacao)),
+      el("span", { class: "tiny" }, new Date(e.quando * 1000).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) + ` · ${tempoRelativo(agora - e.quando)} ${t("tempo.atras")}`)))
+    : [el("li", {}, el("p", {}, t("saude.sem_eventos")))]));
+}
+function saudeAtivar(ativo) {
+  clearInterval(saudeTimer);
+  saudeTimer = null;
+  if (ativo) { renderSaude(); saudeTimer = setInterval(renderSaude, 5000); }
 }
 
 async function carregarCameras() {
@@ -259,7 +301,7 @@ async function carregarCameras() {
     return el("tr", {},
       el("td", {}, c.nome),
       el("td", {}, fonteNome(c.fonte)),
-      el("td", {}, el("span", { class: "state" }, el("span", { class: "dot " + (ok ? "on" : "off") }), texto)),
+      el("td", {}, el("div", { class: "actions" }, el("span", { class: "state" }, el("span", { class: "dot " + (ok ? "on" : "off") }), texto), c.estado ? saudeTag(c.estado.saude) : null)),
       el("td", { class: "right" }, el("div", { class: "actions end" }, abrir, rem)));
   }));
 }
@@ -283,6 +325,11 @@ async function abrirCamera(id) {
   const c = cams.find((x) => x.id === id);
   $("#aovivo").hidden = false;
   $("#aovivo-nome").textContent = c ? c.nome : "";
+  $("#aovivo-saude").hidden = true;
+  const somS = $("#som-saude");
+  somS.checked = somLigado(`saude:${id}`);
+  somS.onchange = () => { definirSom(`saude:${id}`, somS.checked); if (somS.checked) tocarAlerta(); };
+  $("#aovivo-som-saude").title = t("saude.som_dica");
   $("#video").src = `/api/cameras/${id}/mjpeg?t=${Date.now()}`;
   definirModo("ver");
   await carregarRegras();
@@ -345,6 +392,15 @@ function piscarTela() {
 
 function conferirAlertas(estadoCam) {
   let tocou = false;
+  // Saúde: alerta quando a câmera passa de ok para um problema.
+  const saude = estadoCam ? estadoCam.saude : "ok";
+  const chaveS = `saude:${camAberta}`;
+  const problema = SAUDE_PROBLEMA.includes(saude);
+  if (problema && alertaAntes[chaveS] === false) {
+    piscarTela();
+    if (somLigado(chaveS)) { tocarAlerta(); tocou = true; }
+  }
+  alertaAntes[chaveS] = problema;
   for (const r of regrasAbertas) {
     const e = estadoCam && estadoCam.regras ? estadoCam.regras[r.id] : null;
     const agora = !!(e && e.alerta_ms > 0);
@@ -360,8 +416,15 @@ function conferirAlertas(estadoCam) {
 function renderBaloes(estadoCam) {
   conferirAlertas(estadoCam);
   const camada = $("#baloes");
-  if (!regrasAbertas.length) { camada.replaceChildren(); return; }
-  camada.replaceChildren(...regrasAbertas.map((r) => {
+  const saude = estadoCam ? estadoCam.saude : "ok";
+  const tag = $("#aovivo-saude");
+  tag.hidden = !estadoCam;
+  tag.className = "tag " + saudeClasse(saude);
+  tag.textContent = t("saude." + saude);
+  const baloes = SAUDE_PROBLEMA.includes(saude) && saude !== "sem_sinal"
+    ? [el("div", { class: "cf-bubble is-alert saude" }, t("saude.balao." + saude))] : [];
+  if (!regrasAbertas.length) { camada.replaceChildren(...baloes); return; }
+  camada.replaceChildren(...baloes, ...regrasAbertas.map((r) => {
     const e = estadoCam && estadoCam.regras ? estadoCam.regras[r.id] : null;
     const c = centro(r);
     const b = el("div", { class: "cf-bubble" + (e && e.alerta_ms > 0 ? " is-alert" : "") }, textoBalao(r, e));

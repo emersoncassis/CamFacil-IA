@@ -4,6 +4,7 @@
 //! quadro vira a imagem ao vivo da dashboard e, reduzido em cinza, alimenta o
 //! analisador de visão. Uma thread por câmera, isolada do servidor web.
 
+use cf_core::saude::{self, Situacao};
 use cf_core::store::{RegraSalva, Store};
 use cf_core::visao::{Analisador, Evento, Quadro, Regra};
 use serde::Serialize;
@@ -273,7 +274,12 @@ pub struct EstadoCamera {
     pub online: bool,
     pub fps: f32,
     pub erro: Option<String>,
-    pub saude: Option<String>,
+    /// Saúde da imagem: `ok`, `escura`, `coberta`, `desfocada` ou `sem_sinal`.
+    pub saude: String,
+    /// Há quantos segundos está nessa situação.
+    pub saude_desde_s: u64,
+    /// Segundos desde o começo do último problema (`None` = nunca).
+    pub ultimo_problema_s: Option<u64>,
     pub movimento_ms: u64,
     pub regras: HashMap<i64, EstadoRegra>,
 }
@@ -283,7 +289,8 @@ struct Interno {
     online: bool,
     fps: f32,
     erro: Option<String>,
-    saude: Option<String>,
+    saude: saude::Monitor,
+    quadros: u64,
     movimento: Option<Instant>,
     ocupadas: HashMap<i64, bool>,
     alertas: HashMap<i64, Instant>,
@@ -331,11 +338,14 @@ impl Canal {
                 )
             })
             .collect();
+        let agora = Instant::now();
         EstadoCamera {
             online: i.online,
             fps: (i.fps * 10.0).round() / 10.0,
             erro: i.erro.clone(),
-            saude: i.saude.clone(),
+            saude: i.saude.atual().chave().to_string(),
+            saude_desde_s: i.saude.ha_quanto(agora).as_secs(),
+            ultimo_problema_s: i.saude.desde_ultimo_problema(agora).map(|d| d.as_secs()),
             movimento_ms: resta(i.movimento.as_ref(), Duration::from_secs(4)),
             regras,
         }
@@ -462,7 +472,7 @@ fn laco(canal: Arc<Canal>, store: Arc<Store>, fonte: String, url: String) {
                 "ffmpeg não encontrado. Instale com: {}",
                 comando_instalar()
             ));
-            std::thread::sleep(Duration::from_secs(5));
+            esperar_sem_sinal(&canal, &store, Duration::from_secs(5));
             continue;
         };
         let mut cmd = Command::new(ff);
@@ -480,7 +490,7 @@ fn laco(canal: Arc<Canal>, store: Arc<Store>, fonte: String, url: String) {
             Err(e) => {
                 canal.interno.lock().unwrap().erro =
                     Some(format!("não foi possível abrir o ffmpeg: {e}"));
-                std::thread::sleep(espera);
+                esperar_sem_sinal(&canal, &store, espera);
                 continue;
             }
         };
@@ -509,8 +519,38 @@ fn laco(canal: Arc<Canal>, store: Arc<Store>, fonte: String, url: String) {
             espera = (espera * 2).min(Duration::from_secs(30));
         }
         if !canal.parar.load(Ordering::Relaxed) {
-            std::thread::sleep(espera);
+            esperar_sem_sinal(&canal, &store, espera);
         }
+    }
+}
+
+/// Espera entre tentativas avisando o monitor de saúde, a cada segundo, que a
+/// câmera está sem sinal (a histerese decide quando isso vira evento).
+fn esperar_sem_sinal(canal: &Canal, store: &Store, total: Duration) {
+    let fim = Instant::now() + total;
+    while !canal.parar.load(Ordering::Relaxed) {
+        observar_saude(canal, store, Situacao::SemSinal);
+        let resta = fim.saturating_duration_since(Instant::now());
+        if resta.is_zero() {
+            break;
+        }
+        std::thread::sleep(resta.min(Duration::from_secs(1)));
+    }
+}
+
+/// Alimenta o monitor de saúde; grava o evento `saude` só na mudança confirmada.
+fn observar_saude(canal: &Canal, store: &Store, s: Situacao) {
+    if !modulos(store).saude {
+        return;
+    }
+    let mudanca = canal
+        .interno
+        .lock()
+        .unwrap()
+        .saude
+        .observar(s, Instant::now());
+    if let Some(m) = mudanca {
+        let _ = store.registrar_evento(canal.id, None, "saude", m.para.chave(), agora());
     }
 }
 
@@ -611,7 +651,16 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
     } else {
         Vec::new()
     };
-    let eventos = an.processar(&q, &regras, m.movimento, m.saude);
+    // Saúde: uma avaliação por segundo basta (5 quadros/s) e custa quase nada.
+    let n = {
+        let mut i = canal.interno.lock().unwrap();
+        i.quadros += 1;
+        i.quadros
+    };
+    if n.is_multiple_of(5) {
+        observar_saude(canal, store, saude::classificar(&q));
+    }
+    let eventos = an.processar(&q, &regras, m.movimento);
     if let Some(o) = canal.observacao.lock().unwrap().as_mut() {
         if o.inicio.elapsed() < o.duracao {
             o.obs.alimentar(&an.centros());
@@ -645,22 +694,6 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
                 *i.contagens.entry(*regra).or_default() += 1;
                 selo = true;
                 ("linha_cruzada", Some(*regra))
-            }
-            Evento::CameraEscura => {
-                i.saude = Some("escura".into());
-                ("camera_escura", None)
-            }
-            Evento::CameraTapada => {
-                i.saude = Some("tapada".into());
-                ("camera_tapada", None)
-            }
-            Evento::CameraDesfocada => {
-                i.saude = Some("desfocada".into());
-                ("camera_desfocada", None)
-            }
-            Evento::CameraNormal => {
-                i.saude = None;
-                ("camera_normal", None)
             }
         };
         let detalhe = match &e {

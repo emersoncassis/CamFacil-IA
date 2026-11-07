@@ -349,6 +349,27 @@ impl Store {
         v
     }
 
+    /// Últimos eventos de um tipo (ex.: `saude`), do mais novo para o mais velho.
+    pub fn eventos_tipo(&self, tipo: &str, limite: i64) -> Result<Vec<EventoSalvo>> {
+        let c = self.lock();
+        let mut st = c.prepare(
+            "SELECT id, camera_id, regra_id, tipo, detalhe, quando FROM eventos WHERE tipo = ?1 ORDER BY id DESC LIMIT ?2",
+        )?;
+        let v = st
+            .query_map(params![tipo, limite], |r| {
+                Ok(EventoSalvo {
+                    id: r.get(0)?,
+                    camera_id: r.get(1)?,
+                    regra_id: r.get(2)?,
+                    tipo: r.get(3)?,
+                    detalhe: r.get(4)?,
+                    quando: r.get(5)?,
+                })
+            })?
+            .collect();
+        v
+    }
+
     pub fn ganhar_selo(&self, modulo: &str, quando: i64) -> Result<bool> {
         Ok(self.lock().execute(
             "INSERT OR IGNORE INTO selos(modulo, ganho_em) VALUES (?1, ?2)",
@@ -405,6 +426,11 @@ mod tests {
         s.registrar_evento(cam, Some(r), "linha_cruzada", "", 10)
             .unwrap();
         assert_eq!(s.eventos(10).unwrap()[0].tipo, "linha_cruzada");
+        s.registrar_evento(cam, None, "saude", "escura", 11)
+            .unwrap();
+        let sa = s.eventos_tipo("saude", 10).unwrap();
+        assert_eq!(sa.len(), 1);
+        assert_eq!(sa[0].detalhe, "escura");
         assert!(s.ganhar_selo("cerca", 1).unwrap());
         assert!(!s.ganhar_selo("cerca", 2).unwrap());
         assert!(s.remover_camera(cam).unwrap());

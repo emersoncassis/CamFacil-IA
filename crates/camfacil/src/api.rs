@@ -40,6 +40,7 @@ pub fn router(app: Shared) -> Router {
         .route("/api/regras/{id}", patch(patch_regra).delete(delete_regra))
         .route("/api/estado", get(get_estado))
         .route("/api/eventos", get(get_eventos))
+        .route("/api/saude", get(get_saude))
         .route("/api/modulos", get(get_modulos).post(post_modulos))
         .route("/api/selos", get(get_selos))
         .route("/api/elo", get(get_elo))
@@ -647,6 +648,55 @@ async fn get_eventos(
     Ok(Json(
         json!({ "eventos": app.store.eventos(q.limite.clamp(1, 500)).map_err(internal)? }),
     ))
+}
+
+/// Saúde das câmeras para a tela Início: situação atual de cada uma e os
+/// últimos eventos de saúde (mudanças confirmadas, sem spam).
+async fn get_saude(State(app): State<Shared>) -> ApiResult {
+    let cams = app.store.cameras().map_err(internal)?;
+    let nome_de = |id: i64| {
+        cams.iter()
+            .find(|c| c.id == id)
+            .map(|c| c.nome.clone())
+            .unwrap_or_else(|| format!("Câmera {id}"))
+    };
+    let lista: Vec<Value> = cams
+        .iter()
+        .filter(|c| c.ativa)
+        .map(|c| {
+            let e = app
+                .video
+                .canal(c.id)
+                .map(|k| k.estado())
+                .unwrap_or_default();
+            json!({
+                "id": c.id,
+                "nome": c.nome,
+                "online": e.online,
+                "saude": e.saude,
+                "saude_desde_s": e.saude_desde_s,
+                "ultimo_problema_s": e.ultimo_problema_s,
+            })
+        })
+        .collect();
+    let eventos: Vec<Value> = app
+        .store
+        .eventos_tipo("saude", 20)
+        .map_err(internal)?
+        .into_iter()
+        .map(|e| {
+            json!({
+                "camera": nome_de(e.camera_id),
+                "situacao": e.detalhe,
+                "quando": e.quando,
+            })
+        })
+        .collect();
+    Ok(Json(json!({
+        "ligado": crate::video::modulos(&app.store).saude,
+        "cameras": lista,
+        "eventos": eventos,
+    })))
 }
 
 async fn get_modulos(State(app): State<Shared>) -> Json<Value> {
