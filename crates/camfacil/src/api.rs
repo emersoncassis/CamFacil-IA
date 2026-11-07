@@ -519,8 +519,8 @@ async fn get_selos(State(app): State<Shared>) -> ApiResult {
     Ok(Json(json!({ "selos": v })))
 }
 
-/// Áudios das aulas (gravados pelo autor): pasta `aulas` ao lado do executável
-/// ou na pasta de dados. Nome validado para não sair da pasta.
+/// Áudios das aulas: pasta `aulas` ao lado do executável ou na pasta de dados
+/// (permite regravar sem recompilar); senão, a gravação embutida. Nome validado para não sair da pasta.
 async fn audio_aula(nome: &str) -> Response {
     let valido = nome.len() < 64
         && nome
@@ -542,5 +542,9 @@ async fn audio_aula(nome: &str) -> Response {
             return ([(header::CONTENT_TYPE, "audio/ogg")], b).into_response();
         }
     }
-    (StatusCode::NOT_FOUND, "não encontrado").into_response()
+    // Sem arquivo local: usa a gravação embutida no binário.
+    match assets::find(&format!("/aulas/{nome}")) {
+        Some(a) => ([(header::CONTENT_TYPE, a.mime)], a.body).into_response(),
+        None => (StatusCode::NOT_FOUND, "não encontrado").into_response(),
+    }
 }

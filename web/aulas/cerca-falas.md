@@ -1,6 +1,6 @@
 # Falas da aula "Cerca virtual" (para gravar no Voice Studio)
 
-Grave cada fala num arquivo `web/aulas/cerca-NN.ogg` (Opus, mono, ~24 kbps). Se o arquivo não existir, a aula mostra só o texto.
+Gravadas no Voice Studio com a voz do autor (OmniVoice), convertidas para Opus mono 24 kbps e embutidas no binário. Para regravar sem recompilar, coloque `cerca-NN.ogg` na pasta `aulas` dos dados ou ao lado do executável.
 
 1. **cerca-01.ogg** — Vamos aprender a cerca virtual. Ela avisa quando alguém entra numa área ou atravessa uma linha, usando só o computador. Nada de câmera cara.
 2. **cerca-02.ogg** — Comece pela câmera de demonstração. Ela simula uma loja com porta e balcão, então dá para treinar sem nenhuma câmera ligada. Clique em Adicionar demonstração.

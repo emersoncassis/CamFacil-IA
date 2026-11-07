@@ -32,6 +32,12 @@ pub const ASSETS: &[Asset] = &[
         "application/json; charset=utf-8",
         "aulas/cerca.json"
     ),
+    asset!("/aulas/cerca-01.ogg", "audio/ogg", "aulas/cerca-01.ogg"),
+    asset!("/aulas/cerca-02.ogg", "audio/ogg", "aulas/cerca-02.ogg"),
+    asset!("/aulas/cerca-03.ogg", "audio/ogg", "aulas/cerca-03.ogg"),
+    asset!("/aulas/cerca-04.ogg", "audio/ogg", "aulas/cerca-04.ogg"),
+    asset!("/aulas/cerca-05.ogg", "audio/ogg", "aulas/cerca-05.ogg"),
+    asset!("/aulas/cerca-06.ogg", "audio/ogg", "aulas/cerca-06.ogg"),
 ];
 
 pub fn find(path: &str) -> Option<&'static Asset> {
