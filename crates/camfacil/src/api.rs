@@ -12,6 +12,7 @@ use axum::{
 use cf_core::{bench, conectar, onvif, rtsp, system};
 use serde::Deserialize;
 use serde_json::{json, Value};
+use std::sync::Arc;
 use std::time::Duration;
 
 pub fn router(app: Shared) -> Router {
@@ -48,6 +49,19 @@ pub fn router(app: Shared) -> Router {
         .route("/api/elo/qr.svg", get(get_elo_qr))
         .route("/api/elo/confirmar", post(post_elo_confirmar))
         .route("/api/elo/desparear", post(post_elo_desparear))
+        .route("/api/fuso", post(post_fuso))
+        .route(
+            "/api/telegram",
+            get(get_telegram)
+                .post(post_telegram)
+                .delete(delete_telegram),
+        )
+        .route("/api/telegram/testar", post(post_telegram_testar))
+        .route("/api/telegram/fotos", post(post_telegram_fotos))
+        .route(
+            "/api/telegram/chats/{id}",
+            post(post_telegram_chat).delete(delete_telegram_chat),
+        )
         .route("/api/tailscale", get(get_tailscale))
         .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
         .fallback(static_file)
@@ -772,16 +786,111 @@ struct ModuloReq {
 }
 
 async fn post_modulos(State(app): State<Shared>, Json(r): Json<ModuloReq>) -> ApiResult {
-    let chave = match r.modulo.as_str() {
-        "movimento" => "modulo_movimento",
-        "cerca" => "modulo_cerca",
-        "saude" => "modulo_saude",
-        _ => return Err(bad(StatusCode::BAD_REQUEST, "módulo desconhecido")),
-    };
-    app.store
-        .set(chave, if r.ligado { "1" } else { "0" })
-        .map_err(internal)?;
+    crate::video::definir_modulo(&app.store, &r.modulo, r.ligado)
+        .map_err(|e| bad(StatusCode::BAD_REQUEST, e))?;
     Ok(Json(json!({ "modulo": r.modulo, "ligado": r.ligado })))
+}
+
+// ---------- Telegram (SDD-04) ----------
+
+#[derive(Deserialize)]
+struct FusoReq {
+    /// Minutos a somar ao UTC (ex.: -180 para Brasília).
+    minutos: i64,
+}
+
+/// A dashboard informa o fuso do navegador; o bot usa para escrever a hora.
+async fn post_fuso(State(app): State<Shared>, Json(f): Json<FusoReq>) -> ApiResult {
+    app.store
+        .set("fuso_min", &f.minutos.clamp(-840, 840).to_string())
+        .map_err(internal)?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+fn telegram(app: &Shared) -> Result<&Arc<cf_notify::Telegram>, (StatusCode, Json<Value>)> {
+    app.telegram.get().ok_or_else(|| {
+        bad(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Telegram indisponível (não foi possível abrir o cofre de segredos)",
+        )
+    })
+}
+
+async fn get_telegram(State(app): State<Shared>) -> ApiResult {
+    let tg = telegram(&app)?;
+    let chats = app.store.telegram_chats().map_err(internal)?;
+    Ok(Json(json!({
+        "situacao": tg.situacao(),
+        "chats": chats,
+    })))
+}
+
+#[derive(Deserialize)]
+struct TokenReq {
+    token: String,
+}
+
+/// Salva o token (cifrado) depois de confirmar com o Telegram que ele vale.
+async fn post_telegram(State(app): State<Shared>, Json(r): Json<TokenReq>) -> ApiResult {
+    let tg = telegram(&app)?;
+    let eu = tg
+        .definir_token(&r.token)
+        .await
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    Ok(Json(json!({ "bot": eu.username, "nome": eu.first_name })))
+}
+
+async fn delete_telegram(State(app): State<Shared>) -> ApiResult {
+    telegram(&app)?.remover_token().map_err(internal)?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+/// Testa o token salvo e manda uma mensagem aos contatos autorizados.
+async fn post_telegram_testar(State(app): State<Shared>) -> ApiResult {
+    let tg = telegram(&app)?;
+    let eu = tg
+        .testar()
+        .await
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    let enviados = tg.enviar_teste().await.unwrap_or(0);
+    Ok(Json(json!({ "bot": eu.username, "enviados": enviados })))
+}
+
+#[derive(Deserialize)]
+struct FotosReq {
+    ligado: bool,
+}
+
+async fn post_telegram_fotos(State(app): State<Shared>, Json(r): Json<FotosReq>) -> ApiResult {
+    telegram(&app)?.definir_fotos(r.ligado).map_err(internal)?;
+    Ok(Json(json!({ "fotos": r.ligado })))
+}
+
+#[derive(Deserialize)]
+struct ChatReq {
+    autorizado: bool,
+}
+
+async fn post_telegram_chat(
+    State(app): State<Shared>,
+    Path(id): Path<i64>,
+    Json(r): Json<ChatReq>,
+) -> ApiResult {
+    if !app
+        .store
+        .telegram_autorizar(id, r.autorizado)
+        .map_err(internal)?
+    {
+        return Err(bad(StatusCode::NOT_FOUND, "contato não encontrado"));
+    }
+    Ok(Json(json!({ "chat_id": id, "autorizado": r.autorizado })))
+}
+
+async fn delete_telegram_chat(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    if !app.store.telegram_remover(id).map_err(internal)? {
+        return Err(bad(StatusCode::NOT_FOUND, "contato não encontrado"));
+    }
+    Ok(Json(json!({ "removido": true })))
 }
 
 async fn get_selos(State(app): State<Shared>) -> ApiResult {

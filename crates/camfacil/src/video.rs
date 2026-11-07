@@ -13,7 +13,7 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast;
 
@@ -363,12 +363,78 @@ impl Canal {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Notificações (Telegram): gancho global, definido uma vez pelo binário
+// ---------------------------------------------------------------------------
+
+type Notificador = Arc<dyn Fn(cf_notify::Alerta) + Send + Sync>;
+static NOTIFICADOR: OnceLock<Notificador> = OnceLock::new();
+
+/// Liga o envio de alertas (uma vez, na inicialização).
+pub fn definir_notificador(n: Notificador) {
+    let _ = NOTIFICADOR.set(n);
+}
+
+fn notificar(chave: String, texto: String, foto: Option<Arc<Vec<u8>>>) {
+    if let Some(n) = NOTIFICADOR.get() {
+        n(cf_notify::Alerta { chave, texto, foto });
+    }
+}
+
 /// Módulos ligados (lidos das configurações a cada quadro, sem custo relevante).
 #[derive(Clone, Copy)]
 pub struct Modulos {
     pub movimento: bool,
     pub cerca: bool,
     pub saude: bool,
+}
+
+impl Modulos {
+    pub fn ligado(&self, id: &str) -> bool {
+        match id {
+            "movimento" => self.movimento,
+            "cerca" => self.cerca,
+            "saude" => self.saude,
+            _ => false,
+        }
+    }
+}
+
+/// Catálogo: (id, nome falado, apelidos aceitos nos comandos).
+pub const MODULOS: &[(&str, &str, &[&str])] = &[
+    ("movimento", "Movimento inteligente", &["movimento"]),
+    (
+        "cerca",
+        "Cerca e linha virtual",
+        &["cerca", "linha", "zona"],
+    ),
+    ("saude", "Saúde das câmeras", &["saude", "saúde"]),
+];
+
+/// Liga/desliga um módulo pelo id ou apelido. Devolve (id, nome).
+pub fn definir_modulo(
+    store: &Store,
+    nome: &str,
+    ligado: bool,
+) -> Result<(&'static str, &'static str), String> {
+    let n = nome.trim().to_lowercase();
+    let (id, bonito, _) = MODULOS
+        .iter()
+        .find(|(id, _, apelidos)| *id == n || apelidos.contains(&n.as_str()))
+        .ok_or_else(|| {
+            format!(
+                "módulo desconhecido: {nome}. Tenho: {}",
+                MODULOS
+                    .iter()
+                    .map(|(id, _, _)| *id)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        })?;
+    store
+        .set(&format!("modulo_{id}"), if ligado { "1" } else { "0" })
+        .map_err(|e| e.to_string())?;
+    Ok((id, bonito))
 }
 
 pub fn modulos(store: &Store) -> Modulos {
@@ -378,6 +444,15 @@ pub fn modulos(store: &Store) -> Modulos {
         cerca: on("modulo_cerca"),
         saude: on("modulo_saude"),
     }
+}
+
+fn nome_camera(store: &Store, id: i64) -> String {
+    store
+        .camera(id)
+        .ok()
+        .flatten()
+        .map(|c| c.nome)
+        .unwrap_or_else(|| format!("Câmera {id}"))
 }
 
 /// Selo da cerca virtual: uma zona e uma linha criadas e já disparadas.
@@ -551,6 +626,20 @@ fn observar_saude(canal: &Canal, store: &Store, s: Situacao) {
         .observar(s, Instant::now());
     if let Some(m) = mudanca {
         let _ = store.registrar_evento(canal.id, None, "saude", m.para.chave(), agora());
+        if m.para.problema() {
+            let texto = format!(
+                "{} — {}: {}",
+                cf_notify::servico::hora_local(store),
+                nome_camera(store, canal.id),
+                crate::notificacoes::saude_pt(m.para.chave())
+            );
+            let foto = if m.para == Situacao::SemSinal {
+                None
+            } else {
+                canal.ultimo.lock().unwrap().clone()
+            };
+            notificar(format!("saude:{}", canal.id), texto, foto);
+        }
     }
 }
 
@@ -671,6 +760,7 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
     }
     let t = agora();
     let mut selo = false;
+    let mut avisos: Vec<(i64, String)> = Vec::new();
     let mut i = canal.interno.lock().unwrap();
     for e in eventos {
         let (tipo, regra) = match &e {
@@ -703,10 +793,31 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
             _ => String::new(),
         };
         let _ = store.registrar_evento(canal.id, regra, tipo, &detalhe, t);
+        if let (Some(r), true) = (regra, matches!(tipo, "zona_ocupada" | "linha_cruzada")) {
+            avisos.push((r, detalhe));
+        }
     }
     drop(i);
     if selo {
         verificar_selo_cerca(store);
+    }
+    if !avisos.is_empty() {
+        let hora = cf_notify::servico::hora_local(store);
+        let cam = nome_camera(store, canal.id);
+        let foto = canal.ultimo.lock().unwrap().clone();
+        for (r, detalhe) in avisos {
+            let nome = regras
+                .iter()
+                .find(|x| x.id == r)
+                .map(|x| x.nome.clone())
+                .unwrap_or_else(|| "regra".into());
+            let texto = if detalhe.is_empty() {
+                format!("{hora} — {nome}: ocupada · {cam}")
+            } else {
+                format!("{hora} — {nome}: passagem ({detalhe}) · {cam}")
+            };
+            notificar(format!("regra:{r}"), texto, foto.clone());
+        }
     }
 }
 
