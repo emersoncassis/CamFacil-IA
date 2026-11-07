@@ -3,7 +3,6 @@ name: rust
 on:
   push:
     branches: [main]
-    tags: ["v*"]
     paths-ignore: ["**.md", "docs/**"]
   pull_request:
     paths-ignore: ["**.md", "docs/**"]
@@ -81,28 +80,41 @@ jobs:
 
   release:
     name: publicar versão
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Publica sozinho quando a versão do Cargo.toml ainda não tem release.
+    if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v5
+      - name: Versão já publicada?
+        id: versao
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="v$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)"
+          echo "tag=$V" >> "$GITHUB_OUTPUT"
+          if gh release view "$V" >/dev/null 2>&1; then echo "nova=nao" >> "$GITHUB_OUTPUT"; else echo "nova=sim" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/download-artifact@v5
+        if: steps.versao.outputs.nova == 'sim'
         with:
           path: dist
           merge-multiple: true
       - name: Junta os instaladores e as somas de verificação
+        if: steps.versao.outputs.nova == 'sim'
         run: |
           cp scripts/install.sh scripts/install.ps1 dist/
           cd dist && sha256sum * > SHA256SUMS.txt && ls -la
       - name: Cria a versão no GitHub
+        if: steps.versao.outputs.nova == 'sim'
         env:
           GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.versao.outputs.tag }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" dist/* --title "CamFácil IA ${GITHUB_REF_NAME}" \
+          gh release create "$V" dist/* --target "$GITHUB_SHA" --title "CamFácil IA $V" --latest \
             --notes "Baixe pelo site https://cfia.ysafe.com.br ou veja o README. Windows: camfacil-windows-x86_64.exe · Linux: camfacil-linux-x86_64 · Raspberry Pi/ARM 64: camfacil-linux-arm64." \
-            || gh release upload "${GITHUB_REF_NAME}" dist/* --clobber
+            || gh release upload "$V" dist/* --clobber
 
   imagem-api:
     name: imagem Docker da API
@@ -128,4 +140,5 @@ jobs:
           IMG=ghcr.io/emersoncassis/camfacil-ia-painel
           docker tag cfia-api:ci $IMG:latest
           docker push $IMG:latest
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then docker tag cfia-api:ci $IMG:${GITHUB_REF_NAME}; docker push $IMG:${GITHUB_REF_NAME}; fi
+          V="v$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)"
+          docker tag cfia-api:ci $IMG:$V && docker push $IMG:$V
