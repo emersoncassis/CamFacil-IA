@@ -7,3 +7,8 @@
 .env
 .DS_Store
 Thumbs.db
+
+# Segredos (nunca versionar)
+client_secret*.json
+*.pem
+.env.*
