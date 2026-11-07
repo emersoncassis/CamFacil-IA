@@ -61,6 +61,11 @@
         </div>
 
         <div class="block">
+          <h2 data-i18n="inicio.selos"></h2>
+          <div class="selos" id="selos"></div>
+        </div>
+
+        <div class="block">
           <h2 data-i18n="inicio.maquina"></h2>
           <dl class="rows" id="sysinfo"></dl>
         </div>
@@ -75,6 +80,56 @@
           </div>
           <button class="btn primary" id="discover"><svg class="ico"><use href="#i-search"/></svg><span data-i18n="cam.busca_btn"></span></button>
         </header>
+
+        <div class="block">
+          <div class="block-head">
+            <h2 data-i18n="cam.suas"></h2>
+            <div class="actions">
+              <button class="btn sm" id="add-demo" data-i18n="cam.add_demo"></button>
+              <button class="btn sm" id="add-webcam" data-i18n="cam.add_webcam"></button>
+            </div>
+          </div>
+          <p class="note warn" id="ffmpeg-aviso" hidden><svg class="ico sm"><use href="#i-info"/></svg><span id="ffmpeg-texto"></span></p>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th data-i18n="cam.col_nome"></th><th data-i18n="cam.col_fonte"></th><th data-i18n="cam.col_situacao"></th><th class="right"></th></tr></thead>
+              <tbody id="minhas"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="block" id="aovivo" hidden>
+          <div class="block-head">
+            <h2 id="aovivo-nome"></h2>
+            <div class="seg" role="radiogroup" id="modo">
+              <label><input type="radio" name="modo" value="ver" checked><span data-i18n="desenho.ver"></span></label>
+              <label><input type="radio" name="modo" value="zona"><span data-i18n="desenho.zona"></span></label>
+              <label><input type="radio" name="modo" value="linha"><span data-i18n="desenho.linha"></span></label>
+            </div>
+          </div>
+          <div class="viewer" id="viewer">
+            <img id="video" alt="">
+            <svg id="desenho" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div id="baloes"></div>
+            <div class="viewer-off" id="viewer-off" hidden></div>
+          </div>
+          <p class="note" id="desenho-dica"></p>
+          <form class="form regra-form" id="regra-form" hidden autocomplete="off">
+            <label class="span-2"><span data-i18n="regra.nome"></span><input name="nome" required maxlength="40"></label>
+            <label class="zona-only"><span data-i18n="regra.on"></span><input name="rotulo_on" maxlength="24"></label>
+            <label class="zona-only"><span data-i18n="regra.off"></span><input name="rotulo_off" maxlength="24"></label>
+            <div class="actions span-4">
+              <button class="btn primary" type="submit" data-i18n="regra.salvar"></button>
+              <button class="btn" type="button" id="regra-cancelar" data-i18n="regra.cancelar"></button>
+            </div>
+          </form>
+          <div class="table-wrap mt">
+            <table class="table">
+              <thead><tr><th data-i18n="regra.col_nome"></th><th data-i18n="regra.col_tipo"></th><th data-i18n="regra.col_estado"></th><th class="right"></th></tr></thead>
+              <tbody id="regras"></tbody>
+            </table>
+          </div>
+        </div>
 
         <div class="block">
           <h2 data-i18n="cam.encontradas"></h2>
@@ -113,6 +168,10 @@
             <code class="mono" id="rtsp-url"></code>
             <button class="btn ghost sm" id="rtsp-copy" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="cam.copiar"></span></button>
           </div>
+          <form class="add-cam" id="add-rtsp" hidden autocomplete="off">
+            <input name="nome" required maxlength="60" data-i18n-ph="cam.nome_ph">
+            <button class="btn primary" type="submit" data-i18n="cam.adicionar"></button>
+          </form>
           <p id="rtsp-msg" class="msg" role="status"></p>
         </div>
       </section>
@@ -184,6 +243,16 @@
       <footer class="foot" data-i18n="rodape"></footer>
     </main>
   </div>
+
+  <aside class="aula" id="aula" hidden role="dialog" aria-live="polite" aria-labelledby="aula-titulo">
+    <div class="aula-topo"><strong id="aula-titulo"></strong><span class="tiny mono" id="aula-passo"></span></div>
+    <p id="aula-texto"></p>
+    <div class="actions">
+      <button class="btn primary sm" id="aula-proximo" data-i18n="aula.proximo"></button>
+      <button class="btn ghost sm" id="aula-ouvir" data-i18n="aula.ouvir"></button>
+      <button class="btn ghost sm" id="aula-sair" data-i18n="aula.sair"></button>
+    </div>
+  </aside>
 
   <dialog id="disclaimer" aria-labelledby="disc-title">
     <h2 id="disc-title" data-i18n="isencao.titulo"></h2>

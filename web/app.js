@@ -5,10 +5,10 @@ let T = {};
 const t = (k) => T[k] ?? k;
 const $ = (s) => document.querySelector(s);
 
-async function api(path, body) {
+async function api(path, body, method) {
   const opt = body === undefined
-    ? {}
-    : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+    ? { method: method || "GET" }
+    : { method: method || "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
   const r = await fetch(path, opt);
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.erro || r.statusText);
@@ -53,6 +53,7 @@ function showTab(id) {
   try { localStorage.setItem("cf-tab", id); } catch (_) { /* opcional */ }
   if (id === "modulos") renderLevels();
   eloAtivar(id === "integracoes");
+  camerasAtivar(id === "cameras");
 }
 
 // ---------- Visão geral ----------
@@ -81,6 +82,17 @@ async function loadSystem() {
   }
 }
 
+async function renderSelos() {
+  const box = $("#selos");
+  if (!box) return;
+  try {
+    const { selos } = await api("/api/selos");
+    box.replaceChildren(...(selos.length
+      ? selos.map((x) => el("span", { class: "selo" }, t("selo." + x.modulo)))
+      : [el("p", { class: "hint" }, t("inicio.sem_selos"))]));
+  } catch (_) { /* segue */ }
+}
+
 function renderBench(r) {
   const box = $("#bench-result");
   if (!r) { box.replaceChildren(el("p", { class: "hint" }, t("inicio.nunca"))); return; }
@@ -107,26 +119,43 @@ async function runBench() {
 
 // ---------- Módulos ----------
 const MODULES = [
-  ["leve", ["Movimento inteligente", "Cerca e linha virtual", "Saúde das câmeras"]],
-  ["medio", ["Pessoas e veículos", "Contagem", "Permanência", "Mapa de calor"]],
-  ["pesado", ["Leitura de placas", "Reconhecimento facial"]],
+  ["leve", [["movimento", "Movimento inteligente"], ["cerca", "Cerca e linha virtual"], ["saude", "Saúde das câmeras"]]],
+  ["medio", [[null, "Pessoas e veículos"], [null, "Contagem"], [null, "Permanência"], [null, "Mapa de calor"]]],
+  ["pesado", [[null, "Leitura de placas"], [null, "Reconhecimento facial"]]],
 ];
 const RANK = { leve: 0, medio: 1, pesado: 2 };
+const AULAS = { cerca: true };
 
-function renderLevels() {
+async function renderLevels() {
+  let ligados = {};
+  try { ligados = await api("/api/modulos"); } catch (_) { /* segue */ }
   const rows = [];
   for (const [lv, mods] of MODULES) {
     const untested = level == null && lv !== "leve";
     const locked = untested || (level != null && RANK[lv] > RANK[level]);
-    const stateText = untested ? t("mod.testar") : locked ? t("mod.bloqueado") : t("mod.disponivel");
-    for (const name of mods) {
-      const sw = el("label", { class: "switch", title: stateText },
-        el("input", { type: "checkbox", disabled: "", "aria-label": name }), el("span"));
-      rows.push(el("tr", { class: locked ? "locked" : "" },
+    for (const [id, name] of mods) {
+      const disponivel = !!id && !locked;
+      const stateText = untested ? t("mod.testar") : locked ? t("mod.bloqueado")
+        : !id ? t("mod.precisa_modelo") : ligados[id] ? t("mod.ligado") : t("mod.desligado");
+      const input = el("input", { type: "checkbox", "aria-label": name });
+      if (!disponivel) input.setAttribute("disabled", "");
+      if (id && ligados[id]) input.checked = true;
+      input.onchange = async () => {
+        try { await api("/api/modulos", { modulo: id, ligado: input.checked }); renderLevels(); } catch (e) { input.checked = !input.checked; alert(e.message); }
+      };
+      const sw = el("label", { class: "switch", title: stateText }, input, el("span"));
+      const acoes = el("div", { class: "actions end" });
+      if (id && AULAS[id]) {
+        const b = el("button", { class: "btn sm", type: "button" }, t("mod.aula"));
+        b.onclick = () => aulaIniciar(id);
+        acoes.append(b);
+      }
+      acoes.append(sw);
+      rows.push(el("tr", { class: disponivel ? "" : "locked" },
         el("td", {}, name),
         el("td", {}, t("nivel." + lv)),
         el("td", {}, el("span", { class: "state" }, locked ? icon("i-lock") : null, stateText)),
-        el("td", { class: "right" }, sw)));
+        el("td", { class: "right" }, acoes)));
     }
   }
   $("#levels").replaceChildren(...rows);
@@ -155,6 +184,7 @@ async function buildRtsp(ev) {
     lastUrl = r.url;
     $("#rtsp-url").textContent = r.url_sem_senha;
     $("#rtsp-out").hidden = false;
+    $("#add-rtsp").hidden = false;
     msg("");
   } catch (e) { $("#rtsp-out").hidden = true; msg(e.message, "err"); }
 }
@@ -205,6 +235,250 @@ async function discover() {
   busy(b, false, "cam.busca_btn");
 }
 
+// ---------- Câmeras ao vivo, balões e desenho (fase 2) ----------
+let cams = [];
+let camAberta = null;
+let regrasAbertas = [];
+let estadoTimer = null;
+let desenho = { modo: "ver", pontos: [] };
+let ffmpegOk = true;
+
+function fonteNome(f) { return t("fonte." + f); }
+
+async function carregarFfmpeg() {
+  try {
+    const f = await api("/api/video/ffmpeg");
+    ffmpegOk = f.encontrado;
+    $("#ffmpeg-aviso").hidden = f.encontrado;
+    if (!f.encontrado) $("#ffmpeg-texto").textContent = `${t("cam.ffmpeg_falta")} ${f.comando_instalar}`;
+  } catch (_) { /* segue */ }
+}
+
+function situacaoCam(e) {
+  if (!e) return [false, t("estado.conectando")];
+  if (e.online) {
+    const extra = e.saude ? ` · ${t("saude." + e.saude)}` : "";
+    return [true, `${t("estado.online")} · ${e.fps} q/s${extra}`];
+  }
+  return [false, e.erro || t("estado.conectando")];
+}
+
+async function carregarCameras() {
+  try { ({ cameras: cams } = await api("/api/cameras")); } catch (_) { return; }
+  const corpo = $("#minhas");
+  if (!cams.length) {
+    corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "4" }, t("cam.sem_cameras"))));
+    return;
+  }
+  corpo.replaceChildren(...cams.map((c) => {
+    const [ok, texto] = situacaoCam(c.estado);
+    const abrir = el("button", { class: "btn sm", type: "button" }, t("cam.abrir"));
+    abrir.onclick = () => abrirCamera(c.id);
+    const rem = el("button", { class: "btn ghost sm", type: "button" }, t("cam.remover"));
+    rem.onclick = async () => {
+      if (!confirm(t("cam.confirma_remover"))) return;
+      await api(`/api/cameras/${c.id}`, undefined, "DELETE");
+      if (camAberta === c.id) fecharCamera();
+      carregarCameras();
+    };
+    return el("tr", {},
+      el("td", {}, c.nome),
+      el("td", {}, fonteNome(c.fonte)),
+      el("td", {}, el("span", { class: "state" }, el("span", { class: "dot " + (ok ? "on" : "off") }), texto)),
+      el("td", { class: "right" }, el("div", { class: "actions end" }, abrir, rem)));
+  }));
+}
+
+async function adicionarCamera(nome, fonte, url = "") {
+  try {
+    const { id } = await api("/api/cameras", { nome, fonte, url });
+    await carregarCameras();
+    abrirCamera(id);
+  } catch (e) { alert(e.message); }
+}
+
+function fecharCamera() {
+  camAberta = null;
+  $("#aovivo").hidden = true;
+  $("#video").removeAttribute("src");
+}
+
+async function abrirCamera(id) {
+  camAberta = id;
+  const c = cams.find((x) => x.id === id);
+  $("#aovivo").hidden = false;
+  $("#aovivo-nome").textContent = c ? c.nome : "";
+  $("#video").src = `/api/cameras/${id}/mjpeg?t=${Date.now()}`;
+  definirModo("ver");
+  await carregarRegras();
+  if (!aula) $("#aovivo").scrollIntoView({ block: "start" });
+  aulaEvento("camera_aberta");
+}
+
+async function carregarRegras() {
+  if (camAberta == null) return;
+  ({ regras: regrasAbertas } = await api(`/api/cameras/${camAberta}/regras`));
+  desenharSalvas();
+}
+
+function centro(r) {
+  const p = r.pontos;
+  if (r.forma === "linha") return { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 };
+  return { x: p.reduce((a, q) => a + q.x, 0) / p.length, y: p.reduce((a, q) => a + q.y, 0) / p.length };
+}
+
+function textoBalao(r, e) {
+  if (r.forma === "zona") {
+    const on = r.rotulo_on || t("regra.ocupada"), off = r.rotulo_off || t("regra.livre");
+    return `${r.nome} · ${e && e.ocupada ? on : off}`;
+  }
+  return `${r.nome} · ${e ? e.contagem : 0}`;
+}
+
+function renderBaloes(estadoCam) {
+  const camada = $("#baloes");
+  if (!regrasAbertas.length) { camada.replaceChildren(); return; }
+  camada.replaceChildren(...regrasAbertas.map((r) => {
+    const e = estadoCam && estadoCam.regras ? estadoCam.regras[r.id] : null;
+    const c = centro(r);
+    const b = el("div", { class: "cf-bubble" + (e && e.alerta_ms > 0 ? " is-alert" : "") }, textoBalao(r, e));
+    b.style.left = `${c.x * 100}%`;
+    b.style.top = `${c.y * 100}%`;
+    return b;
+  }));
+  const linhas = regrasAbertas.map((r) => {
+    const e = estadoCam && estadoCam.regras ? estadoCam.regras[r.id] : null;
+    let agora;
+    if (r.forma === "zona") agora = e && e.ocupada ? (r.rotulo_on || t("regra.ocupada")) : (r.rotulo_off || t("regra.livre"));
+    else { const n = e ? e.contagem : 0; agora = `${n} ${t(n === 1 ? "regra.passagem" : "regra.passagens")}`; }
+    const rem = el("button", { class: "btn ghost sm", type: "button" }, t("cam.remover"));
+    rem.onclick = async () => {
+      if (!confirm(t("regra.confirma_remover"))) return;
+      await api(`/api/regras/${r.id}?camera_id=${camAberta}`, undefined, "DELETE");
+      carregarRegras();
+    };
+    return el("tr", {}, el("td", {}, r.nome), el("td", {}, t("regra." + r.forma)), el("td", {}, agora), el("td", { class: "right" }, rem));
+  });
+  $("#regras").replaceChildren(...(linhas.length ? linhas : [el("tr", { class: "empty" }, el("td", { colspan: "4" }, t("regra.nenhuma")))]));
+}
+
+async function atualizarEstado() {
+  if ($("#cameras").hidden) return;
+  try {
+    const { cameras } = await api("/api/estado");
+    if (camAberta != null) {
+      const e = cameras[String(camAberta)];
+      renderBaloes(e);
+      const off = $("#viewer-off");
+      off.hidden = !!(e && e.online);
+      if (!off.hidden) off.textContent = (e && e.erro) || t("estado.conectando");
+    }
+  } catch (_) { /* segue */ }
+}
+
+// --- desenho ---
+const svgNS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs) { const e = document.createElementNS(svgNS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); return e; }
+const pts = (lista) => lista.map((p) => `${p.x * 1000},${p.y * 1000}`).join(" ");
+
+function desenharSalvas() {
+  const svg = $("#desenho");
+  svg.replaceChildren();
+  // Formas salvas só aparecem no modo de desenho (para o cliente, só balões).
+  if (desenho.modo !== "ver") {
+    for (const r of regrasAbertas) {
+      svg.append(r.forma === "linha"
+        ? svgEl("polyline", { class: "forma linha salva", points: pts(r.pontos) })
+        : svgEl("polygon", { class: "forma salva", points: pts(r.pontos) }));
+    }
+  }
+  if (desenho.pontos.length) {
+    const fechada = desenho.modo === "zona" && desenho.fechada;
+    svg.append(fechada
+      ? svgEl("polygon", { class: "forma", points: pts(desenho.pontos) })
+      : svgEl("polyline", { class: "forma linha", points: pts(desenho.pontos) }));
+    for (const p of desenho.pontos) svg.append(svgEl("circle", { class: "vertice", cx: p.x * 1000, cy: p.y * 1000, r: 7 }));
+  }
+}
+
+function definirModo(m) {
+  desenho = { modo: m, pontos: [], fechada: false };
+  $("#viewer").classList.toggle("desenhando", m !== "ver");
+  document.querySelector(`#modo input[value="${m}"]`).checked = true;
+  $("#desenho-dica").textContent = t("desenho.dica_" + m);
+  $("#regra-form").hidden = true;
+  desenharSalvas();
+}
+
+function pontoDoClique(ev) {
+  const r = $("#viewer").getBoundingClientRect();
+  return { x: Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height)) };
+}
+
+function concluirDesenho() {
+  desenho.fechada = true;
+  desenharSalvas();
+  const f = $("#regra-form");
+  f.hidden = false;
+  f.classList.toggle("zona", desenho.modo === "zona");
+  f.reset();
+  $("#desenho-dica").textContent = t("desenho.dica_nome");
+  f.nome.focus();
+}
+
+function cliqueViewer(ev) {
+  if (desenho.modo === "ver" || desenho.fechada) return;
+  const p = pontoDoClique(ev);
+  if (desenho.modo === "zona" && desenho.pontos.length >= 3) {
+    const a = desenho.pontos[0];
+    const r = $("#viewer").getBoundingClientRect();
+    if (Math.hypot((p.x - a.x) * r.width, (p.y - a.y) * r.height) < 14) { concluirDesenho(); return; }
+  }
+  desenho.pontos.push(p);
+  desenharSalvas();
+  if (desenho.modo === "linha" && desenho.pontos.length === 2) concluirDesenho();
+}
+
+async function salvarRegra(ev) {
+  ev.preventDefault();
+  const f = new FormData($("#regra-form"));
+  try {
+    await api(`/api/cameras/${camAberta}/regras`, {
+      nome: f.get("nome"), forma: desenho.modo, pontos: desenho.pontos,
+      rotulo_on: f.get("rotulo_on") || "", rotulo_off: f.get("rotulo_off") || "",
+    });
+    definirModo("ver");
+    await carregarRegras();
+    aulaEvento("regra_" + (regrasAbertas.at(-1) || {}).forma);
+  } catch (e) { alert(e.message); }
+}
+
+function camerasAtivar(ativo) {
+  clearInterval(estadoTimer);
+  estadoTimer = null;
+  if (!ativo) return;
+  carregarFfmpeg();
+  carregarCameras();
+  atualizarEstado();
+  let n = 0;
+  estadoTimer = setInterval(() => { atualizarEstado(); if (++n % 4 === 0) carregarCameras(); }, 1000);
+}
+
+function iniciarCameras() {
+  $("#add-demo").onclick = () => adicionarCamera(t("cam.demo_nome"), "demo");
+  $("#add-webcam").onclick = async () => {
+    let url = "";
+    try { const { webcams } = await api("/api/video/webcams"); url = webcams[0] || ""; } catch (_) { /* padrão */ }
+    adicionarCamera(t("cam.webcam_nome"), "webcam", url);
+  };
+  $("#add-rtsp").onsubmit = (ev) => { ev.preventDefault(); adicionarCamera(new FormData(ev.target).get("nome"), "rtsp", lastUrl); };
+  document.querySelectorAll("#modo input").forEach((i) => { i.onchange = () => definirModo(i.value); });
+  $("#viewer").addEventListener("click", cliqueViewer);
+  $("#viewer").addEventListener("dblclick", () => { if (desenho.modo === "zona" && desenho.pontos.length >= 3 && !desenho.fechada) concluirDesenho(); });
+  $("#regra-form").onsubmit = salvarRegra;
+  $("#regra-cancelar").onclick = () => definirModo("ver");
+}
+
 // ---------- Pareamento com o site (Agente-Cam-Elo-IA) ----------
 let eloTimer = null;
 let eloQrLink = null;
@@ -251,6 +525,82 @@ async function eloAcao(fn) {
   try { await fn(); await renderElo(); } catch (e) { eloMsg(e.message, "err"); }
 }
 
+
+// ---------- Aula guiada (agente guia) ----------
+let aula = null; // { dados, i }
+let aulaAudio = null;
+
+function aulaLimparAlvo() { document.querySelectorAll(".guia-alvo").forEach((e) => e.classList.remove("guia-alvo")); }
+
+function aulaMostrar() {
+  aulaLimparAlvo();
+  if (!aula) { $("#aula").hidden = true; return; }
+  const p = aula.dados.passos[aula.i];
+  if (p.aba && document.querySelector(`[data-tab="${p.aba}"]`).getAttribute("aria-selected") !== "true") showTab(p.aba);
+  $("#aula").hidden = false;
+  $("#aula-titulo").textContent = aula.dados.titulo;
+  $("#aula-passo").textContent = `${aula.i + 1}/${aula.dados.passos.length}`;
+  $("#aula-texto").textContent = p.texto;
+  const ultimo = aula.i === aula.dados.passos.length - 1;
+  const b = $("#aula-proximo");
+  b.textContent = t(ultimo ? "aula.concluir" : p.espera ? "aula.esperando" : "aula.proximo");
+  b.disabled = !!p.espera;
+  // O cartão entra na página logo acima do alvo, para nunca cobrir o vídeo.
+  const card = $("#aula");
+  const alvo = p.alvo ? document.querySelector(p.alvo) : null;
+  if (alvo) {
+    alvo.classList.add("guia-alvo");
+    // Antes do cabeçalho do bloco: instrução, depois os controles, depois o vídeo.
+    const ancora = alvo.closest(".block-head") || alvo;
+    ancora.insertAdjacentElement("beforebegin", card);
+    card.classList.add("inline");
+    requestAnimationFrame(() => card.scrollIntoView({ block: "start" }));
+  } else {
+    document.body.append(card);
+    card.classList.remove("inline");
+  }
+  aulaTocar();
+}
+
+function aulaTocar() {
+  if (!aula) return;
+  const p = aula.dados.passos[aula.i];
+  try { if (aulaAudio) aulaAudio.pause(); } catch (_) { /* ok */ }
+  aulaAudio = new Audio(`/aulas/${aula.dados.modulo}-${p.id}.ogg`);
+  aulaAudio.play().catch(() => { /* sem áudio gravado: segue só com texto */ });
+}
+
+function aulaAvancar() {
+  if (!aula) return;
+  if (aula.i >= aula.dados.passos.length - 1) { aulaSair(); return; }
+  aula.i += 1;
+  aulaMostrar();
+}
+
+function aulaSair() {
+  try { if (aulaAudio) aulaAudio.pause(); } catch (_) { /* ok */ }
+  aula = null;
+  aulaMostrar();
+}
+
+function aulaEvento(nome) {
+  if (!aula) return;
+  const p = aula.dados.passos[aula.i];
+  if (p.espera === nome) aulaAvancar();
+}
+
+async function aulaIniciar(modulo) {
+  const dados = await fetch(`/aulas/${modulo}.json`).then((r) => r.json());
+  aula = { dados, i: 0 };
+  aulaMostrar();
+}
+
+// O passo 5 espera o selo: verifica de tempos em tempos.
+setInterval(async () => {
+  if (!aula || aula.dados.passos[aula.i].espera !== "selo_cerca") return;
+  try { const { selos } = await api("/api/selos"); if (selos.some((x) => x.modulo === "cerca")) aulaEvento("selo_cerca"); } catch (_) { /* segue */ }
+}, 2000);
+
 // ---------- Isenção ----------
 async function disclaimer() {
   try {
@@ -268,6 +618,7 @@ async function disclaimer() {
 async function main() {
   T = await fetch("/i18n/pt-BR.json").then((r) => r.json());
   document.querySelectorAll("[data-i18n]").forEach((e) => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach((e) => { e.placeholder = t(e.dataset.i18nPh); });
 
   document.querySelectorAll("[role=tab]").forEach((b) => { b.onclick = () => showTab(b.dataset.tab); });
   $("#bench-run").onclick = runBench;
@@ -275,6 +626,7 @@ async function main() {
   $("#rtsp-test").onclick = testRtsp;
   $("#rtsp-copy").onclick = copyRtsp;
   $("#discover").onclick = discover;
+  iniciarCameras();
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
@@ -287,6 +639,10 @@ async function main() {
 
   const { resultado } = await api("/api/bench");
   renderBench(resultado);
+  renderSelos();
+  $("#aula-proximo").onclick = aulaAvancar;
+  $("#aula-ouvir").onclick = aulaTocar;
+  $("#aula-sair").onclick = aulaSair;
 
   let tab = "inicio";
   try { tab = localStorage.getItem("cf-tab") || tab; } catch (_) { /* opcional */ }

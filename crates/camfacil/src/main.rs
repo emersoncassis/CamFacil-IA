@@ -6,6 +6,7 @@
 mod api;
 mod assets;
 mod elo;
+mod video;
 
 use cf_core::{paths, ports, store::Store};
 use std::net::{IpAddr, Ipv4Addr};
@@ -14,6 +15,7 @@ use std::sync::Arc;
 pub struct App {
     pub store: Arc<Store>,
     pub elo: Arc<elo::Elo>,
+    pub video: Arc<video::Video>,
 }
 
 pub type Shared = Arc<App>;
@@ -85,7 +87,9 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let elo = elo::Elo::carregar(store.clone());
     elo.iniciar_se_ativo();
-    let app: Shared = Arc::new(App { store, elo });
+    let video = video::Video::new(store.clone());
+    video.iniciar_todas();
+    let app: Shared = Arc::new(App { store, elo, video });
     let router = api::router(app);
     axum::serve(listener, router)
         .with_graceful_shutdown(async {
