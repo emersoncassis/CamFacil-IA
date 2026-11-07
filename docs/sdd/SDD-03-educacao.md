@@ -1,15 +1,20 @@
 # SDD-03 — Educação, agente guia e gamificação
 
-Status: proposto · Fase 2
+Status: implementado (escolinha no site) · revisado em 2026-11-07 · ver ADR 0008
 
 ## Objetivo
-Transformar cada configuração numa aula curta, com a voz do autor, sem custo de processamento e funcionando offline.
+Ensinar IA de vídeo do zero, com a voz do autor, sem custo de processamento e sem instalar nada.
 
-## Agente guia
-- Roteiro por tela/módulo em `guide/<modulo>/aula.toml`: passos com `alvo` (seletor CSS), `audio`, `texto`, `acao_esperada`.
-- O front destaca o alvo (contorno `--guide`), toca o áudio e mostra o texto (legenda) ao mesmo tempo.
-- Áudios em Opus/OGG (~24 kbps), gerados previamente no Voice Studio e empacotados com o módulo.
-- Botões: ouvir de novo, pular, desligar guia.
+## Onde fica cada coisa (ADR 0008)
+- **Instrução** fica no site: a **Escolinha de IA** em `https://cfia.ysafe.com.br/aprender` (`crates/cfia-api/web/escola.{html,js,css}`). Roda toda no navegador: animações Errado × Certo sobre a foto da loja, exercícios interativos (desenhar a linha e a zona e ver a IA julgar), simulação do que o cliente vê, quiz de saúde da câmera e selo. Progresso salvo no navegador.
+- **Operação** fica no programa local: Câmeras (buscar → senha → ao vivo), regras, “IA, sugira para mim”, módulos, integrações. Nenhuma aula embutida; os botões **Aprender** abrem a lição correspondente no site.
+- Na entrada do site o técnico escolhe: **Aprender IA do zero** (escolinha) ou **Já trabalho com IA** (download e operação).
+- Narração: `/audio/escola-01..06.ogg` no site (Opus ~24 kbps, geradas no Voice Studio). Sem o arquivo, a lição funciona só com texto.
+
+## Lições (escola.js, `LICOES`)
+1. Como a IA enxerga (centro da mancha) · 2. Linha de passagem (exercício) · 3. Zona (exercício) · 4. Balões, alertas e som (simulação) · 5. Saúde da câmera (quiz) · 6. Da escolinha para a loja (selo + download).
+- A fala nunca é cortada: o próximo áudio espera o atual terminar.
+- O exercício só libera a próxima lição quando a IA simulada aprova (linha que conta; zona sem alarme falso e com ocupado).
 
 ## Formato de aula
 1. O que é e para que serve (áudio + exemplo em vídeo).

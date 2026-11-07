@@ -1,0 +1,171 @@
+/* Escolinha de IA · página própria do site (usa tokens.css e app.css como base) */
+.escola-body { display: flex; flex-direction: column; min-height: 100vh; }
+.topo-nav { display: flex; align-items: center; gap: var(--s3); }
+.escola-badge { color: var(--accent); border-color: var(--accent); }
+.escola { width: 100%; max-width: 1180px; margin: 0 auto; padding: var(--s5); display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: var(--s6); align-items: start; flex: 1; }
+.trilha { position: sticky; top: 64px; }
+.trilha h2 { margin: 0 0 var(--s2); font-size: var(--fs-xl); letter-spacing: -0.015em; }
+.trilha .hint { margin: 0 0 var(--s4); }
+.trilha-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.trilha-item { display: flex; align-items: center; gap: var(--s3); width: 100%; padding: var(--s2) var(--s3); border: 1px solid transparent; border-radius: var(--r); background: none; color: var(--text-2); font: inherit; text-align: left; cursor: pointer; }
+.trilha-item:hover { background: var(--surface); color: var(--text); }
+.trilha-item.atual { border-color: var(--line-strong); background: var(--surface); color: var(--text); }
+.trilha-item.feita .num { border-color: var(--accent); color: var(--accent); }
+.trilha-item.atual .num { border-color: var(--text); color: var(--text); }
+.trilha-item.feita.atual .num { border-color: var(--accent); color: var(--accent); }
+#trilha-progresso { margin: var(--s4) 0 0; }
+
+.licao { min-width: 0; }
+.licao h1 { margin: 0 0 var(--s3); font-size: clamp(24px, 3.4vw, 32px); line-height: 1.15; letter-spacing: -0.02em; }
+.licao .kicker { margin-bottom: var(--s2); }
+.ouvir { margin: 0 0 var(--s4); }
+.licao-texto { max-width: 70ch; margin: 0 0 var(--s3); font-size: var(--fs-md); line-height: 1.6; color: var(--text-2); }
+.licao-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-top: var(--s6); padding-top: var(--s4); border-top: 1px solid var(--line); }
+.licao-nav .tiny { flex: 1; text-align: center; margin: 0; }
+
+/* Exercícios */
+.exercicio { margin-top: var(--s5); padding: var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.ex-topo { margin-bottom: var(--s3); }
+.ex-topo strong { display: block; margin-bottom: 4px; font-size: var(--fs-md); }
+.ex-topo .hint { margin: 0; }
+.exercicio .cena { cursor: crosshair; touch-action: none; }
+.ex-acoes { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s3); }
+.ex-acoes .tiny { margin: 0; }
+.resultado { margin: var(--s3) 0 0; padding: 0 var(--s1); font-size: var(--fs-md); line-height: 1.5; color: var(--text-2); min-height: 1.5em; }
+.resultado.ok { color: var(--accent); }
+.resultado.erro { color: var(--c-alert); }
+.som-opcao { display: inline-flex; align-items: center; gap: var(--s2); margin-left: auto; cursor: pointer; }
+
+.cena { display: block; width: 100%; height: auto; border-radius: 14px; }
+.cena .linha-usuario { fill: none; stroke: #fff; stroke-width: 7; stroke-linecap: round; filter: drop-shadow(0 0 8px rgba(255, 255, 255, .6)); }
+.cena .linha-usuario.flash { stroke: var(--accent); stroke-width: 18; filter: drop-shadow(0 0 14px rgba(6, 203, 63, 1)); }
+.cena .vertice { fill: #fff; stroke: #000; stroke-width: 3; }
+.cena .zona-usuario { fill: rgba(255, 255, 255, .10); stroke: #fff; stroke-width: 4; stroke-dasharray: 14 10; }
+.cena .zona-usuario.falso { fill: rgba(240, 106, 85, .35); stroke: var(--c-danger); }
+.cena .zona-usuario.ocupado { fill: rgba(6, 203, 63, .32); stroke: var(--accent); }
+.cena .pessoa .centro { transition: opacity .1s; }
+.cena .balao rect { fill: rgba(0, 0, 0, .72); stroke: rgba(255, 255, 255, .25); stroke-width: 1.5; }
+.cena .balao text { font: 600 22px var(--font); fill: #fff; text-anchor: middle; stroke: none; paint-order: normal; }
+.cena .balao.alerta rect { fill: #d63c2c; stroke: #ff9c9c; animation: h-pisca-balao .5s steps(2, end) 4; }
+.cena .balao.ocupado rect { fill: rgba(6, 203, 63, .25); stroke: var(--accent); }
+.cena .flash-tela { fill: #ff9c9c; opacity: 0; pointer-events: none; }
+.cena .flash-tela.pisca { animation: h-flash-tela 1.2s ease-out; }
+@keyframes h-pisca-balao { 50% { opacity: .35; } }
+@keyframes h-flash-tela { 0%, 30%, 60% { opacity: .22; } 15%, 45%, 100% { opacity: 0; } }
+
+/* Saúde da câmera */
+.saude-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
+.saude-caso { padding: 0; border: 2px solid var(--line); border-radius: 12px; background: #000; cursor: pointer; overflow: hidden; }
+.saude-caso:hover { border-color: var(--line-strong); }
+.saude-caso.certo { border-color: var(--accent); }
+.saude-caso.errado { border-color: var(--c-danger); }
+.saude-img { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; }
+.saude-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.saude-rotulo { position: absolute; left: 10px; top: 8px; font: 600 12px var(--font-mono); color: #fff; letter-spacing: .08em; text-shadow: 0 1px 3px #000; }
+.f-escura img { filter: brightness(.13) contrast(1.1); }
+.f-coberta img { filter: brightness(.35) blur(14px) saturate(.3); }
+.f-coberta .saude-img::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 50%, rgba(20, 16, 14, .95) 45%, rgba(20, 16, 14, .6) 100%); }
+.f-desfocada img { filter: blur(5px) brightness(.9); }
+
+/* Final */
+.final { margin-top: var(--s5); }
+.selo { display: flex; align-items: center; gap: var(--s4); padding: var(--s4); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.selo .ico { width: 36px; height: 36px; color: var(--text-3); }
+.selo.ganho { border-color: var(--accent); }
+.selo.ganho .ico { color: var(--accent); }
+.selo strong { display: block; }
+.selo .tiny { margin: 2px 0 0; }
+.final-acoes { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center; margin: var(--s4) 0; }
+
+/* Indicador de fala */
+.fala { display: none; gap: 2px; align-items: flex-end; height: 10px; }
+.ouvir.falando .fala { display: inline-flex; }
+.fala i { width: 2px; height: 4px; background: var(--accent); border-radius: 1px; animation: cf-fala .9s ease-in-out infinite; }
+.fala i:nth-child(2) { animation-delay: .15s; }
+.fala i:nth-child(3) { animation-delay: .3s; }
+@keyframes cf-fala { 50% { height: 10px; } }
+
+@media (max-width: 900px) {
+  .escola { grid-template-columns: minmax(0, 1fr); padding: var(--s4); gap: var(--s4); }
+  .trilha { position: static; }
+  .trilha-lista { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+  .trilha-item { white-space: nowrap; width: auto; }
+  .saude-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .licao-nav .tiny { display: none; }
+}
+
+/* ---------- Aula: animações Errado × Certo (foto + HUD) ---------- */
+.aula-anim { margin: var(--s3) 0; }
+.anim-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); }
+.anim-grade.um { grid-template-columns: minmax(0, 560px); }
+.anim-painel { margin: 0; min-width: 0; }
+.anim-painel svg { display: block; width: 100%; height: auto; }
+.anim-painel figcaption { margin-top: var(--s2); font-size: var(--fs-sm); color: var(--text-3); line-height: 1.45; }
+.anim-painel figcaption strong { color: var(--text); font-weight: 500; }
+.anim-tit { display: flex; align-items: center; gap: var(--s2); margin-bottom: var(--s2); font-size: var(--fs-sm); font-weight: 600; }
+.anim-tit::before { content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.anim-tit.erro::before { background: var(--c-danger); }
+.anim-tit.ok::before { background: var(--accent); }
+.cena .moldura { fill: none; stroke: var(--line-strong); stroke-width: 2; }
+.cena .centro circle { fill: var(--accent); }
+.cena .centro .anel { fill: none; stroke: var(--accent); stroke-width: 2.5; opacity: .7; transform-origin: 63px 125px; transform-box: view-box; animation: cf-anel 1.2s ease-out infinite; }
+.cena .centro path { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.cena .linha { stroke-width: 7; stroke-linecap: round; }
+.cena .linha.erro { stroke: var(--c-danger); stroke-dasharray: 18 12; }
+.cena .linha.ok { stroke: var(--accent); filter: drop-shadow(0 0 8px rgba(6, 203, 63, .9)); }
+.cena text { font: 700 34px var(--font); text-anchor: end; paint-order: stroke; stroke: rgba(0, 0, 0, .75); stroke-width: 8px; }
+.cena .placar { fill: #fff; }
+.cena .aviso { fill: var(--c-alert); }
+.cena .okt { fill: var(--accent); text-anchor: middle; }
+.cena .za { text-anchor: middle; }
+.cena .zona { fill: rgba(6, 203, 63, .10); stroke: #fff; stroke-width: 3.5; stroke-dasharray: 14 10; }
+.cena .hud path { fill: none; stroke: var(--accent); stroke-width: 4; }
+.cena .hud text { font: 600 22px var(--font-mono); fill: #fff; text-anchor: start; stroke-width: 6px; letter-spacing: .08em; }
+.cena .hud .rec { fill: #ff3b30; animation: cf-rec 1.2s steps(1, end) infinite; }
+.cena .varredura { animation: cf-varre 3.2s linear infinite; }
+@keyframes cf-anel { from { transform: scale(.6); opacity: .9; } to { transform: scale(1.8); opacity: 0; } }
+@keyframes cf-rec { 50% { opacity: .15; } }
+@keyframes cf-varre { from { transform: translateY(-80px); } to { transform: translateY(560px); } }
+
+.visao .pessoa { animation: cf-visao 7s linear infinite; }
+@keyframes cf-visao { from { transform: translate(-130px, 270px); } to { transform: translate(900px, 270px); } }
+
+/* Linha na borda: a pessoa entra cortada e o centro só aparece depois da linha */
+.borda .pessoa { animation: cf-borda 7s linear infinite; }
+.borda .centro { animation: cf-borda-centro 7s steps(1, end) infinite; }
+.borda .aviso { animation: cf-borda-aviso 7s steps(1, end) infinite; }
+@keyframes cf-borda { from { transform: translate(-130px, 270px); } to { transform: translate(760px, 270px); } }
+@keyframes cf-borda-centro { 0% { opacity: 0; } 16% { opacity: 1; } }
+@keyframes cf-borda-aviso { 0% { opacity: 0; } 20% { opacity: 1; } }
+
+/* Linha no meio da porta: passa e conta */
+.meio .pessoa { animation: cf-meio 7s linear infinite; }
+.meio .p0 { animation: cf-p0 7s steps(1, end) infinite; }
+.meio .p1 { animation: cf-p1 7s steps(1, end) infinite; fill: var(--accent); }
+.meio .linha { animation: cf-flash 7s linear infinite; }
+@keyframes cf-meio { from { transform: translate(-60px, 270px); } to { transform: translate(760px, 270px); } }
+@keyframes cf-p0 { 0% { opacity: 1; } 44% { opacity: 0; } }
+@keyframes cf-p1 { 0% { opacity: 0; } 44% { opacity: 1; } }
+@keyframes cf-flash { 0%, 42% { stroke-width: 7; } 44% { stroke-width: 18; } 52%, 100% { stroke-width: 7; } }
+
+/* Zona grande: quem passa no corredor dispara */
+.zgrande .pessoa { animation: cf-corredor 7s linear infinite; }
+.zgrande .zona { animation: cf-zona-falso 7s steps(1, end) infinite; }
+.zgrande .aviso { animation: cf-zona-falso-t 7s steps(1, end) infinite; }
+@keyframes cf-corredor { from { transform: translate(-130px, 280px); } to { transform: translate(960px, 280px); } }
+@keyframes cf-zona-falso { 0% { fill: rgba(6, 203, 63, .10); stroke: #fff; } 12% { fill: rgba(240, 106, 85, .35); stroke: var(--c-danger); } 90% { fill: rgba(6, 203, 63, .10); stroke: #fff; } }
+@keyframes cf-zona-falso-t { 0% { opacity: 0; } 12% { opacity: 1; } 90% { opacity: 0; } }
+
+/* Zona certa: quem passa não dispara; quem para no balcão, sim */
+.zcerta .passante .pessoa { animation: cf-passante 7s linear infinite; }
+.zcerta .cliente .pessoa { animation: cf-cliente 7s ease-out infinite; }
+.zcerta .zona { animation: cf-zona-ok 7s steps(1, end) infinite; }
+.zcerta .okt { animation: cf-zona-ok-t 7s steps(1, end) infinite; }
+@keyframes cf-passante { 0% { transform: translate(-130px, 292px); } 50%, 100% { transform: translate(980px, 292px); } }
+@keyframes cf-cliente { 0%, 50% { transform: translate(-120px, 200px) scale(.75); } 74%, 100% { transform: translate(300px, 200px) scale(.75); } }
+@keyframes cf-zona-ok { 0% { fill: rgba(6, 203, 63, .10); stroke: #fff; } 74% { fill: rgba(6, 203, 63, .32); stroke: var(--accent); } }
+@keyframes cf-zona-ok-t { 0% { opacity: 0; } 74% { opacity: 1; } }
+
+.topo .brand { white-space: nowrap; }
+@media (max-width: 760px) { .anim-grade { grid-template-columns: minmax(0, 1fr); } .topo-nav .btn { display: none; } }
+@media (prefers-reduced-motion: reduce) { .anim-painel * { animation-duration: 12s !important; } .fala i { animation: none; height: 8px; } }

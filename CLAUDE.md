@@ -6,6 +6,7 @@ Ferramenta open source (AGPL-3.0) em Rust para instaladores de CFTV aprenderem e
 - Produto: `docs/PRD.md`
 - Núcleo: `docs/sdd/SDD-01-nucleo.md` · Módulos: `SDD-02` · Educação: `SDD-03` · Integrações: `SDD-04` · Rede: `SDD-05` · App/TV/Web: `SDD-06` · Modo estúdio: `SDD-07` · Contas e isolamento: `SDD-08` · LGPD: `docs/legal/`
 - Web app e API: **https://cfia.ysafe.com.br** (Dokploy)
+- Escolinha (instrução) fica no site em `crates/cfia-api/web/escola.*`; programa local é só operação (ADR 0008)
 - Decisões: `docs/adr/` · Visual: `DESIGN.md` e `web/tokens.css` (redesign com a skill `impeccable`)
 
 ## Regras inegociáveis
