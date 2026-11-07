@@ -37,6 +37,22 @@ const ARQUIVOS: &[Arquivo] = &[
         "web/privacidade.html"
     ),
     arq!("/termos", "text/html; charset=utf-8", "web/termos.html"),
+    // Instaladores de um comando (curl | sh, irm | iex).
+    arq!(
+        "/instalar.sh",
+        "text/plain; charset=utf-8",
+        "../../scripts/install.sh"
+    ),
+    arq!(
+        "/instalar.ps1",
+        "text/plain; charset=utf-8",
+        "../../scripts/install.ps1"
+    ),
+    arq!(
+        "/instalar-painel.sh",
+        "text/plain; charset=utf-8",
+        "../../scripts/instalar-painel.sh"
+    ),
 ];
 
 pub async fn estatico(uri: Uri) -> Response {

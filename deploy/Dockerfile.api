@@ -5,9 +5,13 @@ WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 COPY web ./web
+COPY scripts ./scripts
 RUN cargo build --release --locked -p cfia-api
 
 FROM gcr.io/distroless/cc-debian12:nonroot
+LABEL org.opencontainers.image.source=https://github.com/emersoncassis/CamFacil-IA \
+      org.opencontainers.image.description="Painel web do CamFácil IA (pareamento dos agentes)" \
+      org.opencontainers.image.licenses=AGPL-3.0-only
 COPY --from=build /src/target/release/cfia-api /usr/local/bin/cfia-api
 ENV PORT=8080
 EXPOSE 8080

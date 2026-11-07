@@ -9,7 +9,7 @@ use axum::{
     routing::{delete, get, patch, post},
     Json, Router,
 };
-use cf_core::{bench, onvif, rtsp, system};
+use cf_core::{bench, conectar, onvif, rtsp, system};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::time::Duration;
@@ -22,8 +22,10 @@ pub fn router(app: Shared) -> Router {
         .route("/api/rtsp/build", post(post_build))
         .route("/api/rtsp/test", post(post_test))
         .route("/api/discover", get(get_discover))
+        .route("/api/procurar", get(get_procurar))
+        .route("/api/conectar", post(post_conectar))
         .route("/api/disclaimer", get(get_disclaimer).post(post_disclaimer))
-        .route("/api/video/ffmpeg", get(get_ffmpeg))
+        .route("/api/video/ffmpeg", get(get_ffmpeg).post(post_ffmpeg))
         .route("/api/video/webcams", get(get_webcams))
         .route("/api/cameras", get(get_cameras).post(post_camera))
         .route("/api/cameras/{id}", delete(delete_camera))
@@ -131,6 +133,96 @@ async fn get_discover() -> Json<Value> {
     Json(json!({ "cameras": found }))
 }
 
+/// Procura câmeras de dois jeitos ao mesmo tempo: ONVIF e varredura da porta
+/// RTSP na rede local. Junta por IP e marca as que já foram adicionadas.
+async fn get_procurar(State(app): State<Shared>) -> Json<Value> {
+    let (onvif, rtsp) = tokio::join!(
+        onvif::discover(Duration::from_secs(3)),
+        conectar::varrer_rtsp(554)
+    );
+    let ja: Vec<String> = app
+        .store
+        .cameras()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|c| c.url)
+        .collect();
+    let mut lista: Vec<Value> = Vec::new();
+    let mut ips: Vec<String> = onvif.iter().map(|d| d.ip.clone()).collect();
+    for ip in rtsp {
+        if !ips.contains(&ip) {
+            ips.push(ip);
+        }
+    }
+    ips.sort_by_key(|ip| ip.parse::<std::net::Ipv4Addr>().map(u32::from).unwrap_or(0));
+    for ip in ips {
+        let d = onvif.iter().find(|d| d.ip == ip);
+        let marca = format!("@{ip}:");
+        lista.push(json!({
+            "ip": ip,
+            "fabricante": d.and_then(|d| d.fabricante.clone()),
+            "modelo": d.and_then(|d| d.modelo.clone().or(d.nome.clone())),
+            "mac": d.and_then(|d| d.mac.clone()),
+            "ja_adicionada": ja.iter().any(|u| u.contains(&marca)),
+        }));
+    }
+    Json(json!({
+        "cameras": lista,
+        "rede": conectar::ip_local().map(|i| i.to_string()),
+    }))
+}
+
+#[derive(Deserialize)]
+struct PedidoConectar {
+    ip: String,
+    #[serde(default = "porta_rtsp")]
+    porta: u16,
+    #[serde(default)]
+    usuario: String,
+    #[serde(default)]
+    senha: String,
+    #[serde(default)]
+    fabricante: Option<String>,
+    #[serde(default)]
+    nome: Option<String>,
+}
+
+fn porta_rtsp() -> u16 {
+    554
+}
+
+/// Um clique: confere a senha, acha o caminho do vídeo e já adiciona a câmera.
+async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>) -> ApiResult {
+    let c = conectar::conectar(
+        &p.ip,
+        p.porta,
+        p.usuario.trim(),
+        &p.senha,
+        p.fabricante.as_deref(),
+    )
+    .await
+    .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    let nome: String = p
+        .nome
+        .filter(|n| !n.trim().is_empty())
+        .unwrap_or_else(|| format!("Câmera {}", p.ip.trim()))
+        .trim()
+        .chars()
+        .take(60)
+        .collect();
+    let id = app
+        .store
+        .criar_camera(&nome, "rtsp", &c.url)
+        .map_err(internal)?;
+    app.video.iniciar(id, "rtsp", &c.url);
+    Ok(Json(json!({
+        "id": id,
+        "nome": nome,
+        "fabricante": c.fabricante,
+        "endereco": c.url_sem_senha,
+    })))
+}
+
 const DISCLAIMER_DOC: &str = "isencao";
 
 async fn get_disclaimer(State(app): State<Shared>) -> ApiResult {
@@ -212,6 +304,14 @@ async fn get_ffmpeg() -> Json<Value> {
         "versao": versao,
         "comando_instalar": crate::video::comando_instalar(),
     }))
+}
+
+async fn post_ffmpeg() -> ApiResult {
+    tokio::task::spawn_blocking(crate::video::instalar_ffmpeg)
+        .await
+        .map_err(internal)?
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    Ok(Json(json!({ "instalado": true })))
 }
 
 async fn get_webcams() -> Json<Value> {

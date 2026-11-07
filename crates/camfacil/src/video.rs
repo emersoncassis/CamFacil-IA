@@ -48,11 +48,67 @@ pub fn achar_ffmpeg() -> Option<PathBuf> {
     if local.is_file() {
         return Some(local);
     }
-    std::env::var_os("PATH").and_then(|paths| {
+    // Ao lado do executável (pacote com ffmpeg junto).
+    if let Some(p) = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(|d| d.join(exe)))
+        .filter(|p| p.is_file())
+    {
+        return Some(p);
+    }
+    let no_path = std::env::var_os("PATH").and_then(|paths| {
         std::env::split_paths(&paths)
             .map(|d| d.join(exe))
             .find(|p| p.is_file())
-    })
+    });
+    if no_path.is_some() {
+        return no_path;
+    }
+    // Recém-instalado pelo winget: o PATH deste processo ainda não sabe dele.
+    if cfg!(windows) {
+        if let Some(l) = std::env::var_os("LOCALAPPDATA") {
+            let p = PathBuf::from(l).join(r"Microsoft\WinGet\Links").join(exe);
+            if p.is_file() {
+                return Some(p);
+            }
+        }
+    }
+    None
+}
+
+/// Instala o ffmpeg sozinho no Windows (winget). Em outros sistemas devolve
+/// o comando para o técnico rodar, porque pede senha de administrador.
+pub fn instalar_ffmpeg() -> Result<(), String> {
+    if !cfg!(windows) {
+        return Err(format!("Rode no terminal: {}", comando_instalar()));
+    }
+    let st = Command::new("winget")
+        .args([
+            "install",
+            "--id",
+            "Gyan.FFmpeg",
+            "-e",
+            "--silent",
+            "--accept-source-agreements",
+            "--accept-package-agreements",
+        ])
+        .status()
+        .map_err(|_| {
+            format!(
+                "Não achei o winget neste Windows. Instale o ffmpeg pelo site ffmpeg.org ou rode: {}",
+                comando_instalar()
+            )
+        })?;
+    if achar_ffmpeg().is_some() {
+        Ok(())
+    } else if st.success() {
+        Err("Instalado. Feche e abra o CamFácil IA de novo para ele achar o ffmpeg.".into())
+    } else {
+        Err(format!(
+            "O winget não conseguiu instalar. Tente no terminal: {}",
+            comando_instalar()
+        ))
+    }
 }
 
 pub fn versao_ffmpeg(p: &PathBuf) -> Option<String> {

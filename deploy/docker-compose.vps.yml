@@ -1,0 +1,56 @@
+# CamFácil IA · painel web em qualquer VPS Linux ou Docker local.
+# Hostinger, HostGator, Google Cloud, AWS, Oracle, DigitalOcean… onde tiver Docker.
+# Use o instalador:  curl -fsSL https://cfia.ysafe.com.br/instalar-painel.sh | sudo sh
+# Ou à mão: copie este arquivo, crie um .env (veja abaixo) e rode
+#   docker compose -f docker-compose.vps.yml up -d
+#
+# .env
+#   DOMINIO=painel.suaempresa.com.br   (ou localhost para testar no seu PC)
+#   POSTGRES_PASSWORD=uma-senha-longa
+#   GOOGLE_CLIENT_ID=...               (login com Google; veja o README)
+#   GOOGLE_CLIENT_SECRET=...
+services:
+  painel:
+    image: ghcr.io/emersoncassis/camfacil-ia-painel:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://cfia:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@banco:5432/cfia
+      BASE_URL: https://${DOMINIO:?defina DOMINIO}
+      PORT: "8080"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      banco:
+        condition: service_healthy
+
+  banco:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cfia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+      POSTGRES_DB: cfia
+    volumes:
+      - banco:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cfia -d cfia"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # HTTPS automático (Let's Encrypt). Em "localhost" usa certificado local.
+  https:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    command: caddy reverse-proxy --from ${DOMINIO} --to painel:8080
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy:/data
+    depends_on:
+      - painel
+
+volumes:
+  banco:
+  caddy:

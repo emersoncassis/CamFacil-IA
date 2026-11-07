@@ -63,6 +63,7 @@ async function garantirDispositivo(forcarNovo = false) {
 
 // ---------- Navegação ----------
 function mostrar(id) {
+  if (typeof vozParar === "function") vozParar();
   document.querySelectorAll("[role=tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
   document.querySelectorAll("main [role=tabpanel]").forEach((p) => { p.hidden = p.id !== id; });
   if (id === "agentes") carregarAgentes();
@@ -174,6 +175,117 @@ function conectarPainel() {
   };
 }
 
+// ---------- Download do programa (Agente-Cam-Elo-IA embutido) ----------
+const REL = "https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/";
+const SISTEMAS = {
+  windows: { nome: "Windows 10 e 11", ico: "i-win", arquivo: "camfacil-windows-x86_64.exe", cmd: "irm https://cfia.ysafe.com.br/instalar.ps1 | iex", onde: "PowerShell" },
+  linux: { nome: "Linux (PC ou mini PC)", ico: "i-tux", arquivo: "camfacil-linux-x86_64", cmd: "curl -fsSL https://cfia.ysafe.com.br/instalar.sh | sh", onde: "terminal" },
+  rpi: { nome: "Raspberry Pi e TV Box (ARM 64)", ico: "i-rpi", arquivo: "camfacil-linux-arm64", cmd: "curl -fsSL https://cfia.ysafe.com.br/instalar.sh | sh", onde: "terminal" },
+};
+
+function sistemaDoVisitante() {
+  const ua = navigator.userAgent;
+  if (/Windows/.test(ua)) return "windows";
+  if (/aarch64|arm64|armv8|Raspbian/i.test(ua)) return "rpi";
+  if (/Linux|X11/.test(ua) && !/Android/.test(ua)) return "linux";
+  return "windows";
+}
+
+function icone(id, cls = "ico") {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg"); svg.setAttribute("class", cls);
+  const use = document.createElementNS(ns, "use"); use.setAttribute("href", "#" + id); svg.append(use);
+  return svg;
+}
+
+function caixaComando(texto) {
+  const b = el("button", { class: "btn ghost sm", type: "button", "data-copiar": "" }, icone("i-copy", "ico sm"), el("span", {}, "Copiar"));
+  return el("div", { class: "cmd" }, el("code", { class: "mono" }, texto), b);
+}
+
+function montarDownload(alvo) {
+  let atual = sistemaDoVisitante();
+  const corpo = el("div", { class: "dl-corpo" });
+  const abas = el("div", { class: "seg", role: "radiogroup", "aria-label": "Sistema" });
+  const desenhar = () => {
+    const s = SISTEMAS[atual];
+    const passos = atual === "windows"
+      ? [
+          el("li", {}, "Clique em ", el("strong", {}, "Baixar para Windows"), " e abra o arquivo baixado."),
+          el("li", {}, "Se aparecer a tela azul do Windows, clique em ", el("strong", {}, "Mais informações"), " e depois em ", el("strong", {}, "Executar assim mesmo"), ". É porque o programa é novo e gratuito, sem certificado pago."),
+          el("li", {}, "O CamFácil IA abre no navegador, já na tela ", el("strong", {}, "Ligar câmera"), "."),
+        ]
+      : [
+          el("li", {}, "Abra o terminal, cole o comando abaixo e aperte Enter."),
+          el("li", {}, "Ele baixa o programa, instala o ffmpeg se faltar e abre o CamFácil IA no navegador."),
+          el("li", {}, "Sem tela (servidor ou TV Box)? Rode ", el("code", { class: "mono" }, "camfacil --lan"), " e abra pelo celular no endereço que aparecer."),
+        ];
+    corpo.replaceChildren(
+      el("div", { class: "actions" },
+        el("a", { class: "btn primary grande", href: REL + s.arquivo, download: "" }, icone("i-down"), el("span", {}, atual === "windows" ? "Baixar para Windows" : `Baixar para ${s.nome}`)),
+        el("span", { class: "tiny" }, "Grátis · cerca de 4 MB · sem cadastro")),
+      el("ol", { class: "steps mt" }, ...passos),
+      el("p", { class: "tiny mt" }, atual === "windows" ? "Prefere instalar com atalho na área de trabalho? Cole no PowerShell:" : "Comando de instalação:"),
+      caixaComando(s.cmd),
+      el("p", { class: "tiny mt" }, "Para mostrar o vídeo, o programa usa o ffmpeg (gratuito). Se faltar, ele mesmo instala ou mostra como."));
+    ligarCopiar(corpo);
+  };
+  for (const [id, s] of Object.entries(SISTEMAS)) {
+    const input = el("input", { type: "radio", name: "so-" + (alvo.id || Math.random()), value: id });
+    input.checked = id === atual;
+    input.onchange = () => { atual = id; desenhar(); };
+    abas.append(el("label", {}, input, el("span", {}, icone(s.ico, "ico sm"), s.nome)));
+  }
+  alvo.replaceChildren(abas, corpo);
+  desenhar();
+}
+
+function ligarCopiar(raiz = document) {
+  raiz.querySelectorAll("[data-copiar]").forEach((b) => {
+    b.onclick = async () => {
+      const txt = b.parentElement.querySelector("code").textContent;
+      try { await navigator.clipboard.writeText(txt); b.querySelector("span").textContent = "Copiado"; setTimeout(() => { b.querySelector("span").textContent = "Copiar"; }, 1600); } catch (_) { /* sem permissão */ }
+    };
+  });
+}
+
+// ---------- Narração na voz do Emerson ----------
+const voz = new Audio();
+let vozFila = [];
+let vozBotao = null;
+
+function vozParar() {
+  voz.pause(); vozFila = [];
+  if (vozBotao) { vozBotao.querySelector("use").setAttribute("href", "#i-play"); vozBotao.classList.remove("tocando"); vozBotao = null; }
+}
+
+function vozProxima() {
+  const f = vozFila.shift();
+  if (!f) { vozParar(); return; }
+  voz.src = `/audio/${f}.ogg`;
+  voz.play().catch(vozParar);
+}
+voz.onended = vozProxima;
+
+async function prepararNarracao() {
+  const caixas = [...document.querySelectorAll("[data-narracao]")];
+  if (!caixas.length) return;
+  // Só mostra o botão se as gravações existem neste servidor.
+  const ok = await fetch("/audio/site-01-boas-vindas.ogg", { method: "HEAD" }).then((r) => r.ok).catch(() => false);
+  if (!ok) return;
+  for (const c of caixas) {
+    c.hidden = false;
+    const b = c.querySelector("button");
+    b.onclick = () => {
+      if (vozBotao === b) { vozParar(); return; }
+      vozParar();
+      vozBotao = b; b.classList.add("tocando"); b.querySelector("use").setAttribute("href", "#i-pause");
+      vozFila = c.dataset.narracao.split(",");
+      vozProxima();
+    };
+  }
+}
+
 // ---------- Início ----------
 async function main() {
   const erro = new URLSearchParams(location.search).get("erro");
@@ -183,6 +295,9 @@ async function main() {
     if (location.pathname === "/parear") sessionStorage.setItem("cfia-voltar", location.pathname + location.hash);
     $("#entrar").hidden = false;
     if (erro) $("#entrar-erro").textContent = "Login cancelado. Tente de novo.";
+    document.querySelectorAll("#entrar [data-baixar]").forEach(montarDownload);
+    ligarCopiar($("#entrar"));
+    prepararNarracao();
     return;
   }
   const voltar = sessionStorage.getItem("cfia-voltar");
@@ -194,9 +309,15 @@ async function main() {
   $("#como-parear").onclick = () => { $("#passos").hidden = !$("#passos").hidden; };
   $("#sair").onclick = async () => { await api("/api/auth/sair", "POST"); location.href = "/"; };
 
+  document.querySelectorAll("#app [data-baixar]").forEach(montarDownload);
+  prepararNarracao();
   garantirDispositivo().catch(() => {});
   conectarPainel();
-  if (location.pathname === "/parear") telaParear(); else mostrar("agentes");
+  if (location.pathname === "/parear") { telaParear(); return; }
+  // Sem agente pareado ainda: abre no passo a passo.
+  let inicial = "agentes";
+  try { const { agentes } = await api("/api/agentes"); if (!agentes.length) inicial = "comecar"; } catch (_) { /* segue */ }
+  mostrar(inicial);
 }
 
 main();

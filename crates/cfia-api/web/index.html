@@ -17,20 +17,75 @@
       <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
       <symbol id="i-out" viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></symbol>
       <symbol id="i-google" viewBox="0 0 24 24"><path d="M20 12.2c0-.6 0-1.1-.1-1.7H12v3.3h4.5a3.9 3.9 0 0 1-1.7 2.5v2h2.7c1.6-1.4 2.5-3.6 2.5-6.1z" fill="currentColor" stroke="none"/><path d="M12 20.5c2.3 0 4.2-.8 5.5-2.1l-2.7-2a5 5 0 0 1-7.5-2.6H4.5v2.1A8.5 8.5 0 0 0 12 20.5z" fill="currentColor" stroke="none" opacity=".75"/><path d="M7.3 13.8a5 5 0 0 1 0-3.6V8H4.5a8.5 8.5 0 0 0 0 7.8z" fill="currentColor" stroke="none" opacity=".55"/><path d="M12 7.3c1.3 0 2.4.4 3.3 1.3l2.4-2.4A8.5 8.5 0 0 0 4.5 8l2.8 2.2A5 5 0 0 1 12 7.3z" fill="currentColor" stroke="none" opacity=".85"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1 1 0 0 1 1-1h9"/></symbol>
+      <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+      <symbol id="i-win" viewBox="0 0 24 24"><path d="M4 5.5 11 4.5v7H4zM13 4.2 20 3v8.5h-7zM4 12.5h7v7L4 18.5zM13 12.5h7V21l-7-1.2z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-tux" viewBox="0 0 24 24"><path d="M12 3c-2.2 0-3.5 1.8-3.5 4.2 0 1.4-.4 2.4-1.3 3.7C6 12.6 5 14.6 5 16.6c0 .7.1 1.3.4 1.8L4 19.6c-.4.4-.1 1.2.5 1.2h3.7c.5 0 .9-.3 1.1-.7.9.2 1.8.3 2.7.3s1.8-.1 2.7-.3c.2.4.6.7 1.1.7h3.7c.6 0 .9-.8.5-1.2l-1.4-1.2c.3-.5.4-1.1.4-1.8 0-2-1-4-2.2-5.7-.9-1.3-1.3-2.3-1.3-3.7C15.5 4.8 14.2 3 12 3z"/><circle cx="10.5" cy="7.5" r=".6" fill="currentColor"/><circle cx="13.5" cy="7.5" r=".6" fill="currentColor"/><path d="M11 9.5h2l-1 1z" fill="currentColor"/></symbol>
+      <symbol id="i-rpi" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8 7V5M12 7V5M16 7V5M8 19v2M16 19v2"/><rect x="9" y="10.5" width="6" height="5" rx="1"/></symbol>
+      <symbol id="i-start" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     </defs>
   </svg>
 
-  <!-- Entrada -->
-  <section id="entrar" class="gate" hidden>
-    <div class="gate-box">
-      <img src="/icon.svg" width="40" height="40" alt="">
-      <h1>CamFácil IA</h1>
-      <p class="lede">Entre para parear e acompanhar os Agentes-Cam-Elo-IA instalados nos seus clientes.</p>
-      <a class="btn primary wide" href="/api/auth/google"><svg class="ico"><use href="#i-google"/></svg><span>Entrar com Google</span></a>
-      <p class="msg err" id="entrar-erro" role="alert"></p>
-      <p class="tiny">O vídeo das câmeras nunca passa por este site. <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></p>
-    </div>
-  </section>
+  <!-- Boas-vindas (sem login) -->
+  <div class="site" id="entrar" hidden>
+    <header class="topo">
+      <div class="brand"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></div>
+      <a class="btn sm" href="/api/auth/google"><svg class="ico sm"><use href="#i-google"/></svg><span>Entrar</span></a>
+    </header>
+
+    <main class="landing">
+      <section class="hero">
+        <p class="kicker">Gratuito · código aberto · roda em PC velho</p>
+        <h1>Ligue as câmeras do cliente e veja a IA funcionando em minutos.</h1>
+        <p class="lede">Baixe, abra no computador da rede, digite a senha da câmera e pronto. A inteligência artificial você aprende e testa depois, no seu ritmo, com aula falada.</p>
+        <div class="ouvir" data-narracao="site-01-boas-vindas,site-02-por-que,site-03-passo-a-passo,site-04-download" hidden>
+          <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir as boas-vindas</span></button>
+          <span class="tiny">Na voz do Emerson, criador do projeto</span>
+        </div>
+      </section>
+
+      <section class="baixar" id="baixar" aria-labelledby="baixar-t">
+        <h2 id="baixar-t">Baixar o CamFácil IA</h2>
+        <div data-baixar></div>
+      </section>
+
+      <section class="faixa" aria-labelledby="como-t">
+        <h2 id="como-t">Como funciona</h2>
+        <ol class="trilha">
+          <li><span class="num">1</span><div><strong>Baixe e abra</strong><p>No computador que está na mesma rede das câmeras. Ele abre sozinho no navegador.</p></div></li>
+          <li><span class="num">2</span><div><strong>Digite a senha da câmera</strong><p>O programa acha as câmeras na rede. Você escolhe, digita usuário e senha, e a imagem aparece.</p></div></li>
+          <li><span class="num">3</span><div><strong>Depois, a IA</strong><p>Cerca virtual, movimento, saúde da câmera. Cada uma com aula falada e desafio. E, se quiser, acompanhe de longe por este site.</p></div></li>
+        </ol>
+      </section>
+
+      <section class="faixa autor" aria-labelledby="quem-t">
+        <h2 id="quem-t">Quem fez e por quê</h2>
+        <p>Eu sou o <strong>Emerson de Carvalho Assis</strong>. Fui instrutor técnico da Intelbras e treinei profissionais de segurança eletrônica no Brasil inteiro. Vi técnicos excelentes travarem na rede IP e na inteligência artificial: não por falta de capacidade, mas por falta de um lugar para errar e testar.</p>
+        <p>O CamFácil IA é esse lugar. Ele não substitui a câmera com IA de borda nem a plataforma em nuvem: é a ponte. Você aprende, valida no cliente e depois oferece a solução certa.</p>
+        <div class="ouvir" data-narracao="site-02-por-que" hidden>
+          <button class="btn sm" type="button"><svg class="ico sm"><use href="#i-play"/></svg><span>Ouvir</span></button>
+        </div>
+      </section>
+
+      <section class="faixa" aria-labelledby="site-t">
+        <h2 id="site-t">Acompanhar de longe (opcional)</h2>
+        <p>Entre com a sua conta Google para parear os computadores dos seus clientes e ver se estão no ar. O vídeo das câmeras nunca passa por este site.</p>
+        <a class="btn primary" href="/api/auth/google"><svg class="ico"><use href="#i-google"/></svg><span>Entrar com Google</span></a>
+        <p class="msg err" id="entrar-erro" role="alert"></p>
+      </section>
+
+      <section class="faixa" aria-labelledby="painel-t">
+        <h2 id="painel-t">Quer o painel no seu próprio servidor?</h2>
+        <p>O painel é um contêiner Docker. Instala em qualquer VPS Linux (Hostinger, HostGator, Google Cloud, AWS…) ou no seu PC, com HTTPS automático:</p>
+        <div class="cmd"><code class="mono">curl -fsSL https://cfia.ysafe.com.br/instalar-painel.sh | sudo sh</code><button class="btn ghost sm" type="button" data-copiar><svg class="ico sm"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
+        <p class="tiny">Passo a passo completo no <a href="https://github.com/emersoncassis/CamFacil-IA#painel-no-seu-servidor">README do projeto</a>.</p>
+      </section>
+    </main>
+
+    <footer class="foot site-foot">Ambiente de aprendizagem e validação, sem garantias (AGPL-3.0). <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></footer>
+  </div>
 
   <!-- App -->
   <div class="shell" id="app" hidden>
@@ -38,6 +93,7 @@
       <div class="brand"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></div>
       <nav aria-label="Seções">
         <ul class="nav" role="tablist">
+          <li><button role="tab" data-tab="comecar"><svg class="ico"><use href="#i-start"/></svg><span>Começar</span></button></li>
           <li><button role="tab" data-tab="agentes" aria-selected="true"><svg class="ico"><use href="#i-agent"/></svg><span>Agentes</span></button></li>
           <li><button role="tab" data-tab="dispositivos"><svg class="ico"><use href="#i-key"/></svg><span>Dispositivos</span></button></li>
         </ul>
@@ -49,6 +105,35 @@
     </aside>
 
     <main>
+      <!-- Começar -->
+      <section id="comecar" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1>Começar</h1>
+            <p class="lede">Três passos: baixar, ligar a câmera, parear com este painel. Leva poucos minutos.</p>
+          </div>
+          <div class="ouvir" data-narracao="site-03-passo-a-passo,site-04-download" hidden>
+            <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir o passo a passo</span></button>
+          </div>
+        </header>
+        <div class="block">
+          <div class="passo"><span class="num">1</span><h2>Baixe no computador da rede das câmeras</h2></div>
+          <div data-baixar></div>
+        </div>
+        <div class="block">
+          <div class="passo"><span class="num">2</span><h2>Ligue a câmera</h2></div>
+          <p class="hint">O programa abre direto em <strong>Ligar câmera</strong> e procura as câmeras na rede. Escolha uma, digite usuário e senha, clique em Conectar. A imagem aparece na hora. Não achou? Digite o IP da câmera.</p>
+        </div>
+        <div class="block">
+          <div class="passo"><span class="num">3</span><h2>Pareie com este painel (opcional)</h2></div>
+          <ol class="steps">
+            <li>No programa, vá em <strong>Integrações → Parear com o site</strong>.</li>
+            <li>Aponte a câmera do celular para o QR code. Ele abre este painel já com o código.</li>
+            <li>Confirme aqui e depois em <strong>Confirmar</strong> na tela do cliente. O agente aparece em <strong>Agentes</strong>.</li>
+          </ol>
+        </div>
+      </section>
+
       <!-- Agentes -->
       <section id="agentes" class="page" role="tabpanel">
         <header class="pagehead">

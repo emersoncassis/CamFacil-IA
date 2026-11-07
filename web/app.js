@@ -54,6 +54,7 @@ function showTab(id) {
   if (id === "modulos") renderLevels();
   eloAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
+  ligarAtivar(id === "ligar");
 }
 
 // ---------- Visão geral ----------
@@ -601,6 +602,114 @@ setInterval(async () => {
   try { const { selos } = await api("/api/selos"); if (selos.some((x) => x.modulo === "cerca")) aulaEvento("selo_cerca"); } catch (_) { /* segue */ }
 }, 2000);
 
+// ---------- Ligar câmera: procurar → senha → funcionando ----------
+let ligarAlvo = null;
+let ligarProcurou = false;
+
+async function ligarVerFfmpeg() {
+  try {
+    const f = await api("/api/video/ffmpeg");
+    $("#ligar-ffmpeg").hidden = f.encontrado;
+    return f.encontrado;
+  } catch (_) { return true; }
+}
+
+async function ligarInstalarFfmpeg() {
+  const b = $("#ligar-ffmpeg-btn"); const m = $("#ligar-ffmpeg-msg");
+  b.disabled = true; m.className = "msg"; m.textContent = t("ligar.ffmpeg_instalando");
+  try {
+    await api("/api/video/ffmpeg", {});
+    m.className = "msg ok"; m.textContent = t("ligar.ffmpeg_ok");
+    setTimeout(ligarVerFfmpeg, 1500);
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+  b.disabled = false;
+}
+
+async function ligarProcurar() {
+  ligarProcurou = true;
+  const st = $("#ligar-status"); const lista = $("#ligar-lista"); const b = $("#ligar-procurar");
+  b.disabled = true;
+  st.replaceChildren(el("span", { class: "carregando", "aria-hidden": "true" }), t("ligar.procurando"));
+  lista.replaceChildren();
+  try {
+    const { cameras, rede } = await api("/api/procurar");
+    if (!cameras.length) {
+      st.textContent = t("ligar.achadas");
+      lista.replaceChildren(el("li", { class: "feita" }, el("p", {}, t("ligar.nenhuma") + (rede ? ` ${t("ligar.rede")} ${rede}` : ""))));
+    } else {
+      st.textContent = t("ligar.achadas");
+      lista.replaceChildren(...cameras.map((c) => {
+        const desc = [c.fabricante, c.modelo].filter(Boolean).join(" · ") || "RTSP";
+        const li = el("li", c.ja_adicionada ? { class: "feita" } : { tabindex: "0", role: "button" },
+          el("div", {}, el("strong", { class: "mono" }, c.ip), el("p", {}, desc)),
+          c.ja_adicionada ? el("span", { class: "badge" }, t("ligar.ja")) : el("span", { class: "btn sm" }, t("ligar.escolher")));
+        if (!c.ja_adicionada) {
+          const ir = () => ligarEscolher(c.ip, c.fabricante);
+          li.onclick = ir;
+          li.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ir(); } };
+        }
+        return li;
+      }));
+      const livres = cameras.filter((c) => !c.ja_adicionada);
+      if (livres.length === 1) ligarEscolher(livres[0].ip, livres[0].fabricante);
+    }
+  } catch (e) { st.textContent = e.message; }
+  b.disabled = false;
+}
+
+function ligarEscolher(ip, fabricante) {
+  ligarAlvo = { ip: ip.trim(), fabricante: fabricante || null };
+  $("#ligar-ip").textContent = ligarAlvo.ip;
+  $("#ligar-passo2").hidden = false;
+  $("#ligar-pronto").hidden = true;
+  $("#ligar-msg").textContent = "";
+  $("#ligar-passo2").scrollIntoView({ block: "nearest" });
+  $("#ligar-senha").focus();
+}
+
+async function ligarConectar(ev) {
+  ev.preventDefault();
+  if (!ligarAlvo) return;
+  const f = ev.target; const m = $("#ligar-msg"); const b = $("#ligar-conectar");
+  b.disabled = true; m.className = "msg"; m.textContent = t("ligar.conectando");
+  try {
+    const r = await api("/api/conectar", {
+      ip: ligarAlvo.ip, fabricante: ligarAlvo.fabricante,
+      usuario: f.usuario.value.trim(), senha: f.senha.value, nome: f.nome.value.trim() || null,
+    });
+    f.senha.value = ""; f.nome.value = "";
+    m.textContent = "";
+    $("#ligar-passo2").hidden = true;
+    $("#ligar-pronto").hidden = false;
+    $("#ligar-pronto").dataset.id = r.id;
+    $("#ligar-video").src = `/api/cameras/${r.id}/mjpeg?t=${Date.now()}`;
+    $("#ligar-endereco").textContent = `${r.nome} · ${r.endereco}`;
+    $("#ligar-pronto").scrollIntoView({ block: "start" });
+    carregarCameras();
+    ligarProcurar();
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+  b.disabled = false;
+}
+
+function ligarSair() { $("#ligar-video").removeAttribute("src"); }
+
+function iniciarLigar() {
+  $("#ligar-procurar").onclick = ligarProcurar;
+  $("#ligar-ffmpeg-btn").onclick = ligarInstalarFfmpeg;
+  $("#ligar-form").onsubmit = ligarConectar;
+  $("#ligar-manual").onsubmit = (ev) => { ev.preventDefault(); ligarEscolher(ev.target.ip.value, null); };
+  $("#ligar-outra").onclick = () => { $("#ligar-pronto").hidden = true; ligarSair(); $("#ligar-passo1").scrollIntoView({ block: "start" }); };
+  $("#ligar-ver").onclick = () => { const id = Number($("#ligar-pronto").dataset.id); ligarSair(); showTab("cameras"); abrirCamera(id); };
+  $("#ligar-aula").onclick = () => { ligarSair(); aulaIniciar("cerca"); };
+  $("#ligar-demo").onclick = async () => { ligarSair(); showTab("cameras"); await adicionarCamera(t("cam.demo_nome"), "demo"); };
+}
+
+function ligarAtivar(ativo) {
+  if (!ativo) { ligarSair(); return; }
+  ligarVerFfmpeg();
+  if (!ligarProcurou) ligarProcurar();
+}
+
 // ---------- Isenção ----------
 async function disclaimer() {
   try {
@@ -627,6 +736,7 @@ async function main() {
   $("#rtsp-copy").onclick = copyRtsp;
   $("#discover").onclick = discover;
   iniciarCameras();
+  iniciarLigar();
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
@@ -646,6 +756,8 @@ async function main() {
 
   let tab = "inicio";
   try { tab = localStorage.getItem("cf-tab") || tab; } catch (_) { /* opcional */ }
+  // Sem câmera nenhuma: o programa abre direto em "Ligar câmera".
+  try { const { cameras } = await api("/api/cameras"); if (!cameras.length) tab = "ligar"; } catch (_) { /* segue */ }
   await loadSystem();
   showTab(tab);
   disclaimer();
