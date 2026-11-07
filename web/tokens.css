@@ -1,82 +1,101 @@
-/* CamFácil IA — design tokens
- * Paleta inspirada na Intelbras (origem do projeto). Não usa marca nem logo da Intelbras.
+/* CamFácil IA — tokens de design.
+ * Base preta, verde só em detalhes (ponto ao vivo, item ativo, foco, chave ligada).
+ * Verde de origem inspirado na paleta Intelbras; sem marca nem logo da Intelbras.
  * Regra: todo CSS do projeto usa apenas estas variáveis. */
 
 :root {
-  /* Cores base */
-  --cf-green: #06cb3f;        /* ação principal, IA ativa */
-  --cf-green-soft: #85ffc5;   /* hover, realces */
-  --cf-green-deep: #035144;   /* superfícies elevadas */
-  --cf-ink: #163134;          /* fundo principal */
-  --cf-black: #0b1a1c;        /* vídeo e quiosque */
-  --cf-gray-100: #efefed;     /* texto principal */
-  --cf-gray-400: #b9b5b4;     /* texto secundário, bordas */
-  --cf-sky: #31bfeb;          /* agente guia */
-  --cf-lime: #d9ff82;         /* gamificação */
-  --cf-alert: #ff9c9c;        /* balão em alerta */
-  --cf-danger: #bc431b;       /* erro, offline, conflito */
-  --cf-warn: #c7ac3e;         /* atenção */
+  color-scheme: dark;
 
-  /* Papéis semânticos (tema escuro, padrão) */
-  --bg: var(--cf-ink);
-  --bg-video: var(--cf-black);
-  --surface: var(--cf-green-deep);
-  --text: var(--cf-gray-100);
-  --text-muted: var(--cf-gray-400);
-  --border: rgba(239, 239, 237, 0.14);
-  --primary: var(--cf-green);
-  --on-primary: var(--cf-black);
-  --guide: var(--cf-sky);
+  /* Neutros */
+  --c-black: #000000;       /* chão */
+  --c-900: #0a0a0a;         /* superfícies */
+  --c-850: #111111;         /* superfície elevada, hover */
+  --c-800: #171717;         /* campos */
+  --c-line: #232323;        /* linhas finas */
+  --c-line-strong: #2e2e2e; /* bordas de controle */
+  --c-500: #8a8a8a;         /* texto secundário (5,9:1 sobre preto) */
+  --c-300: #b4b4b4;         /* texto de apoio */
+  --c-100: #ededed;         /* texto principal */
+  --c-white: #ffffff;
 
-  /* Tipografia */
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
-  --fs-title: 24px;
-  --fs-section: 18px;
-  --fs-body: 15px;
-  --fs-small: 13px;
+  /* Detalhe verde */
+  --c-green: #06cb3f;
+  --c-green-dim: rgba(6, 203, 63, 0.14);
+
+  /* Estados (só onde carregam significado) */
+  --c-warn: #e0b341;
+  --c-danger: #f06a55;
+  --c-alert: #ff9c9c;       /* balão de inteligência em alerta */
+
+  /* Papéis */
+  --bg: var(--c-black);
+  --surface: var(--c-900);
+  --surface-2: var(--c-850);
+  --field: var(--c-800);
+  --line: var(--c-line);
+  --line-strong: var(--c-line-strong);
+  --text: var(--c-100);
+  --text-2: var(--c-300);
+  --text-3: var(--c-500);
+  --accent: var(--c-green);
+  --primary-bg: var(--c-100);
+  --primary-fg: var(--c-black);
+  --focus: var(--c-green);
+
+  /* Tipografia (fontes do sistema: zero download) */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 22px;
 
   /* Espaço e forma */
-  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
-  --radius: 8px;
-  --radius-pill: 999px;
-}
-
-/* Tema claro (opcional, escolhido pelo técnico) */
-:root[data-theme="light"] {
-  --bg: #ffffff;
-  --surface: var(--cf-gray-100);
-  --text: var(--cf-ink);
-  --text-muted: #5b6668;
-  --border: rgba(22, 49, 52, 0.16);
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --r-sm: 4px;
+  --r: 6px;
+  --r-pill: 999px;
+  --rail: 224px;
 }
 
 html, body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: var(--fs-body)/1.5 var(--font);
+  font: var(--fs-md)/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+  caret-color: var(--accent);
 }
 
-/* Balão de inteligência */
+::selection { background: var(--c-green-dim); color: var(--c-white); }
+
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--r-pill); border: 3px solid var(--bg); }
+
+/* Balão de inteligência (sobre o vídeo): única peça que pisca */
 .cf-bubble {
   display: inline-flex; align-items: center; gap: var(--s2);
   padding: var(--s1) var(--s3);
-  border-radius: var(--radius-pill);
-  background: rgba(22, 49, 52, 0.8);
-  color: var(--cf-gray-100);
-  font-size: var(--fs-small);
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--c-100);
+  font-size: var(--fs-sm);
 }
 .cf-bubble::before {
-  content: ""; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--cf-green);
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--c-green);
 }
 .cf-bubble.is-alert {
-  background: var(--cf-alert);
-  color: var(--cf-black);
+  background: var(--c-alert);
+  border-color: transparent;
+  color: var(--c-black);
   animation: cf-blink 1s steps(2, start) 10;
 }
-@keyframes cf-blink { to { opacity: 0.35; } }
+.cf-bubble.is-alert::before { background: var(--c-black); }
+@keyframes cf-blink { to { opacity: 0.4; } }
 @media (prefers-reduced-motion: reduce) {
   .cf-bubble.is-alert { animation: none; }
 }
