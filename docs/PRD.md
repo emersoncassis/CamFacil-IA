@@ -89,6 +89,8 @@ O CamFácil IA permite que instaladores de CFTV, mesmo leigos, rodem inteligênc
 2. **Agente-Cam-Elo-IA** (instalação mínima): ponte com a rede local, RTSP → WebRTC + busca ONVIF. Nome amplo para poder evoluir para ferramentas mais complexas na rede local.
 3. Instalação completa 24/7.
 
+Web app em **https://cfia.ysafe.com.br** (Dokploy), com login Google e isolamento por técnico: [SDD-08](sdd/SDD-08-contas-e-isolamento.md).
+
 ### 5.8 Dispositivos e papéis
 | Dispositivo | Papel | IA |
 |---|---|---|
