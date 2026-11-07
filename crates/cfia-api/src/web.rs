@@ -43,6 +43,16 @@ const ARQUIVOS: &[Arquivo] = &[
     arq!("/selo", "text/html; charset=utf-8", "web/selo.html"),
     arq!("/img/loja.webp", "image/webp", "web/img/loja.webp"),
     arq!("/img/pessoa.webp", "image/webp", "web/img/pessoa.webp"),
+    arq!(
+        "/img/pessoa-frente.webp",
+        "image/webp",
+        "web/img/pessoa-frente.webp"
+    ),
+    arq!(
+        "/img/pessoa-costas.webp",
+        "image/webp",
+        "web/img/pessoa-costas.webp"
+    ),
     arq!("/img/selo-og.png", "image/png", "web/img/selo-og.png"),
     // Narração na voz do autor (Voice Studio, Opus mono 24 kbps).
     arq!(
