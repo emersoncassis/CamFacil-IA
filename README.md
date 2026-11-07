@@ -26,7 +26,7 @@
 > [!IMPORTANT]
 > **O CamFácil IA é um ambiente de aprendizagem e validação.** A solução final no seu cliente é uma câmera ou gravador com **IA de borda**, ou uma plataforma corporativa de IA em nuvem. Aqui você aprende, prova o valor e vende com segurança.
 
-## 🎯 Por que existe
+## <img src="docs/assets/icons/alvo.svg" width="22" alt=""/> Por que existe
 
 Técnico bom trava em duas coisas: **inteligência artificial** e **rede IP**. O CamFácil IA ensina as duas na prática, rodando no computador que já está no balcão do seu cliente. Leia o [manifesto](MANIFESTO.md).
 
@@ -35,7 +35,43 @@ Técnico bom trava em duas coisas: **inteligência artificial** e **rede IP**. O
   <img src="docs/assets/demo-placeholder.svg" width="90%" alt="Dashboard do CamFácil IA: balão de inteligência piscando quando alguém cruza a cerca virtual"/>
 </div>
 
-## ⚡ Instale em um comando
+## <img src="docs/assets/icons/fluxo.svg" width="22" alt=""/> Como funciona
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#163134","primaryTextColor":"#EFEFED","primaryBorderColor":"#06CB3F","lineColor":"#06CB3F","fontFamily":"system-ui"}}}%%
+flowchart LR
+  subgraph F[Fontes de vídeo]
+    C1[Câmeras IP<br/>RTSP / ONVIF]
+    C2[Webcam]
+    C3[Vídeo ou<br/>modo demonstração]
+  end
+  subgraph N[CamFácil IA · binário Rust na máquina do cliente]
+    I[Ingestão<br/>stream secundário, poucos fps]
+    M[Módulos de IA<br/>liga/desliga por nível]
+    E[Eventos e regras<br/>cercas, horários]
+    G[Agente guia<br/>aulas em voz]
+    D[Diagnóstico de rede<br/>IP · MAC · conflitos]
+  end
+  subgraph S[Saídas]
+    W[Dashboard<br/>balões de inteligência]
+    T[Modo TV<br/>quiosque]
+    A[App Android<br/>via Tailscale]
+    Z[Telegram / WhatsApp<br/>webhook]
+  end
+  C1 & C2 & C3 --> I --> M --> E
+  E --> W & T & A & Z
+  G -.ensina.-> W
+  D -.mapa e alertas.-> W
+  A -.botões: portão, relé.-> E
+  classDef saida fill:#035144,stroke:#06CB3F,color:#EFEFED
+  classDef guia fill:#163134,stroke:#31BFEB,color:#EFEFED
+  class W,T,A,Z saida
+  class G guia
+```
+
+Tudo roda localmente, sem nuvem obrigatória. A IA só analisa o stream leve da câmera, e o cliente nunca vê caixas ou riscos: só o balão com o nome da regra, que pisca no alerta.
+
+## <img src="docs/assets/icons/raio.svg" width="22" alt=""/> Instale em um comando
 
 ```sh
 # Linux / Raspberry Pi (em breve)
@@ -49,41 +85,41 @@ irm https://raw.githubusercontent.com/emersoncassis/CamFacil-IA/main/install.ps1
 
 Ou baixe o `camfacil.exe` em **[Releases](https://github.com/emersoncassis/CamFacil-IA/releases)**, dê dois cliques e abra `http://localhost:7070`.
 
-## 🧠 Níveis de IA
+## <img src="docs/assets/icons/chip.svg" width="22" alt=""/> Níveis de IA
 
 O CamFácil IA testa a sua máquina e libera só o que ela aguenta.
 
 | Nível | Módulos | Roda em |
 |:---:|---|---|
-| 🟢 **Leve** | Movimento inteligente · Cerca e linha virtual · Saúde das câmeras | Quase qualquer PC |
-| 🟡 **Médio** | Pessoas e veículos · Contagem · Permanência · Mapa de calor | PC de 4 núcleos, mini PC |
-| 🔴 **Pesado** | Leitura de placas · Reconhecimento facial | Máquinas mais fortes |
+| <img src="docs/assets/icons/nivel-leve.svg" width="12" alt=""/> **Leve** | Movimento inteligente · Cerca e linha virtual · Saúde das câmeras | Quase qualquer PC |
+| <img src="docs/assets/icons/nivel-medio.svg" width="12" alt=""/> **Médio** | Pessoas e veículos · Contagem · Permanência · Mapa de calor | PC de 4 núcleos, mini PC |
+| <img src="docs/assets/icons/nivel-pesado.svg" width="12" alt=""/> **Pesado** | Leitura de placas · Reconhecimento facial | Máquinas mais fortes |
 
-## 🧰 O que vem na caixa
+## <img src="docs/assets/icons/caixa.svg" width="22" alt=""/> O que vem na caixa
 
-| | |
-|---|---|
-| 🎓 **Aula em cada clique** | Agente guia com voz explica cada botão, mostra o certo e o erro comum, e propõe um desafio |
-| 🔎 **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante |
-| 🩺 **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP e senha padrão |
-| 🗺️ **Diagrama da rede** | Desenha o unifilar da instalação e explica em voz |
-| 💬 **Telegram e WhatsApp** | Alertas e comandos com QR code |
-| 📺 **Modo TV** | Tela de quiosque para o cliente, com a sua logo |
-| 📱 **App Android** | Ao vivo, alertas e botões para portão e relé, via Tailscale |
-| 📊 **Relatório de validação** | PDF com a sua marca para fechar a venda |
-| 🤖 **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
+| | | |
+|:---:|---|---|
+| <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Aula em cada clique** | Agente guia com voz explica cada botão, mostra o certo e o erro comum, e propõe um desafio |
+| <img src="docs/assets/icons/lupa.svg" width="20" alt=""/> | **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante |
+| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP e senha padrão |
+| <img src="docs/assets/icons/diagrama.svg" width="20" alt=""/> | **Diagrama da rede** | Desenha o unifilar da instalação e explica em voz |
+| <img src="docs/assets/icons/mensagem.svg" width="20" alt=""/> | **Telegram e WhatsApp** | Alertas e comandos com QR code |
+| <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Modo TV** | Tela de quiosque para o cliente, com a sua logo |
+| <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Ao vivo, alertas e botões para portão e relé, via Tailscale |
+| <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com a sua marca para fechar a venda |
+| <img src="docs/assets/icons/robo.svg" width="20" alt=""/> | **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
 
-## 🧑‍🔧 Para você, técnico
+## <img src="docs/assets/icons/chave.svg" width="22" alt=""/> Para você, técnico
 
 Você não precisa ser programador. Você precisa de um computador velho, uma câmera (ou só a webcam) e vontade de aprender. Em troca, ganha **um novo serviço para vender**, **conhecimento que nenhum curso entregou na prática** e **liberdade** para escolher a melhor solução para cada cliente.
 
-## 🛠️ Para quem programa
+## <img src="docs/assets/icons/codigo.svg" width="22" alt=""/> Para quem programa
 
 - Produto: [`docs/PRD.md`](docs/PRD.md) · Arquitetura: [`docs/sdd/`](docs/sdd) · Decisões: [`docs/adr/`](docs/adr) · Visual: [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)
 - Desenvolvido com [Claude Code](https://claude.com/claude-code): veja [`CLAUDE.md`](CLAUDE.md), os agentes em `.claude/agents/` e as skills em `.claude/skills/`.
 - Quer criar um módulo de IA? Comece por [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## 🗺️ Roadmap
+## <img src="docs/assets/icons/mapa.svg" width="22" alt=""/> Roadmap
 
 - [ ] **Fase 1** — Núcleo: binário, dashboard, benchmark, ONVIF, gerador RTSP
 - [ ] **Fase 2** — Cerca virtual com balões e aula guiada
@@ -92,7 +128,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 - [ ] **Fase 5** — Modo TV, monitor de hardware, relatório e backup
 - [ ] **Fase 6** — App Android, web app e MCP
 
-## 🤝 Contribua
+## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Contribua
 
 <a href="https://github.com/emersoncassis/CamFacil-IA/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=emersoncassis/CamFacil-IA" alt="Contribuidores"/>
