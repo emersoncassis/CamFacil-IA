@@ -20,6 +20,7 @@ Status: proposto · Fase 5 e 6
 1. Navegador puro: núcleo de IA compilado para WASM + ONNX Runtime Web (WebGPU/WASM) — webcam, arquivo, demo.
 2. **Agente-Cam-Elo-IA**: binário mínimo de ponte com a rede local (RTSP → WebRTC, busca ONVIF), base go2rtc ou implementação própria. Nome de serviço: `agente-cam-elo-ia`.
 3. Instalação completa.
+Hospedagem, login e isolamento entre técnicos: [SDD-08](SDD-08-contas-e-isolamento.md), em `https://cfia.ysafe.com.br`.
 O web app mostra o botão para subir de degrau. Limitações do navegador puro documentadas na tela.
 
 ## Marca do técnico
