@@ -412,6 +412,16 @@ function exercicioSaude(raiz, concluir) {
 // ---------- Lições ----------
 const LICOES = [
   {
+    id: "bemvindo", titulo: "Bem-vindo à formação", audio: "escola-00-abertura", abertura: true,
+    texto: [
+      "Obrigado por estar aqui. Se você chegou até esta página, é porque quer aprender de verdade, e isso já te coloca na frente de muita gente que só reclama que a IA é complicada.",
+      "O que você vai aprender aqui é a inteligência de vídeo básica, primária: cruzamento de linha e cerca virtual. É o nível mais simples que existe, e mesmo assim resolve muito problema do dia a dia: saber quem entrou, quem passou onde não devia, quem parou no balcão. Só que ela tem regras. Desenhou errado, ela não funciona, e o cliente perde a confiança. Essas regras são o que eu vou te mostrar, na prática, em uns cinco minutos.",
+      "E tem um detalhe importante: essa inteligência é muito leve. Roda em qualquer computador, roda em TV box, roda num celular velho. Aquele hardware parado no estoque, ou na casa do cliente, vira ferramenta de trabalho hoje, sem comprar nada.",
+      "Esse é o primeiro passo. Você instala, prova que funciona, mostra que aquilo gera valor com custo quase zero. Quando o cliente vê o resultado e passa a acreditar em você, aí sim é hora de evoluir: câmera com inteligência de borda, gravador com IA, plataforma mais avançada. Primeiro a confiança, depois o investimento.",
+      "Então vamos começar pelo começo: como a IA enxerga.",
+    ],
+  },
+  {
     id: "visao", titulo: "Como a IA enxerga", audio: "escola-01",
     texto: [
       "Antes de desenhar qualquer coisa, entenda o que a inteligência artificial faz com a imagem. Ela não reconhece rosto, não sabe quem é a pessoa e não lê placa. Ela compara cada quadro com o fundo da cena, percebe o que se mexeu e acompanha o centro dessa mancha. É a mira verde que você vê na pessoa.",
@@ -498,12 +508,13 @@ function desenharTrilha() {
   $("#trilha").replaceChildren(...LICOES.map((l, i) => {
     const ok = !!feitas[l.id];
     const b = el("button", { type: "button", class: `trilha-item${i === atual ? " atual" : ""}${ok ? " feita" : ""}`, onclick: () => ir(i) },
-      el("span", { class: "num" }, ok ? "✓" : String(i + 1)),
+      el("span", { class: "num" }, ok ? "✓" : l.abertura ? "•" : String(i)),
       el("span", {}, l.titulo));
     return el("li", {}, b);
   }));
-  const n = LICOES.filter((l) => feitas[l.id]).length;
-  $("#trilha-progresso").textContent = n === LICOES.length ? "Formação concluída. Selo conquistado!" : `${n} de ${LICOES.length} lições feitas · progresso salvo neste navegador`;
+  const licoes = LICOES.filter((l) => !l.abertura);
+  const n = licoes.filter((l) => feitas[l.id]).length;
+  $("#trilha-progresso").textContent = n === licoes.length ? "Formação concluída. Selo conquistado!" : `${n} de ${licoes.length} lições feitas · progresso salvo neste navegador`;
 }
 
 function ir(i) {
@@ -511,7 +522,8 @@ function ir(i) {
   const l = LICOES[atual];
   const p = progresso(); p.atual = atual; salvar(p);
   history.replaceState(null, "", `/aprender#${l.id}`);
-  $("#licao-num").textContent = `Lição ${atual + 1} de ${LICOES.length}`;
+  const n = LICOES.filter((x) => !x.abertura).length;
+  $("#licao-num").textContent = l.abertura ? "Apresentação" : `Lição ${atual} de ${n}`;
   $("#licao-titulo").textContent = l.titulo;
   const corpo = $("#licao-corpo");
   corpo.replaceChildren(...l.texto.map((t) => el("p", { class: "licao-texto" }, t)));
@@ -533,6 +545,7 @@ function ir(i) {
   }
   $("#voltar").disabled = atual === 0;
   $("#proxima").hidden = !!l.final;
+  $("#proxima span").textContent = l.abertura ? "Começar a lição 1" : "Próxima lição";
   $("#ouvir-caixa").hidden = !temNarracao || !l.audio;
   if (temNarracao && l.audio) tocar(l.audio);
   desenharTrilha();
@@ -604,9 +617,6 @@ async function main() {
   const hash = location.hash.replace("#", "");
   const porHash = LICOES.findIndex((l) => l.id === hash || (hash === "cerca" && l.id === "linha"));
   const p = progresso();
-  const primeira = !p.atual && !Object.keys(p.feitas || {}).length && porHash < 0;
   ir(porHash >= 0 ? porHash : (p.atual || 0));
-  // Primeira visita: a introdução fala antes da lição (sem cortar).
-  if (primeira && temNarracao) { vozPendente = LICOES[0].audio; tocar("escola-00-intro", true); }
 }
 main();
