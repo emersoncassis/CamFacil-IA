@@ -1,6 +1,6 @@
 # SDD-01 — Núcleo
 
-Status: proposto · Fase 1
+Status: em implementação · Fase 1
 
 ## Objetivo
 Um binário Rust único que sobe a dashboard local, mede a máquina, encontra câmeras e entrega quadros de vídeo para os módulos de IA, gastando o mínimo possível.
@@ -38,7 +38,7 @@ camfacil (binário)
 - **Pastas**: `%PROGRAMDATA%\CamFacil` (Windows), `~/.local/share/camfacil` (Linux).
 - **Portas sem conflito**: na instalação e a cada inicialização, o núcleo verifica quais portas estão livres antes de ocupar qualquer uma, para nunca conflitar com o PDV, o NVR ou outro software do cliente.
   - Ordem de tentativa: porta salva → 7070 → faixa 7071–7099 → porta livre escolhida pelo sistema (bind em `:0`).
-  - Porta escolhida gravada em `camfacil.toml`; a dashboard mostra o endereço real e o QR de pareamento já usa essa porta.
+  - Porta escolhida gravada no SQLite (`settings.port`); a dashboard mostra o endereço real e o QR de pareamento já usa essa porta.
   - Escuta só em `127.0.0.1` e na interface da VPN por padrão; expor na LAN é opção explícita.
   - Nunca usa portas comuns de PDV/ERP/NVR (lista negra configurável: 80, 443, 554, 1433, 3050, 3306, 5432, 8000, 8080, 37777…).
   - O mesmo vale para gateway, MCP e quiosque.
@@ -67,3 +67,14 @@ camfacil (binário)
 - Mostra a imagem da câmera, da webcam e de um arquivo de vídeo.
 - Benchmark retorna um nível e o grava.
 - Metas de orçamento medidas e publicadas no CI.
+
+## Estado da implementação (2026-11-07)
+| Item | Situação |
+|---|---|
+| Workspace, binário único, dashboard embutida | feito |
+| Porta livre com lista negra (ADR-0005) | feito, com testes |
+| `/api/system`, `/api/bench`, `/api/rtsp/*`, `/api/discover` | feito |
+| Aceite da isenção na primeira execução | feito |
+| Orçamento medido (`scripts/budget.sh`) | 2,0 MB · 4,2 MB RAM · 0% CPU ocioso |
+| Benchmark | provisório (kernel de ponto flutuante); trocar por inferência ONNX na fase 2 |
+| ARP/MAC no Windows, pré-visualização de imagem, instaladores | pendente |

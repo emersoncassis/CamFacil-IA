@@ -1,0 +1,98 @@
+//! CamFácil IA — binário principal.
+//!
+//! Sobe a dashboard local numa porta livre (sem conflitar com PDV/NVR do cliente)
+//! e expõe a API da fase 1. Ver `docs/sdd/SDD-01-nucleo.md`.
+
+mod api;
+mod assets;
+
+use cf_core::{paths, ports, store::Store};
+use std::net::{IpAddr, Ipv4Addr};
+use std::sync::Arc;
+
+pub struct App {
+    pub store: Store,
+}
+
+pub type Shared = Arc<App>;
+
+fn main() {
+    // Runtime de uma thread: o núcleo ocioso precisa ser levíssimo. Trabalho pesado
+    // (benchmark, IA) roda em threads próprias.
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("não foi possível iniciar o runtime");
+    if let Err(e) = rt.block_on(run()) {
+        eprintln!("CamFácil IA: erro: {e}");
+        std::process::exit(1);
+    }
+}
+
+async fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--version" || a == "-V") {
+        println!("camfacil {}", cf_core::VERSION);
+        return Ok(());
+    }
+
+    let dir = paths::data_dir();
+    std::fs::create_dir_all(&dir)?;
+    let store = Store::open(&dir.join("camfacil.db"))?;
+
+    // Só na própria máquina, por padrão. Expor na rede é opção explícita.
+    let lan = args.iter().any(|a| a == "--lan");
+    let ip: IpAddr = if lan {
+        IpAddr::V4(Ipv4Addr::UNSPECIFIED)
+    } else {
+        IpAddr::V4(Ipv4Addr::LOCALHOST)
+    };
+
+    let saved = store.get("port")?.and_then(|p| p.parse::<u16>().ok());
+    let chosen = ports::choose(ip, saved)?;
+    store.set("port", &chosen.port.to_string())?;
+    chosen.listener.set_nonblocking(true)?;
+    let listener = tokio::net::TcpListener::from_std(chosen.listener)?;
+
+    let url = format!("http://localhost:{}", chosen.port);
+    println!("CamFácil IA {} — dashboard em {url}", cf_core::VERSION);
+    if chosen.moved {
+        println!(
+            "A porta preferida estava ocupada por outro programa. Usando a {} para não conflitar.",
+            chosen.port
+        );
+    }
+    println!("Dados em {}", dir.display());
+
+    if !args.iter().any(|a| a == "--no-browser") {
+        open_browser(&url);
+    }
+
+    let app: Shared = Arc::new(App { store });
+    let router = api::router(app);
+    axum::serve(listener, router)
+        .with_graceful_shutdown(async {
+            let _ = tokio::signal::ctrl_c().await;
+        })
+        .await?;
+    Ok(())
+}
+
+/// Abre o navegador padrão sem depender de crates extras.
+fn open_browser(url: &str) {
+    #[cfg(windows)]
+    let cmd = std::process::Command::new("cmd")
+        .args(["/C", "start", "", url])
+        .spawn();
+    #[cfg(target_os = "macos")]
+    let cmd = std::process::Command::new("open").arg(url).spawn();
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let cmd = std::process::Command::new("xdg-open")
+        .arg(url)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn();
+    if cmd.is_err() {
+        println!("Abra no navegador: {url}");
+    }
+}
