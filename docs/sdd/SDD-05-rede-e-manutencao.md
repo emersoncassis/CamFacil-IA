@@ -28,3 +28,12 @@ Limite: MAC só é visível na mesma sub-rede.
 - Backup: `camfacil.toml` + SQLite (sem vídeos) → arquivo único cifrado (age/ChaCha20-Poly1305, senha do técnico).
 - Atualização: baixa a release, valida assinatura, troca o binário e guarda o anterior para rollback com um clique.
 - Pacote offline: binário + modelos + áudios num zip para pendrive.
+
+## Acesso de fora pelo Tailscale (status: implementado · fase 3)
+Primeira opção da ADR-0005: usar o cliente Tailscale já instalado na máquina (sem nó embutido, sem porta no roteador).
+
+- `crates/camfacil/src/tailscale.rs`: acha o binário (PATH; Windows `C:\Program Files\Tailscale\tailscale.exe`; macOS `/Applications/Tailscale.app/...`), roda `tailscale status --json` (fallback `tailscale ip -4`) com timeout de 2,5 s, fora da thread da UI.
+- **Escuta**: por padrão o servidor escuta só em `127.0.0.1`. Uma vigília leve (a cada 60 s; sem Tailscale instalado não roda processo nenhum) descobre o IP Tailscale e abre um segundo listener nesse IP, na mesma porta, **sem reiniciar** e sem expor a LAN. Com `--lan` o servidor já escuta em `0.0.0.0` e a vigília não faz nada. Se o IP mudar, o próximo início faz o bind no novo IP.
+- **API**: `GET /api/tailscale` → `{instalado, logado, ip, nome, url, url_nome, escutando, aguardando, lan, erro, comando_instalar, sistema}`; `GET /api/tailscale/qr.svg` (reaproveita o gerador de QR do elo).
+- **UI** (Integrações → "Acessar de fora (Tailscale)"): situação, endereço `http://<ip>:<porta>` com copiar, nome MagicDNS, QR, instruções por sistema (Windows `winget install tailscale.tailscale`; Linux/Raspberry `curl -fsSL https://tailscale.com/install.sh | sh` + `sudo tailscale up`; macOS `brew install --cask tailscale`; celular: app Tailscale com a mesma conta). Explica que o vídeo não passa pela nuvem e que o celular precisa estar na mesma rede Tailscale.
+- Falta validar numa máquina real com Tailscale (aqui foi testado com um binário simulado respondendo `status --json` e `ip -4`, e o bind em um segundo IP).

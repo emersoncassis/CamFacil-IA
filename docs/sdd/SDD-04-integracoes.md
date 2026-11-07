@@ -1,10 +1,16 @@
 # SDD-04 — Integrações (Telegram, WhatsApp, webhook, LLM, MCP)
 
-Status: proposto · Fase 3 e 6
+Status: Telegram **implementado** (fase 3); WhatsApp, webhook, LLM e MCP propostos (fase 3 e 6)
 
-## Telegram (padrão)
-- Bot API oficial via HTTPS (long polling, sem porta aberta). Crate leve (`teloxide` ou cliente próprio com `reqwest`).
-- Vínculo: a dashboard mostra QR code/link `t.me/<bot>?start=<token>`; o primeiro `/start` com o token autoriza o chat.
+## Telegram (padrão) — status: implementado
+- Bot API oficial via HTTPS (long polling `getUpdates` com timeout de 30 s, só enquanto há token; sem porta aberta). Cliente próprio com `reqwest` (rustls, provedor `ring` já usado pelo binário; sem `aws-lc`), multipart do `sendPhoto` montado à mão. Crate `cf-notify`.
+- **Token cifrado** (regra 7): ChaCha20-Poly1305 (`chacha20poly1305`, puro Rust, ~60 KB) com chave de 32 bytes em `data_dir/segredo.key` (modo 0600 no Unix). No SQLite fica `enc:<base64(nonce||cifra)>`.
+- **Vínculo**: o contato manda `/start` ao bot; ele aparece em Integrações → Telegram → "Contatos autorizados" e o técnico liga a chave. Só autorizados recebem alertas e usam comandos. (O link `t.me/<bot>?start=<token>` fica para depois; a aprovação manual na dashboard é mais simples de explicar.)
+- **Alertas**: linha cruzada, zona ocupada e mudança de saúde (escura/coberta/desfocada/sem sinal), com a foto do instante (`canal.ultimo`, JPEG do stream secundário) e o texto `HH:MM — <regra>: passagem (entrada) · <câmera>`. Antirrepique por regra: 30 s (`regra:<id>`, `saude:<camera_id>`). Foto opcional ("Mandar foto junto").
+- **Offline**: fila em memória de 40 alertas; o mais velho sai; reenvio com espera crescente (10 s → 2 min) quando a internet volta. Sem token ou sem contato autorizado, a fila é descartada.
+- **Comandos**: `/status`, `/foto <nome ou nº>`, `/resumo` (alertas de hoje no fuso do técnico, informado pela dashboard em `settings.fuso_min`), `/liga <módulo>`, `/desliga <módulo>` (registra evento `comando`), `/ajuda`.
+- **API local**: `GET/POST/DELETE /api/telegram`, `POST /api/telegram/testar`, `POST /api/telegram/fotos`, `POST/DELETE /api/telegram/chats/{id}`, `POST /api/fuso`.
+- Testado contra um servidor Bot API simulado (`CAMFACIL_TELEGRAM_API`); falta validar com um bot real (@BotFather) numa máquina com internet.
 
 ## WhatsApp (opcional)
 - Biblioteca não oficial por QR code: `whatsapp-rust` (nativo) ou `whatsmeow` (Go) como processo auxiliar se o port for instável (ADR-0004).

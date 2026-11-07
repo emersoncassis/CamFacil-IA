@@ -4,11 +4,13 @@
 
 pub mod bench;
 pub mod conectar;
+pub mod deteccao;
 pub mod elo;
 pub mod onvif;
 pub mod paths;
 pub mod ports;
 pub mod rtsp;
+pub mod saude;
 pub mod store;
 pub mod sugestao;
 pub mod system;
