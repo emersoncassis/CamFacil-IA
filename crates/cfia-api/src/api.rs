@@ -169,7 +169,7 @@ pub async fn listar_agentes(State(s): State<AppState>, t: Tecnico) -> Res {
     let rows = tx
         .query(
             "SELECT id, apelido_cliente, chave_publica, versao,
-                    pareado_em::text, ultimo_contato::text
+                    pareado_em::text, ultimo_contato::text, estado, estado_em::text
              FROM agentes ORDER BY pareado_em DESC NULLS LAST",
             &[],
         )
@@ -188,6 +188,8 @@ pub async fn listar_agentes(State(s): State<AppState>, t: Tecnico) -> Res {
                 "pareado_em": r.get::<_, Option<String>>(4),
                 "ultimo_contato": r.get::<_, Option<String>>(5),
                 "online": s.hub.online(&id),
+                "estado": r.get::<_, Option<Value>>(6),
+                "estado_em": r.get::<_, Option<String>>(7),
             })
         })
         .collect();

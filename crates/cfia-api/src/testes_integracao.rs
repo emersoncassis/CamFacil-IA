@@ -316,4 +316,25 @@ async fn pareamento_completo_com_confirmacao_local() {
     .unwrap();
     let _confirmacao = rx_ag.recv().await.unwrap();
     assert!(rx_ag.recv().await.unwrap().contains("já pareado"));
+
+    // O agente manda o resumo: só o dono enxerga, já filtrado.
+    hub::tratar_agente(
+        &s,
+        agente,
+        &json!({"tipo": "estado", "estado": {"cameras": [{"nome": "Portão", "online": true, "fps": 5.0, "url": "rtsp://x"}], "cpu": 20.0}}),
+        &tx_ag,
+    )
+    .await
+    .unwrap();
+    let (_, v) = chamar(&s, "GET", "/api/agentes", Some(&sa), None).await;
+    let meu = v["agentes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["id"] == json!(agente))
+        .unwrap();
+    assert_eq!(meu["estado"]["cameras"][0]["nome"], "Portão");
+    assert!(!meu["estado"].to_string().contains("rtsp://"));
+    let (_, v) = chamar(&s, "GET", "/api/agentes", Some(&sb), None).await;
+    assert!(!v.to_string().contains("Portão"));
 }

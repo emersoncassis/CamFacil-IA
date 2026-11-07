@@ -37,12 +37,35 @@
 
     <main class="landing">
       <section class="hero">
+        <div class="hero-texto">
         <p class="kicker">Gratuito · código aberto · roda em PC velho</p>
         <h1>Ligue as câmeras do cliente e veja a IA funcionando em minutos.</h1>
         <p class="lede">Baixe, abra no computador da rede, digite a senha da câmera e pronto. A inteligência artificial você aprende e testa depois, no seu ritmo, com aula falada.</p>
-        <div class="ouvir" data-narracao="site-01-boas-vindas,site-02-por-que,site-03-passo-a-passo,site-04-download" hidden>
+        <div class="ouvir" data-narracao="site-01-boas-vindas,site-02-por-que,site-03-passo-a-passo,site-04-download,site-05-painel" hidden>
           <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir as boas-vindas</span></button>
           <span class="tiny">Na voz do Emerson, criador do projeto</span>
+        </div>
+        </div>
+        <div class="cena-hero" aria-hidden="true">
+          <svg viewBox="0 0 960 540">
+            <defs>
+              <clipPath id="ch"><rect width="960" height="540" rx="16"/></clipPath>
+              <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06cb3f" stop-opacity="0"/><stop offset="1" stop-color="#06cb3f" stop-opacity=".22"/></linearGradient>
+              <pattern id="grade" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="#06cb3f" stroke-opacity=".10" stroke-width="1"/></pattern>
+            </defs>
+            <g clip-path="url(#ch)">
+              <image href="/img/loja.webp" width="960" height="540"/>
+              <rect width="960" height="540" fill="url(#grade)"/>
+              <path class="h-linha" d="M360 70V540"/>
+              <g class="h-pessoa"><image href="/img/pessoa.webp" width="126" height="250"/><g class="h-mira"><circle cx="63" cy="125" r="7"/><circle class="h-anel" cx="63" cy="125" r="16"/></g></g>
+              <g class="h-balao h-porta"><rect x="290" y="150" width="140" height="44" rx="22"/><text x="360" y="179">Porta</text></g>
+              <g class="h-balao h-balcao"><rect x="566" y="150" width="190" height="44" rx="22"/><text x="661" y="179">Balcão · livre</text></g>
+              <rect class="h-varre" width="960" height="90" fill="url(#gv)"/>
+              <rect class="h-flash" width="960" height="540"/>
+              <g class="h-hud"><path d="M20 62V20h42M898 20h42v42M940 478v42h-42M62 520H20v-42"/><circle cx="44" cy="44" r="7" class="h-rec"/><text x="60" y="51">REC · CAM 01</text><text x="936" y="508" class="h-dir">IA no PC · 5 q/s</text></g>
+            </g>
+            <rect x="1" y="1" width="958" height="538" rx="16" fill="none" stroke="#2e2e2e" stroke-width="2"/>
+          </svg>
         </div>
       </section>
 
@@ -112,7 +135,7 @@
             <h1>Começar</h1>
             <p class="lede">Três passos: baixar, ligar a câmera, parear com este painel. Leva poucos minutos.</p>
           </div>
-          <div class="ouvir" data-narracao="site-03-passo-a-passo,site-04-download" hidden>
+          <div class="ouvir" data-narracao="site-03-passo-a-passo,site-04-download,site-05-painel" hidden>
             <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir o passo a passo</span></button>
           </div>
         </header>
@@ -150,6 +173,21 @@
             <li>Aponte a câmera do celular para o QR code que aparecer. Ele abre esta página já com o código.</li>
             <li>Confirme aqui e depois clique em <strong>Confirmar</strong> na tela do cliente. O código vale 10 minutos e só funciona uma vez.</li>
           </ol>
+          <p class="hint">A câmera do celular não leu o QR? Use uma das opções abaixo.</p>
+          <div class="actions mt">
+            <button class="btn" type="button" id="ler-qr"><span>Ler QR pela câmera</span></button>
+            <button class="btn" type="button" id="digitar-codigo"><span>Digitar código</span></button>
+          </div>
+          <div class="leitor" id="leitor" hidden>
+            <video id="leitor-video" playsinline muted></video>
+            <div class="leitor-mira" aria-hidden="true"></div>
+            <button class="btn sm" type="button" id="leitor-fechar">Fechar câmera</button>
+          </div>
+          <form class="form mt" id="form-codigo" hidden autocomplete="off">
+            <label class="span-4"><span>Código que aparece embaixo do QR, na tela do cliente</span><input name="codigo" class="mono" required spellcheck="false" autocapitalize="off" placeholder="AbCd EfGh IjKl MnOp QrSt Uv"></label>
+            <div class="actions span-4"><button class="btn primary" type="submit">Continuar</button></div>
+          </form>
+          <p class="msg" id="leitor-msg" role="status"></p>
         </div>
         <div class="block">
           <div class="table-wrap">

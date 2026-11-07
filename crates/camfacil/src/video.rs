@@ -290,8 +290,16 @@ struct Interno {
     contagens: HashMap<i64, u64>,
 }
 
+/// "IA, sugira para mim": observação em andamento ou concluída.
+pub struct Observacao {
+    pub obs: cf_core::sugestao::Observador,
+    pub inicio: Instant,
+    pub duracao: Duration,
+}
+
 pub struct Canal {
     pub id: i64,
+    pub observacao: Mutex<Option<Observacao>>,
     pub ultimo: Mutex<Option<Arc<Vec<u8>>>>,
     pub tx: broadcast::Sender<Arc<Vec<u8>>>,
     regras: RwLock<Vec<Regra>>,
@@ -424,6 +432,7 @@ impl Video {
         let (tx, _) = broadcast::channel(4);
         let canal = Arc::new(Canal {
             id,
+            observacao: Mutex::new(None),
             ultimo: Mutex::new(None),
             tx,
             regras: RwLock::new(Vec::new()),
@@ -603,6 +612,11 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
         Vec::new()
     };
     let eventos = an.processar(&q, &regras, m.movimento, m.saude);
+    if let Some(o) = canal.observacao.lock().unwrap().as_mut() {
+        if o.inicio.elapsed() < o.duracao {
+            o.obs.alimentar(&an.centros());
+        }
+    }
     if eventos.is_empty() {
         return;
     }

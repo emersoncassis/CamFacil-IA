@@ -35,12 +35,16 @@ struct Estado {
     saida: Option<UnboundedSender<String>>,
 }
 
+/// Monta o resumo que vai para o site (câmeras, máquina, alertas).
+pub type Resumo = Box<dyn Fn() -> Value + Send + Sync>;
+
 pub struct Elo {
     pub site: String,
     id: Identidade,
     store: Arc<Store>,
     estado: Mutex<Estado>,
     iniciado: Mutex<bool>,
+    resumo: Mutex<Option<Resumo>>,
 }
 
 #[derive(Serialize)]
@@ -87,7 +91,23 @@ impl Elo {
             store,
             estado: Mutex::new(Estado::default()),
             iniciado: Mutex::new(false),
+            resumo: Mutex::new(None),
         })
+    }
+
+    /// Define como montar o resumo enviado ao site a cada 30 s.
+    pub fn definir_resumo(&self, f: Resumo) {
+        *self.resumo.lock().unwrap() = Some(f);
+    }
+
+    /// Resumo atual, só se pareado (sem dono, o site não tem a quem mostrar).
+    fn resumo_para_enviar(&self) -> Option<String> {
+        if !self.estado.lock().unwrap().pareado {
+            return None;
+        }
+        let r = self.resumo.lock().unwrap();
+        r.as_ref()
+            .map(|f| json!({"tipo": "estado", "estado": f()}).to_string())
     }
 
     fn ativo(&self) -> bool {
@@ -237,6 +257,11 @@ impl Elo {
         self.estado.lock().unwrap().saida = Some(tx.clone());
 
         let mut ping = tokio::time::interval(Duration::from_secs(30));
+        // Primeiro resumo logo após o "bem-vindo"; depois a cada 30 s.
+        let mut resumo = tokio::time::interval_at(
+            tokio::time::Instant::now() + Duration::from_secs(3),
+            Duration::from_secs(30),
+        );
         loop {
             tokio::select! {
                 m = stream.next() => {
@@ -249,6 +274,12 @@ impl Elo {
                 }
                 Some(saida) = rx.recv() => sink.send(Message::Text(saida.into())).await?,
                 _ = ping.tick() => sink.send(Message::Text(json!({"tipo": "ping"}).to_string().into())).await?,
+                _ = resumo.tick() => {
+                    let m = self.resumo_para_enviar();
+                    if let Some(m) = m {
+                        sink.send(Message::Text(m.into())).await?;
+                    }
+                }
             }
         }
         Ok(())

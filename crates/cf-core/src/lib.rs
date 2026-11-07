@@ -10,6 +10,7 @@ pub mod paths;
 pub mod ports;
 pub mod rtsp;
 pub mod store;
+pub mod sugestao;
 pub mod system;
 pub mod visao;
 

@@ -159,6 +159,19 @@ impl Analisador {
         }
     }
 
+    /// Centros das trilhas confirmadas, normalizados 0..1 (para a sugestão).
+    pub fn centros(&self) -> Vec<(u32, f32, f32)> {
+        let Some(q) = &self.anterior else {
+            return Vec::new();
+        };
+        let (w, h) = (q.w.max(1) as f32, q.h.max(1) as f32);
+        self.trilhas
+            .iter()
+            .filter(|t| t.visto >= 2)
+            .map(|t| (t.id, t.x / w, t.y / h))
+            .collect()
+    }
+
     /// Estado atual de uma zona (para o balão).
     pub fn zona_ocupada(&self, regra: i64) -> bool {
         self.zonas.get(&regra).is_some_and(|z| z.ocupada)

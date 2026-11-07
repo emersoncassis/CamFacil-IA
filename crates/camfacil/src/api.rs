@@ -23,6 +23,7 @@ pub fn router(app: Shared) -> Router {
         .route("/api/rtsp/test", post(post_test))
         .route("/api/discover", get(get_discover))
         .route("/api/procurar", get(get_procurar))
+        .route("/api/autoinicio", get(get_autoinicio).post(post_autoinicio))
         .route("/api/conectar", post(post_conectar))
         .route("/api/disclaimer", get(get_disclaimer).post(post_disclaimer))
         .route("/api/video/ffmpeg", get(get_ffmpeg).post(post_ffmpeg))
@@ -31,6 +32,10 @@ pub fn router(app: Shared) -> Router {
         .route("/api/cameras/{id}", delete(delete_camera))
         .route("/api/cameras/{id}/mjpeg", get(get_mjpeg))
         .route("/api/cameras/{id}/foto.jpg", get(get_foto))
+        .route(
+            "/api/cameras/{id}/sugestoes",
+            get(get_sugestoes).post(post_sugestoes),
+        )
         .route("/api/cameras/{id}/regras", get(get_regras).post(post_regra))
         .route("/api/regras/{id}", patch(patch_regra).delete(delete_regra))
         .route("/api/estado", get(get_estado))
@@ -223,6 +228,26 @@ async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>)
     })))
 }
 
+async fn get_autoinicio() -> Json<Value> {
+    let ligado = tokio::task::spawn_blocking(crate::autoinicio::ligado)
+        .await
+        .unwrap_or(false);
+    Json(json!({ "ligado": ligado }))
+}
+
+#[derive(Deserialize)]
+struct PedidoAutoinicio {
+    ligado: bool,
+}
+
+async fn post_autoinicio(Json(p): Json<PedidoAutoinicio>) -> ApiResult {
+    tokio::task::spawn_blocking(move || crate::autoinicio::definir(p.ligado))
+        .await
+        .map_err(internal)?
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    Ok(Json(json!({ "ligado": p.ligado })))
+}
+
 const DISCLAIMER_DOC: &str = "isencao";
 
 async fn get_disclaimer(State(app): State<Shared>) -> ApiResult {
@@ -382,6 +407,53 @@ async fn delete_camera(State(app): State<Shared>, Path(id): Path<i64>) -> ApiRes
         return Err(bad(StatusCode::NOT_FOUND, "câmera não encontrada"));
     }
     Ok(Json(json!({ "removida": true })))
+}
+
+#[derive(Deserialize, Default)]
+struct PedidoSugestao {
+    #[serde(default)]
+    segundos: Option<u64>,
+}
+
+/// Começa a observar a câmera para sugerir regras.
+async fn post_sugestoes(
+    State(app): State<Shared>,
+    Path(id): Path<i64>,
+    body: Option<Json<PedidoSugestao>>,
+) -> ApiResult {
+    let canal = app
+        .video
+        .canal(id)
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    let seg = body.and_then(|b| b.0.segundos).unwrap_or(60).clamp(15, 600);
+    *canal.observacao.lock().unwrap() = Some(crate::video::Observacao {
+        obs: cf_core::sugestao::Observador::new(),
+        inicio: std::time::Instant::now(),
+        duracao: Duration::from_secs(seg),
+    });
+    Ok(Json(json!({ "observando": true, "segundos": seg })))
+}
+
+/// Andamento da observação e as sugestões (parciais ou finais).
+async fn get_sugestoes(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    let canal = app
+        .video
+        .canal(id)
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    let g = canal.observacao.lock().unwrap();
+    let Some(o) = g.as_ref() else {
+        return Ok(Json(json!({ "iniciado": false })));
+    };
+    let passou = o.inicio.elapsed();
+    let terminou = passou >= o.duracao;
+    Ok(Json(json!({
+        "iniciado": true,
+        "terminou": terminou,
+        "restante_s": o.duracao.saturating_sub(passou).as_secs(),
+        "progresso": (passou.as_secs_f32() / o.duracao.as_secs_f32()).min(1.0),
+        "pessoas": o.obs.pessoas(),
+        "sugestoes": o.obs.sugerir(),
+    })))
 }
 
 async fn get_foto(State(app): State<Shared>, Path(id): Path<i64>) -> Response {

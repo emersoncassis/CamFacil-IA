@@ -31,6 +31,8 @@ const ARQUIVOS: &[Arquivo] = &[
         "../../web/tokens.css"
     ),
     arq!("/icon.svg", "image/svg+xml", "../../web/icon.svg"),
+    arq!("/img/loja.webp", "image/webp", "web/img/loja.webp"),
+    arq!("/img/pessoa.webp", "image/webp", "web/img/pessoa.webp"),
     arq!(
         "/privacidade",
         "text/html; charset=utf-8",

@@ -2,7 +2,7 @@
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:163134,50:035144,100:06CB3F&height=220&section=header&text=CamF%C3%A1cil%20IA&fontSize=64&fontColor=EFEFED&animation=fadeIn&fontAlignY=38&desc=Intelig%C3%AAncia%20de%20v%C3%ADdeo%20para%20quem%20instala%20c%C3%A2meras&descAlignY=58&descSize=18" width="100%" alt="CamFácil IA"/>
 
-<a href="#-instale-em-um-comando">
+<a href="https://cfia.ysafe.com.br">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1200&color=06CB3F&center=true&vCenter=true&width=720&lines=IA+de+v%C3%ADdeo+em+qualquer+m%C3%A1quina%2C+com+um+comando.;Aprenda+IA+e+rede+IP+fazendo.;Valide+no+cliente.+Venda+a+c%C3%A2mera+com+IA.;Feito+por+instalador%2C+para+instalador." alt="Frases animadas"/>
 </a>
 
@@ -19,9 +19,28 @@
   <img src="https://img.shields.io/github/stars/emersoncassis/CamFacil-IA?style=flat-square&color=06CB3F" alt="Estrelas"/>
 </p>
 
+<p>
+  <a href="https://cfia.ysafe.com.br"><img src="https://img.shields.io/badge/COMECE%20PELO%20SITE-cfia.ysafe.com.br-06CB3F?style=for-the-badge&labelColor=000000" alt="Comece pelo site: cfia.ysafe.com.br" height="44"/></a>
+</p>
+
 </div>
 
 ---
+
+## <img src="docs/assets/icons/raio.svg" width="22" alt=""/> Comece pelo site: **[cfia.ysafe.com.br](https://cfia.ysafe.com.br)**
+
+Tudo começa lá. Abre, ouve as boas-vindas, baixa e pronto.
+
+| | O que o site faz por você |
+|---|---|
+| <img src="docs/assets/icons/download.svg" width="20" alt=""/> | **Baixa o programa certo** para o seu computador: Windows, Linux ou Raspberry Pi/TV Box. Um clique ou um comando. |
+| <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Explica falando**: boas-vindas, passo a passo e por que o projeto existe, na voz de quem treinou instaladores no Brasil inteiro. |
+| <img src="docs/assets/icons/chave.svg" width="20" alt=""/> | **Login com Google**, sem senha nova. Cada técnico vê só os próprios clientes. |
+| <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **Pareia o computador do cliente** pelo QR code, pela câmera do celular dentro do site ou digitando o código. |
+| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Mostra de longe o que o agente está vendo**: câmeras no ar e sem sinal, CPU e memória da máquina, IA ligada e os últimos alertas. Sem vídeo passando pela nuvem. |
+| <img src="docs/assets/icons/nuvem.svg" width="20" alt=""/> | **Ensina a ter o seu próprio painel**: o mesmo site, em Docker, na sua VPS. |
+
+**No programa, depois de baixar:** ele abre direto em **Câmeras** e procura sozinho na rede. Você escolhe a câmera, digita a senha e a imagem aparece. Depois vem a IA, com aula falada e animada: cerca virtual, linha de passagem, zona, saúde da câmera, alerta com som e tela piscando. A janela do terminal mostra o resumo ao vivo (CPU, memória, câmeras) e dá para deixar abrindo junto com o computador.
 
 > [!IMPORTANT]
 > **O CamFácil IA é um ambiente de aprendizagem e validação.** A solução final no seu cliente é uma câmera ou gravador com **IA de borda**, ou uma plataforma corporativa de IA em nuvem. Aqui você aprende, prova o valor e vende com segurança.
