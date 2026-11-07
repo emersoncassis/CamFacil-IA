@@ -134,6 +134,8 @@ pub fn router(state: AppState) -> Router {
         .route("/api/auth/google/callback", get(auth::retorno))
         .route("/api/auth/sair", post(auth::sair))
         .route("/api/eu", get(api::eu))
+        .route("/api/escola/selo", get(api::meu_selo).post(api::gerar_selo))
+        .route("/api/escola/selo/{codigo}", get(api::selo_publico))
         .route(
             "/api/dispositivos",
             get(api::listar_dispositivos).post(api::criar_dispositivo),

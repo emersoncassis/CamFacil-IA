@@ -13,7 +13,9 @@ Ensinar IA de vídeo do zero, com a voz do autor, sem custo de processamento e s
 
 ## Lições (escola.js, `LICOES`)
 1. Como a IA enxerga (centro da mancha) · 2. Linha de passagem (exercício) · 3. Zona (exercício) · 4. Balões, alertas e som (simulação) · 5. Saúde da câmera (quiz) · 6. Da escolinha para a loja (selo + download).
-- A fala nunca é cortada: o próximo áudio espera o atual terminar.
+- A fala nunca é cortada: o próximo áudio espera o atual terminar. Há narração para cada lição, para a introdução e para cada acerto e erro dos exercícios (`/audio/escola-*.ogg`, textos em `narracao.json`).
+- Simulação fiel à cena: as pessoas entram pela porta e vêm em direção à câmera (ficam maiores), saindo cortadas pela borda; a faixa da borda (~10%) é mostrada como overlay; o cliente para na frente do balcão.
+- **Selo:** ao concluir, o técnico entra com Google (`/api/auth/google?voltar=/aprender`), informa o Instagram (opcional) e autoriza ou não o repost (Emerson, Papo Segurança, Zion). `POST /api/escola/selo` cria um selo por técnico (tabela `selos_escola`, migração 0003) com código público; `/selo/{codigo}` mostra o cartão, gera a imagem 1080×1920 para stories no navegador (canvas) e oferece WhatsApp, LinkedIn, compartilhar e copiar.
 - O exercício só libera a próxima lição quando a IA simulada aprova (linha que conta; zona sem alarme falso e com ocupado).
 
 ## Formato de aula

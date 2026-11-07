@@ -338,3 +338,52 @@ async fn pareamento_completo_com_confirmacao_local() {
     let (_, v) = chamar(&s, "GET", "/api/agentes", Some(&sb), None).await;
     assert!(!v.to_string().contains("Portão"));
 }
+
+#[tokio::test]
+async fn selo_da_escola_exige_login_e_e_publico_por_codigo() {
+    let Some(s) = estado().await else { return };
+    let (_a, sa) = criar_sessao_teste(&s, &format!("a-{}", Uuid::new_v4()), "a@teste").await;
+    let (_b, sb) = criar_sessao_teste(&s, &format!("b-{}", Uuid::new_v4()), "b@teste").await;
+
+    // Sem login não gera.
+    let (st, _) = chamar(&s, "POST", "/api/escola/selo", None, Some(json!({}))).await;
+    assert_eq!(st, StatusCode::UNAUTHORIZED);
+
+    // Gera com Instagram limpo (sem @, minúsculo) e autorização.
+    let (st, v) = chamar(
+        &s,
+        "POST",
+        "/api/escola/selo",
+        Some(&sa),
+        Some(json!({"instagram": "@Emerson.Assis", "autoriza_repost": true})),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    assert_eq!(v["selo"]["instagram"], "emerson.assis");
+    assert_eq!(v["selo"]["autoriza_repost"], true);
+    let codigo = v["selo"]["codigo"].as_str().unwrap().to_string();
+
+    // Instagram inválido cai fora e, sem Instagram, não há o que repostar.
+    let (st, v) = chamar(
+        &s,
+        "POST",
+        "/api/escola/selo",
+        Some(&sa),
+        Some(json!({"instagram": "tem espaço!", "autoriza_repost": true})),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK);
+    assert!(v["selo"]["instagram"].is_null());
+    assert_eq!(v["selo"]["autoriza_repost"], false);
+    // Um por técnico: o código não muda ao regerar.
+    assert_eq!(v["selo"]["codigo"], json!(codigo));
+
+    // O outro técnico não vê o selo como seu; a página pública vê pelo código.
+    let (_, v) = chamar(&s, "GET", "/api/escola/selo", Some(&sb), None).await;
+    assert!(v["selo"].is_null());
+    let (st, v) = chamar(&s, "GET", &format!("/api/escola/selo/{codigo}"), None, None).await;
+    assert_eq!(st, StatusCode::OK);
+    assert_eq!(v["selo"]["codigo"], json!(codigo));
+    let (st, _) = chamar(&s, "GET", "/api/escola/selo/nao-existe", None, None).await;
+    assert_eq!(st, StatusCode::NOT_FOUND);
+}

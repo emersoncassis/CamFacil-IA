@@ -142,9 +142,30 @@ fn redirect_uri(state: &AppState) -> String {
     format!("{}/api/auth/google/callback", state.base_url)
 }
 
+#[derive(Deserialize)]
+pub struct Inicio {
+    /// Caminho local para voltar depois do login (ex.: `/aprender#pratica`).
+    pub voltar: Option<String>,
+}
+
+/// Só caminhos locais simples: nada de `//host`, esquema ou controle.
+fn voltar_seguro(v: Option<&str>) -> Option<String> {
+    let v = v?.trim();
+    let ok = v.starts_with('/')
+        && !v.starts_with("//")
+        && !v.contains('\\')
+        && v.len() < 200
+        && v.chars().all(|c| !c.is_control());
+    ok.then(|| v.to_string())
+}
+
 /// GET /api/auth/google — inicia o login.
-pub async fn iniciar(State(state): State<AppState>) -> Result<Response, Falha> {
+pub async fn iniciar(
+    State(state): State<AppState>,
+    Query(q): Query<Inicio>,
+) -> Result<Response, Falha> {
     let g = google(&state)?;
+    let voltar = voltar_seguro(q.voltar.as_deref());
     let estado = token(24);
     let nonce = token(24);
     let verificador = token(48);
@@ -156,8 +177,8 @@ pub async fn iniciar(State(state): State<AppState>) -> Result<Response, Falha> {
         .await
         .map_err(crate::interno)?;
     tx.execute(
-        "INSERT INTO oauth_estados(estado, nonce, verificador, expira_em) VALUES ($1, $2, $3, now() + interval '10 minutes')",
-        &[&estado, &nonce, &verificador],
+        "INSERT INTO oauth_estados(estado, nonce, verificador, voltar, expira_em) VALUES ($1, $2, $3, $4, now() + interval '10 minutes')",
+        &[&estado, &nonce, &verificador, &voltar],
     )
     .await
     .map_err(crate::interno)?;
@@ -244,7 +265,7 @@ pub async fn retorno(
         .map_err(crate::interno)?;
     let row = tx
         .query_opt(
-            "DELETE FROM oauth_estados WHERE estado = $1 AND expira_em > now() RETURNING nonce, verificador",
+            "DELETE FROM oauth_estados WHERE estado = $1 AND expira_em > now() RETURNING nonce, verificador, voltar",
             &[&estado],
         )
         .await
@@ -252,6 +273,7 @@ pub async fn retorno(
     tx.commit().await.map_err(crate::interno)?;
     let row = row.ok_or_else(|| erro(StatusCode::BAD_REQUEST, "login expirado, tente de novo"))?;
     let (nonce, verificador): (String, String) = (row.get(0), row.get(1));
+    let voltar: Option<String> = row.get(2);
 
     let tok: TokenResp = state
         .http
@@ -332,7 +354,7 @@ pub async fn retorno(
             header::SET_COOKIE,
             cookie_sessao(&sessao, SESSAO_DIAS * 86_400),
         )],
-        Redirect::to("/"),
+        Redirect::to(voltar.as_deref().unwrap_or("/")),
     )
         .into_response())
 }

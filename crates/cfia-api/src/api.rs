@@ -380,3 +380,120 @@ mod tests {
         assert!(!chave_p256_valida("xx"));
     }
 }
+
+// ---------------------------------------------------------------------------
+// Selo da Escolinha de IA
+
+#[derive(Deserialize)]
+pub struct PedidoSelo {
+    #[serde(default)]
+    instagram: Option<String>,
+    #[serde(default)]
+    autoriza_repost: bool,
+}
+
+fn limpar_instagram(v: Option<String>) -> Option<String> {
+    let v = v?.trim().trim_start_matches('@').to_ascii_lowercase();
+    let ok = (1..=30).contains(&v.len())
+        && v.chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '_');
+    ok.then_some(v)
+}
+
+fn selo_json(r: &tokio_postgres::Row) -> Value {
+    json!({
+        "codigo": r.get::<_, String>(0),
+        "nome": r.get::<_, String>(1),
+        "instagram": r.get::<_, Option<String>>(2),
+        "autoriza_repost": r.get::<_, bool>(3),
+        "criado_em": r.get::<_, String>(4),
+    })
+}
+
+const SELO_COLS: &str =
+    "codigo, nome, instagram, autoriza_repost, to_char(criado_em, 'YYYY-MM-DD')";
+
+/// GET /api/escola/selo — o selo do técnico logado, se já gerou.
+pub async fn meu_selo(State(s): State<AppState>, t: Tecnico) -> Result<Json<Value>, Falha> {
+    let mut c = s.db.get().await.map_err(interno)?;
+    let tx = db::begin(&mut c, Ctx::Tecnico(t.id))
+        .await
+        .map_err(interno)?;
+    let r = tx
+        .query_opt(
+            &format!("SELECT {SELO_COLS} FROM selos_escola WHERE tecnico_id = $1"),
+            &[&t.id],
+        )
+        .await
+        .map_err(interno)?;
+    Ok(Json(
+        json!({ "selo": r.as_ref().map(selo_json), "nome": t.nome }),
+    ))
+}
+
+/// POST /api/escola/selo — gera (ou atualiza) o selo. O curso é feito no
+/// navegador; aqui registramos quem concluiu e o que autorizou.
+pub async fn gerar_selo(
+    State(s): State<AppState>,
+    t: Tecnico,
+    Json(p): Json<PedidoSelo>,
+) -> Result<Json<Value>, Falha> {
+    let instagram = limpar_instagram(p.instagram);
+    let autoriza = p.autoriza_repost && instagram.is_some();
+    let codigo = crate::util::token(9);
+    let nome: String = t.nome.trim().chars().take(80).collect();
+    let nome = if nome.is_empty() {
+        t.email.clone()
+    } else {
+        nome
+    };
+    let mut c = s.db.get().await.map_err(interno)?;
+    let tx = db::begin(&mut c, Ctx::Tecnico(t.id))
+        .await
+        .map_err(interno)?;
+    let r = tx
+        .query_one(
+            &format!(
+                "INSERT INTO selos_escola(codigo, tecnico_id, nome, instagram, autoriza_repost)
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT (tecnico_id) DO UPDATE SET nome = excluded.nome,
+                     instagram = excluded.instagram, autoriza_repost = excluded.autoriza_repost
+                 RETURNING {SELO_COLS}"
+            ),
+            &[&codigo, &t.id, &nome, &instagram, &autoriza],
+        )
+        .await
+        .map_err(interno)?;
+    let v = selo_json(&r);
+    db::auditar(&tx, Some(t.id), "selo_escola", &t.email, "")
+        .await
+        .map_err(interno)?;
+    tx.commit().await.map_err(interno)?;
+    Ok(Json(json!({ "selo": v })))
+}
+
+/// GET /api/escola/selo/{codigo} — dados públicos do selo (para a página de
+/// compartilhamento). Só nome, data e Instagram, se a pessoa quis.
+pub async fn selo_publico(
+    State(s): State<AppState>,
+    Path(codigo): Path<String>,
+) -> Result<Json<Value>, Falha> {
+    if codigo.len() > 40
+        || !codigo
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err(erro(StatusCode::NOT_FOUND, "selo não encontrado"));
+    }
+    let mut c = s.db.get().await.map_err(interno)?;
+    let tx = db::begin(&mut c, Ctx::Sistema).await.map_err(interno)?;
+    let r = tx
+        .query_opt(
+            &format!("SELECT {SELO_COLS} FROM selos_escola WHERE codigo = $1"),
+            &[&codigo],
+        )
+        .await
+        .map_err(interno)?
+        .ok_or_else(|| erro(StatusCode::NOT_FOUND, "selo não encontrado"))?;
+    Ok(Json(json!({ "selo": selo_json(&r) })))
+}
