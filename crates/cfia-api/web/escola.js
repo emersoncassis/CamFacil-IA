@@ -1,4 +1,4 @@
-// Escolinha de IA · tudo roda no navegador, sem servidor e sem câmera.
+// Formação de IA para CFTV · tudo roda no navegador, sem servidor e sem câmera.
 // Cena 960×540 (foto da loja). A pessoa tem 126×250; o "centro" que a IA
 // segue fica em (63, 125) dentro do sprite.
 "use strict";
@@ -24,12 +24,13 @@ const W = 960, H = 540;
 const SPRITE = { w: 126, h: 250, cx: 63, cy: 125 };
 // Trajeto de quem entra: aparece na porta (longe, pequeno) e vem em direção
 // à câmera (perto, grande), saindo cortado pela borda de baixo/esquerda.
-// A porta fica no fundo, à esquerda do centro (x≈380); o corredor vem reto até
-// a câmera, então a pessoa cresce quase sem sair do lugar na horizontal.
-const PORTA = { x: 350, y: 233, s: 0.5 };
-const PERTO = { x: 290, y: 330, s: 1.4 };
-// Onde o cliente para para ser atendido: na frente do balcão, à direita do corredor.
-const BALCAO = { x: 455, y: 262, s: 0.95 };
+// A porta dupla de vidro fica no fundo (x 245–430, soleira em y≈300). A pessoa
+// aparece pequena na calçada, vista pelo vidro (pés em y≈240), passa pela
+// soleira e vem reto pelo corredor até a câmera, crescendo.
+const PORTA = { x: 326, y: 165, s: 0.3 }; // pés em (345, 240)
+const PERTO = { x: 292, y: 350, s: 1.4 }; // pés em (380, 700): já saiu por baixo
+// Onde o cliente para para ser atendido: na frente do balcão (pés em 505, 495).
+const BALCAO = { x: 442, y: 245, s: 1.0 };
 // Faixa da borda onde a IA ainda vê a pessoa cortada (≈ uma pessoa de largura).
 const MARGEM = 0.09;
 
@@ -79,7 +80,7 @@ const ANIM = {
     `<path class="zona" d="M120 290H900V530H40Z"/>${PESSOA}<text class="aviso za" x="480" y="110">alarme falso</text>`)}
     ${painel("zcerta", true, "Certo: só na frente do balcão",
     "Quem passa não dispara. Só quem <strong>para no balcão</strong> conta como ocupado.",
-    `<path class="zona" d="M440 300H610V525H440Z"/><g class="passante">${PESSOA}</g><g class="cliente">${PESSOA}</g><text class="okt zc" x="525" y="275">ocupado</text>`)}</div>`,
+    `<path class="zona" d="M430 285H610V525H430Z"/><g class="passante">${PESSOA}</g><g class="cliente">${PESSOA}</g><text class="okt zc" x="520" y="262">ocupado</text>`)}</div>`,
 };
 
 // ---------- Som do alerta (gerado na hora) ----------
@@ -124,9 +125,12 @@ function criarPessoa(svg, lado = "frente") {
     g,
     mover(x, y, escala = 1) {
       g.setAttribute("transform", `translate(${x} ${y}) scale(${escala})`);
-      const inteira = x >= 0 && y >= 0 && x + SPRITE.w * escala <= W && y + SPRITE.h * escala <= H;
+      // A IA só segue o centro dentro da área útil; na faixa da borda a pessoa
+      // está cortada e o centro não existe.
+      const c = { x: x + SPRITE.cx * escala, y: y + SPRITE.cy * escala };
+      const inteira = c.x >= W * MARGEM && c.x <= W * (1 - MARGEM) && c.y >= H * MARGEM && c.y <= H * (1 - MARGEM);
       mira.style.opacity = inteira ? 1 : 0;
-      return inteira ? { x: x + SPRITE.cx * escala, y: y + SPRITE.cy * escala } : null;
+      return inteira ? c : null;
     },
     posicionar(p) { return this.mover(p.x, p.y, p.s); },
     remover() { g.remove(); },
@@ -348,8 +352,8 @@ function exercicioAlerta(raiz, concluir) {
     const p = criarPessoa(svg);
     p.g.querySelector(".centro").style.display = "none"; // o cliente não vê a mira
     let anterior = null; let disparou = false;
-    await animar(3200, (k) => {
-      const c = p.posicionar(noTrajeto(k * 0.45, PORTA, PERTO));
+    await animar(3600, (k) => {
+      const c = p.posicionar(noTrajeto(k * 0.55, PORTA, PERTO));
       if (c && anterior && !disparou && cruzou(anterior, c, LINHA[0], LINHA[1])) {
         disparou = true;
         porta.classList.add("alerta"); flash.classList.add("pisca");
@@ -360,7 +364,7 @@ function exercicioAlerta(raiz, concluir) {
       anterior = c || anterior;
     });
     // vira e chega ao balcão
-    const meio = noTrajeto(0.45, PORTA, PERTO);
+    const meio = noTrajeto(0.55, PORTA, PERTO);
     await animar(1600, (k) => { const e = 1 - Math.pow(1 - k, 2); p.posicionar(noTrajeto(e, meio, BALCAO)); });
     balcao.classList.add("ocupado"); $("text", balcao).textContent = "Balcão · ocupado";
     await animar(1800, () => {});
@@ -418,7 +422,7 @@ const LICOES = [
   {
     id: "linha", titulo: "A linha de passagem", audio: "escola-02",
     texto: [
-      "A linha de passagem conta quem atravessa: porta de entrada, corredor, portão. Antes de desenhar, conheça a faixa da borda: em volta da imagem há uma margem, mais ou menos a largura de uma pessoa (uns 10%), onde a IA só vê a pessoa cortada, entrando ou saindo do quadro. Ali o centro não existe. Por isso, linha encostada na borda não conta nada. A borda ainda tem a distorção da lente e pega quem passa na calçada.",
+      "A linha de passagem conta quem atravessa: porta de entrada, corredor, portão. Antes de desenhar, conheça a faixa da borda: em volta da imagem há uma margem, mais ou menos a largura de uma pessoa (uns 10%), onde a IA só vê a pessoa cortada, entrando ou saindo do quadro. Ali o centro não existe. Por isso, linha encostada na borda não conta nada.",
       "Regra de ouro: linha atravessando o corredor inteiro, de parede a balcão, no meio do caminho, dentro da área útil.",
     ],
     anim: ["margem", "linha"],
@@ -450,7 +454,7 @@ const LICOES = [
     exercicio: exercicioSaude,
   },
   {
-    id: "pratica", titulo: "Da escolinha para a loja", audio: "escola-06",
+    id: "pratica", titulo: "Da formação para a loja", audio: "escola-06",
     texto: [
       "Você já sabe o que importa: a IA segue o centro, a linha vai no meio do caminho, a zona fica só onde a pessoa para, o cliente vê só balões, e a câmera avisa quando não enxerga. Agora é operar.",
       "Baixe o programa no computador que está na mesma rede das câmeras. Ele abre direto em Câmeras, procura tudo na rede, você digita a senha e a imagem aparece. Depois, em cada câmera, desenhe as regras ou peça: IA, sugira para mim. Ela observa um minuto e propõe a linha e a zona. Você só aceita.",
@@ -499,7 +503,7 @@ function desenharTrilha() {
     return el("li", {}, b);
   }));
   const n = LICOES.filter((l) => feitas[l.id]).length;
-  $("#trilha-progresso").textContent = n === LICOES.length ? "Escolinha concluída. Selo conquistado!" : `${n} de ${LICOES.length} lições feitas · progresso salvo neste navegador`;
+  $("#trilha-progresso").textContent = n === LICOES.length ? "Formação concluída. Selo conquistado!" : `${n} de ${LICOES.length} lições feitas · progresso salvo neste navegador`;
 }
 
 function ir(i) {
@@ -563,7 +567,7 @@ async function montarSelo(area) {
     area.replaceChildren(el("div", { class: "selo ganho" },
       (() => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#i-selo" })); return s; })(),
       el("div", {},
-        el("strong", {}, "Você concluiu a escolinha. Falta só gerar o seu selo."),
+        el("strong", {}, "Você concluiu a formação. Falta só gerar o seu selo."),
         el("p", { class: "tiny" }, "O selo leva o seu nome e a data, e fica numa página que você pode compartilhar no Instagram, no LinkedIn e no WhatsApp. Para isso, entre com a sua conta Google (sem senha nova)."),
         el("a", { class: "btn primary", href: `/api/auth/google?voltar=${encodeURIComponent("/aprender#pratica")}` }, "Entrar com Google e gerar o selo"))));
     return;

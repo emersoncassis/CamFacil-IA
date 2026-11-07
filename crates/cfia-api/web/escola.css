@@ -4,7 +4,7 @@
 .escola-badge { color: var(--accent); border-color: var(--accent); }
 .escola { width: 100%; max-width: 1180px; margin: 0 auto; padding: var(--s5); display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: var(--s6); align-items: start; flex: 1; }
 .trilha { position: sticky; top: 64px; }
-.trilha h2 { margin: 0 0 var(--s2); font-size: var(--fs-xl); letter-spacing: -0.015em; }
+.trilha h2 { margin: 0 0 var(--s2); font-size: var(--fs-xl); letter-spacing: -0.015em; text-wrap: balance; }
 .trilha .hint { margin: 0 0 var(--s4); }
 .trilha-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .trilha-item { display: flex; align-items: center; gap: var(--s3); width: 100%; padding: var(--s2) var(--s3); border: 1px solid transparent; border-radius: var(--r); background: none; color: var(--text-2); font: inherit; text-align: left; cursor: pointer; }
@@ -179,36 +179,36 @@
 .faixa .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
 
 /* Trajeto porta → câmera (mesmo da simulação): translate + scale */
-@keyframes cf-entra { from { transform: translate(350px, 233px) scale(.5); } to { transform: translate(290px, 330px) scale(1.4); } }
-@keyframes cf-entra-centro { 0% { opacity: 1; } 57% { opacity: 0; } }
+@keyframes cf-entra { from { transform: translate(326px, 165px) scale(.3); } to { transform: translate(292px, 350px) scale(1.4); } }
+@keyframes cf-entra-centro { 0% { opacity: 1; } 89% { opacity: 0; } }
 .visao .pessoa { animation: cf-entra 7s linear infinite; }
 .visao .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
 .borda .pessoa { animation: cf-entra 7s linear infinite; }
 .borda .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
 .borda .aviso { animation: cf-borda-aviso 7s steps(1, end) infinite; }
-@keyframes cf-borda-aviso { 0% { opacity: 0; } 62% { opacity: 1; } }
+@keyframes cf-borda-aviso { 0% { opacity: 0; } 92% { opacity: 1; } }
 .meio .pessoa { animation: cf-entra 7s linear infinite; }
 .meio .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
 .meio .p0 { animation: cf-p0 7s steps(1, end) infinite; }
 .meio .p1 { animation: cf-p1 7s steps(1, end) infinite; fill: var(--accent); }
 .meio .linha { animation: cf-flash 7s linear infinite; }
-@keyframes cf-p0 { 0% { opacity: 1; } 23% { opacity: 0; } }
-@keyframes cf-p1 { 0% { opacity: 0; } 23% { opacity: 1; } }
-@keyframes cf-flash { 0%, 21% { stroke-width: 7; } 23% { stroke-width: 18; } 31%, 100% { stroke-width: 7; } }
+@keyframes cf-p0 { 0% { opacity: 1; } 44% { opacity: 0; } }
+@keyframes cf-p1 { 0% { opacity: 0; } 44% { opacity: 1; } }
+@keyframes cf-flash { 0%, 42% { stroke-width: 7; } 44% { stroke-width: 18; } 52%, 100% { stroke-width: 7; } }
 .zgrande .pessoa { animation: cf-entra 7s linear infinite; }
 .zgrande .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
 .zgrande .zona { animation: cf-zona-falso 7s steps(1, end) infinite; }
 .zgrande .aviso { animation: cf-zona-falso-t 7s steps(1, end) infinite; }
-@keyframes cf-zona-falso { 0% { fill: rgba(6, 203, 63, .10); stroke: #fff; } 5% { fill: rgba(240, 106, 85, .35); stroke: var(--c-danger); } 60% { fill: rgba(6, 203, 63, .10); stroke: #fff; } }
-@keyframes cf-zona-falso-t { 0% { opacity: 0; } 5% { opacity: 1; } 60% { opacity: 0; } }
+@keyframes cf-zona-falso { 0% { fill: rgba(6, 203, 63, .10); stroke: #fff; } 27% { fill: rgba(240, 106, 85, .35); stroke: var(--c-danger); } 92% { fill: rgba(6, 203, 63, .10); stroke: #fff; } }
+@keyframes cf-zona-falso-t { 0% { opacity: 0; } 27% { opacity: 1; } 92% { opacity: 0; } }
 .zcerta .passante .pessoa { animation: cf-passante 7s linear infinite; }
 .zcerta .passante .centro { animation: cf-passante-centro 7s steps(1, end) infinite; }
 .zcerta .cliente .pessoa { animation: cf-cliente 7s ease-out infinite; }
 .zcerta .zona { animation: cf-zona-ok 7s steps(1, end) infinite; }
 .zcerta .okt { animation: cf-zona-ok-t 7s steps(1, end) infinite; }
-@keyframes cf-passante { 0% { transform: translate(350px, 233px) scale(.5); } 50%, 100% { transform: translate(290px, 330px) scale(1.4); } }
-@keyframes cf-passante-centro { 0% { opacity: 1; } 29% { opacity: 0; } }
-@keyframes cf-cliente { 0%, 50% { transform: translate(350px, 233px) scale(.5); opacity: 0; } 52% { opacity: 1; } 74%, 100% { transform: translate(455px, 262px) scale(.95); opacity: 1; } }
+@keyframes cf-passante { 0% { transform: translate(326px, 165px) scale(.3); } 50%, 100% { transform: translate(292px, 350px) scale(1.4); } }
+@keyframes cf-passante-centro { 0% { opacity: 1; } 45% { opacity: 0; } }
+@keyframes cf-cliente { 0%, 50% { transform: translate(326px, 165px) scale(.3); opacity: 0; } 52% { opacity: 1; } 74%, 100% { transform: translate(442px, 245px) scale(1); opacity: 1; } }
 @keyframes cf-zona-ok { 0% { fill: rgba(6, 203, 63, .10); stroke: #fff; } 74% { fill: rgba(6, 203, 63, .32); stroke: var(--accent); } }
 @keyframes cf-zona-ok-t { 0% { opacity: 0; } 74% { opacity: 1; } }
 
