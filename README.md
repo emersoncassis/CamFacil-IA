@@ -131,7 +131,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 
 ## <img src="docs/assets/icons/codigo.svg" width="22" alt=""/> Para quem programa
 
-- Produto: [`docs/PRD.md`](docs/PRD.md) · Arquitetura: [`docs/sdd/`](docs/sdd) · Decisões: [`docs/adr/`](docs/adr) · Visual: [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)
+- Produto: [`docs/PRD.md`](docs/PRD.md) · Arquitetura: [`docs/sdd/`](docs/sdd) · Decisões: [`docs/adr/`](docs/adr) · Visual: [`DESIGN.md`](DESIGN.md)
 - Desenvolvido com [Claude Code](https://claude.com/claude-code): veja [`CLAUDE.md`](CLAUDE.md), os agentes em `.claude/agents/` e as skills em `.claude/skills/`.
 - Quer criar um módulo de IA? Comece por [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

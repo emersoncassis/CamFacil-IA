@@ -1,32 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-label="Prévia da dashboard do CamFácil IA">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" role="img" aria-label="Prévia da dashboard do CamFácil IA">
   <style>
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
     .alert { animation: blink 1s steps(2, start) infinite; }
-    @keyframes blink { to { opacity: .35; } }
+    @keyframes blink { to { opacity: .4; } }
     @media (prefers-reduced-motion: reduce) { .alert { animation: none; } }
   </style>
-  <rect width="960" height="420" rx="16" fill="#163134"/>
-  <rect x="0" y="0" width="960" height="48" rx="16" fill="#035144"/>
-  <circle cx="28" cy="24" r="7" fill="#06CB3F"/>
-  <text x="46" y="30" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="17" font-weight="700">CamFácil IA</text>
-  <text x="760" y="30" fill="#B9B5B4" font-family="ui-monospace, monospace" font-size="13">CPU 23% · 3 câmeras</text>
+  <rect width="960" height="440" rx="12" fill="#000"/>
+  <rect x=".5" y=".5" width="959" height="439" rx="11.5" fill="none" stroke="#232323"/>
 
-  <rect x="24" y="68" width="440" height="248" rx="10" fill="#0B1A1C"/>
-  <text x="40" y="92" fill="#B9B5B4" font-family="ui-monospace, monospace" font-size="12">Câmera 1 · Portão</text>
-  <rect x="160" y="230" rx="14" width="176" height="28" fill="#FF9C9C" class="alert"/>
-  <circle cx="178" cy="244" r="5" fill="#0B1A1C"/>
-  <text x="192" y="249" fill="#0B1A1C" font-family="system-ui, sans-serif" font-size="13" font-weight="600">Cerca Portão · alerta</text>
+  <!-- trilho -->
+  <line x1="200" y1="0" x2="200" y2="440" stroke="#232323"/>
+  <rect x="20" y="20" width="18" height="18" rx="4" fill="#0a0a0a" stroke="#2e2e2e"/>
+  <circle cx="29" cy="29" r="2.5" fill="#06CB3F"/>
+  <text x="48" y="34" fill="#ededed" font-size="14" font-weight="600">CamFácil IA</text>
+  <text x="32" y="78" fill="#8a8a8a" font-size="13">Início</text>
+  <rect x="12" y="92" width="176" height="28" rx="6" fill="#111"/>
+  <text x="32" y="111" fill="#ededed" font-size="13">Câmeras</text>
+  <text x="32" y="144" fill="#8a8a8a" font-size="13">Módulos de IA</text>
+  <text x="32" y="174" fill="#8a8a8a" font-size="13">Integrações</text>
+  <circle cx="24" cy="410" r="3.5" fill="#06CB3F"/>
+  <text x="34" y="414" fill="#b4b4b4" font-size="12">Rodando nesta máquina</text>
 
-  <rect x="496" y="68" width="440" height="248" rx="10" fill="#0B1A1C"/>
-  <text x="512" y="92" fill="#B9B5B4" font-family="ui-monospace, monospace" font-size="12">Câmera 2 · Salão</text>
-  <rect x="560" y="150" rx="14" width="132" height="28" fill="#163134" fill-opacity=".85"/>
-  <circle cx="578" cy="164" r="5" fill="#06CB3F"/>
-  <text x="592" y="169" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="13">Mesa 1 · cheia</text>
-  <rect x="730" y="220" rx="14" width="138" height="28" fill="#163134" fill-opacity=".85"/>
-  <circle cx="748" cy="234" r="5" fill="#06CB3F"/>
-  <text x="762" y="239" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="13">Balcão · vazio</text>
+  <!-- conteúdo -->
+  <text x="232" y="48" fill="#ededed" font-size="20" font-weight="600">Câmeras</text>
+  <text x="232" y="70" fill="#8a8a8a" font-size="12">Viu o balão piscar? Alguém cruzou a cerca do portão.</text>
+  <rect x="842" y="32" width="96" height="28" rx="6" fill="#ededed"/>
+  <text x="858" y="51" fill="#000" font-size="12" font-weight="500">Buscar câmeras</text>
+  <line x1="232" y1="88" x2="938" y2="88" stroke="#232323"/>
 
-  <rect x="24" y="336" width="912" height="60" rx="10" fill="#035144"/>
-  <rect x="24" y="336" width="4" height="60" fill="#31BFEB"/>
-  <text x="44" y="362" fill="#31BFEB" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Agente guia</text>
-  <text x="44" y="383" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="14">Viu o balão piscar? Alguém cruzou a cerca do portão. Agora desenhe a sua cerca na câmera 3.</text>
+  <rect x="232" y="108" width="340" height="200" rx="6" fill="#0a0a0a" stroke="#232323"/>
+  <text x="246" y="128" fill="#8a8a8a" font-size="11" font-family="ui-monospace, monospace">CAM-01 · Portão</text>
+  <rect x="330" y="236" width="150" height="26" rx="13" fill="#FF9C9C" class="alert"/>
+  <circle cx="346" cy="249" r="3" fill="#000"/>
+  <text x="356" y="253" fill="#000" font-size="12" font-weight="600">Cerca Portão</text>
+
+  <rect x="598" y="108" width="340" height="200" rx="6" fill="#0a0a0a" stroke="#232323"/>
+  <text x="612" y="128" fill="#8a8a8a" font-size="11" font-family="ui-monospace, monospace">CAM-02 · Salão</text>
+  <rect x="640" y="168" width="118" height="26" rx="13" fill="#000" fill-opacity=".75" stroke="#2e2e2e"/>
+  <circle cx="656" cy="181" r="3" fill="#06CB3F"/>
+  <text x="666" y="185" fill="#ededed" font-size="12">Mesa 1 · cheia</text>
+  <rect x="780" y="236" width="128" height="26" rx="13" fill="#000" fill-opacity=".75" stroke="#2e2e2e"/>
+  <circle cx="796" cy="249" r="3" fill="#06CB3F"/>
+  <text x="806" y="253" fill="#ededed" font-size="12">Balcão · vazio</text>
+
+  <rect x="232" y="328" width="706" height="88" rx="6" fill="none" stroke="#232323"/>
+  <rect x="232.5" y="328.5" width="705" height="26" rx="5.5" fill="#0a0a0a"/>
+  <text x="248" y="346" fill="#8a8a8a" font-size="11">IP</text>
+  <text x="420" y="346" fill="#8a8a8a" font-size="11">Fabricante</text>
+  <text x="600" y="346" fill="#8a8a8a" font-size="11">MAC</text>
+  <text x="248" y="376" fill="#ededed" font-size="12" font-family="ui-monospace, monospace">192.168.1.108</text>
+  <text x="420" y="376" fill="#ededed" font-size="12">Intelbras</text>
+  <text x="600" y="376" fill="#ededed" font-size="12" font-family="ui-monospace, monospace">3C:EF:8C:1A:22:07</text>
+  <line x1="232" y1="388" x2="938" y2="388" stroke="#232323"/>
+  <text x="248" y="406" fill="#ededed" font-size="12" font-family="ui-monospace, monospace">192.168.1.109</text>
+  <text x="420" y="406" fill="#ededed" font-size="12">Hikvision</text>
+  <text x="600" y="406" fill="#ededed" font-size="12" font-family="ui-monospace, monospace">44:19:B6:7E:90:3A</text>
 </svg>

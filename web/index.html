@@ -3,108 +3,165 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
   <title>CamFácil IA</title>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="dot" aria-hidden="true"></span><strong>CamFácil IA</strong></div>
-    <nav class="tabs" role="tablist" aria-label="Seções">
-      <button role="tab" data-tab="inicio" aria-selected="true" data-i18n="tab.inicio"></button>
-      <button role="tab" data-tab="cameras" data-i18n="tab.cameras"></button>
-      <button role="tab" data-tab="modulos" data-i18n="tab.modulos"></button>
-      <button role="tab" data-tab="integracoes" data-i18n="tab.integracoes"></button>
-    </nav>
-    <div class="status mono" id="topstatus"></div>
-  </header>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></symbol>
+      <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 7h11v10H4z"/><path d="m15 11 5-3v8l-5-3"/></symbol>
+      <symbol id="i-chip" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/></symbol>
+      <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1 1 0 0 1 1-1h9"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+    </defs>
+  </svg>
 
-  <main>
-    <!-- Início -->
-    <section id="inicio" class="panel" role="tabpanel">
-      <aside class="guide"><p data-i18n="guia.inicio"></p></aside>
-      <div class="grid">
-        <article class="card">
-          <h2 data-i18n="inicio.maquina"></h2>
-          <dl class="kv" id="sysinfo"><dt>…</dt><dd></dd></dl>
-        </article>
-        <article class="card">
-          <h2 data-i18n="inicio.teste"></h2>
-          <p class="muted" data-i18n="inicio.teste_desc"></p>
-          <div id="bench-result" class="bench"></div>
-          <button class="btn primary" id="bench-run" data-i18n="inicio.teste_btn"></button>
-        </article>
+  <div class="shell">
+    <aside class="rail">
+      <div class="brand">
+        <img src="/icon.svg" width="22" height="22" alt="">
+        <span>CamFácil IA</span>
       </div>
-    </section>
+      <nav aria-label="Seções">
+        <ul class="nav" role="tablist">
+          <li><button role="tab" data-tab="inicio" aria-selected="true"><svg class="ico"><use href="#i-home"/></svg><span data-i18n="tab.inicio"></span></button></li>
+          <li><button role="tab" data-tab="cameras"><svg class="ico"><use href="#i-cam"/></svg><span data-i18n="tab.cameras"></span></button></li>
+          <li><button role="tab" data-tab="modulos"><svg class="ico"><use href="#i-chip"/></svg><span data-i18n="tab.modulos"></span></button></li>
+          <li><button role="tab" data-tab="integracoes"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="tab.integracoes"></span></button></li>
+        </ul>
+      </nav>
+      <div class="rail-foot">
+        <div class="live"><span class="dot" id="live-dot"></span><span id="live-text" data-i18n="status.conectando"></span></div>
+        <div class="tiny mono" id="rail-meta"></div>
+      </div>
+    </aside>
 
-    <!-- Câmeras -->
-    <section id="cameras" class="panel" role="tabpanel" hidden>
-      <aside class="guide"><p data-i18n="guia.cameras"></p></aside>
-      <div class="grid">
-        <article class="card">
-          <h2 data-i18n="cam.busca"></h2>
-          <p class="muted" data-i18n="cam.busca_desc"></p>
-          <button class="btn primary" id="discover" data-i18n="cam.busca_btn"></button>
-          <ul class="list" id="found"></ul>
-        </article>
-        <article class="card">
+    <main>
+      <!-- Início -->
+      <section id="inicio" class="page" role="tabpanel">
+        <header class="pagehead">
+          <div>
+            <h1 data-i18n="inicio.titulo"></h1>
+            <p class="lede" data-i18n="guia.inicio"></p>
+          </div>
+          <button class="btn primary" id="bench-run"><svg class="ico"><use href="#i-play"/></svg><span data-i18n="inicio.teste_btn"></span></button>
+        </header>
+
+        <div class="block">
+          <h2 data-i18n="inicio.teste"></h2>
+          <div id="bench-result"></div>
+        </div>
+
+        <div class="block">
+          <h2 data-i18n="inicio.maquina"></h2>
+          <dl class="rows" id="sysinfo"></dl>
+        </div>
+      </section>
+
+      <!-- Câmeras -->
+      <section id="cameras" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1 data-i18n="tab.cameras"></h1>
+            <p class="lede" data-i18n="guia.cameras"></p>
+          </div>
+          <button class="btn primary" id="discover"><svg class="ico"><use href="#i-search"/></svg><span data-i18n="cam.busca_btn"></span></button>
+        </header>
+
+        <div class="block">
+          <h2 data-i18n="cam.encontradas"></h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th data-i18n="cam.col_ip"></th><th data-i18n="cam.col_fab"></th><th data-i18n="cam.col_modelo"></th><th data-i18n="cam.col_mac"></th><th class="right"></th></tr></thead>
+              <tbody id="found"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="block">
           <h2 data-i18n="cam.gerador"></h2>
           <form id="rtsp-form" class="form" autocomplete="off">
-            <label><span data-i18n="cam.fabricante"></span><select name="fabricante" id="vendor"></select></label>
-            <label><span data-i18n="cam.ip"></span><input name="ip" required placeholder="192.168.1.108" class="mono"></label>
-            <div class="row">
-              <label><span data-i18n="cam.porta"></span><input name="porta" type="number" value="554" min="1" max="65535" class="mono"></label>
-              <label><span data-i18n="cam.canal"></span><input name="canal" type="number" value="1" min="1" class="mono"></label>
-            </div>
-            <div class="row">
-              <label><span data-i18n="cam.usuario"></span><input name="usuario" value="admin"></label>
-              <label><span data-i18n="cam.senha"></span><input name="senha" type="password"></label>
-            </div>
-            <fieldset class="seg">
+            <label class="span-2"><span data-i18n="cam.fabricante"></span><select name="fabricante" id="vendor"></select></label>
+            <label class="span-2"><span data-i18n="cam.ip"></span><input name="ip" required placeholder="192.168.1.108" class="mono" inputmode="decimal"></label>
+            <label><span data-i18n="cam.porta"></span><input name="porta" type="number" value="554" min="1" max="65535" class="mono"></label>
+            <label><span data-i18n="cam.canal"></span><input name="canal" type="number" value="1" min="1" class="mono"></label>
+            <label><span data-i18n="cam.usuario"></span><input name="usuario" value="admin"></label>
+            <label><span data-i18n="cam.senha"></span><input name="senha" type="password"></label>
+            <fieldset class="span-4">
               <legend data-i18n="cam.stream"></legend>
-              <label><input type="radio" name="stream" value="principal"> <span data-i18n="cam.principal"></span></label>
-              <label><input type="radio" name="stream" value="secundario" checked> <span data-i18n="cam.secundario"></span></label>
-              <label><input type="radio" name="stream" value="extra"> <span data-i18n="cam.extra"></span></label>
+              <div class="seg" role="radiogroup">
+                <label><input type="radio" name="stream" value="principal"><span data-i18n="cam.principal"></span></label>
+                <label><input type="radio" name="stream" value="secundario" checked><span data-i18n="cam.secundario"></span></label>
+                <label><input type="radio" name="stream" value="extra"><span data-i18n="cam.extra"></span></label>
+              </div>
+              <p class="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="cam.dica_secundario"></span></p>
             </fieldset>
-            <p class="hint" data-i18n="cam.dica_secundario"></p>
-            <div class="actions">
+            <div class="actions span-4">
               <button class="btn primary" type="submit" data-i18n="cam.gerar"></button>
               <button class="btn" type="button" id="rtsp-test" data-i18n="cam.testar"></button>
             </div>
           </form>
-          <div id="rtsp-out" class="out" hidden>
+          <div id="rtsp-out" class="result" hidden>
             <code class="mono" id="rtsp-url"></code>
-            <button class="btn small" id="rtsp-copy" data-i18n="cam.copiar"></button>
+            <button class="btn ghost sm" id="rtsp-copy" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="cam.copiar"></span></button>
           </div>
           <p id="rtsp-msg" class="msg" role="status"></p>
-        </article>
-      </div>
-    </section>
+        </div>
+      </section>
 
-    <!-- Módulos de IA -->
-    <section id="modulos" class="panel" role="tabpanel" hidden>
-      <aside class="guide"><p data-i18n="guia.modulos"></p></aside>
-      <div class="levels" id="levels"></div>
-    </section>
+      <!-- Módulos de IA -->
+      <section id="modulos" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1 data-i18n="tab.modulos"></h1>
+            <p class="lede" data-i18n="guia.modulos"></p>
+          </div>
+        </header>
+        <div class="block">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th data-i18n="mod.col_modulo"></th><th data-i18n="mod.col_nivel"></th><th data-i18n="mod.col_estado"></th><th class="right" data-i18n="mod.col_ativo"></th></tr></thead>
+              <tbody id="levels"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-    <!-- Integrações -->
-    <section id="integracoes" class="panel" role="tabpanel" hidden>
-      <aside class="guide"><p data-i18n="guia.integracoes"></p></aside>
-      <div class="grid">
-        <article class="card soon"><h2>Telegram</h2><p class="muted" data-i18n="int.telegram"></p><span class="tag" data-i18n="em_breve"></span></article>
-        <article class="card soon"><h2>WhatsApp</h2><p class="muted" data-i18n="int.whatsapp"></p><span class="tag" data-i18n="em_breve"></span></article>
-        <article class="card soon"><h2 data-i18n="int.marca"></h2><p class="muted" data-i18n="int.marca_desc"></p><span class="tag" data-i18n="em_breve"></span></article>
-      </div>
-    </section>
-  </main>
+      <!-- Integrações -->
+      <section id="integracoes" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1 data-i18n="tab.integracoes"></h1>
+            <p class="lede" data-i18n="guia.integracoes"></p>
+          </div>
+        </header>
+        <div class="block">
+          <ul class="list">
+            <li><div><strong>Telegram</strong><p data-i18n="int.telegram"></p></div><span class="badge" data-i18n="em_breve"></span></li>
+            <li><div><strong>WhatsApp</strong><p data-i18n="int.whatsapp"></p></div><span class="badge" data-i18n="em_breve"></span></li>
+            <li><div><strong data-i18n="int.marca"></strong><p data-i18n="int.marca_desc"></p></div><span class="badge" data-i18n="em_breve"></span></li>
+          </ul>
+        </div>
+      </section>
 
-  <footer class="foot muted" data-i18n="rodape"></footer>
+      <footer class="foot" data-i18n="rodape"></footer>
+    </main>
+  </div>
 
   <dialog id="disclaimer" aria-labelledby="disc-title">
     <h2 id="disc-title" data-i18n="isencao.titulo"></h2>
     <ol class="disc" id="disc-list"></ol>
-    <button class="btn primary" id="disc-ok" data-i18n="isencao.aceito"></button>
+    <div class="actions end">
+      <button class="btn primary" id="disc-ok" data-i18n="isencao.aceito"></button>
+    </div>
   </dialog>
 
   <script src="/app.js"></script>

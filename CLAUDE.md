@@ -5,14 +5,14 @@ Ferramenta open source (AGPL-3.0) em Rust para instaladores de CFTV aprenderem e
 ## Leia antes de codar (só o necessário para a tarefa)
 - Produto: `docs/PRD.md`
 - Núcleo: `docs/sdd/SDD-01-nucleo.md` · Módulos: `SDD-02` · Educação: `SDD-03` · Integrações: `SDD-04` · Rede: `SDD-05` · App/TV/Web: `SDD-06` · Modo estúdio: `SDD-07` · LGPD: `docs/legal/`
-- Decisões: `docs/adr/` · Visual: `docs/DESIGN_SYSTEM.md` e `web/tokens.css`
+- Decisões: `docs/adr/` · Visual: `DESIGN.md` e `web/tokens.css` (redesign com a skill `impeccable`)
 
 ## Regras inegociáveis
 1. **Leveza primeiro.** Núcleo ocioso < 50 MB RAM, < 2% CPU, binário < 30 MB. Toda dependência nova: justificar no PR (tamanho e custo). Prefira `default-features = false`.
 2. **Sem Node/Python/Docker no caminho de execução.** Front = HTML + CSS + JS puro embutido no binário.
 3. **Offline-first.** Nada essencial depende de nuvem.
 4. **Visual limpo.** Nunca desenhar caixas/máscaras do YOLO para o cliente; só o balão com o nome da regra.
-5. **CSS só com tokens** de `web/tokens.css`.
+5. **CSS só com tokens** de `web/tokens.css`. Base preta, verde só em detalhes (ver `DESIGN.md`).
 6. **Escopo**: não implementar painel multicliente, busca em gravações, ronda virtual nem gravação contínua (PRD §6).
 7. **Segurança**: segredos cifrados; MCP desligado por padrão; ações físicas (portão/relé) exigem confirmação e log.
 8. Textos de interface em **pt-BR**, em arquivos de tradução.

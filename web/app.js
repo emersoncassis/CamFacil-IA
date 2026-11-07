@@ -20,8 +20,18 @@ function el(tag, attrs = {}, ...children) {
   for (const [k, v] of Object.entries(attrs)) {
     if (k === "class") e.className = v; else e.setAttribute(k, v);
   }
-  for (const c of children) e.append(c);
+  for (const c of children) if (c != null) e.append(c);
   return e;
+}
+
+function icon(id, cls = "ico sm") {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("class", cls);
+  const use = document.createElementNS(ns, "use");
+  use.setAttribute("href", "#" + id);
+  svg.append(use);
+  return svg;
 }
 
 function msg(text, kind) {
@@ -30,7 +40,13 @@ function msg(text, kind) {
   m.className = "msg " + (kind || "");
 }
 
-// ---------- Abas ----------
+function busy(btn, on, labelKey) {
+  btn.disabled = on;
+  const span = btn.querySelector("span[data-i18n]") || btn;
+  span.textContent = t(on ? labelKey : span.dataset.i18n || labelKey);
+}
+
+// ---------- Navegação ----------
 function showTab(id) {
   document.querySelectorAll("[role=tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
   document.querySelectorAll("[role=tabpanel]").forEach((p) => { p.hidden = p.id !== id; });
@@ -38,7 +54,7 @@ function showTab(id) {
   if (id === "modulos") renderLevels();
 }
 
-// ---------- Início ----------
+// ---------- Visão geral ----------
 let level = null;
 
 async function loadSystem() {
@@ -50,58 +66,69 @@ async function loadSystem() {
       ["sys.cpu", s.cpu_brand || "—"],
       ["sys.nucleos", s.cpu_cores],
       ["sys.uso", s.cpu_usage.toFixed(0) + "%"],
-      ["sys.ram", `${s.ram_used_mb} / ${s.ram_total_mb} MB`],
+      ["sys.ram", `${s.ram_used_mb.toLocaleString("pt-BR")} de ${s.ram_total_mb.toLocaleString("pt-BR")} MB`],
       ["sys.self", s.self_ram_mb != null ? s.self_ram_mb + " MB" : "—"],
       ["sys.versao", s.version],
     ];
-    const dl = $("#sysinfo");
-    dl.replaceChildren(...rows.flatMap(([k, v]) => [el("dt", {}, t(k)), el("dd", {}, String(v))]));
-    $("#topstatus").textContent = `CPU ${s.cpu_usage.toFixed(0)}% · RAM ${s.ram_used_mb} MB`;
+    $("#sysinfo").replaceChildren(...rows.flatMap(([k, v]) => [el("dt", {}, t(k)), el("dd", {}, String(v))]));
+    $("#live-dot").className = "dot on";
+    $("#live-text").textContent = t("status.online");
+    $("#rail-meta").textContent = `CPU ${s.cpu_usage.toFixed(0)}% · ${s.self_ram_mb ?? "—"} MB · v${s.version}`;
   } catch (_) {
-    $("#topstatus").textContent = t("erro.rede");
+    $("#live-dot").className = "dot off";
+    $("#live-text").textContent = t("status.offline");
   }
 }
 
 function renderBench(r) {
   const box = $("#bench-result");
-  if (!r) { box.replaceChildren(el("p", { class: "muted" }, t("inicio.nunca"))); return; }
-  const m = (v, k) => el("div", { class: "metric" }, el("strong", {}, String(v)), el("span", {}, t(k)));
+  if (!r) { box.replaceChildren(el("p", { class: "hint" }, t("inicio.nunca"))); return; }
+  const cell = (k, v, cls) => el("div", {}, el("dt", {}, t(k)), el("dd", { class: cls || "" }, String(v)));
   box.replaceChildren(
-    m(t("nivel." + r.nivel), "inicio.nivel"),
-    m(r.fps_estimado, "inicio.fps"),
-    m(r.cameras_medio, "inicio.cams"),
+    el("dl", { class: "measure" },
+      cell("inicio.nivel", t("nivel." + r.nivel), "on"),
+      cell("inicio.fps", r.fps_estimado.toLocaleString("pt-BR")),
+      cell("inicio.cams", r.cameras_medio)),
+    el("p", { class: "hint" }, t("inicio.nota")),
   );
 }
 
 async function runBench() {
   const b = $("#bench-run");
-  b.disabled = true; b.textContent = t("inicio.testando");
+  busy(b, true, "inicio.testando");
   try {
     const { resultado } = await api("/api/bench", {});
     level = resultado.nivel;
     renderBench(resultado);
-  } catch (e) { renderBench(null); }
-  b.disabled = false; b.textContent = t("inicio.teste_btn");
+  } catch (_) { renderBench(null); }
+  busy(b, false, "inicio.teste_btn");
 }
 
 // ---------- Módulos ----------
-const LEVELS = [
-  { id: "leve", cor: "var(--cf-green)", mods: ["Movimento inteligente", "Cerca e linha virtual", "Saúde das câmeras"] },
-  { id: "medio", cor: "var(--cf-warn)", mods: ["Pessoas e veículos", "Contagem", "Permanência", "Mapa de calor"] },
-  { id: "pesado", cor: "var(--cf-danger)", mods: ["Leitura de placas", "Reconhecimento facial"] },
+const MODULES = [
+  ["leve", ["Movimento inteligente", "Cerca e linha virtual", "Saúde das câmeras"]],
+  ["medio", ["Pessoas e veículos", "Contagem", "Permanência", "Mapa de calor"]],
+  ["pesado", ["Leitura de placas", "Reconhecimento facial"]],
 ];
 const RANK = { leve: 0, medio: 1, pesado: 2 };
 
 function renderLevels() {
-  const wrap = $("#levels");
-  wrap.replaceChildren(...LEVELS.map((l) => {
-    const locked = level == null ? l.id !== "leve" : RANK[l.id] > RANK[level];
-    const note = level == null && l.id !== "leve" ? t("nivel.faca_teste") : locked ? t("nivel.bloqueado") : t("nivel.em_breve");
-    return el("article", { class: "card level" + (locked ? " locked" : "") },
-      el("h2", {}, el("span", { class: "pip", style: `background:${l.cor}` }), t("nivel." + l.id)),
-      el("ul", {}, ...l.mods.map((m) => el("li", {}, m))),
-      el("p", { class: locked ? "lock" : "muted" }, note));
-  }));
+  const rows = [];
+  for (const [lv, mods] of MODULES) {
+    const untested = level == null && lv !== "leve";
+    const locked = untested || (level != null && RANK[lv] > RANK[level]);
+    const stateText = untested ? t("mod.testar") : locked ? t("mod.bloqueado") : t("mod.disponivel");
+    for (const name of mods) {
+      const sw = el("label", { class: "switch", title: stateText },
+        el("input", { type: "checkbox", disabled: "", "aria-label": name }), el("span"));
+      rows.push(el("tr", { class: locked ? "locked" : "" },
+        el("td", {}, name),
+        el("td", {}, t("nivel." + lv)),
+        el("td", {}, el("span", { class: "state" }, locked ? icon("i-lock") : null, stateText)),
+        el("td", { class: "right" }, sw)));
+    }
+  }
+  $("#levels").replaceChildren(...rows);
 }
 
 // ---------- Câmeras ----------
@@ -133,7 +160,7 @@ async function buildRtsp(ev) {
 
 async function testRtsp() {
   const d = formData();
-  if (!d.ip) { msg(t("cam.ip"), "err"); return; }
+  if (!d.ip) { msg(t("cam.ip"), "err"); $("#rtsp-form").ip.focus(); return; }
   const b = $("#rtsp-test");
   b.disabled = true; b.textContent = t("cam.testando");
   try {
@@ -147,14 +174,18 @@ async function copyRtsp() {
   try { await navigator.clipboard.writeText(lastUrl); msg(t("cam.copiado"), "ok"); } catch (_) { /* sem permissão */ }
 }
 
+function emptyRow(text) {
+  return el("tr", { class: "empty" }, el("td", { colspan: "5" }, text));
+}
+
 async function discover() {
-  const b = $("#discover"); const list = $("#found");
-  b.disabled = true; b.textContent = t("cam.buscando");
+  const b = $("#discover"); const body = $("#found");
+  busy(b, true, "cam.buscando");
   try {
     const { cameras } = await api("/api/discover");
-    if (!cameras.length) list.replaceChildren(el("li", {}, el("small", {}, t("cam.nenhuma"))));
-    else list.replaceChildren(...cameras.map((c) => {
-      const use = el("button", { class: "btn small", type: "button" }, t("cam.usar"));
+    if (!cameras.length) body.replaceChildren(emptyRow(t("cam.nenhuma")));
+    else body.replaceChildren(...cameras.map((c) => {
+      const use = el("button", { class: "btn sm", type: "button" }, t("cam.usar"));
       use.onclick = () => {
         const f = $("#rtsp-form");
         f.ip.value = c.ip;
@@ -162,13 +193,15 @@ async function discover() {
         if ([...f.fabricante.options].some((o) => o.value === v)) f.fabricante.value = v;
         f.senha.focus();
       };
-      const desc = [c.fabricante, c.modelo].filter(Boolean).join(" · ") || c.nome || "";
-      return el("li", {},
-        el("div", {}, el("div", { class: "mono" }, c.ip), el("small", {}, [desc, c.mac].filter(Boolean).join(" · "))),
-        use);
+      return el("tr", {},
+        el("td", { class: "mono" }, c.ip),
+        el("td", {}, c.fabricante || "—"),
+        el("td", {}, c.modelo || c.nome || "—"),
+        el("td", { class: "mono" }, c.mac || "—"),
+        el("td", { class: "right" }, use));
     }));
-  } catch (e) { list.replaceChildren(el("li", {}, el("small", {}, e.message))); }
-  b.disabled = false; b.textContent = t("cam.busca_btn");
+  } catch (e) { body.replaceChildren(emptyRow(e.message)); }
+  busy(b, false, "cam.busca_btn");
 }
 
 // ---------- Isenção ----------
@@ -195,10 +228,11 @@ async function main() {
   $("#rtsp-test").onclick = testRtsp;
   $("#rtsp-copy").onclick = copyRtsp;
   $("#discover").onclick = discover;
+  $("#found").replaceChildren(emptyRow(t("cam.vazio")));
 
   const { fabricantes } = await api("/api/rtsp/vendors");
   $("#vendor").replaceChildren(...fabricantes.map((f) =>
-    el("option", { value: f.id }, f.tambem.length ? `${f.nome} (padrão ${f.tambem.join(", ")})` : f.nome)));
+    el("option", { value: f.id }, f.tambem.length ? `${f.nome} (mesmo padrão: ${f.tambem.join(", ")})` : f.nome)));
 
   const { resultado } = await api("/api/bench");
   renderBench(resultado);
