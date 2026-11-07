@@ -36,6 +36,13 @@ camfacil (binário)
 - **Frontend**: HTML + CSS (tokens) + JS sem framework, embutido com `include_dir`/`rust-embed`. Sem build de Node no caminho crítico.
 - **Configuração**: um único `camfacil.toml` + SQLite; tudo exportável para o backup.
 - **Pastas**: `%PROGRAMDATA%\CamFacil` (Windows), `~/.local/share/camfacil` (Linux).
+- **Portas sem conflito**: na instalação e a cada inicialização, o núcleo verifica quais portas estão livres antes de ocupar qualquer uma, para nunca conflitar com o PDV, o NVR ou outro software do cliente.
+  - Ordem de tentativa: porta salva → 7070 → faixa 7071–7099 → porta livre escolhida pelo sistema (bind em `:0`).
+  - Porta escolhida gravada em `camfacil.toml`; a dashboard mostra o endereço real e o QR de pareamento já usa essa porta.
+  - Escuta só em `127.0.0.1` e na interface da VPN por padrão; expor na LAN é opção explícita.
+  - Nunca usa portas comuns de PDV/ERP/NVR (lista negra configurável: 80, 443, 554, 1433, 3050, 3306, 5432, 8000, 8080, 37777…).
+  - O mesmo vale para gateway, MCP e quiosque.
+- **VPN embutida (sem abrir portas)**: acesso remoto pelo app Android e pelo técnico via Tailscale, sem port forwarding no roteador do cliente (ADR-0005).
 
 ## Instalação
 - Linux: `curl -fsSL https://.../install.sh | sh` → baixa o binário da release, cria serviço systemd.
