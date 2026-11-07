@@ -56,9 +56,9 @@ const ARQUIVOS: &[Arquivo] = &[
     arq!("/img/selo-og.png", "image/png", "web/img/selo-og.png"),
     // Narração na voz do autor (Voice Studio, Opus mono 24 kbps).
     arq!(
-        "/audio/escola-00-intro.ogg",
+        "/audio/escola-00-abertura.ogg",
         "audio/ogg",
-        "web/audio/escola-00-intro.ogg"
+        "web/audio/escola-00-abertura.ogg"
     ),
     arq!(
         "/audio/escola-01.ogg",
