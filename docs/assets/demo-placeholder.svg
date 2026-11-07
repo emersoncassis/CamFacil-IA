@@ -27,6 +27,6 @@
 
   <rect x="24" y="336" width="912" height="60" rx="10" fill="#035144"/>
   <rect x="24" y="336" width="4" height="60" fill="#31BFEB"/>
-  <text x="44" y="362" fill="#31BFEB" font-family="system-ui, sans-serif" font-size="13" font-weight="700">🔊 Agente guia</text>
+  <text x="44" y="362" fill="#31BFEB" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Agente guia</text>
   <text x="44" y="383" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="14">Viu o balão piscar? Alguém cruzou a cerca do portão. Agora desenhe a sua cerca na câmera 3.</text>
 </svg>
