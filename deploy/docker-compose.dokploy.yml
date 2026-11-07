@@ -1,0 +1,49 @@
+# Deploy no Dokploy (tipo "Docker Compose"), apontando para este arquivo.
+# Variáveis em Environment do Dokploy:
+#   POSTGRES_PASSWORD, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+# Domínio: em Domains, cfia.ysafe.com.br → serviço cfia-api, porta 8080, HTTPS ligado.
+services:
+  cfia-api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://cfia:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@cfia-db:5432/cfia
+      BASE_URL: https://cfia.ysafe.com.br
+      PORT: "8080"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      cfia-db:
+        condition: service_healthy
+    expose:
+      - "8080"
+    networks:
+      - interna
+      - dokploy-network
+
+  cfia-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cfia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+      POSTGRES_DB: cfia
+    volumes:
+      - cfia-db-dados:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cfia -d cfia"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - interna
+
+volumes:
+  cfia-db-dados:
+
+networks:
+  interna:
+  dokploy-network:
+    external: true

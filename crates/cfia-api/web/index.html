@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>CamFácil IA</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/tokens.css">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true">
+    <defs>
+      <symbol id="i-agent" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M9 20h6M12 16v4"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l2 2M14 9l2 2"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+      <symbol id="i-out" viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></symbol>
+      <symbol id="i-google" viewBox="0 0 24 24"><path d="M20 12.2c0-.6 0-1.1-.1-1.7H12v3.3h4.5a3.9 3.9 0 0 1-1.7 2.5v2h2.7c1.6-1.4 2.5-3.6 2.5-6.1z" fill="currentColor" stroke="none"/><path d="M12 20.5c2.3 0 4.2-.8 5.5-2.1l-2.7-2a5 5 0 0 1-7.5-2.6H4.5v2.1A8.5 8.5 0 0 0 12 20.5z" fill="currentColor" stroke="none" opacity=".75"/><path d="M7.3 13.8a5 5 0 0 1 0-3.6V8H4.5a8.5 8.5 0 0 0 0 7.8z" fill="currentColor" stroke="none" opacity=".55"/><path d="M12 7.3c1.3 0 2.4.4 3.3 1.3l2.4-2.4A8.5 8.5 0 0 0 4.5 8l2.8 2.2A5 5 0 0 1 12 7.3z" fill="currentColor" stroke="none" opacity=".85"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Entrada -->
+  <section id="entrar" class="gate" hidden>
+    <div class="gate-box">
+      <img src="/icon.svg" width="40" height="40" alt="">
+      <h1>CamFácil IA</h1>
+      <p class="lede">Entre para parear e acompanhar os Agentes-Cam-Elo-IA instalados nos seus clientes.</p>
+      <a class="btn primary wide" href="/api/auth/google"><svg class="ico"><use href="#i-google"/></svg><span>Entrar com Google</span></a>
+      <p class="msg err" id="entrar-erro" role="alert"></p>
+      <p class="tiny">O vídeo das câmeras nunca passa por este site. <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></p>
+    </div>
+  </section>
+
+  <!-- App -->
+  <div class="shell" id="app" hidden>
+    <aside class="rail">
+      <div class="brand"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></div>
+      <nav aria-label="Seções">
+        <ul class="nav" role="tablist">
+          <li><button role="tab" data-tab="agentes" aria-selected="true"><svg class="ico"><use href="#i-agent"/></svg><span>Agentes</span></button></li>
+          <li><button role="tab" data-tab="dispositivos"><svg class="ico"><use href="#i-key"/></svg><span>Dispositivos</span></button></li>
+        </ul>
+      </nav>
+      <div class="rail-foot">
+        <div class="live"><span class="dot" id="live-dot"></span><span id="eu-email"></span></div>
+        <button class="btn ghost sm" id="sair"><svg class="ico sm"><use href="#i-out"/></svg><span>Sair</span></button>
+      </div>
+    </aside>
+
+    <main>
+      <!-- Agentes -->
+      <section id="agentes" class="page" role="tabpanel">
+        <header class="pagehead">
+          <div>
+            <h1>Agentes</h1>
+            <p class="lede">Cada Agente-Cam-Elo-IA instalado num cliente aparece aqui depois do pareamento. Só você vê os seus.</p>
+          </div>
+          <button class="btn primary" id="como-parear"><svg class="ico"><use href="#i-link"/></svg><span>Parear agente</span></button>
+        </header>
+        <div class="block" id="passos" hidden>
+          <h2>Como parear</h2>
+          <ol class="steps">
+            <li>No computador do cliente, abra o CamFácil IA e vá em <strong>Integrações → Parear com o site</strong>.</li>
+            <li>Aponte a câmera do celular para o QR code que aparecer. Ele abre esta página já com o código.</li>
+            <li>Confirme aqui e depois clique em <strong>Confirmar</strong> na tela do cliente. O código vale 10 minutos e só funciona uma vez.</li>
+          </ol>
+        </div>
+        <div class="block">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Cliente</th><th>Situação</th><th>Impressão</th><th>Versão</th><th class="right">Pareado em</th></tr></thead>
+              <tbody id="lista-agentes"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dispositivos -->
+      <section id="dispositivos" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1>Dispositivos</h1>
+            <p class="lede">Cada navegador onde você entrou tem uma chave própria. Os agentes só aceitam comandos dos dispositivos autorizados no pareamento. Revogue os que você não usa mais.</p>
+          </div>
+        </header>
+        <div class="block">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Dispositivo</th><th>Impressão</th><th>Criado em</th><th class="right"></th></tr></thead>
+              <tbody id="lista-dispositivos"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Parear -->
+      <section id="parear" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1>Parear agente</h1>
+            <p class="lede">Confira se a impressão abaixo é a mesma que aparece na tela do cliente.</p>
+          </div>
+        </header>
+        <div class="block">
+          <dl class="rows">
+            <dt>Impressão do agente</dt><dd class="mono" id="par-impressao">—</dd>
+            <dt>Sua conta</dt><dd id="par-conta">—</dd>
+          </dl>
+          <div class="actions mt">
+            <button class="btn primary" id="par-confirmar">Confirmar pareamento</button>
+            <button class="btn" id="par-cancelar" type="button">Cancelar</button>
+          </div>
+          <p class="msg" id="par-msg" role="status"></p>
+        </div>
+      </section>
+
+      <footer class="foot">Ambiente de aprendizagem e validação, sem garantias (AGPL-3.0). <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></footer>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
