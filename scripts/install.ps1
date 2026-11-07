@@ -29,5 +29,6 @@ $s.TargetPath = $exe
 $s.WorkingDirectory = $dir
 $s.Save()
 
-Write-Host 'Pronto. Atalho criado na area de trabalho. Abrindo...'
+& $exe --autoiniciar | Out-Null
+Write-Host 'Pronto. Atalho criado na area de trabalho e o programa vai abrir junto com o Windows. Abrindo...'
 Start-Process $exe

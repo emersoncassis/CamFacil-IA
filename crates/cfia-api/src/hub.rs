@@ -251,6 +251,29 @@ pub(crate) async fn tratar_agente(
     match v["tipo"].as_str().unwrap_or("") {
         "ping" => responder(json!({"tipo": "pong"})),
 
+        // Resumo periódico do que o agente está vendo. Guarda o último e
+        // repassa ao técnico dono, se ele estiver com o painel aberto.
+        "estado" => {
+            let estado = limpar_estado(&v["estado"]);
+            let mut c = state.db.get().await?;
+            let tx = db::begin(&mut c, Ctx::Sistema).await?;
+            let dono: Option<Uuid> = tx
+                .query_opt(
+                    "UPDATE agentes SET estado = $2, estado_em = now(), ultimo_contato = now()
+                     WHERE id = $1 RETURNING dono_id",
+                    &[&agente, &estado],
+                )
+                .await?
+                .and_then(|r| r.get(0));
+            tx.commit().await?;
+            if let Some(d) = dono {
+                state.hub.para_tecnico(
+                    &d,
+                    json!({"tipo": "estado", "agente_id": agente, "estado": estado}),
+                );
+            }
+        }
+
         // O agente gerou um código e mostra o QR; o servidor guarda só o hash.
         "novo_codigo" => {
             let hash = v["codigo_hash"].as_str().unwrap_or("");
@@ -377,6 +400,69 @@ pub(crate) async fn tratar_agente(
     Ok(())
 }
 
+/// Aceita só os campos conhecidos, com tamanho limitado: o agente não
+/// consegue encher o banco nem mandar o que não deve (imagem, senha, URL).
+pub(crate) fn limpar_estado(v: &Value) -> Value {
+    let txt = |x: &Value, n: usize| -> Value {
+        x.as_str()
+            .map(|s| Value::String(s.chars().take(n).collect()))
+            .unwrap_or(Value::Null)
+    };
+    let num = |x: &Value| {
+        x.as_f64()
+            .filter(|f| f.is_finite())
+            .map(|f| json!((f * 10.0).round() / 10.0))
+            .unwrap_or(Value::Null)
+    };
+    let cameras: Vec<Value> = v["cameras"]
+        .as_array()
+        .map(|a| {
+            a.iter()
+                .take(64)
+                .map(|c| {
+                    json!({
+                        "nome": txt(&c["nome"], 60),
+                        "online": c["online"].as_bool().unwrap_or(false),
+                        "fps": num(&c["fps"]),
+                        "erro": txt(&c["erro"], 120),
+                        "saude": txt(&c["saude"], 30),
+                        "regras": c["regras"].as_u64().unwrap_or(0).min(100),
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let alertas: Vec<Value> = v["alertas"]
+        .as_array()
+        .map(|a| {
+            a.iter()
+                .take(20)
+                .map(|e| {
+                    json!({
+                        "camera": txt(&e["camera"], 60),
+                        "regra": txt(&e["regra"], 60),
+                        "tipo": txt(&e["tipo"], 30),
+                        "quando": e["quando"].as_i64(),
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    json!({
+        "cameras": cameras,
+        "alertas": alertas,
+        "cpu": num(&v["cpu"]),
+        "ram_usada_mb": v["ram_usada_mb"].as_u64(),
+        "ram_total_mb": v["ram_total_mb"].as_u64(),
+        "proprio_mb": v["proprio_mb"].as_u64(),
+        "sistema": txt(&v["sistema"], 80),
+        "maquina": txt(&v["maquina"], 80),
+        "versao": txt(&v["versao"], 20),
+        "ligado_s": v["ligado_s"].as_u64(),
+        "modulos": v["modulos"].as_array().map(|a| a.iter().take(10).map(|m| txt(m, 20)).collect::<Vec<_>>()),
+    })
+}
+
 // ---------------------------------------------------------------------------
 // Painel (navegador do técnico)
 // ---------------------------------------------------------------------------
@@ -473,5 +559,29 @@ mod tests {
         assert!(verificar_agente(&pk, &sig, "abc"));
         assert!(!verificar_agente(&pk, &sig, "outro"));
         assert!(!verificar_agente("lixo", &sig, "abc"));
+    }
+}
+
+#[cfg(test)]
+mod testes_estado {
+    use super::limpar_estado;
+    use serde_json::json;
+
+    #[test]
+    fn so_passa_o_que_e_conhecido_e_corta_tamanho() {
+        let e = limpar_estado(&json!({
+            "cameras": [{"nome": "x".repeat(500), "online": true, "fps": 5.04, "url": "rtsp://admin:senha@1.2.3.4/", "senha": "123"}],
+            "imagem": "base64...",
+            "cpu": 12.345,
+            "alertas": (0..50).map(|i| json!({"camera": "Portão", "tipo": "linha_cruzada", "quando": i})).collect::<Vec<_>>(),
+        }));
+        let s = e.to_string();
+        assert!(!s.contains("rtsp://") && !s.contains("senha") && !s.contains("imagem"));
+        assert_eq!(
+            e["cameras"][0]["nome"].as_str().unwrap().chars().count(),
+            60
+        );
+        assert_eq!(e["alertas"].as_array().unwrap().len(), 20);
+        assert_eq!(e["cpu"], json!(12.3));
     }
 }

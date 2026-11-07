@@ -25,5 +25,6 @@ if ! command -v ffmpeg >/dev/null 2>&1; then
 fi
 
 case ":$PATH:" in *":$DEST:"*) ;; *) echo "Dica: para abrir depois, rode $DEST/camfacil" ;; esac
+"$DEST/camfacil" --autoiniciar || true
 echo "Pronto. Abrindo o CamFácil IA no navegador…"
 exec "$DEST/camfacil"

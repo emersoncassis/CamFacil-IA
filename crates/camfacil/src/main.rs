@@ -5,8 +5,10 @@
 
 mod api;
 mod assets;
+mod autoinicio;
 mod elo;
 mod painel;
+mod resumo;
 mod video;
 
 use cf_core::{paths, ports, store::Store};
@@ -41,6 +43,13 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|a| a == "--version" || a == "-V") {
         println!("camfacil {}", cf_core::VERSION);
+        return Ok(());
+    }
+    if args.iter().any(|a| a == "--autoiniciar") {
+        match autoinicio::definir(true) {
+            Ok(()) => println!("O CamFácil IA vai abrir junto com o computador."),
+            Err(e) => println!("Não deu para ligar a inicialização automática: {e}"),
+        }
         return Ok(());
     }
     if args.iter().any(|a| a == "--testar-site") {
@@ -91,6 +100,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let video = video::Video::new(store.clone());
     video.iniciar_todas();
     let app: Shared = Arc::new(App { store, elo, video });
+    app.elo.definir_resumo(resumo::montar(Arc::downgrade(&app)));
     let rede = lan
         .then(|| cf_core::conectar::ip_local().map(|ip| format!("http://{ip}:{}", chosen.port)))
         .flatten();

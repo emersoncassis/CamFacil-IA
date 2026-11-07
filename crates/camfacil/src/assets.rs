@@ -32,6 +32,8 @@ pub const ASSETS: &[Asset] = &[
         "application/json; charset=utf-8",
         "aulas/cerca.json"
     ),
+    asset!("/aula/loja.webp", "image/webp", "aula/loja.webp"),
+    asset!("/aula/pessoa.webp", "image/webp", "aula/pessoa.webp"),
     asset!("/aulas/cerca-01.ogg", "audio/ogg", "aulas/cerca-01.ogg"),
     asset!("/aulas/cerca-02.ogg", "audio/ogg", "aulas/cerca-02.ogg"),
     asset!("/aulas/cerca-03.ogg", "audio/ogg", "aulas/cerca-03.ogg"),

@@ -10,10 +10,16 @@ use uuid::Uuid;
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Result<T> = std::result::Result<T, Error>;
 
-const MIGRACOES: &[(&str, &str)] = &[(
-    "0001_inicial",
-    include_str!("../migrations/0001_inicial.sql"),
-)];
+const MIGRACOES: &[(&str, &str)] = &[
+    (
+        "0001_inicial",
+        include_str!("../migrations/0001_inicial.sql"),
+    ),
+    (
+        "0002_estado_agente",
+        include_str!("../migrations/0002_estado_agente.sql"),
+    ),
+];
 
 /// Contexto de uma transação.
 #[derive(Debug, Clone, Copy)]

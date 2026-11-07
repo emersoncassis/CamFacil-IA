@@ -54,7 +54,7 @@ function showTab(id) {
   if (id === "modulos") renderLevels();
   eloAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
-  ligarAtivar(id === "ligar");
+  ligarAtivar(id === "cameras");
 }
 
 // ---------- Visão geral ----------
@@ -210,32 +210,6 @@ function emptyRow(text) {
   return el("tr", { class: "empty" }, el("td", { colspan: "5" }, text));
 }
 
-async function discover() {
-  const b = $("#discover"); const body = $("#found");
-  busy(b, true, "cam.buscando");
-  try {
-    const { cameras } = await api("/api/discover");
-    if (!cameras.length) body.replaceChildren(emptyRow(t("cam.nenhuma")));
-    else body.replaceChildren(...cameras.map((c) => {
-      const use = el("button", { class: "btn sm", type: "button" }, t("cam.usar"));
-      use.onclick = () => {
-        const f = $("#rtsp-form");
-        f.ip.value = c.ip;
-        const v = (c.fabricante || "").toLowerCase();
-        if ([...f.fabricante.options].some((o) => o.value === v)) f.fabricante.value = v;
-        f.senha.focus();
-      };
-      return el("tr", {},
-        el("td", { class: "mono" }, c.ip),
-        el("td", {}, c.fabricante || "—"),
-        el("td", {}, c.modelo || c.nome || "—"),
-        el("td", { class: "mono" }, c.mac || "—"),
-        el("td", { class: "right" }, use));
-    }));
-  } catch (e) { body.replaceChildren(emptyRow(e.message)); }
-  busy(b, false, "cam.busca_btn");
-}
-
 // ---------- Câmeras ao vivo, balões e desenho (fase 2) ----------
 let cams = [];
 let camAberta = null;
@@ -312,6 +286,7 @@ async function abrirCamera(id) {
   $("#video").src = `/api/cameras/${id}/mjpeg?t=${Date.now()}`;
   definirModo("ver");
   await carregarRegras();
+  sugAbrirCamera();
   if (!aula) $("#aovivo").scrollIntoView({ block: "start" });
   aulaEvento("camera_aberta");
 }
@@ -336,7 +311,55 @@ function textoBalao(r, e) {
   return `${r.nome} · ${e ? e.contagem : 0}`;
 }
 
+// ---------- Som e piscada do alerta ----------
+let somCtx = null;
+const alertaAntes = {};
+
+function somLigado(id) {
+  try { return (JSON.parse(localStorage.getItem("cf-som") || "{}")[id]) !== false; } catch (_) { return true; }
+}
+function definirSom(id, ligado) {
+  try { const m = JSON.parse(localStorage.getItem("cf-som") || "{}"); m[id] = ligado; localStorage.setItem("cf-som", JSON.stringify(m)); } catch (_) { /* opcional */ }
+}
+
+/// Dois bipes curtos, gerados na hora (sem arquivo de áudio).
+function tocarAlerta() {
+  try {
+    somCtx = somCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = somCtx.currentTime;
+    for (const [i, f] of [[0, 880], [0.18, 1320]]) {
+      const o = somCtx.createOscillator(); const g = somCtx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + i);
+      g.gain.exponentialRampToValueAtTime(0.25, t0 + i + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i + 0.16);
+      o.connect(g).connect(somCtx.destination);
+      o.start(t0 + i); o.stop(t0 + i + 0.18);
+    }
+  } catch (_) { /* navegador sem áudio */ }
+}
+
+function piscarTela() {
+  const v = $("#viewer");
+  v.classList.remove("alerta"); void v.offsetWidth; v.classList.add("alerta");
+}
+
+function conferirAlertas(estadoCam) {
+  let tocou = false;
+  for (const r of regrasAbertas) {
+    const e = estadoCam && estadoCam.regras ? estadoCam.regras[r.id] : null;
+    const agora = !!(e && e.alerta_ms > 0);
+    const chave = `${camAberta}:${r.id}`;
+    if (agora && alertaAntes[chave] === false) {
+      piscarTela();
+      if (!tocou && somLigado(r.id)) { tocarAlerta(); tocou = true; }
+    }
+    alertaAntes[chave] = agora;
+  }
+}
+
 function renderBaloes(estadoCam) {
+  conferirAlertas(estadoCam);
   const camada = $("#baloes");
   if (!regrasAbertas.length) { camada.replaceChildren(); return; }
   camada.replaceChildren(...regrasAbertas.map((r) => {
@@ -358,9 +381,13 @@ function renderBaloes(estadoCam) {
       await api(`/api/regras/${r.id}?camera_id=${camAberta}`, undefined, "DELETE");
       carregarRegras();
     };
-    return el("tr", {}, el("td", {}, r.nome), el("td", {}, t("regra." + r.forma)), el("td", {}, agora), el("td", { class: "right" }, rem));
+    const chk = el("input", { type: "checkbox", "aria-label": `${t("regra.som")}: ${r.nome}` });
+    chk.checked = somLigado(r.id);
+    chk.onchange = () => { definirSom(r.id, chk.checked); if (chk.checked) tocarAlerta(); };
+    const som = el("label", { class: "som-regra", title: t("regra.som_dica") }, el("span", { class: "switch" }, chk, el("span")), el("span", { class: "tiny" }, t("regra.som")));
+    return el("tr", {}, el("td", {}, r.nome), el("td", {}, t("regra." + r.forma)), el("td", {}, agora), el("td", {}, som), el("td", { class: "right" }, rem));
   });
-  $("#regras").replaceChildren(...(linhas.length ? linhas : [el("tr", { class: "empty" }, el("td", { colspan: "4" }, t("regra.nenhuma")))]));
+  $("#regras").replaceChildren(...(linhas.length ? linhas : [el("tr", { class: "empty" }, el("td", { colspan: "5" }, t("regra.nenhuma")))]));
 }
 
 async function atualizarEstado() {
@@ -400,6 +427,7 @@ function desenharSalvas() {
       : svgEl("polyline", { class: "forma linha", points: pts(desenho.pontos) }));
     for (const p of desenho.pontos) svg.append(svgEl("circle", { class: "vertice", cx: p.x * 1000, cy: p.y * 1000, r: 7 }));
   }
+  if (typeof sugDesenhar === "function") sugDesenhar();
 }
 
 function definirModo(m) {
@@ -501,6 +529,9 @@ async function renderElo() {
   $("#elo-qr-area").hidden = !temQr;
   if (temQr && eloQrLink !== st.link) { eloQrLink = st.link; $("#elo-qr").src = "/api/elo/qr.svg?t=" + Date.now(); }
   if (temQr) {
+    // Código para digitar no site, em blocos de 4 (o site ignora os espaços).
+    const cod = new URLSearchParams(st.link.split("#")[1] || "").get("c") || "";
+    $("#elo-codigo").textContent = cod.match(/.{1,4}/g)?.join(" ") || "";
     const m = Math.floor(st.expira_em_s / 60), s = String(st.expira_em_s % 60).padStart(2, "0");
     $("#elo-expira").textContent = `${m}:${s}`;
   }
@@ -530,18 +561,61 @@ async function eloAcao(fn) {
 // ---------- Aula guiada (agente guia) ----------
 let aula = null; // { dados, i }
 let aulaAudio = null;
+let aulaPendente = null;
 
 function aulaLimparAlvo() { document.querySelectorAll(".guia-alvo").forEach((e) => e.classList.remove("guia-alvo")); }
 
+// ---------- Animações da aula (foto da loja + pessoa, SVG + CSS) ----------
+// Cena 960×540. A pessoa tem 126×250; o "centro" que a IA segue fica em (63, 125).
+const SPRITE = '<image href="/aula/pessoa.webp" width="126" height="250"/>';
+const MIRA = '<g class="centro"><circle cx="63" cy="125" r="7"/><circle cx="63" cy="125" r="16" class="anel"/><path d="M63 97v14M63 139v14M35 125h14M77 125h14"/></g>';
+const PESSOA = `<g class="pessoa">${SPRITE}${MIRA}</g>`;
+const HUD = '<g class="hud"><path d="M18 58V18h40M902 18h40v40M942 482v40h-40M58 522H18v-40"/><circle cx="40" cy="40" r="6" class="rec"/><text x="54" y="46">REC · CAM 01</text></g><rect class="varredura" x="0" y="0" width="960" height="70"/>';
+
+function painel(cls, ok, titulo, legenda, conteudo) {
+  return `<figure class="anim-painel ${cls}"><div class="anim-tit ${ok ? "ok" : "erro"}">${titulo}</div>
+    <svg viewBox="0 0 960 540" role="img" aria-label="${titulo}"><defs><clipPath id="clip-${cls}"><rect width="960" height="540" rx="14"/></clipPath>
+    <linearGradient id="g-${cls}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06cb3f" stop-opacity="0"/><stop offset="1" stop-color="#06cb3f" stop-opacity=".18"/></linearGradient></defs>
+    <g clip-path="url(#clip-${cls})"><image href="/aula/loja.webp" width="960" height="540"/>${conteudo}${HUD.replace("varredura\"", `varredura" fill="url(#g-${cls})"`)}</g>
+    <rect class="moldura" x="1" y="1" width="958" height="538" rx="14"/></svg>
+    <figcaption>${legenda}</figcaption></figure>`;
+}
+
+const ANIMS = {
+  visao: () => `<div class="anim-grade um">${painel("visao", true, "Como a IA enxerga",
+    "Ela não reconhece “uma pessoa”: percebe o que se mexeu e acompanha o <strong>centro</strong> (a mira verde). Toda regra olha para esse centro.",
+    PESSOA)}</div>`,
+  linha: () => `<div class="anim-grade">${painel("borda", false, "Errado: linha na borda",
+    "A pessoa entra cortada. Quando a IA consegue vê-la inteira, o centro <strong>já passou</strong> da linha. Não conta.",
+    `<path class="linha erro" d="M26 60V540"/>${PESSOA}<g class="placar-g"><text class="placar" x="930" y="110">passagens: 0</text><text class="aviso" x="930" y="160">não contou</text></g>`)}
+    ${painel("meio", true, "Certo: linha no meio da porta",
+    "A IA vê o centro <strong>antes</strong> e <strong>depois</strong> da linha. Conta a passagem.",
+    `<path class="linha ok" d="M360 60V540"/>${PESSOA}<g class="placar-g"><text class="placar p0" x="930" y="110">passagens: 0</text><text class="placar p1" x="930" y="110">passagens: 1</text></g>`)}</div>`,
+  zona: () => `<div class="anim-grade">${painel("zgrande", false, "Errado: zona pegando o corredor",
+    "Quem só passa pelo corredor entra na zona e dispara o aviso: <strong>alarme falso</strong>.",
+    `<path class="zona" d="M110 300H900L960 540H0Z"/>${PESSOA}<text class="aviso za" x="480" y="110">alarme falso</text>`)}
+    ${painel("zcerta", true, "Certo: só na frente do balcão",
+    "Quem passa não dispara. Só quem <strong>para no balcão</strong> conta como ocupado.",
+    `<path class="zona" d="M330 240L466 226V384L318 396Z"/><g class="passante">${PESSOA}</g><g class="cliente">${PESSOA}</g><text class="okt zc" x="398" y="205">ocupado</text>`)}</div>`,
+};
+
+function aulaAnim(nome) {
+  const caixa = $("#aula-anim");
+  const f = ANIMS[nome];
+  caixa.hidden = !f;
+  caixa.innerHTML = f ? f() : "";
+}
+
 function aulaMostrar() {
   aulaLimparAlvo();
-  if (!aula) { $("#aula").hidden = true; return; }
+  if (!aula) { $("#aula").hidden = true; $("#aula-anim").innerHTML = ""; return; }
   const p = aula.dados.passos[aula.i];
   if (p.aba && document.querySelector(`[data-tab="${p.aba}"]`).getAttribute("aria-selected") !== "true") showTab(p.aba);
   $("#aula").hidden = false;
   $("#aula-titulo").textContent = aula.dados.titulo;
   $("#aula-passo").textContent = `${aula.i + 1}/${aula.dados.passos.length}`;
   $("#aula-texto").textContent = p.texto;
+  aulaAnim(p.anim);
   const ultimo = aula.i === aula.dados.passos.length - 1;
   const b = $("#aula-proximo");
   b.textContent = t(ultimo ? "aula.concluir" : p.espera ? "aula.esperando" : "aula.proximo");
@@ -549,9 +623,8 @@ function aulaMostrar() {
   // O cartão entra na página logo acima do alvo, para nunca cobrir o vídeo.
   const card = $("#aula");
   const alvo = p.alvo ? document.querySelector(p.alvo) : null;
-  if (alvo) {
+  if (alvo && alvo.offsetParent !== null) {
     alvo.classList.add("guia-alvo");
-    // Antes do cabeçalho do bloco: instrução, depois os controles, depois o vídeo.
     const ancora = alvo.closest(".block-head") || alvo;
     ancora.insertAdjacentElement("beforebegin", card);
     card.classList.add("inline");
@@ -563,12 +636,38 @@ function aulaMostrar() {
   aulaTocar();
 }
 
-function aulaTocar() {
-  if (!aula) return;
+function aulaFonte() {
   const p = aula.dados.passos[aula.i];
-  try { if (aulaAudio) aulaAudio.pause(); } catch (_) { /* ok */ }
-  aulaAudio = new Audio(`/aulas/${aula.dados.modulo}-${p.id}.ogg`);
-  aulaAudio.play().catch(() => { /* sem áudio gravado: segue só com texto */ });
+  // Gravação nova primeiro; se ainda não existir, a versão anterior.
+  return [p.audio || `${aula.dados.modulo}-${p.id}`, p.reserva].filter(Boolean).map((a) => `/aulas/${a}.ogg`);
+}
+
+function aulaFalando(on) { $("#aula").classList.toggle("falando", on); }
+
+function aulaTocarAgora(fontes) {
+  try { if (aulaAudio) { aulaAudio.onended = null; aulaAudio.pause(); } } catch (_) { /* ok */ }
+  const [src, ...resto] = fontes;
+  if (!src) { aulaFalando(false); return; }
+  aulaAudio = new Audio(src);
+  aulaAudio.onended = () => {
+    aulaFalando(false);
+    const prox = aulaPendente; aulaPendente = null;
+    if (prox && aula) aulaTocarAgora(prox);
+  };
+  aulaAudio.onplaying = () => aulaFalando(true);
+  aulaAudio.onerror = () => { aulaFalando(false); if (resto.length) aulaTocarAgora(resto); };
+  aulaAudio.play().catch(() => { /* onerror cuida da reserva */ });
+}
+
+/// Nunca corta a fala no meio: se ainda está falando, o próximo áudio
+/// entra na fila e começa assim que a fala atual terminar.
+function aulaTocar(forcar = false) {
+  if (!aula) return;
+  const src = aulaFonte();
+  const falando = aulaAudio && !aulaAudio.paused && !aulaAudio.ended;
+  if (falando && !forcar) { aulaPendente = src; return; }
+  aulaPendente = null;
+  aulaTocarAgora(src);
 }
 
 function aulaAvancar() {
@@ -579,7 +678,9 @@ function aulaAvancar() {
 }
 
 function aulaSair() {
-  try { if (aulaAudio) aulaAudio.pause(); } catch (_) { /* ok */ }
+  try { if (aulaAudio) { aulaAudio.onended = null; aulaAudio.pause(); } } catch (_) { /* ok */ }
+  aulaPendente = null;
+  aulaFalando(false);
   aula = null;
   aulaMostrar();
 }
@@ -625,9 +726,9 @@ async function ligarInstalarFfmpeg() {
   b.disabled = false;
 }
 
-async function ligarProcurar() {
+async function ligarProcurar(autoescolher = true) {
   ligarProcurou = true;
-  const st = $("#ligar-status"); const lista = $("#ligar-lista"); const b = $("#ligar-procurar");
+  const st = $("#ligar-status"); const lista = $("#ligar-lista"); const b = $("#discover");
   b.disabled = true;
   st.replaceChildren(el("span", { class: "carregando", "aria-hidden": "true" }), t("ligar.procurando"));
   lista.replaceChildren();
@@ -651,7 +752,7 @@ async function ligarProcurar() {
         return li;
       }));
       const livres = cameras.filter((c) => !c.ja_adicionada);
-      if (livres.length === 1) ligarEscolher(livres[0].ip, livres[0].fabricante);
+      if (autoescolher && livres.length === 1) ligarEscolher(livres[0].ip, livres[0].fabricante);
     }
   } catch (e) { st.textContent = e.message; }
   b.disabled = false;
@@ -661,7 +762,8 @@ function ligarEscolher(ip, fabricante) {
   ligarAlvo = { ip: ip.trim(), fabricante: fabricante || null };
   $("#ligar-ip").textContent = ligarAlvo.ip;
   $("#ligar-passo2").hidden = false;
-  $("#ligar-pronto").hidden = true;
+  $("#ligar-ok").hidden = true;
+  $("#ligar-form").hidden = false;
   $("#ligar-msg").textContent = "";
   $("#ligar-passo2").scrollIntoView({ block: "nearest" });
   $("#ligar-senha").focus();
@@ -672,6 +774,7 @@ async function ligarConectar(ev) {
   if (!ligarAlvo) return;
   const f = ev.target; const m = $("#ligar-msg"); const b = $("#ligar-conectar");
   b.disabled = true; m.className = "msg"; m.textContent = t("ligar.conectando");
+  $("#ligar-ok").hidden = true;
   try {
     const r = await api("/api/conectar", {
       ip: ligarAlvo.ip, fabricante: ligarAlvo.fabricante,
@@ -679,35 +782,129 @@ async function ligarConectar(ev) {
     });
     f.senha.value = ""; f.nome.value = "";
     m.textContent = "";
-    $("#ligar-passo2").hidden = true;
-    $("#ligar-pronto").hidden = false;
-    $("#ligar-pronto").dataset.id = r.id;
-    $("#ligar-video").src = `/api/cameras/${r.id}/mjpeg?t=${Date.now()}`;
-    $("#ligar-endereco").textContent = `${r.nome} · ${r.endereco}`;
-    $("#ligar-pronto").scrollIntoView({ block: "start" });
-    carregarCameras();
-    ligarProcurar();
+    $("#ligar-ok-texto").textContent = `${r.nome} ${t("ligar.ligada")}`;
+    $("#ligar-ok").hidden = false;
+    $("#ligar-form").hidden = true;
+    await carregarCameras();
+    abrirCamera(r.id);
+    ligarProcurar(false);
   } catch (e) { m.className = "msg err"; m.textContent = e.message; }
   b.disabled = false;
 }
 
-function ligarSair() { $("#ligar-video").removeAttribute("src"); }
+function ligarResetar() {
+  $("#ligar-passo2").hidden = true;
+  $("#ligar-ok").hidden = true;
+  $("#ligar-form").hidden = false;
+  ligarAlvo = null;
+}
 
 function iniciarLigar() {
-  $("#ligar-procurar").onclick = ligarProcurar;
+  $("#discover").onclick = () => { ligarResetar(); ligarProcurar(); };
   $("#ligar-ffmpeg-btn").onclick = ligarInstalarFfmpeg;
   $("#ligar-form").onsubmit = ligarConectar;
   $("#ligar-manual").onsubmit = (ev) => { ev.preventDefault(); ligarEscolher(ev.target.ip.value, null); };
-  $("#ligar-outra").onclick = () => { $("#ligar-pronto").hidden = true; ligarSair(); $("#ligar-passo1").scrollIntoView({ block: "start" }); };
-  $("#ligar-ver").onclick = () => { const id = Number($("#ligar-pronto").dataset.id); ligarSair(); showTab("cameras"); abrirCamera(id); };
-  $("#ligar-aula").onclick = () => { ligarSair(); aulaIniciar("cerca"); };
-  $("#ligar-demo").onclick = async () => { ligarSair(); showTab("cameras"); await adicionarCamera(t("cam.demo_nome"), "demo"); };
+  $("#ligar-outra").onclick = () => { ligarResetar(); $("#ligar-passo1").scrollIntoView({ block: "start" }); };
+  $("#ligar-aula").onclick = () => aulaIniciar("cerca");
+  $("#ligar-demo").onclick = () => adicionarCamera(t("cam.demo_nome"), "demo");
 }
 
+/// Ao abrir a tela Câmeras: confere o ffmpeg e, na primeira vez, já procura.
 function ligarAtivar(ativo) {
-  if (!ativo) { ligarSair(); return; }
+  if (!ativo) return;
   ligarVerFfmpeg();
   if (!ligarProcurou) ligarProcurar();
+}
+
+// ---------- IA, sugira para mim ----------
+let sugTimer = null;
+let sugPreview = [];
+
+function sugDesenhar() {
+  // Prévia tracejada das sugestões por cima do vídeo (só para o técnico).
+  const svg = $("#desenho");
+  svg.querySelectorAll(".sugestao").forEach((e) => e.remove());
+  for (const sg of sugPreview) {
+    svg.append(sg.forma === "linha"
+      ? svgEl("polyline", { class: "forma linha sugestao", points: pts(sg.pontos) })
+      : svgEl("polygon", { class: "forma sugestao", points: pts(sg.pontos) }));
+  }
+}
+
+function sugRender(r) {
+  const lista = $("#sug-lista");
+  sugPreview = r.sugestoes || [];
+  sugDesenhar();
+  $("#sug-andamento").hidden = !r.iniciado;
+  if (!r.iniciado) { lista.replaceChildren(); return; }
+  $("#sug-barra").style.width = `${Math.round((r.progresso || 0) * 100)}%`;
+  const pessoas = `${r.pessoas} ${r.pessoas === 1 ? t("sug.pessoa") : t("sug.pessoas")}`;
+  $("#sug-status").textContent = r.terminou ? `${t("sug.pronto")} · ${pessoas}` : `${t("sug.olhando")} ${r.restante_s} s · ${pessoas}`;
+  if (!sugPreview.length) {
+    lista.replaceChildren(el("li", { class: "tiny" }, r.terminou ? t("sug.nada") : t("sug.aguarde")));
+    return;
+  }
+  lista.replaceChildren(...sugPreview.map((sg) => {
+    const aceitar = el("button", { class: "btn primary sm", type: "button" }, t("sug.aceitar"));
+    aceitar.onclick = async () => {
+      aceitar.disabled = true;
+      try {
+        await api(`/api/cameras/${camAberta}/regras`, { nome: sg.nome, forma: sg.forma, pontos: sg.pontos, rotulo_on: "", rotulo_off: "" });
+        await carregarRegras();
+        sugPreview = sugPreview.filter((x) => x !== sg);
+        aceitar.closest("li").replaceChildren(el("span", { class: "msg ok" }, `${sg.nome} ${t("sug.criada")}`));
+        sugDesenhar();
+      } catch (e) { alert(e.message); aceitar.disabled = false; }
+    };
+    const pct = Math.round(sg.confianca * 100);
+    return el("li", {},
+      el("div", { class: "sug-info" },
+        el("strong", {}, `${sg.nome} · ${t("regra." + sg.forma)}`),
+        el("p", { class: "tiny" }, sg.motivo),
+        el("span", { class: "badge" }, `${t("sug.confianca")} ${pct}%`)),
+      aceitar);
+  }));
+}
+
+async function sugAtualizar() {
+  if (camAberta == null) return;
+  try {
+    const r = await api(`/api/cameras/${camAberta}/sugestoes`);
+    sugRender(r);
+    if (r.iniciado && !r.terminou) sugTimer = setTimeout(sugAtualizar, 2000);
+    else { $("#sug-iniciar").disabled = false; }
+  } catch (_) { /* segue */ }
+}
+
+async function sugIniciar() {
+  if (camAberta == null) return;
+  clearTimeout(sugTimer);
+  $("#sug-iniciar").disabled = true;
+  try { await api(`/api/cameras/${camAberta}/sugestoes`, { segundos: 60 }); sugAtualizar(); }
+  catch (e) { alert(e.message); $("#sug-iniciar").disabled = false; }
+}
+
+function sugAbrirCamera() {
+  clearTimeout(sugTimer);
+  sugPreview = [];
+  $("#sug-lista").replaceChildren();
+  $("#sug-andamento").hidden = true;
+  $("#sug-iniciar").disabled = false;
+  sugAtualizar();
+}
+
+// ---------- Abrir junto com o computador ----------
+async function iniciarAutoinicio() {
+  const c = $("#autoinicio"); const m = $("#auto-msg");
+  try { c.checked = (await api("/api/autoinicio")).ligado; } catch (_) { /* segue */ }
+  c.onchange = async () => {
+    c.disabled = true; m.className = "msg"; m.textContent = "";
+    try {
+      await api("/api/autoinicio", { ligado: c.checked });
+      m.className = "msg ok"; m.textContent = t(c.checked ? "auto.ligado" : "auto.desligado");
+    } catch (e) { c.checked = !c.checked; m.className = "msg err"; m.textContent = e.message; }
+    c.disabled = false;
+  };
 }
 
 // ---------- Isenção ----------
@@ -734,14 +931,14 @@ async function main() {
   $("#rtsp-form").onsubmit = buildRtsp;
   $("#rtsp-test").onclick = testRtsp;
   $("#rtsp-copy").onclick = copyRtsp;
-  $("#discover").onclick = discover;
   iniciarCameras();
   iniciarLigar();
+  iniciarAutoinicio();
+  $("#sug-iniciar").onclick = sugIniciar;
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
   $("#elo-desparear").onclick = () => { if (confirm(t("elo.confirma_desparear"))) eloAcao(() => api("/api/elo/desparear", {})); };
-  $("#found").replaceChildren(emptyRow(t("cam.vazio")));
 
   const { fabricantes } = await api("/api/rtsp/vendors");
   $("#vendor").replaceChildren(...fabricantes.map((f) =>
@@ -751,13 +948,13 @@ async function main() {
   renderBench(resultado);
   renderSelos();
   $("#aula-proximo").onclick = aulaAvancar;
-  $("#aula-ouvir").onclick = aulaTocar;
+  $("#aula-ouvir").onclick = () => aulaTocar(true);
   $("#aula-sair").onclick = aulaSair;
 
   let tab = "inicio";
   try { tab = localStorage.getItem("cf-tab") || tab; } catch (_) { /* opcional */ }
   // Sem câmera nenhuma: o programa abre direto em "Ligar câmera".
-  try { const { cameras } = await api("/api/cameras"); if (!cameras.length) tab = "ligar"; } catch (_) { /* segue */ }
+  try { const { cameras } = await api("/api/cameras"); if (!cameras.length) tab = "cameras"; } catch (_) { /* segue */ }
   await loadSystem();
   showTab(tab);
   disclaimer();

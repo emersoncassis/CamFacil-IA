@@ -64,6 +64,7 @@ async function garantirDispositivo(forcarNovo = false) {
 // ---------- Navegação ----------
 function mostrar(id) {
   if (typeof vozParar === "function") vozParar();
+  if (typeof fecharLeitor === "function" && leitorStream) fecharLeitor();
   document.querySelectorAll("[role=tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
   document.querySelectorAll("main [role=tabpanel]").forEach((p) => { p.hidden = p.id !== id; });
   if (id === "agentes") carregarAgentes();
@@ -79,21 +80,72 @@ async function carregarAgentes() {
       corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "5" }, "Nenhum agente pareado ainda. Clique em Parear agente para ver como.")));
       return;
     }
-    corpo.replaceChildren(...agentes.map((a) => {
+    corpo.replaceChildren(...agentes.flatMap((a) => {
       const campo = el("input", { class: "cell-edit", value: a.apelido_cliente, placeholder: "Nome do cliente", "aria-label": "Nome do cliente", maxlength: "60" });
       campo.addEventListener("change", async () => {
         try { await api(`/api/agentes/${a.id}`, "PATCH", { apelido_cliente: campo.value }); } catch (e) { campo.value = a.apelido_cliente; alert(e.message); }
       });
-      return el("tr", { "data-agente": a.id },
+      const linha = el("tr", { "data-agente": a.id },
         el("td", {}, campo),
         el("td", {}, el("span", { class: "state" }, el("span", { class: "dot " + (a.online ? "on" : "") }), a.online ? "On-line" : "Desconectado")),
         el("td", { class: "mono" }, a.impressao),
-        el("td", { class: "mono" }, a.versao || "—"),
+        el("td", { class: "mono" }, (a.estado && a.estado.versao) || a.versao || "—"),
         el("td", { class: "right" }, data(a.pareado_em)));
+      const det = el("tr", { class: "detalhe", "data-estado": a.id }, el("td", { colspan: "5" }, visaoAgente(a.estado, a.estado_em, a.online)));
+      return [linha, det];
     }));
   } catch (e) {
     corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "5" }, e.message)));
   }
+}
+
+// ---------- O que o agente está vendo ----------
+function quandoRel(seg) {
+  if (seg == null) return "";
+  const d = Math.max(0, Math.round(Date.now() / 1000 - seg));
+  if (d < 60) return "agora";
+  if (d < 3600) return `há ${Math.round(d / 60)} min`;
+  if (d < 86400) return `há ${Math.round(d / 3600)} h`;
+  return `há ${Math.round(d / 86400)} d`;
+}
+
+function barraUso(rotulo, pct, texto) {
+  const p = Math.max(0, Math.min(100, pct || 0));
+  const nivel = p >= 85 ? "alto" : p >= 60 ? "medio" : "";
+  return el("div", { class: "uso" }, el("span", { class: "tiny" }, rotulo),
+    el("span", { class: "uso-barra " + nivel }, (() => { const i = el("i"); i.style.setProperty("--p", `${p}%`); return i; })()),
+    el("span", { class: "mono tiny" }, texto));
+}
+
+const TIPO_ALERTA = { linha_cruzada: "cruzou a linha", zona_ocupada: "entrou na zona", movimento: "movimento", saude: "problema na câmera" };
+
+function visaoAgente(e, em, online) {
+  if (!e) return el("p", { class: "tiny vazio-agente" }, online
+    ? "Conectado. O primeiro resumo chega em alguns segundos (atualize o programa no cliente se não aparecer)."
+    : "Ainda sem resumo deste computador. Ele aparece quando o programa estiver aberto e com internet.");
+  const cams = e.cameras || [];
+  const on = cams.filter((c) => c.online).length;
+  const camLista = el("ul", { class: "cams-agente" }, ...(cams.length ? cams.map((c) =>
+    el("li", {}, el("span", { class: "dot " + (c.online ? "on" : "off") }),
+      el("span", {}, c.nome || "Câmera"),
+      el("span", { class: "tiny" }, c.online ? `${c.fps ?? 0} q/s${c.regras ? ` · ${c.regras} ${c.regras === 1 ? "regra" : "regras"}` : ""}${c.saude ? ` · ${c.saude}` : ""}` : (c.erro || "sem sinal"))))
+    : [el("li", { class: "tiny" }, "Nenhuma câmera ligada ainda.")]));
+  const ramPct = e.ram_total_mb ? (e.ram_usada_mb * 100) / e.ram_total_mb : 0;
+  const maquina = el("div", { class: "maq-agente" },
+    barraUso("CPU", e.cpu, `${Math.round(e.cpu || 0)}%`),
+    barraUso("Memória", ramPct, e.ram_total_mb ? `${(e.ram_usada_mb / 1024).toFixed(1)} de ${(e.ram_total_mb / 1024).toFixed(1)} GB` : "—"),
+    el("p", { class: "tiny" }, [e.maquina, e.sistema, e.proprio_mb != null ? `CamFácil IA usando ${e.proprio_mb} MB` : null].filter(Boolean).join(" · ")));
+  const alertas = (e.alertas || []).slice(0, 5);
+  const alertLista = el("ul", { class: "alertas-agente" }, ...(alertas.length ? alertas.map((a) =>
+    el("li", {}, el("span", {}, `${a.camera || "Câmera"}${a.regra ? ` · ${a.regra}` : ""}`),
+      el("span", { class: "tiny" }, `${TIPO_ALERTA[a.tipo] || a.tipo} · ${quandoRel(a.quando)}`)))
+    : [el("li", { class: "tiny" }, "Nenhum alerta ainda.")]));
+  const atual = em ? `Atualizado ${quandoRel(Date.parse(em) / 1000)}` : "";
+  return el("div", { class: "agente-visao" },
+    el("section", {}, el("h3", {}, `Câmeras · ${on} de ${cams.length} no ar`), camLista),
+    el("section", {}, el("h3", {}, "Máquina do cliente"), maquina),
+    el("section", {}, el("h3", {}, "Últimos alertas"), alertLista),
+    el("p", { class: "tiny atualizado" }, [atual, (e.modulos || []).length ? `IA ligada: ${e.modulos.join(", ")}` : "Nenhuma IA ligada"].filter(Boolean).join(" · ")));
 }
 
 // ---------- Dispositivos ----------
@@ -157,6 +209,57 @@ async function telaParear() {
   };
 }
 
+// ---------- Alternativas ao QR: leitor no site e código digitado ----------
+let leitorStream = null;
+
+function irParaParear(codigo, impressao) {
+  const c = (codigo || "").replace(/\s+/g, "");
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(c)) { msgLeitor("Código incompleto. Confira na tela do cliente.", "err"); return; }
+  history.replaceState(null, "", `/parear#c=${encodeURIComponent(c)}${impressao ? `&f=${encodeURIComponent(impressao)}` : ""}`);
+  fecharLeitor();
+  telaParear();
+}
+
+function msgLeitor(t, tipo) { const m = $("#leitor-msg"); m.textContent = t; m.className = "msg " + (tipo || ""); }
+
+function fecharLeitor() {
+  if (leitorStream) { leitorStream.getTracks().forEach((t) => t.stop()); leitorStream = null; }
+  $("#leitor").hidden = true;
+}
+
+async function abrirLeitor() {
+  $("#form-codigo").hidden = true;
+  if (!("BarcodeDetector" in window)) {
+    msgLeitor("Este navegador não lê QR pela página (comum no iPhone). Abra a câmera normal do celular ou use Digitar código.", "err");
+    return;
+  }
+  try {
+    const det = new BarcodeDetector({ formats: ["qr_code"] });
+    leitorStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    const v = $("#leitor-video");
+    v.srcObject = leitorStream;
+    await v.play();
+    $("#leitor").hidden = false;
+    msgLeitor("Aponte para o QR na tela do cliente.");
+    const procurar = async () => {
+      if (!leitorStream) return;
+      try {
+        const [r] = await det.detect(v);
+        if (r && r.rawValue.includes("/parear#")) {
+          const p = new URLSearchParams(r.rawValue.split("#")[1]);
+          irParaParear(p.get("c"), p.get("f"));
+          return;
+        }
+      } catch (_) { /* quadro ruim: tenta o próximo */ }
+      setTimeout(procurar, 250);
+    };
+    procurar();
+  } catch (e) {
+    fecharLeitor();
+    msgLeitor("Não consegui abrir a câmera. Libere a permissão no navegador ou use Digitar código.", "err");
+  }
+}
+
 // ---------- Tempo real ----------
 function conectarPainel() {
   const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/painel`);
@@ -169,6 +272,9 @@ function conectarPainel() {
       setTimeout(() => { history.replaceState(null, "", "/"); mostrar("agentes"); }, 1200);
     } else if (m.tipo === "pareamento_recusado") {
       msgPar("O pareamento foi recusado na tela do cliente.", "err");
+    } else if (m.tipo === "estado") {
+      const td = document.querySelector(`[data-estado="${m.agente_id}"] td`);
+      if (td) td.replaceChildren(visaoAgente(m.estado, new Date().toISOString(), true));
     } else if (["agente_online", "agente_offline", "despareado"].includes(m.tipo) && !$("#agentes").hidden) {
       carregarAgentes();
     }
@@ -308,7 +414,11 @@ async function main() {
   $("#app").hidden = false;
   $("#eu-email").textContent = eu.email;
   document.querySelectorAll("[role=tab]").forEach((b) => { b.onclick = () => { history.replaceState(null, "", "/"); mostrar(b.dataset.tab); }; });
-  $("#como-parear").onclick = () => { $("#passos").hidden = !$("#passos").hidden; };
+  $("#como-parear").onclick = () => { $("#passos").hidden = !$("#passos").hidden; if ($("#passos").hidden) fecharLeitor(); };
+  $("#ler-qr").onclick = abrirLeitor;
+  $("#leitor-fechar").onclick = () => { fecharLeitor(); msgLeitor(""); };
+  $("#digitar-codigo").onclick = () => { fecharLeitor(); msgLeitor(""); $("#form-codigo").hidden = false; $("#form-codigo").codigo.focus(); };
+  $("#form-codigo").onsubmit = (ev) => { ev.preventDefault(); irParaParear(ev.target.codigo.value, null); };
   $("#sair").onclick = async () => { await api("/api/auth/sair", "POST"); location.href = "/"; };
 
   document.querySelectorAll("#app [data-baixar]").forEach(montarDownload);
