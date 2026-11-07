@@ -52,6 +52,7 @@ function showTab(id) {
   document.querySelectorAll("[role=tabpanel]").forEach((p) => { p.hidden = p.id !== id; });
   try { localStorage.setItem("cf-tab", id); } catch (_) { /* opcional */ }
   if (id === "modulos") renderLevels();
+  eloAtivar(id === "integracoes");
 }
 
 // ---------- Visão geral ----------
@@ -204,6 +205,52 @@ async function discover() {
   busy(b, false, "cam.busca_btn");
 }
 
+// ---------- Pareamento com o site (Agente-Cam-Elo-IA) ----------
+let eloTimer = null;
+let eloQrLink = null;
+
+async function renderElo() {
+  let st;
+  try { st = await api("/api/elo"); } catch (_) { return; }
+  const dot = $("#elo-dot");
+  let texto;
+  if (st.pareado) { dot.className = "dot on"; texto = `${t("elo.pareado")} ${st.dono_email || ""}`; }
+  else if (st.conectado) { dot.className = "dot"; texto = t("elo.conectado"); }
+  else if (st.ativo) { dot.className = "dot"; texto = t("elo.conectando"); }
+  else { dot.className = "dot"; texto = t("elo.desligado"); }
+  $("#elo-status").textContent = texto;
+  $("#elo-impressao").textContent = st.impressao;
+  $("#elo-site").textContent = st.site.replace(/^https?:\/\//, "");
+
+  const temQr = !st.pareado && st.link && st.expira_em_s > 0;
+  $("#elo-qr-area").hidden = !temQr;
+  if (temQr && eloQrLink !== st.link) { eloQrLink = st.link; $("#elo-qr").src = "/api/elo/qr.svg?t=" + Date.now(); }
+  if (temQr) {
+    const m = Math.floor(st.expira_em_s / 60), s = String(st.expira_em_s % 60).padStart(2, "0");
+    $("#elo-expira").textContent = `${m}:${s}`;
+  }
+  $("#elo-pedido").hidden = !st.pedido;
+  if (st.pedido) $("#elo-pedido-email").textContent = st.pedido.email;
+  $("#elo-parear").hidden = st.pareado;
+  $("#elo-parear").textContent = t(temQr ? "elo.novo_qr" : "elo.parear");
+  $("#elo-desparear").hidden = !st.pareado;
+  const m = $("#elo-msg");
+  m.textContent = st.erro && !st.pareado && st.ativo ? st.erro : "";
+  m.className = "msg" + (st.erro && !st.conectado ? " err" : "");
+}
+
+function eloMsg(texto, tipo) { const m = $("#elo-msg"); m.textContent = texto; m.className = "msg " + (tipo || ""); }
+
+function eloAtivar(ativo) {
+  clearInterval(eloTimer);
+  eloTimer = null;
+  if (ativo) { renderElo(); eloTimer = setInterval(renderElo, 1500); }
+}
+
+async function eloAcao(fn) {
+  try { await fn(); await renderElo(); } catch (e) { eloMsg(e.message, "err"); }
+}
+
 // ---------- Isenção ----------
 async function disclaimer() {
   try {
@@ -228,6 +275,10 @@ async function main() {
   $("#rtsp-test").onclick = testRtsp;
   $("#rtsp-copy").onclick = copyRtsp;
   $("#discover").onclick = discover;
+  $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
+  $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
+  $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
+  $("#elo-desparear").onclick = () => { if (confirm(t("elo.confirma_desparear"))) eloAcao(() => api("/api/elo/desparear", {})); };
   $("#found").replaceChildren(emptyRow(t("cam.vazio")));
 
   const { fabricantes } = await api("/api/rtsp/vendors");

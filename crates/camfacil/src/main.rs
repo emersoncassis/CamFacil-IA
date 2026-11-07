@@ -5,13 +5,15 @@
 
 mod api;
 mod assets;
+mod elo;
 
 use cf_core::{paths, ports, store::Store};
 use std::net::{IpAddr, Ipv4Addr};
 use std::sync::Arc;
 
 pub struct App {
-    pub store: Store,
+    pub store: Arc<Store>,
+    pub elo: Arc<elo::Elo>,
 }
 
 pub type Shared = Arc<App>;
@@ -30,15 +32,28 @@ fn main() {
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
+    // Provedor de criptografia do TLS (conexão segura com o site).
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|a| a == "--version" || a == "-V") {
         println!("camfacil {}", cf_core::VERSION);
         return Ok(());
     }
+    if args.iter().any(|a| a == "--testar-site") {
+        let site =
+            std::env::var("CAMFACIL_SITE").unwrap_or_else(|_| cf_core::elo::URL_PADRAO.into());
+        println!("Testando conexão com {site}…");
+        match elo::testar(&site).await {
+            Ok(m) => println!("OK: {m}"),
+            Err(e) => println!("Falhou: {e}"),
+        }
+        return Ok(());
+    }
 
     let dir = paths::data_dir();
     std::fs::create_dir_all(&dir)?;
-    let store = Store::open(&dir.join("camfacil.db"))?;
+    let store = Arc::new(Store::open(&dir.join("camfacil.db"))?);
 
     // Só na própria máquina, por padrão. Expor na rede é opção explícita.
     let lan = args.iter().any(|a| a == "--lan");
@@ -68,7 +83,9 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         open_browser(&url);
     }
 
-    let app: Shared = Arc::new(App { store });
+    let elo = elo::Elo::carregar(store.clone());
+    elo.iniciar_se_ativo();
+    let app: Shared = Arc::new(App { store, elo });
     let router = api::router(app);
     axum::serve(listener, router)
         .with_graceful_shutdown(async {

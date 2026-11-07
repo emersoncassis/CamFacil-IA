@@ -1,6 +1,6 @@
 # SDD-08 — Contas de técnico, pareamento e isolamento (web)
 
-Status: proposto · Fase 6 · Domínio: **https://cfia.ysafe.com.br**
+Status: implementado (login, pareamento, isolamento; WebRTC na fase 6) · Domínio: **https://cfia.ysafe.com.br**
 
 ## Objetivo
 Vários técnicos usam o web app no mesmo domínio, e cada um só enxerga e controla os próprios Agentes-Cam-Elo-IA. O servidor do projeto **nunca recebe vídeo, senha de câmera nem endereço RTSP**.
