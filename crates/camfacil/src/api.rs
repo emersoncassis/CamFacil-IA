@@ -43,6 +43,14 @@ pub fn router(app: Shared) -> Router {
         .route("/api/eventos", get(get_eventos))
         .route("/api/saude", get(get_saude))
         .route("/api/modulos", get(get_modulos).post(post_modulos))
+        .route("/api/ia", get(get_ia).delete(delete_ia))
+        .route("/api/ia/baixar", post(post_ia_baixar))
+        .route("/api/ia/cancelar", post(post_ia_cancelar))
+        .route("/api/ia/permanencia", post(post_ia_permanencia))
+        .route(
+            "/api/cameras/{id}/calor",
+            get(get_calor).delete(delete_calor),
+        )
         .route("/api/selos", get(get_selos))
         .route("/api/elo", get(get_elo))
         .route("/api/elo/codigo", post(post_elo_codigo))
@@ -776,7 +784,104 @@ async fn get_saude(State(app): State<Shared>) -> ApiResult {
 
 async fn get_modulos(State(app): State<Shared>) -> Json<Value> {
     let m = crate::video::modulos(&app.store);
-    Json(json!({ "movimento": m.movimento, "cerca": m.cerca, "saude": m.saude }))
+    let perm = app
+        .store
+        .get("permanencia_s")
+        .ok()
+        .flatten()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(60);
+    Json(json!({
+        "movimento": m.movimento, "cerca": m.cerca, "saude": m.saude,
+        "pessoas": m.pessoas, "contagem": m.contagem, "permanencia": m.permanencia, "calor": m.calor,
+        "permanencia_s": perm,
+        "ia_pronta": app.ia.pronto(),
+    }))
+}
+
+// ---------- Nível médio: runtime, modelo e detector ----------
+
+fn estado_ia(app: &Shared) -> Value {
+    let a = app.ia.andamento();
+    json!({
+        "pronto": app.ia.pronto(),
+        "suportado": crate::ia::pacote_ort().is_some(),
+        "plataforma": format!("{} {}", std::env::consts::OS, std::env::consts::ARCH),
+        "onnxruntime": { "instalado": app.ia.lib_ort().is_some(), "versao": crate::ia::ORT_VERSAO },
+        "modelo": { "instalado": app.ia.modelo().is_some(), "nome": crate::ia::MODELO_NOME },
+        "baixando": app.ia.baixando(),
+        "andamento": a,
+        "detector": app.ia.detector.lock().unwrap().clone(),
+        "pasta": app.ia.dir().display().to_string(),
+    })
+}
+
+async fn get_ia(State(app): State<Shared>) -> Json<Value> {
+    Json(estado_ia(&app))
+}
+
+/// Começa o download (runtime + modelo) em segundo plano.
+async fn post_ia_baixar(State(app): State<Shared>) -> ApiResult {
+    if crate::ia::pacote_ort().is_none() {
+        return Err(bad(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "não há ONNX Runtime oficial para este sistema",
+        ));
+    }
+    if !app.ia.pronto() && !app.ia.baixando() {
+        let ia = app.ia.clone();
+        tokio::spawn(async move {
+            ia.baixar().await;
+        });
+    }
+    Ok(Json(estado_ia(&app)))
+}
+
+async fn post_ia_cancelar(State(app): State<Shared>) -> Json<Value> {
+    app.ia.cancelar();
+    Json(estado_ia(&app))
+}
+
+async fn delete_ia(State(app): State<Shared>) -> ApiResult {
+    app.ia.apagar().map_err(|e| bad(StatusCode::CONFLICT, e))?;
+    Ok(Json(estado_ia(&app)))
+}
+
+#[derive(Deserialize)]
+struct PermanenciaReq {
+    segundos: u64,
+}
+
+async fn post_ia_permanencia(
+    State(app): State<Shared>,
+    Json(r): Json<PermanenciaReq>,
+) -> ApiResult {
+    let s = r.segundos.clamp(5, 3600);
+    app.store
+        .set("permanencia_s", &s.to_string())
+        .map_err(internal)?;
+    Ok(Json(json!({ "permanencia_s": s })))
+}
+
+/// Mapa de calor acumulado (grade), só para o técnico.
+async fn get_calor(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    let canal = app
+        .video
+        .canal(id)
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    let m = canal.medio.lock().unwrap();
+    Ok(Json(
+        json!({ "calor": m.rastreador.calor, "ligado": crate::video::modulos(&app.store).calor }),
+    ))
+}
+
+async fn delete_calor(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    let canal = app
+        .video
+        .canal(id)
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    canal.medio.lock().unwrap().rastreador.calor.limpar();
+    Ok(Json(json!({ "limpo": true })))
 }
 
 #[derive(Deserialize)]

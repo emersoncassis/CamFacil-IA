@@ -4,6 +4,7 @@
 //! quadro vira a imagem ao vivo da dashboard e, reduzido em cinza, alimenta o
 //! analisador de visão. Uma thread por câmera, isolada do servidor web.
 
+use cf_core::deteccao::{self, Deteccao, EventoMedio, Rastreador};
 use cf_core::saude::{self, Situacao};
 use cf_core::store::{RegraSalva, Store};
 use cf_core::visao::{Analisador, Evento, Quadro, Regra};
@@ -267,6 +268,8 @@ pub struct EstadoRegra {
     /// Em alerta (balão pisca) até este instante, em ms desde agora.
     pub alerta_ms: u64,
     pub contagem: u64,
+    /// Complemento do balão enquanto em alerta (ex.: "parado 65 s").
+    pub aviso: Option<String>,
 }
 
 #[derive(Default, Clone, Serialize)]
@@ -282,6 +285,18 @@ pub struct EstadoCamera {
     pub ultimo_problema_s: Option<u64>,
     pub movimento_ms: u64,
     pub regras: HashMap<i64, EstadoRegra>,
+    /// Nível médio: o que o detector viu por último ("2 pessoas · 1 carro").
+    pub objetos: Vec<(String, usize)>,
+    /// Há quantos ms o detector olhou esta câmera (None = nunca).
+    pub ia_ms: Option<u64>,
+}
+
+/// Estado do nível médio (detector) de uma câmera.
+#[derive(Default)]
+pub struct Medio {
+    pub rastreador: Rastreador,
+    pub deteccoes: Vec<Deteccao>,
+    pub quando: Option<Instant>,
 }
 
 #[derive(Default)]
@@ -295,6 +310,7 @@ struct Interno {
     ocupadas: HashMap<i64, bool>,
     alertas: HashMap<i64, Instant>,
     contagens: HashMap<i64, u64>,
+    avisos: HashMap<i64, String>,
 }
 
 /// "IA, sugira para mim": observação em andamento ou concluída.
@@ -311,11 +327,16 @@ pub struct Canal {
     pub tx: broadcast::Sender<Arc<Vec<u8>>>,
     regras: RwLock<Vec<Regra>>,
     interno: Mutex<Interno>,
+    pub medio: Mutex<Medio>,
     parar: AtomicBool,
     filho: Mutex<Option<Child>>,
 }
 
 impl Canal {
+    pub fn regras(&self) -> Vec<Regra> {
+        self.regras.read().unwrap().clone()
+    }
+
     pub fn estado(&self) -> EstadoCamera {
         let i = self.interno.lock().unwrap();
         let resta = |t: Option<&Instant>, d: Duration| {
@@ -334,11 +355,26 @@ impl Canal {
                         ocupada: i.ocupadas.get(&r.id).copied().unwrap_or(false),
                         alerta_ms: resta(i.alertas.get(&r.id), ALERTA),
                         contagem: i.contagens.get(&r.id).copied().unwrap_or(0),
+                        aviso: if resta(i.alertas.get(&r.id), ALERTA) > 0 {
+                            i.avisos.get(&r.id).cloned()
+                        } else {
+                            None
+                        },
                     },
                 )
             })
             .collect();
         let agora = Instant::now();
+        let (objetos, ia_ms) = {
+            let m = self.medio.lock().unwrap();
+            (
+                deteccao::contar(&m.deteccoes)
+                    .into_iter()
+                    .map(|(c, n)| (deteccao::plural(c, n), n))
+                    .collect(),
+                m.quando.map(|q| q.elapsed().as_millis() as u64),
+            )
+        };
         EstadoCamera {
             online: i.online,
             fps: (i.fps * 10.0).round() / 10.0,
@@ -348,6 +384,92 @@ impl Canal {
             ultimo_problema_s: i.saude.desde_ultimo_problema(agora).map(|d| d.as_secs()),
             movimento_ms: resta(i.movimento.as_ref(), Duration::from_secs(4)),
             regras,
+            objetos,
+            ia_ms,
+        }
+    }
+
+    /// Aplica os eventos do detector (nível médio) ao estado dos balões,
+    /// grava no banco e avisa o Telegram. Chamado pela thread `ia-detector`.
+    pub fn aplicar_medio(&self, store: &Store, eventos: Vec<EventoMedio>) {
+        if eventos.is_empty() {
+            return;
+        }
+        let regras = self.regras();
+        let nome = |r: i64| {
+            regras
+                .iter()
+                .find(|x| x.id == r)
+                .map(|x| x.nome.clone())
+                .unwrap_or_else(|| "regra".into())
+        };
+        let t = agora();
+        let hora = cf_notify::servico::hora_local(store);
+        let cam = nome_camera(store, self.id);
+        let foto = self.ultimo.lock().unwrap().clone();
+        let mut avisos: Vec<(String, String)> = Vec::new();
+        let mut selo = false;
+        {
+            let mut i = self.interno.lock().unwrap();
+            for e in &eventos {
+                match e {
+                    EventoMedio::LinhaCruzada {
+                        regra,
+                        sentido,
+                        classe,
+                    } => {
+                        i.alertas.insert(*regra, Instant::now());
+                        *i.contagens.entry(*regra).or_default() += 1;
+                        let que = deteccao::nome_classe(*classe).unwrap_or("objeto");
+                        let det =
+                            format!("{} ({que})", if *sentido > 0 { "entrada" } else { "saída" });
+                        let _ =
+                            store.registrar_evento(self.id, Some(*regra), "linha_cruzada", &det, t);
+                        avisos.push((
+                            format!("regra:{regra}"),
+                            format!("{hora} — {}: passagem {det} · {cam}", nome(*regra)),
+                        ));
+                        selo = true;
+                    }
+                    EventoMedio::ZonaOcupada { regra, quantas } => {
+                        i.ocupadas.insert(*regra, true);
+                        i.alertas.insert(*regra, Instant::now());
+                        *i.contagens.entry(*regra).or_default() += 1;
+                        let det = deteccao::plural(0, *quantas);
+                        let _ =
+                            store.registrar_evento(self.id, Some(*regra), "zona_ocupada", &det, t);
+                        avisos.push((
+                            format!("regra:{regra}"),
+                            format!("{hora} — {}: {det} · {cam}", nome(*regra)),
+                        ));
+                        selo = true;
+                    }
+                    EventoMedio::ZonaLivre { regra } => {
+                        i.ocupadas.insert(*regra, false);
+                        let _ = store.registrar_evento(self.id, Some(*regra), "zona_livre", "", t);
+                    }
+                    EventoMedio::Permanencia { regra, segundos } => {
+                        i.alertas.insert(*regra, Instant::now());
+                        i.avisos.insert(*regra, format!("parado há {segundos} s"));
+                        let det = format!("{segundos} s");
+                        let _ =
+                            store.registrar_evento(self.id, Some(*regra), "permanencia", &det, t);
+                        avisos.push((
+                            format!("permanencia:{regra}"),
+                            format!(
+                                "{hora} — {}: pessoa parada há {segundos} s · {cam}",
+                                nome(*regra)
+                            ),
+                        ));
+                    }
+                }
+            }
+        }
+        if selo {
+            verificar_selo_cerca(store);
+        }
+        for (chave, texto) in avisos {
+            notificar(chave, texto, foto.clone());
         }
     }
 
@@ -387,6 +509,10 @@ pub struct Modulos {
     pub movimento: bool,
     pub cerca: bool,
     pub saude: bool,
+    pub pessoas: bool,
+    pub contagem: bool,
+    pub permanencia: bool,
+    pub calor: bool,
 }
 
 impl Modulos {
@@ -395,21 +521,55 @@ impl Modulos {
             "movimento" => self.movimento,
             "cerca" => self.cerca,
             "saude" => self.saude,
+            "pessoas" => self.pessoas,
+            "contagem" => self.contagem,
+            "permanencia" => self.permanencia,
+            "calor" => self.calor,
             _ => false,
         }
     }
+
+    /// Algum módulo que precisa do detector (nível médio) está ligado?
+    pub fn qualquer_medio(&self) -> bool {
+        self.pessoas || self.contagem || self.permanencia || self.calor
+    }
 }
 
-/// Catálogo: (id, nome falado, apelidos aceitos nos comandos).
-pub const MODULOS: &[(&str, &str, &[&str])] = &[
-    ("movimento", "Movimento inteligente", &["movimento"]),
+/// Catálogo: (id, nome falado, apelidos aceitos nos comandos, nível).
+pub const MODULOS: &[(&str, &str, &[&str], &str)] = &[
+    ("movimento", "Movimento inteligente", &["movimento"], "leve"),
     (
         "cerca",
         "Cerca e linha virtual",
         &["cerca", "linha", "zona"],
+        "leve",
     ),
-    ("saude", "Saúde das câmeras", &["saude", "saúde"]),
+    ("saude", "Saúde das câmeras", &["saude", "saúde"], "leve"),
+    (
+        "pessoas",
+        "Pessoas e veículos",
+        &["pessoas", "pessoa", "veiculos", "veículos"],
+        "medio",
+    ),
+    ("contagem", "Contagem", &["contagem", "contar"], "medio"),
+    (
+        "permanencia",
+        "Permanência",
+        &["permanencia", "permanência"],
+        "medio",
+    ),
+    ("calor", "Mapa de calor", &["calor", "mapa"], "medio"),
 ];
+
+/// Nível que o teste da máquina liberou (0 leve, 1 médio, 2 pesado).
+fn nivel_liberado(store: &Store) -> Option<u8> {
+    match store.get("bench_level").ok().flatten()?.as_str() {
+        "leve" => Some(0),
+        "medio" => Some(1),
+        "pesado" => Some(2),
+        _ => None,
+    }
+}
 
 /// Liga/desliga um módulo pelo id ou apelido. Devolve (id, nome).
 pub fn definir_modulo(
@@ -418,19 +578,34 @@ pub fn definir_modulo(
     ligado: bool,
 ) -> Result<(&'static str, &'static str), String> {
     let n = nome.trim().to_lowercase();
-    let (id, bonito, _) = MODULOS
+    let (id, bonito, _, nivel) = MODULOS
         .iter()
-        .find(|(id, _, apelidos)| *id == n || apelidos.contains(&n.as_str()))
+        .find(|(id, _, apelidos, _)| *id == n || apelidos.contains(&n.as_str()))
         .ok_or_else(|| {
             format!(
                 "módulo desconhecido: {nome}. Tenho: {}",
                 MODULOS
                     .iter()
-                    .map(|(id, _, _)| *id)
+                    .map(|(id, _, _, _)| *id)
                     .collect::<Vec<_>>()
                     .join(", ")
             )
         })?;
+    if ligado && *nivel == "medio" {
+        match nivel_liberado(store) {
+            None => {
+                return Err(
+                    "faça o teste da máquina (tela Início) antes de ligar um módulo médio".into(),
+                )
+            }
+            Some(0) => {
+                return Err(format!(
+                    "esta máquina não liberou o nível médio; {bonito} precisa de um computador mais forte ou de câmera com IA de borda"
+                ))
+            }
+            _ => {}
+        }
+    }
     store
         .set(&format!("modulo_{id}"), if ligado { "1" } else { "0" })
         .map_err(|e| e.to_string())?;
@@ -439,14 +614,20 @@ pub fn definir_modulo(
 
 pub fn modulos(store: &Store) -> Modulos {
     let on = |k: &str| store.get(k).ok().flatten().as_deref() != Some("0");
+    // Médios desligados por padrão (precisam do download do modelo).
+    let on_medio = |k: &str| store.get(k).ok().flatten().as_deref() == Some("1");
     Modulos {
         movimento: on("modulo_movimento"),
         cerca: on("modulo_cerca"),
         saude: on("modulo_saude"),
+        pessoas: on_medio("modulo_pessoas"),
+        contagem: on_medio("modulo_contagem"),
+        permanencia: on_medio("modulo_permanencia"),
+        calor: on_medio("modulo_calor"),
     }
 }
 
-fn nome_camera(store: &Store, id: i64) -> String {
+pub(crate) fn nome_camera(store: &Store, id: i64) -> String {
     store
         .camera(id)
         .ok()
@@ -491,6 +672,13 @@ impl Video {
         self.canais.lock().unwrap().get(&id).cloned()
     }
 
+    /// Todos os canais ativos, em ordem de id.
+    pub fn canais(&self) -> Vec<Arc<Canal>> {
+        let mut v: Vec<Arc<Canal>> = self.canais.lock().unwrap().values().cloned().collect();
+        v.sort_by_key(|c| c.id);
+        v
+    }
+
     /// Liga todas as câmeras ativas salvas.
     pub fn iniciar_todas(self: &Arc<Self>) {
         if let Ok(cams) = self.store.cameras() {
@@ -522,6 +710,7 @@ impl Video {
             tx,
             regras: RwLock::new(Vec::new()),
             interno: Mutex::new(Interno::default()),
+            medio: Mutex::new(Medio::default()),
             parar: AtomicBool::new(false),
             filho: Mutex::new(None),
         });
@@ -735,8 +924,24 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
         return;
     };
     let m = modulos(store);
-    let regras = if m.cerca {
-        canal.regras.read().unwrap().clone()
+    // Com o detector cuidando de zonas (pessoas) ou linhas (contagem), o
+    // analisador por movimento deixa essas regras para ele (sem contar duas vezes).
+    let detector_ativo = canal.medio.lock().unwrap().quando.is_some();
+    let regras: Vec<Regra> = if m.cerca {
+        canal
+            .regras
+            .read()
+            .unwrap()
+            .iter()
+            .filter(|r| {
+                !detector_ativo
+                    || match r.forma {
+                        cf_core::visao::Forma::Zona => !m.pessoas,
+                        cf_core::visao::Forma::Linha => !m.contagem,
+                    }
+            })
+            .cloned()
+            .collect()
     } else {
         Vec::new()
     };

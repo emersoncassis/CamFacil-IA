@@ -1,6 +1,6 @@
 # ADR-0002 — Inferência com ONNX Runtime (ort) e licença AGPL-3.0
 
-Status: aceito · 2026-11-07
+Status: aceito · 2026-11-07 · implementado na fase 3 (`ort` 2.0 rc com `load-dynamic`: a libonnxruntime é baixada em tempo de execução, o binário não a embute)
 
 ## Contexto
 Os modelos mais práticos de detecção (YOLO da Ultralytics) são AGPL-3.0. O projeto é open source e educativo. A referência conceitual de visão (Supervision, Roboflow) é Python, o que não serve ao requisito de leveza.
