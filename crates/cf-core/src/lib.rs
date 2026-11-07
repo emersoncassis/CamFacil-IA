@@ -10,6 +10,7 @@ pub mod ports;
 pub mod rtsp;
 pub mod store;
 pub mod system;
+pub mod visao;
 
 /// Versão do binário, exibida na dashboard.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

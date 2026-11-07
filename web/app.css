@@ -195,3 +195,37 @@ dialog h2 { margin: 0 0 var(--s3); font-size: var(--fs-lg); font-weight: 600; }
 .pedido p { margin: 0 0 var(--s2); }
 .pedido strong { font-weight: 600; }
 @media (max-width: 760px) { .qr-area { flex-direction: column; align-items: flex-start; } }
+
+/* Câmeras ao vivo */
+.block-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s3); }
+.block-head h2 { margin: 0; }
+.note.warn { color: var(--c-warn); margin: 0 0 var(--s3); }
+.viewer { position: relative; width: 100%; max-width: 960px; aspect-ratio: 16 / 9; background: var(--c-black); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; user-select: none; }
+.viewer img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
+.viewer svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.viewer.desenhando { cursor: crosshair; }
+.viewer.desenhando svg { pointer-events: auto; }
+#baloes { position: absolute; inset: 0; pointer-events: none; }
+#baloes .cf-bubble { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; }
+.viewer-off { position: absolute; inset: 0; display: grid; place-items: center; padding: var(--s5); text-align: center; color: var(--text-3); background: var(--c-black); }
+.forma { fill: rgba(6, 203, 63, 0.12); stroke: var(--accent); stroke-width: 3; vector-effect: non-scaling-stroke; }
+.forma.linha { fill: none; }
+.forma.salva { fill: rgba(255, 255, 255, 0.06); stroke: var(--c-300); stroke-dasharray: 6 4; }
+.vertice { fill: var(--accent); }
+.regra-form { margin-top: var(--s4); }
+.regra-form .zona-only { display: none; }
+.regra-form.zona .zona-only { display: flex; }
+.add-cam { display: flex; gap: var(--s2); margin-top: var(--s3); max-width: 720px; }
+.add-cam input { flex: 1; min-width: 0; }
+
+/* Aula guiada (agente guia) */
+.aula { position: fixed; right: var(--s5); bottom: var(--s5); z-index: 20; width: min(380px, calc(100vw - 32px)); padding: var(--s4); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 16px 48px rgba(0, 0, 0, .55); }
+.aula.inline { position: static; width: auto; max-width: 960px; margin: 0 0 var(--s4); box-shadow: none; border-color: var(--guide); }
+.aula-topo { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); margin-bottom: var(--s2); }
+.aula-topo strong { color: var(--guide); font-weight: 600; font-size: var(--fs-sm); }
+.aula p { margin: 0 0 var(--s3); color: var(--text); }
+.guia-alvo { outline: 2px solid var(--guide) !important; outline-offset: 4px; border-radius: var(--r); }
+.selos { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.selo { display: inline-flex; align-items: center; gap: var(--s2); padding: 4px var(--s3) 4px var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r-pill); font-size: var(--fs-sm); }
+.selo::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c-green); }
+@media (max-width: 760px) { .aula { right: var(--s4); left: var(--s4); width: auto; bottom: var(--s4); } }

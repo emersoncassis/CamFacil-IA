@@ -27,6 +27,11 @@ pub const ASSETS: &[Asset] = &[
         "i18n/pt-BR.json"
     ),
     asset!("/icon.svg", "image/svg+xml", "icon.svg"),
+    asset!(
+        "/aulas/cerca.json",
+        "application/json; charset=utf-8",
+        "aulas/cerca.json"
+    ),
 ];
 
 pub fn find(path: &str) -> Option<&'static Asset> {
