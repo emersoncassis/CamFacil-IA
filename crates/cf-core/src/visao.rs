@@ -1,5 +1,6 @@
-//! Visão computacional leve (nível "leve" do SDD-02): movimento inteligente,
-//! cerca virtual (zonas e linhas) e saúde da câmera, sem rede neural.
+//! Visão computacional leve (nível "leve" do SDD-02): movimento inteligente e
+//! cerca virtual (zonas e linhas), sem rede neural. A saúde da câmera usa as
+//! métricas de `saude()` daqui, com a máquina de estados em `crate::saude`.
 //!
 //! Tudo trabalha em quadros cinza pequenos (ex.: 160×90). Coordenadas de regras
 //! são normalizadas (0–1), independentes da resolução da câmera.
@@ -69,10 +70,6 @@ pub enum Evento {
     ZonaOcupada { regra: i64 },
     ZonaLivre { regra: i64 },
     LinhaCruzada { regra: i64, sentido: i8 },
-    CameraEscura,
-    CameraTapada,
-    CameraDesfocada,
-    CameraNormal,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -132,9 +129,6 @@ pub struct Analisador {
     prox_id: u32,
     zonas: std::collections::HashMap<i64, EstadoZona>,
     movimento_seguido: u32,
-    saude_ruim: Option<Evento>,
-    saude_contagem: u32,
-    quadros: u64,
 }
 
 impl Default for Analisador {
@@ -153,9 +147,6 @@ impl Analisador {
             prox_id: 1,
             zonas: Default::default(),
             movimento_seguido: 0,
-            saude_ruim: None,
-            saude_contagem: 0,
-            quadros: 0,
         }
     }
 
@@ -178,14 +169,7 @@ impl Analisador {
     }
 
     /// Processa um quadro e devolve os eventos novos.
-    pub fn processar(
-        &mut self,
-        q: &Quadro,
-        regras: &[Regra],
-        movimento: bool,
-        saude: bool,
-    ) -> Vec<Evento> {
-        self.quadros += 1;
+    pub fn processar(&mut self, q: &Quadro, regras: &[Regra], movimento: bool) -> Vec<Evento> {
         let mut ev = Vec::new();
         let n = q.w * q.h;
         if self.fundo.len() != n {
@@ -275,11 +259,6 @@ impl Analisador {
             }
         }
 
-        if saude && self.quadros.is_multiple_of(5) {
-            if let Some(e) = self.avaliar_saude(q) {
-                ev.push(e);
-            }
-        }
         self.anterior = Some(q.clone());
         ev
     }
@@ -319,31 +298,6 @@ impl Analisador {
                 self.prox_id = self.prox_id.wrapping_add(1);
             }
         }
-    }
-
-    fn avaliar_saude(&mut self, q: &Quadro) -> Option<Evento> {
-        let s = saude(q);
-        let atual = if s.media < 18.0 {
-            Some(Evento::CameraEscura)
-        } else if s.desvio < 6.0 {
-            Some(Evento::CameraTapada)
-        } else if s.nitidez < 12.0 {
-            Some(Evento::CameraDesfocada)
-        } else {
-            None
-        };
-        // Exige 3 avaliações seguidas para mudar (evita alarme por um quadro).
-        if atual == self.saude_ruim {
-            self.saude_contagem = 0;
-            return None;
-        }
-        self.saude_contagem += 1;
-        if self.saude_contagem < 3 {
-            return None;
-        }
-        self.saude_contagem = 0;
-        self.saude_ruim = atual.clone();
-        Some(atual.unwrap_or(Evento::CameraNormal))
     }
 }
 
@@ -587,7 +541,7 @@ mod tests {
     fn cena_parada_nao_gera_evento() {
         let mut a = Analisador::default();
         for _ in 0..30 {
-            assert!(a.processar(&cena(None), &[], true, false).is_empty());
+            assert!(a.processar(&cena(None), &[], true).is_empty());
         }
     }
 
@@ -609,11 +563,11 @@ mod tests {
             },
         ];
         for _ in 0..5 {
-            a.processar(&cena(None), &regras, true, false);
+            a.processar(&cena(None), &regras, true);
         }
         let mut todos = Vec::new();
         for x in (10..140).step_by(5) {
-            todos.extend(a.processar(&cena(Some(x)), &regras, true, false));
+            todos.extend(a.processar(&cena(Some(x)), &regras, true));
         }
         assert!(todos.contains(&Evento::Movimento));
         assert!(
@@ -630,7 +584,7 @@ mod tests {
         // Pessoa sai de cena: a zona libera depois de alguns quadros.
         let mut depois = Vec::new();
         for _ in 0..20 {
-            depois.extend(a.processar(&cena(None), &regras, true, false));
+            depois.extend(a.processar(&cena(None), &regras, true));
         }
         assert!(
             depois.contains(&Evento::ZonaLivre { regra: 2 }),
@@ -642,13 +596,13 @@ mod tests {
     fn ruido_pequeno_e_ignorado() {
         let mut a = Analisador::default();
         for _ in 0..5 {
-            a.processar(&cena(None), &[], true, false);
+            a.processar(&cena(None), &[], true);
         }
         // Um pixel piscando (folha, chuva, ruído) não vira movimento.
         for i in 0..10 {
             let mut q = cena(None);
             q.px[(40 + i) * W + 80] = 255;
-            assert!(a.processar(&q, &[], true, false).is_empty());
+            assert!(a.processar(&q, &[], true).is_empty());
         }
     }
 
@@ -667,11 +621,5 @@ mod tests {
         assert!(saude(&escura).media < 18.0);
         assert!(saude(&tapada).desvio < 6.0);
         assert!(saude(&cena(None)).nitidez > 12.0);
-        let mut a = Analisador::default();
-        let mut ev = Vec::new();
-        for _ in 0..40 {
-            ev.extend(a.processar(&tapada, &[], false, true));
-        }
-        assert!(ev.contains(&Evento::CameraTapada), "{ev:?}");
     }
 }

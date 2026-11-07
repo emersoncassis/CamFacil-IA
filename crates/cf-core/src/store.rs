@@ -64,6 +64,12 @@ impl Store {
                  modulo   TEXT PRIMARY KEY,
                  ganho_em INTEGER NOT NULL
              );
+             CREATE TABLE IF NOT EXISTS telegram_chats (
+                 chat_id    INTEGER PRIMARY KEY,
+                 nome       TEXT NOT NULL DEFAULT '',
+                 autorizado INTEGER NOT NULL DEFAULT 0,
+                 visto_em   INTEGER NOT NULL
+             );
              CREATE TABLE IF NOT EXISTS acceptances (
                  id         INTEGER PRIMARY KEY,
                  document   TEXT NOT NULL,
@@ -349,6 +355,27 @@ impl Store {
         v
     }
 
+    /// Últimos eventos de um tipo (ex.: `saude`), do mais novo para o mais velho.
+    pub fn eventos_tipo(&self, tipo: &str, limite: i64) -> Result<Vec<EventoSalvo>> {
+        let c = self.lock();
+        let mut st = c.prepare(
+            "SELECT id, camera_id, regra_id, tipo, detalhe, quando FROM eventos WHERE tipo = ?1 ORDER BY id DESC LIMIT ?2",
+        )?;
+        let v = st
+            .query_map(params![tipo, limite], |r| {
+                Ok(EventoSalvo {
+                    id: r.get(0)?,
+                    camera_id: r.get(1)?,
+                    regra_id: r.get(2)?,
+                    tipo: r.get(3)?,
+                    detalhe: r.get(4)?,
+                    quando: r.get(5)?,
+                })
+            })?
+            .collect();
+        v
+    }
+
     pub fn ganhar_selo(&self, modulo: &str, quando: i64) -> Result<bool> {
         Ok(self.lock().execute(
             "INSERT OR IGNORE INTO selos(modulo, ganho_em) VALUES (?1, ?2)",
@@ -364,9 +391,107 @@ impl Store {
     }
 }
 
+// ---------------- Telegram: contatos ----------------
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ChatTelegram {
+    pub chat_id: i64,
+    pub nome: String,
+    pub autorizado: bool,
+    pub visto_em: i64,
+}
+
+impl Store {
+    /// Alguém falou com o bot: registra (ou atualiza nome e data) sem autorizar.
+    pub fn telegram_chat_visto(&self, chat_id: i64, nome: &str, quando: i64) -> Result<()> {
+        self.lock().execute(
+            "INSERT INTO telegram_chats(chat_id, nome, visto_em) VALUES (?1, ?2, ?3)
+             ON CONFLICT(chat_id) DO UPDATE SET nome = excluded.nome, visto_em = excluded.visto_em",
+            params![chat_id, nome, quando],
+        )?;
+        Ok(())
+    }
+
+    pub fn telegram_chats(&self) -> Result<Vec<ChatTelegram>> {
+        let c = self.lock();
+        let mut st = c.prepare(
+            "SELECT chat_id, nome, autorizado, visto_em FROM telegram_chats ORDER BY autorizado DESC, visto_em DESC",
+        )?;
+        let v = st
+            .query_map([], |r| {
+                Ok(ChatTelegram {
+                    chat_id: r.get(0)?,
+                    nome: r.get(1)?,
+                    autorizado: r.get::<_, i64>(2)? != 0,
+                    visto_em: r.get(3)?,
+                })
+            })?
+            .collect();
+        v
+    }
+
+    pub fn telegram_autorizados(&self) -> Result<Vec<i64>> {
+        Ok(self
+            .telegram_chats()?
+            .into_iter()
+            .filter(|c| c.autorizado)
+            .map(|c| c.chat_id)
+            .collect())
+    }
+
+    pub fn telegram_autorizar(&self, chat_id: i64, autorizado: bool) -> Result<bool> {
+        Ok(self.lock().execute(
+            "UPDATE telegram_chats SET autorizado = ?2 WHERE chat_id = ?1",
+            params![chat_id, autorizado as i64],
+        )? > 0)
+    }
+
+    pub fn telegram_remover(&self, chat_id: i64) -> Result<bool> {
+        Ok(self.lock().execute(
+            "DELETE FROM telegram_chats WHERE chat_id = ?1",
+            params![chat_id],
+        )? > 0)
+    }
+
+    /// Eventos desde um instante (para o /resumo do dia).
+    pub fn eventos_desde(&self, desde: i64) -> Result<Vec<EventoSalvo>> {
+        let c = self.lock();
+        let mut st = c.prepare(
+            "SELECT id, camera_id, regra_id, tipo, detalhe, quando FROM eventos WHERE quando >= ?1 ORDER BY id DESC LIMIT 5000",
+        )?;
+        let v = st
+            .query_map(params![desde], |r| {
+                Ok(EventoSalvo {
+                    id: r.get(0)?,
+                    camera_id: r.get(1)?,
+                    regra_id: r.get(2)?,
+                    tipo: r.get(3)?,
+                    detalhe: r.get(4)?,
+                    quando: r.get(5)?,
+                })
+            })?
+            .collect();
+        v
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn contatos_do_telegram() {
+        let s = Store::memory().unwrap();
+        s.telegram_chat_visto(10, "Zé", 1).unwrap();
+        s.telegram_chat_visto(10, "Zé Técnico", 2).unwrap();
+        assert!(s.telegram_autorizados().unwrap().is_empty());
+        assert!(s.telegram_autorizar(10, true).unwrap());
+        assert_eq!(s.telegram_autorizados().unwrap(), vec![10]);
+        assert_eq!(s.telegram_chats().unwrap()[0].nome, "Zé Técnico");
+        assert!(!s.telegram_autorizar(99, true).unwrap());
+        assert!(s.telegram_remover(10).unwrap());
+        assert!(s.telegram_chats().unwrap().is_empty());
+    }
 
     #[test]
     fn grava_e_le_configuracao() {
@@ -405,6 +530,11 @@ mod tests {
         s.registrar_evento(cam, Some(r), "linha_cruzada", "", 10)
             .unwrap();
         assert_eq!(s.eventos(10).unwrap()[0].tipo, "linha_cruzada");
+        s.registrar_evento(cam, None, "saude", "escura", 11)
+            .unwrap();
+        let sa = s.eventos_tipo("saude", 10).unwrap();
+        assert_eq!(sa.len(), 1);
+        assert_eq!(sa[0].detalhe, "escura");
         assert!(s.ganhar_selo("cerca", 1).unwrap());
         assert!(!s.ganhar_selo("cerca", 2).unwrap());
         assert!(s.remover_camera(cam).unwrap());

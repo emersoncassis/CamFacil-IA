@@ -74,6 +74,20 @@
           <div id="bench-result"></div>
         </div>
 
+        <div class="block" id="saude-bloco">
+          <h2 data-i18n="saude.titulo"></h2>
+          <p class="hint" data-i18n="saude.desc"></p>
+          <p class="note warn mt" id="saude-desligado" hidden><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="saude.desligado"></span></p>
+          <div class="table-wrap mt">
+            <table class="table">
+              <thead><tr><th data-i18n="saude.col_camera"></th><th data-i18n="saude.col_situacao"></th><th data-i18n="saude.col_desde"></th><th data-i18n="saude.col_ultimo"></th></tr></thead>
+              <tbody id="saude-cameras"></tbody>
+            </table>
+          </div>
+          <h3 class="sub" data-i18n="saude.eventos"></h3>
+          <ul class="list eventos" id="saude-eventos"></ul>
+        </div>
+
         <div class="block">
           <h2 data-i18n="inicio.selos"></h2>
           <div class="selos" id="selos"></div>
@@ -153,7 +167,13 @@
 
         <div class="block" id="aovivo" hidden>
           <div class="block-head">
-            <h2 id="aovivo-nome"></h2>
+            <div class="aovivo-titulo">
+              <h2 id="aovivo-nome"></h2>
+              <span class="tag" id="aovivo-saude" hidden></span>
+              <span class="tag" id="aovivo-objetos" hidden></span>
+              <label class="som-regra" id="calor-wrap" hidden><span class="switch"><input type="checkbox" id="calor-toggle"><span></span></span><span class="tiny" data-i18n="calor.toggle"></span></label>
+              <label class="som-regra" title="" id="aovivo-som-saude"><span class="switch"><input type="checkbox" id="som-saude"><span></span></span><span class="tiny" data-i18n="saude.som"></span></label>
+            </div>
             <div class="seg" role="radiogroup" id="modo">
               <label><input type="radio" name="modo" value="ver" checked><span data-i18n="desenho.ver"></span></label>
               <label><input type="radio" name="modo" value="zona"><span data-i18n="desenho.zona"></span></label>
@@ -250,6 +270,28 @@
             </table>
           </div>
         </div>
+        <div class="block" id="ia-bloco">
+          <div class="block-head">
+            <h2 data-i18n="ia.titulo"></h2>
+            <div class="actions">
+              <button class="btn sm" id="ia-baixar" type="button" hidden><span data-i18n="ia.baixar"></span></button>
+              <button class="btn sm" id="ia-cancelar" type="button" hidden data-i18n="ia.cancelar"></button>
+              <button class="btn ghost sm" id="ia-apagar" type="button" hidden data-i18n="ia.apagar"></button>
+            </div>
+          </div>
+          <p class="hint" data-i18n="ia.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="ia.situacao"></dt><dd><span class="state"><span class="dot" id="ia-dot"></span><span id="ia-status"></span></span></dd>
+            <dt data-i18n="ia.detector"></dt><dd id="ia-detector">—</dd>
+            <dt data-i18n="ia.pasta"></dt><dd class="mono tiny" id="ia-pasta">—</dd>
+          </dl>
+          <div class="sug-andamento" id="ia-andamento" hidden>
+            <div class="sug-barra"><i id="ia-barra"></i></div>
+            <p class="tiny" id="ia-andamento-texto"></p>
+          </div>
+          <p class="msg" id="ia-msg" role="status"></p>
+          <p class="tiny" data-i18n="ia.pendrive"></p>
+        </div>
       </section>
 
       <!-- Integrações -->
@@ -291,9 +333,70 @@
           </div>
           <p class="msg" id="elo-msg" role="status"></p>
         </div>
+        <div class="block" id="ts">
+          <h2 data-i18n="ts.titulo"></h2>
+          <p class="hint" data-i18n="ts.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="ts.situacao"></dt><dd><span class="state"><span class="dot" id="ts-dot"></span><span id="ts-status"></span></span></dd>
+            <dt data-i18n="ts.endereco"></dt><dd id="ts-endereco">—</dd>
+            <dt data-i18n="ts.nome"></dt><dd class="mono" id="ts-nome">—</dd>
+          </dl>
+          <div class="qr-area" id="ts-qr-area" hidden>
+            <div class="qr"><img id="ts-qr" alt="" width="200" height="200"></div>
+            <div>
+              <p data-i18n="ts.qr_passo"></p>
+              <p class="hint" data-i18n="ts.mesma_rede"></p>
+              <p class="hint" data-i18n="ts.sem_nuvem"></p>
+            </div>
+          </div>
+          <div id="ts-instalar" hidden>
+            <p class="hint" id="ts-instalar-texto"></p>
+            <div class="result"><code class="mono" id="ts-comando"></code><button class="btn ghost sm" id="ts-copiar-cmd" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="cam.copiar"></span></button></div>
+            <details class="avancado mt">
+              <summary data-i18n="ts.outros"></summary>
+              <dl class="rows mt">
+                <dt>Windows</dt><dd class="mono">winget install tailscale.tailscale</dd>
+                <dt>Linux / Raspberry Pi</dt><dd class="mono">curl -fsSL https://tailscale.com/install.sh | sh<br>sudo tailscale up</dd>
+                <dt>macOS</dt><dd class="mono">brew install --cask tailscale</dd>
+                <dt data-i18n="ts.celular"></dt><dd data-i18n="ts.celular_desc"></dd>
+              </dl>
+            </details>
+          </div>
+          <p class="msg" id="ts-msg" role="status"></p>
+        </div>
+        <div class="block" id="tg">
+          <h2>Telegram</h2>
+          <p class="hint" data-i18n="tg.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="tg.situacao"></dt><dd><span class="state"><span class="dot" id="tg-dot"></span><span id="tg-status"></span></span></dd>
+            <dt data-i18n="tg.bot"></dt><dd class="mono" id="tg-bot">—</dd>
+            <dt data-i18n="tg.envios"></dt><dd id="tg-envios">—</dd>
+          </dl>
+          <form class="add-cam" id="tg-form" autocomplete="off">
+            <input name="token" class="mono" type="password" autocapitalize="off" spellcheck="false" data-i18n-ph="tg.token_ph">
+            <button class="btn primary" type="submit" id="tg-salvar"><span data-i18n="tg.salvar"></span></button>
+          </form>
+          <p class="tiny mt" data-i18n="tg.como_criar"></p>
+          <div class="actions mt" id="tg-acoes" hidden>
+            <button class="btn sm" id="tg-testar" type="button"><span data-i18n="tg.testar"></span></button>
+            <button class="btn ghost sm" id="tg-remover" type="button" data-i18n="tg.remover"></button>
+            <label class="som-regra" title="" id="tg-fotos-wrap"><span class="switch"><input type="checkbox" id="tg-fotos"><span></span></span><span class="tiny" data-i18n="tg.fotos"></span></label>
+          </div>
+          <p class="msg" id="tg-msg" role="status"></p>
+          <div id="tg-contatos" hidden>
+            <h3 class="sub" data-i18n="tg.contatos"></h3>
+            <p class="hint" data-i18n="tg.contatos_dica"></p>
+            <div class="table-wrap mt">
+              <table class="table">
+                <thead><tr><th data-i18n="tg.col_nome"></th><th data-i18n="tg.col_chat"></th><th data-i18n="tg.col_visto"></th><th data-i18n="tg.col_autorizado"></th><th class="right"></th></tr></thead>
+                <tbody id="tg-chats"></tbody>
+              </table>
+            </div>
+            <p class="tiny mt" data-i18n="tg.comandos"></p>
+          </div>
+        </div>
         <div class="block">
           <ul class="list">
-            <li><div><strong>Telegram</strong><p data-i18n="int.telegram"></p></div><span class="badge" data-i18n="em_breve"></span></li>
             <li><div><strong>WhatsApp</strong><p data-i18n="int.whatsapp"></p></div><span class="badge" data-i18n="em_breve"></span></li>
             <li><div><strong data-i18n="int.marca"></strong><p data-i18n="int.marca_desc"></p></div><span class="badge" data-i18n="em_breve"></span></li>
           </ul>

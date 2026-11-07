@@ -4,6 +4,8 @@
 //! quadro vira a imagem ao vivo da dashboard e, reduzido em cinza, alimenta o
 //! analisador de visão. Uma thread por câmera, isolada do servidor web.
 
+use cf_core::deteccao::{self, Deteccao, EventoMedio, Rastreador};
+use cf_core::saude::{self, Situacao};
 use cf_core::store::{RegraSalva, Store};
 use cf_core::visao::{Analisador, Evento, Quadro, Regra};
 use serde::Serialize;
@@ -12,7 +14,7 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast;
 
@@ -266,6 +268,8 @@ pub struct EstadoRegra {
     /// Em alerta (balão pisca) até este instante, em ms desde agora.
     pub alerta_ms: u64,
     pub contagem: u64,
+    /// Complemento do balão enquanto em alerta (ex.: "parado 65 s").
+    pub aviso: Option<String>,
 }
 
 #[derive(Default, Clone, Serialize)]
@@ -273,9 +277,26 @@ pub struct EstadoCamera {
     pub online: bool,
     pub fps: f32,
     pub erro: Option<String>,
-    pub saude: Option<String>,
+    /// Saúde da imagem: `ok`, `escura`, `coberta`, `desfocada` ou `sem_sinal`.
+    pub saude: String,
+    /// Há quantos segundos está nessa situação.
+    pub saude_desde_s: u64,
+    /// Segundos desde o começo do último problema (`None` = nunca).
+    pub ultimo_problema_s: Option<u64>,
     pub movimento_ms: u64,
     pub regras: HashMap<i64, EstadoRegra>,
+    /// Nível médio: o que o detector viu por último ("2 pessoas · 1 carro").
+    pub objetos: Vec<(String, usize)>,
+    /// Há quantos ms o detector olhou esta câmera (None = nunca).
+    pub ia_ms: Option<u64>,
+}
+
+/// Estado do nível médio (detector) de uma câmera.
+#[derive(Default)]
+pub struct Medio {
+    pub rastreador: Rastreador,
+    pub deteccoes: Vec<Deteccao>,
+    pub quando: Option<Instant>,
 }
 
 #[derive(Default)]
@@ -283,11 +304,13 @@ struct Interno {
     online: bool,
     fps: f32,
     erro: Option<String>,
-    saude: Option<String>,
+    saude: saude::Monitor,
+    quadros: u64,
     movimento: Option<Instant>,
     ocupadas: HashMap<i64, bool>,
     alertas: HashMap<i64, Instant>,
     contagens: HashMap<i64, u64>,
+    avisos: HashMap<i64, String>,
 }
 
 /// "IA, sugira para mim": observação em andamento ou concluída.
@@ -304,11 +327,16 @@ pub struct Canal {
     pub tx: broadcast::Sender<Arc<Vec<u8>>>,
     regras: RwLock<Vec<Regra>>,
     interno: Mutex<Interno>,
+    pub medio: Mutex<Medio>,
     parar: AtomicBool,
     filho: Mutex<Option<Child>>,
 }
 
 impl Canal {
+    pub fn regras(&self) -> Vec<Regra> {
+        self.regras.read().unwrap().clone()
+    }
+
     pub fn estado(&self) -> EstadoCamera {
         let i = self.interno.lock().unwrap();
         let resta = |t: Option<&Instant>, d: Duration| {
@@ -327,17 +355,121 @@ impl Canal {
                         ocupada: i.ocupadas.get(&r.id).copied().unwrap_or(false),
                         alerta_ms: resta(i.alertas.get(&r.id), ALERTA),
                         contagem: i.contagens.get(&r.id).copied().unwrap_or(0),
+                        aviso: if resta(i.alertas.get(&r.id), ALERTA) > 0 {
+                            i.avisos.get(&r.id).cloned()
+                        } else {
+                            None
+                        },
                     },
                 )
             })
             .collect();
+        let agora = Instant::now();
+        let (objetos, ia_ms) = {
+            let m = self.medio.lock().unwrap();
+            (
+                deteccao::contar(&m.deteccoes)
+                    .into_iter()
+                    .map(|(c, n)| (deteccao::plural(c, n), n))
+                    .collect(),
+                m.quando.map(|q| q.elapsed().as_millis() as u64),
+            )
+        };
         EstadoCamera {
             online: i.online,
             fps: (i.fps * 10.0).round() / 10.0,
             erro: i.erro.clone(),
-            saude: i.saude.clone(),
+            saude: i.saude.atual().chave().to_string(),
+            saude_desde_s: i.saude.ha_quanto(agora).as_secs(),
+            ultimo_problema_s: i.saude.desde_ultimo_problema(agora).map(|d| d.as_secs()),
             movimento_ms: resta(i.movimento.as_ref(), Duration::from_secs(4)),
             regras,
+            objetos,
+            ia_ms,
+        }
+    }
+
+    /// Aplica os eventos do detector (nível médio) ao estado dos balões,
+    /// grava no banco e avisa o Telegram. Chamado pela thread `ia-detector`.
+    pub fn aplicar_medio(&self, store: &Store, eventos: Vec<EventoMedio>) {
+        if eventos.is_empty() {
+            return;
+        }
+        let regras = self.regras();
+        let nome = |r: i64| {
+            regras
+                .iter()
+                .find(|x| x.id == r)
+                .map(|x| x.nome.clone())
+                .unwrap_or_else(|| "regra".into())
+        };
+        let t = agora();
+        let hora = cf_notify::servico::hora_local(store);
+        let cam = nome_camera(store, self.id);
+        let foto = self.ultimo.lock().unwrap().clone();
+        let mut avisos: Vec<(String, String)> = Vec::new();
+        let mut selo = false;
+        {
+            let mut i = self.interno.lock().unwrap();
+            for e in &eventos {
+                match e {
+                    EventoMedio::LinhaCruzada {
+                        regra,
+                        sentido,
+                        classe,
+                    } => {
+                        i.alertas.insert(*regra, Instant::now());
+                        *i.contagens.entry(*regra).or_default() += 1;
+                        let que = deteccao::nome_classe(*classe).unwrap_or("objeto");
+                        let det =
+                            format!("{} ({que})", if *sentido > 0 { "entrada" } else { "saída" });
+                        let _ =
+                            store.registrar_evento(self.id, Some(*regra), "linha_cruzada", &det, t);
+                        avisos.push((
+                            format!("regra:{regra}"),
+                            format!("{hora} — {}: passagem {det} · {cam}", nome(*regra)),
+                        ));
+                        selo = true;
+                    }
+                    EventoMedio::ZonaOcupada { regra, quantas } => {
+                        i.ocupadas.insert(*regra, true);
+                        i.alertas.insert(*regra, Instant::now());
+                        *i.contagens.entry(*regra).or_default() += 1;
+                        let det = deteccao::plural(0, *quantas);
+                        let _ =
+                            store.registrar_evento(self.id, Some(*regra), "zona_ocupada", &det, t);
+                        avisos.push((
+                            format!("regra:{regra}"),
+                            format!("{hora} — {}: {det} · {cam}", nome(*regra)),
+                        ));
+                        selo = true;
+                    }
+                    EventoMedio::ZonaLivre { regra } => {
+                        i.ocupadas.insert(*regra, false);
+                        let _ = store.registrar_evento(self.id, Some(*regra), "zona_livre", "", t);
+                    }
+                    EventoMedio::Permanencia { regra, segundos } => {
+                        i.alertas.insert(*regra, Instant::now());
+                        i.avisos.insert(*regra, format!("parado há {segundos} s"));
+                        let det = format!("{segundos} s");
+                        let _ =
+                            store.registrar_evento(self.id, Some(*regra), "permanencia", &det, t);
+                        avisos.push((
+                            format!("permanencia:{regra}"),
+                            format!(
+                                "{hora} — {}: pessoa parada há {segundos} s · {cam}",
+                                nome(*regra)
+                            ),
+                        ));
+                    }
+                }
+            }
+        }
+        if selo {
+            verificar_selo_cerca(store);
+        }
+        for (chave, texto) in avisos {
+            notificar(chave, texto, foto.clone());
         }
     }
 
@@ -353,21 +485,155 @@ impl Canal {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Notificações (Telegram): gancho global, definido uma vez pelo binário
+// ---------------------------------------------------------------------------
+
+type Notificador = Arc<dyn Fn(cf_notify::Alerta) + Send + Sync>;
+static NOTIFICADOR: OnceLock<Notificador> = OnceLock::new();
+
+/// Liga o envio de alertas (uma vez, na inicialização).
+pub fn definir_notificador(n: Notificador) {
+    let _ = NOTIFICADOR.set(n);
+}
+
+fn notificar(chave: String, texto: String, foto: Option<Arc<Vec<u8>>>) {
+    if let Some(n) = NOTIFICADOR.get() {
+        n(cf_notify::Alerta { chave, texto, foto });
+    }
+}
+
 /// Módulos ligados (lidos das configurações a cada quadro, sem custo relevante).
 #[derive(Clone, Copy)]
 pub struct Modulos {
     pub movimento: bool,
     pub cerca: bool,
     pub saude: bool,
+    pub pessoas: bool,
+    pub contagem: bool,
+    pub permanencia: bool,
+    pub calor: bool,
+}
+
+impl Modulos {
+    pub fn ligado(&self, id: &str) -> bool {
+        match id {
+            "movimento" => self.movimento,
+            "cerca" => self.cerca,
+            "saude" => self.saude,
+            "pessoas" => self.pessoas,
+            "contagem" => self.contagem,
+            "permanencia" => self.permanencia,
+            "calor" => self.calor,
+            _ => false,
+        }
+    }
+
+    /// Algum módulo que precisa do detector (nível médio) está ligado?
+    pub fn qualquer_medio(&self) -> bool {
+        self.pessoas || self.contagem || self.permanencia || self.calor
+    }
+}
+
+/// Catálogo: (id, nome falado, apelidos aceitos nos comandos, nível).
+pub const MODULOS: &[(&str, &str, &[&str], &str)] = &[
+    ("movimento", "Movimento inteligente", &["movimento"], "leve"),
+    (
+        "cerca",
+        "Cerca e linha virtual",
+        &["cerca", "linha", "zona"],
+        "leve",
+    ),
+    ("saude", "Saúde das câmeras", &["saude", "saúde"], "leve"),
+    (
+        "pessoas",
+        "Pessoas e veículos",
+        &["pessoas", "pessoa", "veiculos", "veículos"],
+        "medio",
+    ),
+    ("contagem", "Contagem", &["contagem", "contar"], "medio"),
+    (
+        "permanencia",
+        "Permanência",
+        &["permanencia", "permanência"],
+        "medio",
+    ),
+    ("calor", "Mapa de calor", &["calor", "mapa"], "medio"),
+];
+
+/// Nível que o teste da máquina liberou (0 leve, 1 médio, 2 pesado).
+fn nivel_liberado(store: &Store) -> Option<u8> {
+    match store.get("bench_level").ok().flatten()?.as_str() {
+        "leve" => Some(0),
+        "medio" => Some(1),
+        "pesado" => Some(2),
+        _ => None,
+    }
+}
+
+/// Liga/desliga um módulo pelo id ou apelido. Devolve (id, nome).
+pub fn definir_modulo(
+    store: &Store,
+    nome: &str,
+    ligado: bool,
+) -> Result<(&'static str, &'static str), String> {
+    let n = nome.trim().to_lowercase();
+    let (id, bonito, _, nivel) = MODULOS
+        .iter()
+        .find(|(id, _, apelidos, _)| *id == n || apelidos.contains(&n.as_str()))
+        .ok_or_else(|| {
+            format!(
+                "módulo desconhecido: {nome}. Tenho: {}",
+                MODULOS
+                    .iter()
+                    .map(|(id, _, _, _)| *id)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        })?;
+    if ligado && *nivel == "medio" {
+        match nivel_liberado(store) {
+            None => {
+                return Err(
+                    "faça o teste da máquina (tela Início) antes de ligar um módulo médio".into(),
+                )
+            }
+            Some(0) => {
+                return Err(format!(
+                    "esta máquina não liberou o nível médio; {bonito} precisa de um computador mais forte ou de câmera com IA de borda"
+                ))
+            }
+            _ => {}
+        }
+    }
+    store
+        .set(&format!("modulo_{id}"), if ligado { "1" } else { "0" })
+        .map_err(|e| e.to_string())?;
+    Ok((id, bonito))
 }
 
 pub fn modulos(store: &Store) -> Modulos {
     let on = |k: &str| store.get(k).ok().flatten().as_deref() != Some("0");
+    // Médios desligados por padrão (precisam do download do modelo).
+    let on_medio = |k: &str| store.get(k).ok().flatten().as_deref() == Some("1");
     Modulos {
         movimento: on("modulo_movimento"),
         cerca: on("modulo_cerca"),
         saude: on("modulo_saude"),
+        pessoas: on_medio("modulo_pessoas"),
+        contagem: on_medio("modulo_contagem"),
+        permanencia: on_medio("modulo_permanencia"),
+        calor: on_medio("modulo_calor"),
     }
+}
+
+pub(crate) fn nome_camera(store: &Store, id: i64) -> String {
+    store
+        .camera(id)
+        .ok()
+        .flatten()
+        .map(|c| c.nome)
+        .unwrap_or_else(|| format!("Câmera {id}"))
 }
 
 /// Selo da cerca virtual: uma zona e uma linha criadas e já disparadas.
@@ -406,6 +672,13 @@ impl Video {
         self.canais.lock().unwrap().get(&id).cloned()
     }
 
+    /// Todos os canais ativos, em ordem de id.
+    pub fn canais(&self) -> Vec<Arc<Canal>> {
+        let mut v: Vec<Arc<Canal>> = self.canais.lock().unwrap().values().cloned().collect();
+        v.sort_by_key(|c| c.id);
+        v
+    }
+
     /// Liga todas as câmeras ativas salvas.
     pub fn iniciar_todas(self: &Arc<Self>) {
         if let Ok(cams) = self.store.cameras() {
@@ -437,6 +710,7 @@ impl Video {
             tx,
             regras: RwLock::new(Vec::new()),
             interno: Mutex::new(Interno::default()),
+            medio: Mutex::new(Medio::default()),
             parar: AtomicBool::new(false),
             filho: Mutex::new(None),
         });
@@ -462,7 +736,7 @@ fn laco(canal: Arc<Canal>, store: Arc<Store>, fonte: String, url: String) {
                 "ffmpeg não encontrado. Instale com: {}",
                 comando_instalar()
             ));
-            std::thread::sleep(Duration::from_secs(5));
+            esperar_sem_sinal(&canal, &store, Duration::from_secs(5));
             continue;
         };
         let mut cmd = Command::new(ff);
@@ -480,7 +754,7 @@ fn laco(canal: Arc<Canal>, store: Arc<Store>, fonte: String, url: String) {
             Err(e) => {
                 canal.interno.lock().unwrap().erro =
                     Some(format!("não foi possível abrir o ffmpeg: {e}"));
-                std::thread::sleep(espera);
+                esperar_sem_sinal(&canal, &store, espera);
                 continue;
             }
         };
@@ -509,7 +783,51 @@ fn laco(canal: Arc<Canal>, store: Arc<Store>, fonte: String, url: String) {
             espera = (espera * 2).min(Duration::from_secs(30));
         }
         if !canal.parar.load(Ordering::Relaxed) {
-            std::thread::sleep(espera);
+            esperar_sem_sinal(&canal, &store, espera);
+        }
+    }
+}
+
+/// Espera entre tentativas avisando o monitor de saúde, a cada segundo, que a
+/// câmera está sem sinal (a histerese decide quando isso vira evento).
+fn esperar_sem_sinal(canal: &Canal, store: &Store, total: Duration) {
+    let fim = Instant::now() + total;
+    while !canal.parar.load(Ordering::Relaxed) {
+        observar_saude(canal, store, Situacao::SemSinal);
+        let resta = fim.saturating_duration_since(Instant::now());
+        if resta.is_zero() {
+            break;
+        }
+        std::thread::sleep(resta.min(Duration::from_secs(1)));
+    }
+}
+
+/// Alimenta o monitor de saúde; grava o evento `saude` só na mudança confirmada.
+fn observar_saude(canal: &Canal, store: &Store, s: Situacao) {
+    if !modulos(store).saude {
+        return;
+    }
+    let mudanca = canal
+        .interno
+        .lock()
+        .unwrap()
+        .saude
+        .observar(s, Instant::now());
+    if let Some(m) = mudanca {
+        let _ = store.registrar_evento(canal.id, None, "saude", m.para.chave(), agora());
+        if m.para.problema() {
+            let texto = format!(
+                "{} — {}: {}",
+                cf_notify::servico::hora_local(store),
+                nome_camera(store, canal.id),
+                crate::notificacoes::saude_pt(m.para.chave())
+            );
+            let foto = if m.para == Situacao::SemSinal {
+                None
+            } else {
+                canal.ultimo.lock().unwrap().clone()
+            };
+            notificar(format!("saude:{}", canal.id), texto, foto);
         }
     }
 }
@@ -606,12 +924,37 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
         return;
     };
     let m = modulos(store);
-    let regras = if m.cerca {
-        canal.regras.read().unwrap().clone()
+    // Com o detector cuidando de zonas (pessoas) ou linhas (contagem), o
+    // analisador por movimento deixa essas regras para ele (sem contar duas vezes).
+    let detector_ativo = canal.medio.lock().unwrap().quando.is_some();
+    let regras: Vec<Regra> = if m.cerca {
+        canal
+            .regras
+            .read()
+            .unwrap()
+            .iter()
+            .filter(|r| {
+                !detector_ativo
+                    || match r.forma {
+                        cf_core::visao::Forma::Zona => !m.pessoas,
+                        cf_core::visao::Forma::Linha => !m.contagem,
+                    }
+            })
+            .cloned()
+            .collect()
     } else {
         Vec::new()
     };
-    let eventos = an.processar(&q, &regras, m.movimento, m.saude);
+    // Saúde: uma avaliação por segundo basta (5 quadros/s) e custa quase nada.
+    let n = {
+        let mut i = canal.interno.lock().unwrap();
+        i.quadros += 1;
+        i.quadros
+    };
+    if n.is_multiple_of(5) {
+        observar_saude(canal, store, saude::classificar(&q));
+    }
+    let eventos = an.processar(&q, &regras, m.movimento);
     if let Some(o) = canal.observacao.lock().unwrap().as_mut() {
         if o.inicio.elapsed() < o.duracao {
             o.obs.alimentar(&an.centros());
@@ -622,6 +965,7 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
     }
     let t = agora();
     let mut selo = false;
+    let mut avisos: Vec<(i64, String)> = Vec::new();
     let mut i = canal.interno.lock().unwrap();
     for e in eventos {
         let (tipo, regra) = match &e {
@@ -646,22 +990,6 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
                 selo = true;
                 ("linha_cruzada", Some(*regra))
             }
-            Evento::CameraEscura => {
-                i.saude = Some("escura".into());
-                ("camera_escura", None)
-            }
-            Evento::CameraTapada => {
-                i.saude = Some("tapada".into());
-                ("camera_tapada", None)
-            }
-            Evento::CameraDesfocada => {
-                i.saude = Some("desfocada".into());
-                ("camera_desfocada", None)
-            }
-            Evento::CameraNormal => {
-                i.saude = None;
-                ("camera_normal", None)
-            }
         };
         let detalhe = match &e {
             Evento::LinhaCruzada { sentido, .. } => {
@@ -670,10 +998,31 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
             _ => String::new(),
         };
         let _ = store.registrar_evento(canal.id, regra, tipo, &detalhe, t);
+        if let (Some(r), true) = (regra, matches!(tipo, "zona_ocupada" | "linha_cruzada")) {
+            avisos.push((r, detalhe));
+        }
     }
     drop(i);
     if selo {
         verificar_selo_cerca(store);
+    }
+    if !avisos.is_empty() {
+        let hora = cf_notify::servico::hora_local(store);
+        let cam = nome_camera(store, canal.id);
+        let foto = canal.ultimo.lock().unwrap().clone();
+        for (r, detalhe) in avisos {
+            let nome = regras
+                .iter()
+                .find(|x| x.id == r)
+                .map(|x| x.nome.clone())
+                .unwrap_or_else(|| "regra".into());
+            let texto = if detalhe.is_empty() {
+                format!("{hora} — {nome}: ocupada · {cam}")
+            } else {
+                format!("{hora} — {nome}: passagem ({detalhe}) · {cam}")
+            };
+            notificar(format!("regra:{r}"), texto, foto.clone());
+        }
     }
 }
 

@@ -52,7 +52,11 @@ function showTab(id) {
   document.querySelectorAll("[role=tabpanel]").forEach((p) => { p.hidden = p.id !== id; });
   try { localStorage.setItem("cf-tab", id); } catch (_) { /* opcional */ }
   if (id === "modulos") renderLevels();
+  iaAtivar(id === "modulos");
+  saudeAtivar(id === "inicio");
   eloAtivar(id === "integracoes");
+  tsAtivar(id === "integracoes");
+  tgAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
   ligarAtivar(id === "cameras");
 }
@@ -121,28 +125,36 @@ async function runBench() {
 // ---------- Módulos ----------
 const MODULES = [
   ["leve", [["movimento", "Movimento inteligente"], ["cerca", "Cerca e linha virtual"], ["saude", "Saúde das câmeras"]]],
-  ["medio", [[null, "Pessoas e veículos"], [null, "Contagem"], [null, "Permanência"], [null, "Mapa de calor"]]],
+  ["medio", [["pessoas", "Pessoas e veículos"], ["contagem", "Contagem"], ["permanencia", "Permanência"], ["calor", "Mapa de calor"]]],
   ["pesado", [[null, "Leitura de placas"], [null, "Reconhecimento facial"]]],
 ];
 const RANK = { leve: 0, medio: 1, pesado: 2 };
 const ESCOLA_LICAO = { cerca: "linha", movimento: "visao", saude: "saude" };
+let modulosInfo = {};
 
 async function renderLevels() {
   let ligados = {};
   try { ligados = await api("/api/modulos"); } catch (_) { /* segue */ }
+  modulosInfo = ligados;
   const rows = [];
   for (const [lv, mods] of MODULES) {
     const untested = level == null && lv !== "leve";
     const locked = untested || (level != null && RANK[lv] > RANK[level]);
     for (const [id, name] of mods) {
       const disponivel = !!id && !locked;
-      const stateText = untested ? t("mod.testar") : locked ? t("mod.bloqueado")
-        : !id ? t("mod.precisa_modelo") : ligados[id] ? t("mod.ligado") : t("mod.desligado");
+      const stateText = !id ? t("mod.pesado_texto") : untested ? t("mod.testar") : locked ? t("mod.bloqueado")
+        : lv === "medio" && !ligados.ia_pronta ? (ligados[id] ? t("mod.baixar_modelo") : t("mod.desligado"))
+        : ligados[id] ? t("mod.ligado") : t("mod.desligado");
       const input = el("input", { type: "checkbox", "aria-label": name });
       if (!disponivel) input.setAttribute("disabled", "");
       if (id && ligados[id]) input.checked = true;
       input.onchange = async () => {
-        try { await api("/api/modulos", { modulo: id, ligado: input.checked }); renderLevels(); } catch (e) { input.checked = !input.checked; alert(e.message); }
+        try {
+          await api("/api/modulos", { modulo: id, ligado: input.checked });
+          // Primeiro módulo médio ligado sem modelo: começa o download.
+          if (input.checked && lv === "medio" && !ligados.ia_pronta) { await api("/api/ia/baixar", {}); }
+          renderLevels(); renderIa();
+        } catch (e) { input.checked = !input.checked; alert(e.message); }
       };
       const sw = el("label", { class: "switch", title: stateText }, input, el("span"));
       const acoes = el("div", { class: "actions end" });
@@ -150,6 +162,11 @@ async function renderLevels() {
         const b = el("button", { class: "btn sm", type: "button", title: t("mod.aprender_dica") }, t("mod.aprender"));
         b.onclick = () => abrirEscola(ESCOLA_LICAO[id]);
         acoes.append(b);
+      }
+      if (id === "permanencia") {
+        const n = el("input", { class: "perm-input mono", type: "number", min: "5", max: "3600", value: String(ligados.permanencia_s || 60), "aria-label": t("mod.permanencia_s") });
+        n.onchange = async () => { try { await api("/api/ia/permanencia", { segundos: Number(n.value) }); } catch (e) { alert(e.message); } };
+        acoes.append(el("span", { class: "perm-wrap" }, n, t("mod.permanencia_s")));
       }
       acoes.append(sw);
       rows.push(el("tr", { class: disponivel ? "" : "locked" },
@@ -160,6 +177,45 @@ async function renderLevels() {
     }
   }
   $("#levels").replaceChildren(...rows);
+}
+
+// ---------- Modelo de IA do nível médio (download sob demanda) ----------
+let iaTimer = null;
+function iaMsg(texto, tipo) { const m = $("#ia-msg"); m.textContent = texto; m.className = "msg " + (tipo || ""); }
+
+async function renderIa() {
+  let r;
+  try { r = await api("/api/ia"); } catch (_) { return; }
+  const a = r.andamento; const dot = $("#ia-dot");
+  let texto;
+  if (!r.suportado) { dot.className = "dot off"; texto = `${t("ia.nao_suportado")} (${r.plataforma})`; }
+  else if (r.baixando) { dot.className = "dot"; texto = t("ia.fase." + a.fase) || a.fase; }
+  else if (r.pronto) { dot.className = "dot on"; texto = `${t("ia.pronto")} (ONNX Runtime ${r.onnxruntime.versao} · ${r.modelo.nome})`; }
+  else if (a.fase === "erro" || a.fase === "cancelado") { dot.className = "dot off"; texto = `${t("ia.fase." + a.fase)}: ${a.erro || ""}`; }
+  else { dot.className = "dot"; texto = t("ia.faltando"); }
+  $("#ia-status").textContent = texto;
+  const d = r.detector;
+  $("#ia-detector").textContent = d.erro ? d.erro : d.carregado
+    ? `${t("ia.detector_ok")} ${d.inferencias} ${t("ia.detector_inferencias")} ${d.ultimo_ms} ${t("ia.detector_ms")}` : t("ia.detector_parado");
+  $("#ia-pasta").textContent = r.pasta;
+  $("#ia-baixar").hidden = r.pronto || r.baixando || !r.suportado;
+  $("#ia-cancelar").hidden = !r.baixando;
+  $("#ia-apagar").hidden = !r.pronto || r.baixando;
+  const and = $("#ia-andamento");
+  and.hidden = !r.baixando;
+  if (r.baixando) {
+    const pct = a.total ? Math.round(a.baixado / a.total * 100) : 0;
+    $("#ia-barra").style.width = `${a.fase === "extraindo" ? 100 : pct}%`;
+    const mb = (n) => (n / 1048576).toFixed(1).replace(".", ",");
+    $("#ia-andamento-texto").textContent = a.total ? `${mb(a.baixado)} de ${mb(a.total)} MB (${pct}%)` : `${mb(a.baixado)} MB`;
+  }
+  if (r.pronto && modulosInfo.ia_pronta === false) renderLevels();
+}
+
+function iaAtivar(ativo) {
+  clearInterval(iaTimer);
+  iaTimer = null;
+  if (ativo) { renderIa(); iaTimer = setInterval(renderIa, 1500); }
 }
 
 // ---------- Câmeras ----------
@@ -231,11 +287,52 @@ async function carregarFfmpeg() {
 
 function situacaoCam(e) {
   if (!e) return [false, t("estado.conectando")];
-  if (e.online) {
-    const extra = e.saude ? ` · ${t("saude." + e.saude)}` : "";
-    return [true, `${t("estado.online")} · ${e.fps} q/s${extra}`];
-  }
+  if (e.online) return [true, `${t("estado.online")} · ${e.fps} q/s`];
   return [false, e.erro || t("estado.conectando")];
+}
+
+// ---------- Saúde da câmera (indicador, balão, bloco do Início) ----------
+const SAUDE_PROBLEMA = ["escura", "coberta", "desfocada", "sem_sinal"];
+function saudeClasse(k) { return k === "ok" ? "ok" : k === "sem_sinal" ? "off" : "warn"; }
+function saudeTag(k) { return el("span", { class: "tag " + saudeClasse(k) }, t("saude." + k)); }
+
+/// "agora", "40 s", "5 min", "2 h", "3 d".
+function tempoRelativo(seg) {
+  if (seg == null) return "—";
+  if (seg < 5) return t("tempo.agora");
+  if (seg < 60) return `${seg} ${t("tempo.s")}`;
+  if (seg < 3600) return `${Math.floor(seg / 60)} ${t("tempo.min")}`;
+  if (seg < 86400) return `${Math.floor(seg / 3600)} ${t("tempo.h")}`;
+  return `${Math.floor(seg / 86400)} ${t("tempo.d")}`;
+}
+
+let saudeTimer = null;
+async function renderSaude() {
+  let r;
+  try { r = await api("/api/saude"); } catch (_) { return; }
+  $("#saude-desligado").hidden = r.ligado;
+  const corpo = $("#saude-cameras");
+  if (!r.cameras.length) {
+    corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "4" }, t("saude.sem_cameras"))));
+  } else {
+    corpo.replaceChildren(...r.cameras.map((c) => el("tr", {},
+      el("td", {}, c.nome),
+      el("td", {}, saudeTag(c.saude)),
+      el("td", {}, tempoRelativo(c.saude_desde_s)),
+      el("td", {}, c.ultimo_problema_s == null ? t("saude.nunca") : `${tempoRelativo(c.ultimo_problema_s)} ${t("tempo.atras")}`))));
+  }
+  const ev = $("#saude-eventos");
+  const agora = Math.floor(Date.now() / 1000);
+  ev.replaceChildren(...(r.eventos.length
+    ? r.eventos.map((e) => el("li", {},
+      el("div", { class: "actions" }, el("strong", {}, e.camera), saudeTag(e.situacao)),
+      el("span", { class: "tiny" }, new Date(e.quando * 1000).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) + ` · ${tempoRelativo(agora - e.quando)} ${t("tempo.atras")}`)))
+    : [el("li", {}, el("p", {}, t("saude.sem_eventos")))]));
+}
+function saudeAtivar(ativo) {
+  clearInterval(saudeTimer);
+  saudeTimer = null;
+  if (ativo) { renderSaude(); saudeTimer = setInterval(renderSaude, 5000); }
 }
 
 async function carregarCameras() {
@@ -259,7 +356,7 @@ async function carregarCameras() {
     return el("tr", {},
       el("td", {}, c.nome),
       el("td", {}, fonteNome(c.fonte)),
-      el("td", {}, el("span", { class: "state" }, el("span", { class: "dot " + (ok ? "on" : "off") }), texto)),
+      el("td", {}, el("div", { class: "actions" }, el("span", { class: "state" }, el("span", { class: "dot " + (ok ? "on" : "off") }), texto), c.estado ? saudeTag(c.estado.saude) : null)),
       el("td", { class: "right" }, el("div", { class: "actions end" }, abrir, rem)));
   }));
 }
@@ -283,7 +380,15 @@ async function abrirCamera(id) {
   const c = cams.find((x) => x.id === id);
   $("#aovivo").hidden = false;
   $("#aovivo-nome").textContent = c ? c.nome : "";
+  $("#aovivo-saude").hidden = true;
+  const somS = $("#som-saude");
+  somS.checked = somLigado(`saude:${id}`);
+  somS.onchange = () => { definirSom(`saude:${id}`, somS.checked); if (somS.checked) tocarAlerta(); };
+  $("#aovivo-som-saude").title = t("saude.som_dica");
   $("#video").src = `/api/cameras/${id}/mjpeg?t=${Date.now()}`;
+  $("#aovivo-objetos").hidden = true;
+  try { modulosInfo = await api("/api/modulos"); } catch (_) { /* segue */ }
+  calorConfigurar();
   definirModo("ver");
   await carregarRegras();
   sugAbrirCamera();
@@ -303,11 +408,53 @@ function centro(r) {
 }
 
 function textoBalao(r, e) {
+  const aviso = e && e.aviso ? ` · ${e.aviso}` : "";
   if (r.forma === "zona") {
     const on = r.rotulo_on || t("regra.ocupada"), off = r.rotulo_off || t("regra.livre");
-    return `${r.nome} · ${e && e.ocupada ? on : off}`;
+    return `${r.nome} · ${e && e.ocupada ? on : off}${aviso}`;
   }
-  return `${r.nome} · ${e ? e.contagem : 0}`;
+  return `${r.nome} · ${e ? e.contagem : 0}${aviso}`;
+}
+
+// ---------- Nível médio no ao vivo: o que a IA viu e mapa de calor ----------
+let calorLigado = false;
+let calorTimer = null;
+
+function renderObjetos(estadoCam) {
+  const tag = $("#aovivo-objetos");
+  const obj = estadoCam && estadoCam.objetos ? estadoCam.objetos : [];
+  const vivo = estadoCam && estadoCam.ia_ms != null && estadoCam.ia_ms < 5000;
+  tag.hidden = !vivo;
+  tag.className = "tag ia";
+  tag.textContent = `${t("aovivo.visto")}: ${obj.length ? obj.map((o) => o[0]).join(" · ") : "—"}`;
+}
+
+function calorDesenhar(c) {
+  const svg = $("#desenho");
+  svg.querySelectorAll(".calor").forEach((e) => e.remove());
+  if (!calorLigado || !c || !c.maximo) return;
+  const cw = 1000 / c.colunas, ch = 1000 / c.linhas;
+  for (let y = 0; y < c.linhas; y++) for (let x = 0; x < c.colunas; x++) {
+    const v = c.celulas[y * c.colunas + x];
+    if (!v) continue;
+    const a = Math.min(0.75, 0.12 + 0.63 * (v / c.maximo));
+    svg.append(svgEl("rect", { class: "calor", x: x * cw, y: y * ch, width: cw, height: ch, fill: `rgba(6, 203, 63, ${a.toFixed(2)})` }));
+  }
+}
+
+async function calorAtualizar() {
+  if (camAberta == null || !calorLigado) { calorDesenhar(null); return; }
+  try { const { calor } = await api(`/api/cameras/${camAberta}/calor`); calorDesenhar(calor); } catch (_) { /* segue */ }
+}
+
+function calorConfigurar() {
+  const wrap = $("#calor-wrap"); const chk = $("#calor-toggle");
+  wrap.hidden = !modulosInfo.calor;
+  wrap.title = t("calor.dica");
+  chk.checked = calorLigado;
+  chk.onchange = () => { calorLigado = chk.checked; calorAtualizar(); };
+  clearInterval(calorTimer);
+  calorTimer = setInterval(calorAtualizar, 3000);
 }
 
 // ---------- Som e piscada do alerta ----------
@@ -345,6 +492,15 @@ function piscarTela() {
 
 function conferirAlertas(estadoCam) {
   let tocou = false;
+  // Saúde: alerta quando a câmera passa de ok para um problema.
+  const saude = estadoCam ? estadoCam.saude : "ok";
+  const chaveS = `saude:${camAberta}`;
+  const problema = SAUDE_PROBLEMA.includes(saude);
+  if (problema && alertaAntes[chaveS] === false) {
+    piscarTela();
+    if (somLigado(chaveS)) { tocarAlerta(); tocou = true; }
+  }
+  alertaAntes[chaveS] = problema;
   for (const r of regrasAbertas) {
     const e = estadoCam && estadoCam.regras ? estadoCam.regras[r.id] : null;
     const agora = !!(e && e.alerta_ms > 0);
@@ -360,8 +516,16 @@ function conferirAlertas(estadoCam) {
 function renderBaloes(estadoCam) {
   conferirAlertas(estadoCam);
   const camada = $("#baloes");
-  if (!regrasAbertas.length) { camada.replaceChildren(); return; }
-  camada.replaceChildren(...regrasAbertas.map((r) => {
+  const saude = estadoCam ? estadoCam.saude : "ok";
+  const tag = $("#aovivo-saude");
+  tag.hidden = !estadoCam;
+  tag.className = "tag " + saudeClasse(saude);
+  tag.textContent = t("saude." + saude);
+  renderObjetos(estadoCam);
+  const baloes = SAUDE_PROBLEMA.includes(saude) && saude !== "sem_sinal"
+    ? [el("div", { class: "cf-bubble is-alert saude" }, t("saude.balao." + saude))] : [];
+  if (!regrasAbertas.length) { camada.replaceChildren(...baloes); return; }
+  camada.replaceChildren(...baloes, ...regrasAbertas.map((r) => {
     const e = estadoCam && estadoCam.regras ? estadoCam.regras[r.id] : null;
     const c = centro(r);
     const b = el("div", { class: "cf-bubble" + (e && e.alerta_ms > 0 ? " is-alert" : "") }, textoBalao(r, e));
@@ -427,6 +591,7 @@ function desenharSalvas() {
     for (const p of desenho.pontos) svg.append(svgEl("circle", { class: "vertice", cx: p.x * 1000, cy: p.y * 1000, r: 7 }));
   }
   if (typeof sugDesenhar === "function") sugDesenhar();
+  if (calorLigado) calorAtualizar();
 }
 
 function definirModo(m) {
@@ -555,6 +720,125 @@ async function eloAcao(fn) {
   try { await fn(); await renderElo(); } catch (e) { eloMsg(e.message, "err"); }
 }
 
+
+// ---------- Acessar de fora (Tailscale) ----------
+let tsTimer = null;
+let tsQrUrl = null;
+let tsUltimo = null;
+
+async function renderTailscale() {
+  let st;
+  try { st = await api("/api/tailscale"); } catch (_) { return; }
+  tsUltimo = st;
+  const dot = $("#ts-dot");
+  let texto;
+  if (!st.instalado) { dot.className = "dot"; texto = t("ts.nao_instalado"); }
+  else if (!st.logado) { dot.className = "dot off"; texto = t("ts.nao_logado"); }
+  else if (st.lan) { dot.className = "dot on"; texto = t("ts.lan"); }
+  else if (st.aguardando) { dot.className = "dot"; texto = t("ts.aguardando"); }
+  else { dot.className = "dot on"; texto = t("ts.pronto"); }
+  $("#ts-status").textContent = texto;
+  const end = $("#ts-endereco");
+  if (st.url) {
+    const copiar = el("button", { class: "btn ghost sm", type: "button" }, icon("i-copy"), el("span", {}, t("cam.copiar")));
+    copiar.onclick = async () => { try { await navigator.clipboard.writeText(st.url); tsMsg(t("ts.copiado"), "ok"); } catch (_) { /* sem permissão */ } };
+    end.replaceChildren(el("div", { class: "actions" }, el("code", { class: "mono" }, st.url), copiar));
+  } else end.textContent = "—";
+  $("#ts-nome").textContent = st.nome || "—";
+  const temQr = !!st.url && st.logado;
+  $("#ts-qr-area").hidden = !temQr;
+  if (temQr && tsQrUrl !== st.url) { tsQrUrl = st.url; $("#ts-qr").src = "/api/tailscale/qr.svg?t=" + Date.now(); }
+  $("#ts-instalar").hidden = st.logado;
+  if (!st.logado) {
+    $("#ts-instalar-texto").textContent = t(st.instalado ? "ts.logar_texto" : "ts.instalar_texto");
+    $("#ts-comando").textContent = st.instalado ? (st.sistema === "windows" ? "" : "sudo tailscale up") : st.comando_instalar;
+    $("#ts-comando").parentElement.hidden = !$("#ts-comando").textContent;
+  }
+  const m = $("#ts-msg");
+  if (st.erro && st.instalado && !st.logado) { m.textContent = st.erro; m.className = "msg"; }
+  else if (m.dataset.fixo !== "1") { m.textContent = ""; m.className = "msg"; }
+}
+
+function tsMsg(texto, tipo) { const m = $("#ts-msg"); m.textContent = texto; m.className = "msg " + (tipo || ""); m.dataset.fixo = "1"; setTimeout(() => { m.dataset.fixo = ""; }, 4000); }
+
+function tsAtivar(ativo) {
+  clearInterval(tsTimer);
+  tsTimer = null;
+  if (ativo) { renderTailscale(); tsTimer = setInterval(renderTailscale, 10000); }
+}
+
+// ---------- Telegram ----------
+let tgTimer = null;
+
+function tgMsg(texto, tipo) { const m = $("#tg-msg"); m.textContent = texto; m.className = "msg " + (tipo || ""); }
+
+async function renderTelegram() {
+  let r;
+  try { r = await api("/api/telegram"); } catch (e) { tgMsg(e.message, "err"); return; }
+  const s = r.situacao;
+  const dot = $("#tg-dot");
+  let texto;
+  if (!s.configurado) { dot.className = "dot"; texto = t("tg.sem_token"); }
+  else if (s.escutando) { dot.className = "dot on"; texto = t("tg.escutando"); }
+  else { dot.className = "dot off"; texto = s.ultimo_erro || t("tg.parado"); }
+  $("#tg-status").textContent = texto;
+  $("#tg-bot").textContent = s.bot ? "@" + s.bot : "—";
+  $("#tg-envios").textContent = s.configurado
+    ? `${s.enviados} ${t("tg.enviados")} · ${s.na_fila} ${t("tg.fila")}${s.descartados ? ` · ${s.descartados} ${t("tg.descartados")}` : ""}` : "—";
+  $("#tg-acoes").hidden = !s.configurado;
+  $("#tg-contatos").hidden = !s.configurado;
+  $("#tg-form").hidden = s.configurado;
+  const f = $("#tg-fotos"); f.checked = s.fotos;
+  $("#tg-fotos-wrap").title = t("tg.fotos_dica");
+  if (s.configurado && s.ultimo_erro && !s.escutando) { /* já mostrado na situação */ }
+  const corpo = $("#tg-chats");
+  if (!r.chats.length) { corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "5" }, t("tg.nenhum_contato")))); return; }
+  corpo.replaceChildren(...r.chats.map((c) => {
+    const chk = el("input", { type: "checkbox", "aria-label": `${t("tg.col_autorizado")}: ${c.nome}` });
+    chk.checked = c.autorizado;
+    chk.onchange = async () => { try { await api(`/api/telegram/chats/${c.chat_id}`, { autorizado: chk.checked }); renderTelegram(); } catch (e) { chk.checked = !chk.checked; tgMsg(e.message, "err"); } };
+    const rem = el("button", { class: "btn ghost sm", type: "button" }, t("tg.remover_contato"));
+    rem.onclick = async () => { if (!confirm(t("tg.confirma_remover_contato"))) return; await api(`/api/telegram/chats/${c.chat_id}`, undefined, "DELETE"); renderTelegram(); };
+    return el("tr", {},
+      el("td", {}, c.nome || "—"),
+      el("td", { class: "mono" }, String(c.chat_id)),
+      el("td", {}, `${tempoRelativo(Math.floor(Date.now() / 1000) - c.visto_em)} ${t("tempo.atras")}`),
+      el("td", {}, el("label", { class: "switch" }, chk, el("span"))),
+      el("td", { class: "right" }, rem));
+  }));
+}
+
+async function tgSalvar(ev) {
+  ev.preventDefault();
+  const f = ev.target; const b = $("#tg-salvar");
+  const token = f.token.value.trim();
+  if (!token) return;
+  busy(b, true, "tg.salvando"); tgMsg("");
+  try {
+    const r = await api("/api/telegram", { token });
+    f.token.value = "";
+    tgMsg(`${t("tg.salvo")} @${r.bot || r.nome}`, "ok");
+    renderTelegram();
+  } catch (e) { tgMsg(e.message, "err"); }
+  busy(b, false, "tg.salvar");
+}
+
+async function tgTestar() {
+  const b = $("#tg-testar");
+  busy(b, true, "tg.testando"); tgMsg("");
+  try {
+    const r = await api("/api/telegram/testar", {});
+    tgMsg(`${t("tg.testado")} ${r.enviados} ${r.enviados === 1 ? t("tg.contato") : t("tg.contatos_n")} (@${r.bot}).`, "ok");
+  } catch (e) { tgMsg(e.message, "err"); }
+  busy(b, false, "tg.testar");
+  renderTelegram();
+}
+
+function tgAtivar(ativo) {
+  clearInterval(tgTimer);
+  tgTimer = null;
+  if (ativo) { renderTelegram(); tgTimer = setInterval(renderTelegram, 5000); }
+}
 
 // ---------- Aula guiada (agente guia) ----------
 // Aprender fica no site (escolinha): aqui é só operação.
@@ -796,6 +1080,16 @@ async function main() {
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
+  $("#ia-baixar").onclick = async () => { try { await api("/api/ia/baixar", {}); renderIa(); } catch (e) { iaMsg(e.message, "err"); } };
+  $("#ia-cancelar").onclick = async () => { try { await api("/api/ia/cancelar", {}); renderIa(); } catch (e) { iaMsg(e.message, "err"); } };
+  $("#ia-apagar").onclick = async () => { if (!confirm(t("ia.confirma_apagar"))) return; try { await api("/api/ia", undefined, "DELETE"); renderIa(); renderLevels(); } catch (e) { iaMsg(e.message, "err"); } };
+  $("#tg-form").onsubmit = tgSalvar;
+  $("#tg-testar").onclick = tgTestar;
+  $("#tg-remover").onclick = async () => { if (!confirm(t("tg.confirma_remover"))) return; try { await api("/api/telegram", undefined, "DELETE"); tgMsg(t("tg.removido"), "ok"); renderTelegram(); } catch (e) { tgMsg(e.message, "err"); } };
+  $("#tg-fotos").onchange = async (e) => { try { await api("/api/telegram/fotos", { ligado: e.target.checked }); } catch (err) { tgMsg(err.message, "err"); } };
+  // O bot escreve a hora no fuso do técnico: informa o do navegador.
+  api("/api/fuso", { minutos: -new Date().getTimezoneOffset() }).catch(() => {});
+  $("#ts-copiar-cmd").onclick = async () => { try { await navigator.clipboard.writeText($("#ts-comando").textContent); tsMsg(t("ts.cmd_copiado"), "ok"); } catch (_) { /* sem permissão */ } };
   $("#elo-desparear").onclick = () => { if (confirm(t("elo.confirma_desparear"))) eloAcao(() => api("/api/elo/desparear", {})); };
 
   const { fabricantes } = await api("/api/rtsp/vendors");

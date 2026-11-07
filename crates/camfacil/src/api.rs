@@ -12,6 +12,7 @@ use axum::{
 use cf_core::{bench, conectar, onvif, rtsp, system};
 use serde::Deserialize;
 use serde_json::{json, Value};
+use std::sync::Arc;
 use std::time::Duration;
 
 pub fn router(app: Shared) -> Router {
@@ -40,13 +41,37 @@ pub fn router(app: Shared) -> Router {
         .route("/api/regras/{id}", patch(patch_regra).delete(delete_regra))
         .route("/api/estado", get(get_estado))
         .route("/api/eventos", get(get_eventos))
+        .route("/api/saude", get(get_saude))
         .route("/api/modulos", get(get_modulos).post(post_modulos))
+        .route("/api/ia", get(get_ia).delete(delete_ia))
+        .route("/api/ia/baixar", post(post_ia_baixar))
+        .route("/api/ia/cancelar", post(post_ia_cancelar))
+        .route("/api/ia/permanencia", post(post_ia_permanencia))
+        .route(
+            "/api/cameras/{id}/calor",
+            get(get_calor).delete(delete_calor),
+        )
         .route("/api/selos", get(get_selos))
         .route("/api/elo", get(get_elo))
         .route("/api/elo/codigo", post(post_elo_codigo))
         .route("/api/elo/qr.svg", get(get_elo_qr))
         .route("/api/elo/confirmar", post(post_elo_confirmar))
         .route("/api/elo/desparear", post(post_elo_desparear))
+        .route("/api/fuso", post(post_fuso))
+        .route(
+            "/api/telegram",
+            get(get_telegram)
+                .post(post_telegram)
+                .delete(delete_telegram),
+        )
+        .route("/api/telegram/testar", post(post_telegram_testar))
+        .route("/api/telegram/fotos", post(post_telegram_fotos))
+        .route(
+            "/api/telegram/chats/{id}",
+            post(post_telegram_chat).delete(delete_telegram_chat),
+        )
+        .route("/api/tailscale", get(get_tailscale))
+        .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
         .fallback(static_file)
         .with_state(app)
 }
@@ -309,6 +334,65 @@ async fn post_elo_desparear(State(app): State<Shared>) -> ApiResult {
         .desparear()
         .map(|_| Json(json!({"ok": true})))
         .map_err(|m| bad(StatusCode::CONFLICT, m))
+}
+
+// ---------- Acesso de fora pelo Tailscale (ADR-0005) ----------
+
+fn url_tailscale(app: &Shared, ip: std::net::Ipv4Addr) -> String {
+    let porta = app
+        .store
+        .get("port")
+        .ok()
+        .flatten()
+        .and_then(|p| p.parse::<u16>().ok())
+        .unwrap_or(7070);
+    format!("http://{ip}:{porta}")
+}
+
+async fn get_tailscale(State(app): State<Shared>) -> Json<Value> {
+    let s = crate::tailscale::situacao().await;
+    let escutando = app.tailscale.escutando();
+    let lan = std::env::args().any(|a| a == "--lan");
+    let url = s.ip.map(|ip| url_tailscale(&app, ip));
+    let url_nome = s
+        .nome
+        .as_ref()
+        .zip(s.ip)
+        .map(|(n, ip)| url_tailscale(&app, ip).replace(&ip.to_string(), n));
+    // Logado mas ainda sem escutar nesse IP: a vigília liga em até 1 minuto.
+    let aguardando = s.ip.is_some() && !lan && escutando != s.ip;
+    Json(json!({
+        "instalado": s.instalado,
+        "logado": s.logado,
+        "ip": s.ip,
+        "nome": s.nome,
+        "url": url,
+        "url_nome": url_nome,
+        "escutando": escutando.is_some() || (lan && s.ip.is_some()),
+        "aguardando": aguardando,
+        "lan": lan,
+        "erro": s.erro,
+        "comando_instalar": crate::tailscale::comando_instalar(),
+        "sistema": std::env::consts::OS,
+    }))
+}
+
+async fn get_tailscale_qr(State(app): State<Shared>) -> Response {
+    let svg = crate::tailscale::ip()
+        .await
+        .map(|ip| url_tailscale(&app, ip))
+        .and_then(|u| crate::elo::qr_svg(&u));
+    match svg {
+        Some(s) => (
+            [
+                (header::CONTENT_TYPE, "image/svg+xml"),
+                (header::CACHE_CONTROL, "no-store"),
+            ],
+            s,
+        )
+            .into_response(),
+        None => (StatusCode::NOT_FOUND, "Tailscale não conectado").into_response(),
+    }
 }
 
 // ---------- Vídeo, câmeras e regras (fase 2) ----------
@@ -649,9 +733,155 @@ async fn get_eventos(
     ))
 }
 
+/// Saúde das câmeras para a tela Início: situação atual de cada uma e os
+/// últimos eventos de saúde (mudanças confirmadas, sem spam).
+async fn get_saude(State(app): State<Shared>) -> ApiResult {
+    let cams = app.store.cameras().map_err(internal)?;
+    let nome_de = |id: i64| {
+        cams.iter()
+            .find(|c| c.id == id)
+            .map(|c| c.nome.clone())
+            .unwrap_or_else(|| format!("Câmera {id}"))
+    };
+    let lista: Vec<Value> = cams
+        .iter()
+        .filter(|c| c.ativa)
+        .map(|c| {
+            let e = app
+                .video
+                .canal(c.id)
+                .map(|k| k.estado())
+                .unwrap_or_default();
+            json!({
+                "id": c.id,
+                "nome": c.nome,
+                "online": e.online,
+                "saude": e.saude,
+                "saude_desde_s": e.saude_desde_s,
+                "ultimo_problema_s": e.ultimo_problema_s,
+            })
+        })
+        .collect();
+    let eventos: Vec<Value> = app
+        .store
+        .eventos_tipo("saude", 20)
+        .map_err(internal)?
+        .into_iter()
+        .map(|e| {
+            json!({
+                "camera": nome_de(e.camera_id),
+                "situacao": e.detalhe,
+                "quando": e.quando,
+            })
+        })
+        .collect();
+    Ok(Json(json!({
+        "ligado": crate::video::modulos(&app.store).saude,
+        "cameras": lista,
+        "eventos": eventos,
+    })))
+}
+
 async fn get_modulos(State(app): State<Shared>) -> Json<Value> {
     let m = crate::video::modulos(&app.store);
-    Json(json!({ "movimento": m.movimento, "cerca": m.cerca, "saude": m.saude }))
+    let perm = app
+        .store
+        .get("permanencia_s")
+        .ok()
+        .flatten()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(60);
+    Json(json!({
+        "movimento": m.movimento, "cerca": m.cerca, "saude": m.saude,
+        "pessoas": m.pessoas, "contagem": m.contagem, "permanencia": m.permanencia, "calor": m.calor,
+        "permanencia_s": perm,
+        "ia_pronta": app.ia.pronto(),
+    }))
+}
+
+// ---------- Nível médio: runtime, modelo e detector ----------
+
+fn estado_ia(app: &Shared) -> Value {
+    let a = app.ia.andamento();
+    json!({
+        "pronto": app.ia.pronto(),
+        "suportado": crate::ia::pacote_ort().is_some(),
+        "plataforma": format!("{} {}", std::env::consts::OS, std::env::consts::ARCH),
+        "onnxruntime": { "instalado": app.ia.lib_ort().is_some(), "versao": crate::ia::ORT_VERSAO },
+        "modelo": { "instalado": app.ia.modelo().is_some(), "nome": crate::ia::MODELO_NOME },
+        "baixando": app.ia.baixando(),
+        "andamento": a,
+        "detector": app.ia.detector.lock().unwrap().clone(),
+        "pasta": app.ia.dir().display().to_string(),
+    })
+}
+
+async fn get_ia(State(app): State<Shared>) -> Json<Value> {
+    Json(estado_ia(&app))
+}
+
+/// Começa o download (runtime + modelo) em segundo plano.
+async fn post_ia_baixar(State(app): State<Shared>) -> ApiResult {
+    if crate::ia::pacote_ort().is_none() {
+        return Err(bad(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "não há ONNX Runtime oficial para este sistema",
+        ));
+    }
+    if !app.ia.pronto() && !app.ia.baixando() {
+        let ia = app.ia.clone();
+        tokio::spawn(async move {
+            ia.baixar().await;
+        });
+    }
+    Ok(Json(estado_ia(&app)))
+}
+
+async fn post_ia_cancelar(State(app): State<Shared>) -> Json<Value> {
+    app.ia.cancelar();
+    Json(estado_ia(&app))
+}
+
+async fn delete_ia(State(app): State<Shared>) -> ApiResult {
+    app.ia.apagar().map_err(|e| bad(StatusCode::CONFLICT, e))?;
+    Ok(Json(estado_ia(&app)))
+}
+
+#[derive(Deserialize)]
+struct PermanenciaReq {
+    segundos: u64,
+}
+
+async fn post_ia_permanencia(
+    State(app): State<Shared>,
+    Json(r): Json<PermanenciaReq>,
+) -> ApiResult {
+    let s = r.segundos.clamp(5, 3600);
+    app.store
+        .set("permanencia_s", &s.to_string())
+        .map_err(internal)?;
+    Ok(Json(json!({ "permanencia_s": s })))
+}
+
+/// Mapa de calor acumulado (grade), só para o técnico.
+async fn get_calor(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    let canal = app
+        .video
+        .canal(id)
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    let m = canal.medio.lock().unwrap();
+    Ok(Json(
+        json!({ "calor": m.rastreador.calor, "ligado": crate::video::modulos(&app.store).calor }),
+    ))
+}
+
+async fn delete_calor(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    let canal = app
+        .video
+        .canal(id)
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    canal.medio.lock().unwrap().rastreador.calor.limpar();
+    Ok(Json(json!({ "limpo": true })))
 }
 
 #[derive(Deserialize)]
@@ -661,16 +891,111 @@ struct ModuloReq {
 }
 
 async fn post_modulos(State(app): State<Shared>, Json(r): Json<ModuloReq>) -> ApiResult {
-    let chave = match r.modulo.as_str() {
-        "movimento" => "modulo_movimento",
-        "cerca" => "modulo_cerca",
-        "saude" => "modulo_saude",
-        _ => return Err(bad(StatusCode::BAD_REQUEST, "módulo desconhecido")),
-    };
-    app.store
-        .set(chave, if r.ligado { "1" } else { "0" })
-        .map_err(internal)?;
+    crate::video::definir_modulo(&app.store, &r.modulo, r.ligado)
+        .map_err(|e| bad(StatusCode::BAD_REQUEST, e))?;
     Ok(Json(json!({ "modulo": r.modulo, "ligado": r.ligado })))
+}
+
+// ---------- Telegram (SDD-04) ----------
+
+#[derive(Deserialize)]
+struct FusoReq {
+    /// Minutos a somar ao UTC (ex.: -180 para Brasília).
+    minutos: i64,
+}
+
+/// A dashboard informa o fuso do navegador; o bot usa para escrever a hora.
+async fn post_fuso(State(app): State<Shared>, Json(f): Json<FusoReq>) -> ApiResult {
+    app.store
+        .set("fuso_min", &f.minutos.clamp(-840, 840).to_string())
+        .map_err(internal)?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+fn telegram(app: &Shared) -> Result<&Arc<cf_notify::Telegram>, (StatusCode, Json<Value>)> {
+    app.telegram.get().ok_or_else(|| {
+        bad(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Telegram indisponível (não foi possível abrir o cofre de segredos)",
+        )
+    })
+}
+
+async fn get_telegram(State(app): State<Shared>) -> ApiResult {
+    let tg = telegram(&app)?;
+    let chats = app.store.telegram_chats().map_err(internal)?;
+    Ok(Json(json!({
+        "situacao": tg.situacao(),
+        "chats": chats,
+    })))
+}
+
+#[derive(Deserialize)]
+struct TokenReq {
+    token: String,
+}
+
+/// Salva o token (cifrado) depois de confirmar com o Telegram que ele vale.
+async fn post_telegram(State(app): State<Shared>, Json(r): Json<TokenReq>) -> ApiResult {
+    let tg = telegram(&app)?;
+    let eu = tg
+        .definir_token(&r.token)
+        .await
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    Ok(Json(json!({ "bot": eu.username, "nome": eu.first_name })))
+}
+
+async fn delete_telegram(State(app): State<Shared>) -> ApiResult {
+    telegram(&app)?.remover_token().map_err(internal)?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+/// Testa o token salvo e manda uma mensagem aos contatos autorizados.
+async fn post_telegram_testar(State(app): State<Shared>) -> ApiResult {
+    let tg = telegram(&app)?;
+    let eu = tg
+        .testar()
+        .await
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    let enviados = tg.enviar_teste().await.unwrap_or(0);
+    Ok(Json(json!({ "bot": eu.username, "enviados": enviados })))
+}
+
+#[derive(Deserialize)]
+struct FotosReq {
+    ligado: bool,
+}
+
+async fn post_telegram_fotos(State(app): State<Shared>, Json(r): Json<FotosReq>) -> ApiResult {
+    telegram(&app)?.definir_fotos(r.ligado).map_err(internal)?;
+    Ok(Json(json!({ "fotos": r.ligado })))
+}
+
+#[derive(Deserialize)]
+struct ChatReq {
+    autorizado: bool,
+}
+
+async fn post_telegram_chat(
+    State(app): State<Shared>,
+    Path(id): Path<i64>,
+    Json(r): Json<ChatReq>,
+) -> ApiResult {
+    if !app
+        .store
+        .telegram_autorizar(id, r.autorizado)
+        .map_err(internal)?
+    {
+        return Err(bad(StatusCode::NOT_FOUND, "contato não encontrado"));
+    }
+    Ok(Json(json!({ "chat_id": id, "autorizado": r.autorizado })))
+}
+
+async fn delete_telegram_chat(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    if !app.store.telegram_remover(id).map_err(internal)? {
+        return Err(bad(StatusCode::NOT_FOUND, "contato não encontrado"));
+    }
+    Ok(Json(json!({ "removido": true })))
 }
 
 async fn get_selos(State(app): State<Shared>) -> ApiResult {
