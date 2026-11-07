@@ -143,6 +143,35 @@
             <p class="lede" data-i18n="guia.integracoes"></p>
           </div>
         </header>
+        <div class="block" id="elo">
+          <h2 data-i18n="elo.titulo"></h2>
+          <p class="hint" data-i18n="elo.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="elo.situacao"></dt><dd><span class="state"><span class="dot" id="elo-dot"></span><span id="elo-status"></span></span></dd>
+            <dt data-i18n="elo.impressao"></dt><dd class="mono" id="elo-impressao">—</dd>
+            <dt data-i18n="elo.site"></dt><dd class="mono" id="elo-site">—</dd>
+          </dl>
+          <div class="pedido" id="elo-pedido" hidden>
+            <p><strong id="elo-pedido-email"></strong> <span data-i18n="elo.pedido"></span></p>
+            <p class="hint" data-i18n="elo.pedido_dica"></p>
+            <div class="actions">
+              <button class="btn primary" id="elo-aceitar" data-i18n="elo.aceitar"></button>
+              <button class="btn" id="elo-recusar" data-i18n="elo.recusar"></button>
+            </div>
+          </div>
+          <div class="qr-area" id="elo-qr-area" hidden>
+            <div class="qr"><img id="elo-qr" alt="" width="200" height="200"></div>
+            <div>
+              <p data-i18n="elo.qr_passo"></p>
+              <p class="hint"><span data-i18n="elo.expira"></span> <span class="mono" id="elo-expira"></span></p>
+            </div>
+          </div>
+          <div class="actions mt">
+            <button class="btn primary" id="elo-parear" data-i18n="elo.parear"></button>
+            <button class="btn" id="elo-desparear" data-i18n="elo.desparear" hidden></button>
+          </div>
+          <p class="msg" id="elo-msg" role="status"></p>
+        </div>
         <div class="block">
           <ul class="list">
             <li><div><strong>Telegram</strong><p data-i18n="int.telegram"></p></div><span class="badge" data-i18n="em_breve"></span></li>

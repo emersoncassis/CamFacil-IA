@@ -29,6 +29,11 @@ impl Store {
                  key   TEXT PRIMARY KEY,
                  value TEXT NOT NULL
              );
+             CREATE TABLE IF NOT EXISTS dispositivos_autorizados (
+                 chave_publica TEXT PRIMARY KEY,
+                 tecnico_email TEXT NOT NULL,
+                 adicionado_em INTEGER NOT NULL
+             );
              CREATE TABLE IF NOT EXISTS acceptances (
                  id         INTEGER PRIMARY KEY,
                  document   TEXT NOT NULL,
@@ -84,6 +89,42 @@ impl Store {
     }
 }
 
+impl Store {
+    /// Autoriza um navegador do técnico (feito só após confirmação na tela local).
+    pub fn autorizar_dispositivo(&self, chave: &str, email: &str, at_unix: i64) -> Result<()> {
+        self.lock().execute(
+            "INSERT INTO dispositivos_autorizados(chave_publica, tecnico_email, adicionado_em)
+             VALUES (?1, ?2, ?3) ON CONFLICT(chave_publica) DO UPDATE SET tecnico_email = excluded.tecnico_email",
+            params![chave, email, at_unix],
+        )?;
+        Ok(())
+    }
+
+    pub fn revogar_dispositivo(&self, chave: &str) -> Result<()> {
+        self.lock().execute(
+            "DELETE FROM dispositivos_autorizados WHERE chave_publica = ?1",
+            params![chave],
+        )?;
+        Ok(())
+    }
+
+    pub fn dispositivo_autorizado(&self, chave: &str) -> Result<bool> {
+        let n: i64 = self.lock().query_row(
+            "SELECT COUNT(*) FROM dispositivos_autorizados WHERE chave_publica = ?1",
+            params![chave],
+            |r| r.get(0),
+        )?;
+        Ok(n > 0)
+    }
+
+    /// Desparear: esquece todos os navegadores autorizados.
+    pub fn limpar_dispositivos(&self) -> Result<()> {
+        self.lock()
+            .execute("DELETE FROM dispositivos_autorizados", [])?;
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,6 +136,19 @@ mod tests {
         s.set("port", "7070").unwrap();
         s.set("port", "7071").unwrap();
         assert_eq!(s.get("port").unwrap().as_deref(), Some("7071"));
+    }
+
+    #[test]
+    fn dispositivos_autorizados() {
+        let s = Store::memory().unwrap();
+        assert!(!s.dispositivo_autorizado("k").unwrap());
+        s.autorizar_dispositivo("k", "a@b", 1).unwrap();
+        assert!(s.dispositivo_autorizado("k").unwrap());
+        s.revogar_dispositivo("k").unwrap();
+        assert!(!s.dispositivo_autorizado("k").unwrap());
+        s.autorizar_dispositivo("k", "a@b", 1).unwrap();
+        s.limpar_dispositivos().unwrap();
+        assert!(!s.dispositivo_autorizado("k").unwrap());
     }
 
     #[test]

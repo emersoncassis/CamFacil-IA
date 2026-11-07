@@ -3,6 +3,7 @@
 //! Cada módulo é pequeno e testável sem rede. Ver `docs/sdd/SDD-01-nucleo.md`.
 
 pub mod bench;
+pub mod elo;
 pub mod onvif;
 pub mod paths;
 pub mod ports;
