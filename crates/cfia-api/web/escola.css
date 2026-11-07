@@ -169,3 +169,65 @@
 .topo .brand { white-space: nowrap; }
 @media (max-width: 760px) { .anim-grade { grid-template-columns: minmax(0, 1fr); } .topo-nav .btn { display: none; } }
 @media (prefers-reduced-motion: reduce) { .anim-painel * { animation-duration: 12s !important; } .fala i { animation: none; height: 8px; } }
+
+/* Faixa da borda */
+.cena .margem path { fill: rgba(240, 106, 85, .22); }
+.cena .margem .util { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 10 8; }
+.cena .margem text { font: 600 22px var(--font); text-anchor: middle; fill: #fff; }
+.cena .margem .util-t { text-anchor: start; fill: var(--accent); }
+.faixa .pessoa { animation: cf-entra 7s linear infinite; }
+.faixa .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
+
+/* Trajeto porta → câmera (mesmo da simulação): translate + scale */
+@keyframes cf-entra { from { transform: translate(600px, 212px) scale(.42); } to { transform: translate(-140px, 330px) scale(1.35); } }
+@keyframes cf-entra-centro { 0% { opacity: 1; } 64% { opacity: 0; } }
+.visao .pessoa { animation: cf-entra 7s linear infinite; }
+.visao .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
+.borda .pessoa { animation: cf-entra 7s linear infinite; }
+.borda .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
+.borda .aviso { animation: cf-borda-aviso 7s steps(1, end) infinite; }
+@keyframes cf-borda-aviso { 0% { opacity: 0; } 70% { opacity: 1; } }
+.meio .pessoa { animation: cf-entra 7s linear infinite; }
+.meio .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
+.meio .p0 { animation: cf-p0 7s steps(1, end) infinite; }
+.meio .p1 { animation: cf-p1 7s steps(1, end) infinite; fill: var(--accent); }
+.meio .linha { animation: cf-flash 7s linear infinite; }
+@keyframes cf-p0 { 0% { opacity: 1; } 33% { opacity: 0; } }
+@keyframes cf-p1 { 0% { opacity: 0; } 33% { opacity: 1; } }
+@keyframes cf-flash { 0%, 31% { stroke-width: 7; } 33% { stroke-width: 18; } 41%, 100% { stroke-width: 7; } }
+.zgrande .pessoa { animation: cf-entra 7s linear infinite; }
+.zgrande .centro { animation: cf-entra-centro 7s steps(1, end) infinite; }
+.zgrande .zona { animation: cf-zona-falso 7s steps(1, end) infinite; }
+.zgrande .aviso { animation: cf-zona-falso-t 7s steps(1, end) infinite; }
+@keyframes cf-zona-falso { 0% { fill: rgba(6, 203, 63, .10); stroke: #fff; } 8% { fill: rgba(240, 106, 85, .35); stroke: var(--c-danger); } 70% { fill: rgba(6, 203, 63, .10); stroke: #fff; } }
+@keyframes cf-zona-falso-t { 0% { opacity: 0; } 8% { opacity: 1; } 70% { opacity: 0; } }
+.zcerta .passante .pessoa { animation: cf-passante 7s linear infinite; }
+.zcerta .passante .centro { animation: cf-passante-centro 7s steps(1, end) infinite; }
+.zcerta .cliente .pessoa { animation: cf-cliente 7s ease-out infinite; }
+.zcerta .zona { animation: cf-zona-ok 7s steps(1, end) infinite; }
+.zcerta .okt { animation: cf-zona-ok-t 7s steps(1, end) infinite; }
+@keyframes cf-passante { 0% { transform: translate(600px, 212px) scale(.42); } 50%, 100% { transform: translate(-140px, 330px) scale(1.35); } }
+@keyframes cf-passante-centro { 0% { opacity: 1; } 32% { opacity: 0; } }
+@keyframes cf-cliente { 0%, 50% { transform: translate(600px, 212px) scale(.42); opacity: 0; } 52% { opacity: 1; } 74%, 100% { transform: translate(520px, 290px) scale(.95); opacity: 1; } }
+@keyframes cf-zona-ok { 0% { fill: rgba(6, 203, 63, .10); stroke: #fff; } 74% { fill: rgba(6, 203, 63, .32); stroke: var(--accent); } }
+@keyframes cf-zona-ok-t { 0% { opacity: 0; } 74% { opacity: 1; } }
+
+/* Selo */
+.selo-area { margin-bottom: var(--s4); }
+.selo-form { padding: var(--s4); border: 1px solid var(--accent); border-radius: 12px; background: var(--surface); }
+.selo-form .kicker { margin: 0 0 var(--s2); }
+.selo-form .prefixo { display: flex; align-items: center; gap: 6px; }
+.selo-form .prefixo i { font-style: normal; color: var(--text-3); }
+.selo-form .prefixo input { flex: 1; min-width: 0; }
+.selo-form .check { flex-direction: row; align-items: flex-start; gap: var(--s2); font-size: var(--fs-sm); color: var(--text-2); }
+.selo-form .check input { margin-top: 3px; accent-color: var(--accent); }
+.selo-cartao { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--s5); padding: var(--s4); border: 1px solid var(--accent); border-radius: 14px; background: var(--surface); }
+.selo-arte { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); }
+.selo-info h2 { margin: 0 0 var(--s2); font-size: var(--fs-xl); letter-spacing: -0.015em; }
+.selo-info .hint { margin: 0 0 var(--s3); }
+.selo-acoes { display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s3) 0; }
+.selo-pagina { width: 100%; max-width: 900px; margin: 0 auto; padding: var(--s6) var(--s5); flex: 1; }
+.selo-chamada { margin-top: var(--s6); padding-top: var(--s5); border-top: 1px solid var(--line); }
+.selo-chamada h3 { margin: 0 0 var(--s2); }
+@media (max-width: 760px) { .selo-cartao { grid-template-columns: minmax(0, 1fr); } .selo-arte { max-width: 220px; } }
+.cena .aviso.ok { fill: var(--accent); }
