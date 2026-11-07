@@ -1,0 +1,82 @@
+/* CamFácil IA — design tokens
+ * Paleta inspirada na Intelbras (origem do projeto). Não usa marca nem logo da Intelbras.
+ * Regra: todo CSS do projeto usa apenas estas variáveis. */
+
+:root {
+  /* Cores base */
+  --cf-green: #06cb3f;        /* ação principal, IA ativa */
+  --cf-green-soft: #85ffc5;   /* hover, realces */
+  --cf-green-deep: #035144;   /* superfícies elevadas */
+  --cf-ink: #163134;          /* fundo principal */
+  --cf-black: #0b1a1c;        /* vídeo e quiosque */
+  --cf-gray-100: #efefed;     /* texto principal */
+  --cf-gray-400: #b9b5b4;     /* texto secundário, bordas */
+  --cf-sky: #31bfeb;          /* agente guia */
+  --cf-lime: #d9ff82;         /* gamificação */
+  --cf-alert: #ff9c9c;        /* balão em alerta */
+  --cf-danger: #bc431b;       /* erro, offline, conflito */
+  --cf-warn: #c7ac3e;         /* atenção */
+
+  /* Papéis semânticos (tema escuro, padrão) */
+  --bg: var(--cf-ink);
+  --bg-video: var(--cf-black);
+  --surface: var(--cf-green-deep);
+  --text: var(--cf-gray-100);
+  --text-muted: var(--cf-gray-400);
+  --border: rgba(239, 239, 237, 0.14);
+  --primary: var(--cf-green);
+  --on-primary: var(--cf-black);
+  --guide: var(--cf-sky);
+
+  /* Tipografia */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --fs-title: 24px;
+  --fs-section: 18px;
+  --fs-body: 15px;
+  --fs-small: 13px;
+
+  /* Espaço e forma */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --radius: 8px;
+  --radius-pill: 999px;
+}
+
+/* Tema claro (opcional, escolhido pelo técnico) */
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: var(--cf-gray-100);
+  --text: var(--cf-ink);
+  --text-muted: #5b6668;
+  --border: rgba(22, 49, 52, 0.16);
+}
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: var(--fs-body)/1.5 var(--font);
+}
+
+/* Balão de inteligência */
+.cf-bubble {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  padding: var(--s1) var(--s3);
+  border-radius: var(--radius-pill);
+  background: rgba(22, 49, 52, 0.8);
+  color: var(--cf-gray-100);
+  font-size: var(--fs-small);
+}
+.cf-bubble::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--cf-green);
+}
+.cf-bubble.is-alert {
+  background: var(--cf-alert);
+  color: var(--cf-black);
+  animation: cf-blink 1s steps(2, start) 10;
+}
+@keyframes cf-blink { to { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) {
+  .cf-bubble.is-alert { animation: none; }
+}

@@ -1,0 +1,27 @@
+# Checagem leve enquanto o código Rust não existe.
+# Na fase 1, o Claude Code substitui/complementa este fluxo com fmt, clippy, test e builds cruzados.
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar links internos dos docs
+        run: |
+          set -e
+          fail=0
+          for f in $(git ls-files '*.md'); do
+            dir=$(dirname "$f")
+            for link in $(grep -oE '\]\([^)#]+\)' "$f" | sed -E 's/^\]\(//; s/\)$//' | grep -vE '^(https?:|mailto:)'); do
+              if [ ! -e "$dir/$link" ]; then
+                echo "Link quebrado em $f: $link"; fail=1
+              fi
+            done
+          done
+          exit $fail

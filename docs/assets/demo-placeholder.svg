@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-label="Prévia da dashboard do CamFácil IA">
+  <style>
+    .alert { animation: blink 1s steps(2, start) infinite; }
+    @keyframes blink { to { opacity: .35; } }
+    @media (prefers-reduced-motion: reduce) { .alert { animation: none; } }
+  </style>
+  <rect width="960" height="420" rx="16" fill="#163134"/>
+  <rect x="0" y="0" width="960" height="48" rx="16" fill="#035144"/>
+  <circle cx="28" cy="24" r="7" fill="#06CB3F"/>
+  <text x="46" y="30" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="17" font-weight="700">CamFácil IA</text>
+  <text x="760" y="30" fill="#B9B5B4" font-family="ui-monospace, monospace" font-size="13">CPU 23% · 3 câmeras</text>
+
+  <rect x="24" y="68" width="440" height="248" rx="10" fill="#0B1A1C"/>
+  <text x="40" y="92" fill="#B9B5B4" font-family="ui-monospace, monospace" font-size="12">Câmera 1 · Portão</text>
+  <rect x="160" y="230" rx="14" width="176" height="28" fill="#FF9C9C" class="alert"/>
+  <circle cx="178" cy="244" r="5" fill="#0B1A1C"/>
+  <text x="192" y="249" fill="#0B1A1C" font-family="system-ui, sans-serif" font-size="13" font-weight="600">Cerca Portão · alerta</text>
+
+  <rect x="496" y="68" width="440" height="248" rx="10" fill="#0B1A1C"/>
+  <text x="512" y="92" fill="#B9B5B4" font-family="ui-monospace, monospace" font-size="12">Câmera 2 · Salão</text>
+  <rect x="560" y="150" rx="14" width="132" height="28" fill="#163134" fill-opacity=".85"/>
+  <circle cx="578" cy="164" r="5" fill="#06CB3F"/>
+  <text x="592" y="169" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="13">Mesa 1 · cheia</text>
+  <rect x="730" y="220" rx="14" width="138" height="28" fill="#163134" fill-opacity=".85"/>
+  <circle cx="748" cy="234" r="5" fill="#06CB3F"/>
+  <text x="762" y="239" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="13">Balcão · vazio</text>
+
+  <rect x="24" y="336" width="912" height="60" rx="10" fill="#035144"/>
+  <rect x="24" y="336" width="4" height="60" fill="#31BFEB"/>
+  <text x="44" y="362" fill="#31BFEB" font-family="system-ui, sans-serif" font-size="13" font-weight="700">🔊 Agente guia</text>
+  <text x="44" y="383" fill="#EFEFED" font-family="system-ui, sans-serif" font-size="14">Viu o balão piscar? Alguém cruzou a cerca do portão. Agora desenhe a sua cerca na câmera 3.</text>
+</svg>

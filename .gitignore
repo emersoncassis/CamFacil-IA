@@ -1,0 +1,9 @@
+/target
+**/*.rs.bk
+*.onnx
+/data/
+*.sqlite
+*.db
+.env
+.DS_Store
+Thumbs.db
