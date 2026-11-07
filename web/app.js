@@ -54,6 +54,7 @@ function showTab(id) {
   if (id === "modulos") renderLevels();
   saudeAtivar(id === "inicio");
   eloAtivar(id === "integracoes");
+  tsAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
   ligarAtivar(id === "cameras");
 }
@@ -619,6 +620,52 @@ async function eloAcao(fn) {
 }
 
 
+// ---------- Acessar de fora (Tailscale) ----------
+let tsTimer = null;
+let tsQrUrl = null;
+let tsUltimo = null;
+
+async function renderTailscale() {
+  let st;
+  try { st = await api("/api/tailscale"); } catch (_) { return; }
+  tsUltimo = st;
+  const dot = $("#ts-dot");
+  let texto;
+  if (!st.instalado) { dot.className = "dot"; texto = t("ts.nao_instalado"); }
+  else if (!st.logado) { dot.className = "dot off"; texto = t("ts.nao_logado"); }
+  else if (st.lan) { dot.className = "dot on"; texto = t("ts.lan"); }
+  else if (st.aguardando) { dot.className = "dot"; texto = t("ts.aguardando"); }
+  else { dot.className = "dot on"; texto = t("ts.pronto"); }
+  $("#ts-status").textContent = texto;
+  const end = $("#ts-endereco");
+  if (st.url) {
+    const copiar = el("button", { class: "btn ghost sm", type: "button" }, icon("i-copy"), el("span", {}, t("cam.copiar")));
+    copiar.onclick = async () => { try { await navigator.clipboard.writeText(st.url); tsMsg(t("ts.copiado"), "ok"); } catch (_) { /* sem permissão */ } };
+    end.replaceChildren(el("div", { class: "actions" }, el("code", { class: "mono" }, st.url), copiar));
+  } else end.textContent = "—";
+  $("#ts-nome").textContent = st.nome || "—";
+  const temQr = !!st.url && st.logado;
+  $("#ts-qr-area").hidden = !temQr;
+  if (temQr && tsQrUrl !== st.url) { tsQrUrl = st.url; $("#ts-qr").src = "/api/tailscale/qr.svg?t=" + Date.now(); }
+  $("#ts-instalar").hidden = st.logado;
+  if (!st.logado) {
+    $("#ts-instalar-texto").textContent = t(st.instalado ? "ts.logar_texto" : "ts.instalar_texto");
+    $("#ts-comando").textContent = st.instalado ? (st.sistema === "windows" ? "" : "sudo tailscale up") : st.comando_instalar;
+    $("#ts-comando").parentElement.hidden = !$("#ts-comando").textContent;
+  }
+  const m = $("#ts-msg");
+  if (st.erro && st.instalado && !st.logado) { m.textContent = st.erro; m.className = "msg"; }
+  else if (m.dataset.fixo !== "1") { m.textContent = ""; m.className = "msg"; }
+}
+
+function tsMsg(texto, tipo) { const m = $("#ts-msg"); m.textContent = texto; m.className = "msg " + (tipo || ""); m.dataset.fixo = "1"; setTimeout(() => { m.dataset.fixo = ""; }, 4000); }
+
+function tsAtivar(ativo) {
+  clearInterval(tsTimer);
+  tsTimer = null;
+  if (ativo) { renderTailscale(); tsTimer = setInterval(renderTailscale, 10000); }
+}
+
 // ---------- Aula guiada (agente guia) ----------
 // Aprender fica no site (escolinha): aqui é só operação.
 const ESCOLA = "https://cfia.ysafe.com.br/aprender";
@@ -859,6 +906,7 @@ async function main() {
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
+  $("#ts-copiar-cmd").onclick = async () => { try { await navigator.clipboard.writeText($("#ts-comando").textContent); tsMsg(t("ts.cmd_copiado"), "ok"); } catch (_) { /* sem permissão */ } };
   $("#elo-desparear").onclick = () => { if (confirm(t("elo.confirma_desparear"))) eloAcao(() => api("/api/elo/desparear", {})); };
 
   const { fabricantes } = await api("/api/rtsp/vendors");

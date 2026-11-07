@@ -1,6 +1,6 @@
 # ADR-0005 — VPN embutida e escolha automática de portas
 
-Status: proposto · 2026-11-07
+Status: aceito; item 2 (primeira opção: Tailscale já instalado) implementado na fase 3 · 2026-11-07
 
 ## Contexto
 A máquina do cliente costuma rodar PDV, ERP, banco de dados e NVR. Abrir portas no roteador é inseguro e muitas vezes impossível (CGNAT). Ocupar uma porta usada por outro software derruba o sistema do cliente.

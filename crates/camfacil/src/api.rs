@@ -48,6 +48,8 @@ pub fn router(app: Shared) -> Router {
         .route("/api/elo/qr.svg", get(get_elo_qr))
         .route("/api/elo/confirmar", post(post_elo_confirmar))
         .route("/api/elo/desparear", post(post_elo_desparear))
+        .route("/api/tailscale", get(get_tailscale))
+        .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
         .fallback(static_file)
         .with_state(app)
 }
@@ -310,6 +312,65 @@ async fn post_elo_desparear(State(app): State<Shared>) -> ApiResult {
         .desparear()
         .map(|_| Json(json!({"ok": true})))
         .map_err(|m| bad(StatusCode::CONFLICT, m))
+}
+
+// ---------- Acesso de fora pelo Tailscale (ADR-0005) ----------
+
+fn url_tailscale(app: &Shared, ip: std::net::Ipv4Addr) -> String {
+    let porta = app
+        .store
+        .get("port")
+        .ok()
+        .flatten()
+        .and_then(|p| p.parse::<u16>().ok())
+        .unwrap_or(7070);
+    format!("http://{ip}:{porta}")
+}
+
+async fn get_tailscale(State(app): State<Shared>) -> Json<Value> {
+    let s = crate::tailscale::situacao().await;
+    let escutando = app.tailscale.escutando();
+    let lan = std::env::args().any(|a| a == "--lan");
+    let url = s.ip.map(|ip| url_tailscale(&app, ip));
+    let url_nome = s
+        .nome
+        .as_ref()
+        .zip(s.ip)
+        .map(|(n, ip)| url_tailscale(&app, ip).replace(&ip.to_string(), n));
+    // Logado mas ainda sem escutar nesse IP: a vigília liga em até 1 minuto.
+    let aguardando = s.ip.is_some() && !lan && escutando != s.ip;
+    Json(json!({
+        "instalado": s.instalado,
+        "logado": s.logado,
+        "ip": s.ip,
+        "nome": s.nome,
+        "url": url,
+        "url_nome": url_nome,
+        "escutando": escutando.is_some() || (lan && s.ip.is_some()),
+        "aguardando": aguardando,
+        "lan": lan,
+        "erro": s.erro,
+        "comando_instalar": crate::tailscale::comando_instalar(),
+        "sistema": std::env::consts::OS,
+    }))
+}
+
+async fn get_tailscale_qr(State(app): State<Shared>) -> Response {
+    let svg = crate::tailscale::ip()
+        .await
+        .map(|ip| url_tailscale(&app, ip))
+        .and_then(|u| crate::elo::qr_svg(&u));
+    match svg {
+        Some(s) => (
+            [
+                (header::CONTENT_TYPE, "image/svg+xml"),
+                (header::CACHE_CONTROL, "no-store"),
+            ],
+            s,
+        )
+            .into_response(),
+        None => (StatusCode::NOT_FOUND, "Tailscale não conectado").into_response(),
+    }
 }
 
 // ---------- Vídeo, câmeras e regras (fase 2) ----------
