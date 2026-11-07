@@ -19,6 +19,13 @@ Registro `A` de `cfia.ysafe.com.br` apontando para o IP do servidor do Dokploy.
 
 Sem `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, o site sobe normalmente e o botão de login avisa que ainda não está configurado.
 
+## Alternativa: pelo terminal (sem o painel)
+No servidor do Dokploy, como root:
+```sh
+curl -fsSL https://raw.githubusercontent.com/emersoncassis/CamFacil-IA/main/scripts/deploy-servidor.sh | sh
+```
+O script clona em `/opt/camfacil`, gera a senha do banco em `/opt/camfacil/deploy/.env`, sobe API + Postgres com o Traefik do Dokploy (HTTPS automático) e testa `/api/saude`. Para colocar as chaves do Google, edite o `.env` e rode o script de novo. Esse modo não aparece no painel do Dokploy.
+
 ## 3. Google Auth Platform
 - Cliente **Aplicativo da Web**.
 - Origem autorizada: `https://cfia.ysafe.com.br`.
