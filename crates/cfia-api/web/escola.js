@@ -24,10 +24,12 @@ const W = 960, H = 540;
 const SPRITE = { w: 126, h: 250, cx: 63, cy: 125 };
 // Trajeto de quem entra: aparece na porta (longe, pequeno) e vem em direção
 // à câmera (perto, grande), saindo cortado pela borda de baixo/esquerda.
-const PORTA = { x: 600, y: 212, s: 0.42 };
-const PERTO = { x: -140, y: 330, s: 1.35 };
-// Onde o cliente para para ser atendido: na frente do balcão.
-const BALCAO = { x: 520, y: 290, s: 0.95 };
+// A porta fica no fundo, à esquerda do centro (x≈380); o corredor vem reto até
+// a câmera, então a pessoa cresce quase sem sair do lugar na horizontal.
+const PORTA = { x: 350, y: 233, s: 0.5 };
+const PERTO = { x: 290, y: 330, s: 1.4 };
+// Onde o cliente para para ser atendido: na frente do balcão, à direita do corredor.
+const BALCAO = { x: 455, y: 262, s: 0.95 };
 // Faixa da borda onde a IA ainda vê a pessoa cortada (≈ uma pessoa de largura).
 const MARGEM = 0.09;
 
@@ -53,7 +55,9 @@ function cena(cls, conteudo = "", margem = false) {
     <rect class="moldura" x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14"/>
   </svg>`;
 }
-const PESSOA = `<g class="pessoa"><image href="/img/pessoa.webp" width="${SPRITE.w}" height="${SPRITE.h}"/><g class="centro"><circle cx="63" cy="125" r="7"/><circle cx="63" cy="125" r="16" class="anel"/><path d="M63 97v14M63 139v14M35 125h14M77 125h14"/></g></g>`;
+// Quem entra vem de frente para a câmera; quem sai, de costas.
+const pessoaSvg = (lado = "frente") => `<g class="pessoa"><image href="/img/pessoa-${lado}.webp" width="${SPRITE.w}" height="${SPRITE.h}"/><g class="centro"><circle cx="63" cy="125" r="7"/><circle cx="63" cy="125" r="16" class="anel"/><path d="M63 97v14M63 139v14M35 125h14M77 125h14"/></g></g>`;
+const PESSOA = pessoaSvg("frente");
 
 function painel(cls, ok, titulo, legenda, conteudo, margem = false) {
   return `<figure class="anim-painel ${cls}"><div class="anim-tit ${ok ? "ok" : "erro"}">${titulo}</div>${cena(cls, conteudo, margem)}<figcaption>${legenda}</figcaption></figure>`;
@@ -75,7 +79,7 @@ const ANIM = {
     `<path class="zona" d="M120 290H900V530H40Z"/>${PESSOA}<text class="aviso za" x="480" y="110">alarme falso</text>`)}
     ${painel("zcerta", true, "Certo: só na frente do balcão",
     "Quem passa não dispara. Só quem <strong>para no balcão</strong> conta como ocupado.",
-    `<path class="zona" d="M500 330H690V525H500Z"/><g class="passante">${PESSOA}</g><g class="cliente">${PESSOA}</g><text class="okt zc" x="595" y="305">ocupado</text>`)}</div>`,
+    `<path class="zona" d="M440 300H610V525H440Z"/><g class="passante">${PESSOA}</g><g class="cliente">${PESSOA}</g><text class="okt zc" x="525" y="275">ocupado</text>`)}</div>`,
 };
 
 // ---------- Som do alerta (gerado na hora) ----------
@@ -111,9 +115,9 @@ function coordSvg(svg, ev) {
 }
 
 // Pessoa controlada por código (rAF). Devolve o centro quando a IA "vê" a pessoa inteira.
-function criarPessoa(svg) {
+function criarPessoa(svg, lado = "frente") {
   const g = svgEl("g", { class: "pessoa" });
-  g.innerHTML = PESSOA.replace(/^<g class="pessoa">|<\/g>$/g, "");
+  g.innerHTML = pessoaSvg(lado).replace(/^<g class="pessoa">|<\/g>$/g, "");
   svg.querySelector(".atores").append(g);
   const mira = g.querySelector(".centro");
   return {
@@ -186,8 +190,8 @@ function exercicioLinha(raiz, concluir) {
   // Três passagens: entra (centro do corredor), entra (mais à esquerda), sai.
   const PASSAGENS = [
     { tipo: "entrou", de: PORTA, para: PERTO, dx: 0 },
-    { tipo: "entrou", de: PORTA, para: PERTO, dx: -70 },
-    { tipo: "saiu", de: PERTO, para: PORTA, dx: 30 },
+    { tipo: "entrou", de: PORTA, para: PERTO, dx: -55 },
+    { tipo: "saiu", de: PERTO, para: PORTA, dx: 40, lado: "costas" },
   ];
 
   async function simular() {
@@ -195,7 +199,7 @@ function exercicioLinha(raiz, concluir) {
     const [a, b] = pontos;
     const conta = { entrou: 0, saiu: 0 };
     for (const pas of PASSAGENS) {
-      const pessoa = criarPessoa(svg);
+      const pessoa = criarPessoa(svg, pas.lado);
       let anterior = null; let contouEsta = false;
       await animar(4200, (k) => {
         const c = pessoa.posicionar(noTrajeto(k, pas.de, pas.para, pas.dx));
@@ -278,8 +282,8 @@ function exercicioZona(raiz, concluir) {
     rodando = true;
     let falso = false; let ocupado = false;
     // 1) dois passantes: um entra, outro sai
-    for (const [de, para, dx] of [[PORTA, PERTO, 0], [PERTO, PORTA, -60]]) {
-      const p = criarPessoa(svg);
+    for (const [de, para, dx, lado] of [[PORTA, PERTO, 0, "frente"], [PERTO, PORTA, -50, "costas"]]) {
+      const p = criarPessoa(svg, lado);
       await animar(3600, (k) => {
         const c = p.posicionar(noTrajeto(k, de, para, dx));
         if (c && dentro(c, rect)) { falso = true; zona.classList.add("falso"); mostrar("alarme falso", "erro"); }
