@@ -86,8 +86,28 @@ O CamFácil IA permite que instaladores de CFTV, mesmo leigos, rodem inteligênc
 
 ### 5.7 Web app e instalação progressiva
 1. Só navegador (WASM + ONNX Runtime Web): webcam, vídeo, demonstração.
-2. Gateway mínimo: RTSP → WebRTC + busca ONVIF.
+2. **Agente-Cam-Elo-IA** (instalação mínima): ponte com a rede local, RTSP → WebRTC + busca ONVIF. Nome amplo para poder evoluir para ferramentas mais complexas na rede local.
 3. Instalação completa 24/7.
+
+### 5.8 Dispositivos e papéis
+| Dispositivo | Papel | IA |
+|---|---|---|
+| PC ou mini PC | Cérebro completo | Todos os níveis que o benchmark liberar |
+| Raspberry Pi | Cérebro compacto | Leve e médio |
+| TV Box (APK ou Armbian) | Quiosque + Agente-Cam-Elo-IA + IA leve | Leve; pessoas só em 1 câmera, poucos fps |
+| Smart TV (Tizen, webOS) | Só tela (quiosque) | Nenhuma |
+| Android TV / Google TV | Tela + IA leve (mesmo APK) | Leve |
+| Celular velho | Agente-Cam-Elo-IA, IA em 1–2 câmeras, câmera de demonstração, mini arquivo de clipes | Leve a médio |
+
+- Android: serviço em primeiro plano, início automático, exceção na economia de bateria; preferir aparelhos homologados pela Anatel.
+- Celular 24h na tomada: limitar carga (~80%) ou tomada inteligente; lugar ventilado.
+- Mini arquivo de clipes no celular: só clipes de alertas, limpeza automática, cifrados, cartão "endurance". Não é gravação contínua.
+
+### 5.9 Modo estúdio (estudo)
+Criar inteligências novas conversando com a IA (Anthropic por padrão), com treino opcional no Google Colab e web app no domínio do projeto (Dokploy). Somente estudo. Detalhes no [SDD-07](sdd/SDD-07-modo-estudio.md).
+
+### 5.10 LGPD e responsabilidades
+Modelos de termo, placa e isenção em [`docs/legal/`](legal/README.md). Aceites registrados com data, hora e versão.
 
 ## 6. Fora do escopo (não competir com parceiros)
 Painel multicliente, busca inteligente em gravações, ronda virtual, gravação contínua (NVR), monitoramento profissional 24h. Propostas nessa linha são recusadas em revisão.
@@ -107,7 +127,8 @@ Painel multicliente, busca inteligente em gravações, ronda virtual, gravação
 | 3 — Alertas | Telegram, depois WhatsApp; comandos; texto/foto/clipe |
 | 4 — Rede | Inventário, foto da rede, diagnóstico, diagrama unifilar |
 | 5 — Saídas | Módulo TV, monitor de hardware, relatório, backup |
-| 6 — App e web | App Android, web app + gateway, MCP |
+| 6 — App e web | App Android, web app + Agente-Cam-Elo-IA, MCP |
+| 7 — Modo estúdio | Conversa com IA, vocabulário aberto, Colab |
 
 ## 9. Riscos
 | Risco | Mitigação |
@@ -116,7 +137,8 @@ Painel multicliente, busca inteligente em gravações, ronda virtual, gravação
 | Máquinas fracas demais | Benchmark e níveis; teste de stress |
 | Licença AGPL do YOLO | Projeto inteiro em AGPL-3.0 |
 | Termos do YouTube | Priorizar vídeos próprios ou com permissão |
-| LGPD | Modo LGPD, placa "ambiente monitorado", dados ficam locais |
+| LGPD | Modo LGPD, placa, termos de autorização e responsabilidade, dados ficam locais, projeto não hospeda imagens |
+| Modelos de estudo usados em produção | Aviso em todo modelo exportado e no modo estúdio |
 | Concorrer com parceiros | Seção "Fora do escopo" como regra de revisão |
 
 ## 10. Questões em aberto

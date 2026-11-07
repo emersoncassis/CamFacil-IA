@@ -4,7 +4,7 @@ Ferramenta open source (AGPL-3.0) em Rust para instaladores de CFTV aprenderem e
 
 ## Leia antes de codar (só o necessário para a tarefa)
 - Produto: `docs/PRD.md`
-- Núcleo: `docs/sdd/SDD-01-nucleo.md` · Módulos: `SDD-02` · Educação: `SDD-03` · Integrações: `SDD-04` · Rede: `SDD-05` · App/TV/Web: `SDD-06`
+- Núcleo: `docs/sdd/SDD-01-nucleo.md` · Módulos: `SDD-02` · Educação: `SDD-03` · Integrações: `SDD-04` · Rede: `SDD-05` · App/TV/Web: `SDD-06` · Modo estúdio: `SDD-07` · LGPD: `docs/legal/`
 - Decisões: `docs/adr/` · Visual: `docs/DESIGN_SYSTEM.md` e `web/tokens.css`
 
 ## Regras inegociáveis

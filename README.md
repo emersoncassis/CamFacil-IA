@@ -26,6 +26,9 @@
 > [!IMPORTANT]
 > **O CamFácil IA é um ambiente de aprendizagem e validação.** A solução final no seu cliente é uma câmera ou gravador com **IA de borda**, ou uma plataforma corporativa de IA em nuvem. Aqui você aprende, prova o valor e vende com segurança.
 
+> [!WARNING]
+> Uso experimental, de estudo e validação, sem garantias. O projeto não coleta nem hospeda imagens: quem opera é o técnico, responsável pela LGPD junto ao cliente. Leia a [isenção](docs/legal/ISENCAO.md) e os [modelos de LGPD](docs/legal/README.md).
+
 ## <img src="docs/assets/icons/alvo.svg" width="22" alt=""/> Por que existe
 
 Técnico bom trava em duas coisas: **inteligência artificial** e **rede IP**. O CamFácil IA ensina as duas na prática, rodando no computador que já está no balcão do seu cliente. Leia o [manifesto](MANIFESTO.md).
@@ -108,6 +111,8 @@ O CamFácil IA testa a sua máquina e libera só o que ela aguenta.
 | <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Ao vivo, alertas e botões para portão e relé, via Tailscale |
 | <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com a sua marca para fechar a venda |
 | <img src="docs/assets/icons/robo.svg" width="20" alt=""/> | **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
+| <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** | Descreva uma inteligência nova e aprenda como ela é montada (só estudo) |
+| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Agente-Cam-Elo-IA** | Ponte leve entre o navegador e as câmeras da rede local |
 
 ## <img src="docs/assets/icons/chave.svg" width="22" alt=""/> Para você, técnico
 
@@ -126,7 +131,8 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 - [ ] **Fase 3** — Telegram, WhatsApp e comandos
 - [ ] **Fase 4** — Diagnóstico de rede e diagrama unifilar
 - [ ] **Fase 5** — Modo TV, monitor de hardware, relatório e backup
-- [ ] **Fase 6** — App Android, web app e MCP
+- [ ] **Fase 6** — App Android, web app, Agente-Cam-Elo-IA e MCP
+- [ ] **Fase 7** — Modo estúdio
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Contribua
 
