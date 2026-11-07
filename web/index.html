@@ -74,6 +74,20 @@
           <div id="bench-result"></div>
         </div>
 
+        <div class="block" id="saude-bloco">
+          <h2 data-i18n="saude.titulo"></h2>
+          <p class="hint" data-i18n="saude.desc"></p>
+          <p class="note warn mt" id="saude-desligado" hidden><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="saude.desligado"></span></p>
+          <div class="table-wrap mt">
+            <table class="table">
+              <thead><tr><th data-i18n="saude.col_camera"></th><th data-i18n="saude.col_situacao"></th><th data-i18n="saude.col_desde"></th><th data-i18n="saude.col_ultimo"></th></tr></thead>
+              <tbody id="saude-cameras"></tbody>
+            </table>
+          </div>
+          <h3 class="sub" data-i18n="saude.eventos"></h3>
+          <ul class="list eventos" id="saude-eventos"></ul>
+        </div>
+
         <div class="block">
           <h2 data-i18n="inicio.selos"></h2>
           <div class="selos" id="selos"></div>
@@ -153,7 +167,11 @@
 
         <div class="block" id="aovivo" hidden>
           <div class="block-head">
-            <h2 id="aovivo-nome"></h2>
+            <div class="aovivo-titulo">
+              <h2 id="aovivo-nome"></h2>
+              <span class="tag" id="aovivo-saude" hidden></span>
+              <label class="som-regra" title="" id="aovivo-som-saude"><span class="switch"><input type="checkbox" id="som-saude"><span></span></span><span class="tiny" data-i18n="saude.som"></span></label>
+            </div>
             <div class="seg" role="radiogroup" id="modo">
               <label><input type="radio" name="modo" value="ver" checked><span data-i18n="desenho.ver"></span></label>
               <label><input type="radio" name="modo" value="zona"><span data-i18n="desenho.zona"></span></label>

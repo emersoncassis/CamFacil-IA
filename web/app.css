@@ -285,3 +285,18 @@ button.link:hover { color: var(--text); }
 #desenho polyline.sugestao { fill: none; }
 @keyframes cf-sug { to { stroke-dashoffset: -24; } }
 @media (max-width: 760px) { .sugerir-topo, .sug-lista li { flex-direction: column; align-items: stretch; } }
+
+/* ---------- Saúde das câmeras ---------- */
+.tag { display: inline-flex; align-items: center; gap: var(--s2); padding: 2px var(--s2) 2px 7px; border: 1px solid var(--line-strong); border-radius: var(--r-pill); font-size: var(--fs-xs); color: var(--text-2); white-space: nowrap; }
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); }
+.tag.ok::before { background: var(--accent); }
+.tag.warn { color: var(--c-warn); border-color: var(--c-warn); }
+.tag.warn::before { background: var(--c-warn); }
+.tag.off { color: var(--c-danger); border-color: var(--c-danger); }
+.tag.off::before { background: var(--c-danger); }
+.aovivo-titulo { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.aovivo-titulo h2 { margin: 0; }
+#baloes .cf-bubble.saude { left: 50%; top: var(--s4); transform: translate(-50%, 0); }
+.sub { margin: var(--s4) 0 var(--s2); font-size: var(--fs-sm); font-weight: 500; color: var(--text-3); }
+.list.eventos li { padding: var(--s2) var(--s4); font-size: var(--fs-sm); }
+.list.eventos .tiny { flex: none; }
