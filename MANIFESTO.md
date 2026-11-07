@@ -13,3 +13,4 @@ Ele não é o fim do caminho. É a ponte. O técnico aprende, valida no cliente 
 Nosso objetivo é dar **liberdade** ao técnico: entender a tecnologia, confiar no que vende e crescer com ela.
 
 — Emerson de Carvalho Assis
+#sangueverde
