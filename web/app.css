@@ -229,3 +229,21 @@ dialog h2 { margin: 0 0 var(--s3); font-size: var(--fs-lg); font-weight: 600; }
 .selo { display: inline-flex; align-items: center; gap: var(--s2); padding: 4px var(--s3) 4px var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r-pill); font-size: var(--fs-sm); }
 .selo::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c-green); }
 @media (max-width: 760px) { .aula { right: var(--s4); left: var(--s4); width: auto; bottom: var(--s4); } }
+
+/* ---------- Ligar câmera (caminho rápido) ---------- */
+.passo { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s3); }
+.passo h2 { margin: 0; }
+.num { display: inline-grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1px solid var(--line-strong); font-size: var(--fs-xs); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.num.ok { border-color: var(--accent); color: var(--accent); }
+.list.pick li { cursor: pointer; transition: background-color .12s; }
+.list.pick li:hover { background: var(--surface); }
+.list.pick li.feita { cursor: default; color: var(--text-3); }
+.list.pick li.feita:hover { background: none; }
+.list.pick .mono { color: var(--text); }
+.list.pick li.feita .mono { color: var(--text-3); }
+.carregando { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--accent); animation: gira .8s linear infinite; vertical-align: -1px; margin-right: var(--s2); }
+@keyframes gira { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .carregando { animation-duration: 2.4s; } }
+button.link { padding: 0; border: 0; background: none; font: inherit; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); cursor: pointer; }
+button.link:hover { color: var(--text); }
+.mt { margin-top: var(--s3); }

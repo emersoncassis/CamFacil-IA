@@ -20,6 +20,8 @@
       <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></symbol>
       <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
       <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1 1 0 0 1 1-1h9"/></symbol>
+      <symbol id="i-link2" viewBox="0 0 24 24"><path d="M4 7h11v10H4z"/><path d="m15 11 5-3v8l-5-3"/><path d="M7 12h5M9.5 9.5v5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
       <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
     </defs>
   </svg>
@@ -32,6 +34,7 @@
       </div>
       <nav aria-label="Seções">
         <ul class="nav" role="tablist">
+          <li><button role="tab" data-tab="ligar"><svg class="ico"><use href="#i-link2"/></svg><span data-i18n="tab.ligar"></span></button></li>
           <li><button role="tab" data-tab="inicio" aria-selected="true"><svg class="ico"><use href="#i-home"/></svg><span data-i18n="tab.inicio"></span></button></li>
           <li><button role="tab" data-tab="cameras"><svg class="ico"><use href="#i-cam"/></svg><span data-i18n="tab.cameras"></span></button></li>
           <li><button role="tab" data-tab="modulos"><svg class="ico"><use href="#i-chip"/></svg><span data-i18n="tab.modulos"></span></button></li>
@@ -45,6 +48,60 @@
     </aside>
 
     <main>
+      <!-- Ligar câmera: o caminho rápido -->
+      <section id="ligar" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1 data-i18n="ligar.titulo"></h1>
+            <p class="lede" data-i18n="ligar.lede"></p>
+          </div>
+          <button class="btn" id="ligar-procurar"><svg class="ico"><use href="#i-search"/></svg><span data-i18n="ligar.procurar"></span></button>
+        </header>
+
+        <div class="block" id="ligar-ffmpeg" hidden>
+          <p class="note warn"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="ligar.ffmpeg"></span></p>
+          <div class="actions">
+            <button class="btn primary" id="ligar-ffmpeg-btn"><span data-i18n="ligar.ffmpeg_btn"></span></button>
+          </div>
+          <p class="msg" id="ligar-ffmpeg-msg" role="status"></p>
+        </div>
+
+        <div class="block" id="ligar-passo1">
+          <div class="passo"><span class="num">1</span><h2 id="ligar-status" data-i18n="ligar.procurando"></h2></div>
+          <ul class="list pick" id="ligar-lista"></ul>
+          <form class="add-cam mt" id="ligar-manual" autocomplete="off">
+            <input name="ip" class="mono" inputmode="decimal" required data-i18n-ph="ligar.manual_ph">
+            <button class="btn" type="submit" data-i18n="ligar.manual_btn"></button>
+          </form>
+        </div>
+
+        <div class="block" id="ligar-passo2" hidden>
+          <div class="passo"><span class="num">2</span><h2><span data-i18n="ligar.senha_titulo"></span> <span class="mono" id="ligar-ip"></span></h2></div>
+          <form class="form" id="ligar-form" autocomplete="off">
+            <label><span data-i18n="cam.usuario"></span><input name="usuario" value="admin" autocapitalize="off"></label>
+            <label><span data-i18n="cam.senha"></span><input name="senha" type="password" id="ligar-senha"></label>
+            <label class="span-2"><span data-i18n="ligar.nome"></span><input name="nome" maxlength="60" data-i18n-ph="cam.nome_ph"></label>
+            <div class="actions span-4">
+              <button class="btn primary" type="submit" id="ligar-conectar"><span data-i18n="ligar.conectar"></span></button>
+            </div>
+          </form>
+          <p class="msg" id="ligar-msg" role="status"></p>
+        </div>
+
+        <div class="block" id="ligar-pronto" hidden>
+          <div class="passo"><span class="num ok"><svg class="ico sm"><use href="#i-check"/></svg></span><h2 data-i18n="ligar.pronto"></h2></div>
+          <div class="viewer"><img id="ligar-video" alt=""></div>
+          <p class="hint" id="ligar-endereco"></p>
+          <div class="actions mt">
+            <button class="btn primary" id="ligar-aula"><span data-i18n="ligar.aprender"></span></button>
+            <button class="btn" id="ligar-outra"><span data-i18n="ligar.outra"></span></button>
+            <button class="btn ghost" id="ligar-ver"><span data-i18n="ligar.ver"></span></button>
+          </div>
+        </div>
+
+        <p class="tiny mt" id="ligar-demo-linha"><span data-i18n="ligar.sem_camera"></span> <button class="link" id="ligar-demo" type="button" data-i18n="ligar.demo"></button></p>
+      </section>
+
       <!-- Início -->
       <section id="inicio" class="page" role="tabpanel">
         <header class="pagehead">

@@ -214,3 +214,52 @@ a.btn { text-decoration: none; }
 .doc h2 { font-size: var(--fs-lg); margin: var(--s6) 0 var(--s2); }
 .doc p, .doc li { color: var(--text-2); }
 .doc .tiny { margin-bottom: var(--s5); }
+
+/* ---------- Página de boas-vindas ---------- */
+.site { min-height: 100vh; display: flex; flex-direction: column; }
+.topo { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: var(--s4); padding: var(--s3) var(--s5); background: var(--bg); border-bottom: 1px solid var(--line); }
+.topo .brand { padding: 0; }
+.landing { width: 100%; max-width: 760px; margin: 0 auto; padding: 0 var(--s5); }
+.hero { padding: var(--s7) 0 var(--s6); }
+.kicker { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--text-3); }
+.kicker::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: var(--s2); border-radius: 50%; background: var(--accent); vertical-align: 1px; }
+.hero h1 { margin: 0; font-size: clamp(26px, 4.4vw, 36px); line-height: 1.15; font-weight: 600; letter-spacing: -0.025em; text-wrap: balance; }
+.hero .lede { margin-top: var(--s4); font-size: var(--fs-lg); line-height: 1.55; color: var(--text-2); }
+.ouvir { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s5); }
+.ouvir .btn.tocando { border-color: var(--accent); }
+.ouvir .btn.tocando .ico { color: var(--accent); }
+.pagehead .ouvir { margin-top: 0; }
+
+.baixar { padding: var(--s5); margin-bottom: var(--s6); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.baixar h2, .faixa h2 { margin: 0 0 var(--s4); font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
+[data-baixar] .seg { flex-wrap: wrap; margin-bottom: var(--s4); }
+[data-baixar] .seg span { display: inline-flex; align-items: center; gap: 6px; }
+.btn.grande { height: 44px; padding: 0 var(--s5); font-size: var(--fs-lg); }
+.cmd { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s2); padding: var(--s2) var(--s2) var(--s2) var(--s3); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); }
+.cmd code { flex: 1; min-width: 0; font-size: var(--fs-sm); overflow-x: auto; white-space: nowrap; color: var(--text); }
+.steps.mt { margin-top: var(--s4); }
+.tiny.mt { margin-top: var(--s4); margin-bottom: 0; }
+
+.faixa { padding: var(--s6) 0; border-top: 1px solid var(--line); }
+.faixa p { margin: 0 0 var(--s3); max-width: 68ch; color: var(--text-2); line-height: 1.6; }
+.faixa p strong { color: var(--text); font-weight: 500; }
+.faixa .btn.primary { margin-top: var(--s2); }
+.trilha { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s4); }
+.trilha li { display: flex; gap: var(--s3); align-items: flex-start; }
+.trilha strong { font-weight: 500; }
+.trilha p { margin: 2px 0 0; color: var(--text-3); }
+.passo { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s3); }
+.passo h2 { margin: 0; }
+.num { display: inline-grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1px solid var(--line-strong); font-size: var(--fs-xs); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.trilha .num { margin-top: 1px; }
+.site-foot { margin: 0 auto; width: 100%; max-width: 760px; padding: var(--s6) var(--s5) var(--s5); }
+.hint strong { color: var(--text); font-weight: 500; }
+
+@media (max-width: 760px) {
+  .topo { padding: var(--s3) var(--s4); }
+  .landing { padding: 0 var(--s4); }
+  .hero { padding: var(--s6) 0 var(--s5); }
+  .baixar { padding: var(--s4); }
+  .site-foot { padding: var(--s5) var(--s4); }
+}
+.dl-corpo .actions { align-items: center; }
