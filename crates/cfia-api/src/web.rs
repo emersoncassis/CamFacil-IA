@@ -31,6 +31,14 @@ const ARQUIVOS: &[Arquivo] = &[
         "../../web/tokens.css"
     ),
     arq!("/icon.svg", "image/svg+xml", "../../web/icon.svg"),
+    // Escolinha de IA: aprender do zero, no navegador.
+    arq!("/aprender", "text/html; charset=utf-8", "web/escola.html"),
+    arq!(
+        "/escola.js",
+        "text/javascript; charset=utf-8",
+        "web/escola.js"
+    ),
+    arq!("/escola.css", "text/css; charset=utf-8", "web/escola.css"),
     arq!("/img/loja.webp", "image/webp", "web/img/loja.webp"),
     arq!("/img/pessoa.webp", "image/webp", "web/img/pessoa.webp"),
     arq!(

@@ -125,7 +125,7 @@ const MODULES = [
   ["pesado", [[null, "Leitura de placas"], [null, "Reconhecimento facial"]]],
 ];
 const RANK = { leve: 0, medio: 1, pesado: 2 };
-const AULAS = { cerca: true };
+const ESCOLA_LICAO = { cerca: "linha", movimento: "visao", saude: "saude" };
 
 async function renderLevels() {
   let ligados = {};
@@ -146,9 +146,9 @@ async function renderLevels() {
       };
       const sw = el("label", { class: "switch", title: stateText }, input, el("span"));
       const acoes = el("div", { class: "actions end" });
-      if (id && AULAS[id]) {
-        const b = el("button", { class: "btn sm", type: "button" }, t("mod.aula"));
-        b.onclick = () => aulaIniciar(id);
+      if (id && ESCOLA_LICAO[id]) {
+        const b = el("button", { class: "btn sm", type: "button", title: t("mod.aprender_dica") }, t("mod.aprender"));
+        b.onclick = () => abrirEscola(ESCOLA_LICAO[id]);
         acoes.append(b);
       }
       acoes.append(sw);
@@ -287,8 +287,7 @@ async function abrirCamera(id) {
   definirModo("ver");
   await carregarRegras();
   sugAbrirCamera();
-  if (!aula) $("#aovivo").scrollIntoView({ block: "start" });
-  aulaEvento("camera_aberta");
+  $("#aovivo").scrollIntoView({ block: "start" });
 }
 
 async function carregarRegras() {
@@ -478,7 +477,6 @@ async function salvarRegra(ev) {
     });
     definirModo("ver");
     await carregarRegras();
-    aulaEvento("regra_" + (regrasAbertas.at(-1) || {}).forma);
   } catch (e) { alert(e.message); }
 }
 
@@ -559,149 +557,9 @@ async function eloAcao(fn) {
 
 
 // ---------- Aula guiada (agente guia) ----------
-let aula = null; // { dados, i }
-let aulaAudio = null;
-let aulaPendente = null;
-
-function aulaLimparAlvo() { document.querySelectorAll(".guia-alvo").forEach((e) => e.classList.remove("guia-alvo")); }
-
-// ---------- Animações da aula (foto da loja + pessoa, SVG + CSS) ----------
-// Cena 960×540. A pessoa tem 126×250; o "centro" que a IA segue fica em (63, 125).
-const SPRITE = '<image href="/aula/pessoa.webp" width="126" height="250"/>';
-const MIRA = '<g class="centro"><circle cx="63" cy="125" r="7"/><circle cx="63" cy="125" r="16" class="anel"/><path d="M63 97v14M63 139v14M35 125h14M77 125h14"/></g>';
-const PESSOA = `<g class="pessoa">${SPRITE}${MIRA}</g>`;
-const HUD = '<g class="hud"><path d="M18 58V18h40M902 18h40v40M942 482v40h-40M58 522H18v-40"/><circle cx="40" cy="40" r="6" class="rec"/><text x="54" y="46">REC · CAM 01</text></g><rect class="varredura" x="0" y="0" width="960" height="70"/>';
-
-function painel(cls, ok, titulo, legenda, conteudo) {
-  return `<figure class="anim-painel ${cls}"><div class="anim-tit ${ok ? "ok" : "erro"}">${titulo}</div>
-    <svg viewBox="0 0 960 540" role="img" aria-label="${titulo}"><defs><clipPath id="clip-${cls}"><rect width="960" height="540" rx="14"/></clipPath>
-    <linearGradient id="g-${cls}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06cb3f" stop-opacity="0"/><stop offset="1" stop-color="#06cb3f" stop-opacity=".18"/></linearGradient></defs>
-    <g clip-path="url(#clip-${cls})"><image href="/aula/loja.webp" width="960" height="540"/>${conteudo}${HUD.replace("varredura\"", `varredura" fill="url(#g-${cls})"`)}</g>
-    <rect class="moldura" x="1" y="1" width="958" height="538" rx="14"/></svg>
-    <figcaption>${legenda}</figcaption></figure>`;
-}
-
-const ANIMS = {
-  visao: () => `<div class="anim-grade um">${painel("visao", true, "Como a IA enxerga",
-    "Ela não reconhece “uma pessoa”: percebe o que se mexeu e acompanha o <strong>centro</strong> (a mira verde). Toda regra olha para esse centro.",
-    PESSOA)}</div>`,
-  linha: () => `<div class="anim-grade">${painel("borda", false, "Errado: linha na borda",
-    "A pessoa entra cortada. Quando a IA consegue vê-la inteira, o centro <strong>já passou</strong> da linha. Não conta.",
-    `<path class="linha erro" d="M26 60V540"/>${PESSOA}<g class="placar-g"><text class="placar" x="930" y="110">passagens: 0</text><text class="aviso" x="930" y="160">não contou</text></g>`)}
-    ${painel("meio", true, "Certo: linha no meio da porta",
-    "A IA vê o centro <strong>antes</strong> e <strong>depois</strong> da linha. Conta a passagem.",
-    `<path class="linha ok" d="M360 60V540"/>${PESSOA}<g class="placar-g"><text class="placar p0" x="930" y="110">passagens: 0</text><text class="placar p1" x="930" y="110">passagens: 1</text></g>`)}</div>`,
-  zona: () => `<div class="anim-grade">${painel("zgrande", false, "Errado: zona pegando o corredor",
-    "Quem só passa pelo corredor entra na zona e dispara o aviso: <strong>alarme falso</strong>.",
-    `<path class="zona" d="M110 300H900L960 540H0Z"/>${PESSOA}<text class="aviso za" x="480" y="110">alarme falso</text>`)}
-    ${painel("zcerta", true, "Certo: só na frente do balcão",
-    "Quem passa não dispara. Só quem <strong>para no balcão</strong> conta como ocupado.",
-    `<path class="zona" d="M330 240L466 226V384L318 396Z"/><g class="passante">${PESSOA}</g><g class="cliente">${PESSOA}</g><text class="okt zc" x="398" y="205">ocupado</text>`)}</div>`,
-};
-
-function aulaAnim(nome) {
-  const caixa = $("#aula-anim");
-  const f = ANIMS[nome];
-  caixa.hidden = !f;
-  caixa.innerHTML = f ? f() : "";
-}
-
-function aulaMostrar() {
-  aulaLimparAlvo();
-  if (!aula) { $("#aula").hidden = true; $("#aula-anim").innerHTML = ""; return; }
-  const p = aula.dados.passos[aula.i];
-  if (p.aba && document.querySelector(`[data-tab="${p.aba}"]`).getAttribute("aria-selected") !== "true") showTab(p.aba);
-  $("#aula").hidden = false;
-  $("#aula-titulo").textContent = aula.dados.titulo;
-  $("#aula-passo").textContent = `${aula.i + 1}/${aula.dados.passos.length}`;
-  $("#aula-texto").textContent = p.texto;
-  aulaAnim(p.anim);
-  const ultimo = aula.i === aula.dados.passos.length - 1;
-  const b = $("#aula-proximo");
-  b.textContent = t(ultimo ? "aula.concluir" : p.espera ? "aula.esperando" : "aula.proximo");
-  b.disabled = !!p.espera;
-  // O cartão entra na página logo acima do alvo, para nunca cobrir o vídeo.
-  const card = $("#aula");
-  const alvo = p.alvo ? document.querySelector(p.alvo) : null;
-  if (alvo && alvo.offsetParent !== null) {
-    alvo.classList.add("guia-alvo");
-    const ancora = alvo.closest(".block-head") || alvo;
-    ancora.insertAdjacentElement("beforebegin", card);
-    card.classList.add("inline");
-    requestAnimationFrame(() => card.scrollIntoView({ block: "start" }));
-  } else {
-    document.body.append(card);
-    card.classList.remove("inline");
-  }
-  aulaTocar();
-}
-
-function aulaFonte() {
-  const p = aula.dados.passos[aula.i];
-  // Gravação nova primeiro; se ainda não existir, a versão anterior.
-  return [p.audio || `${aula.dados.modulo}-${p.id}`, p.reserva].filter(Boolean).map((a) => `/aulas/${a}.ogg`);
-}
-
-function aulaFalando(on) { $("#aula").classList.toggle("falando", on); }
-
-function aulaTocarAgora(fontes) {
-  try { if (aulaAudio) { aulaAudio.onended = null; aulaAudio.pause(); } } catch (_) { /* ok */ }
-  const [src, ...resto] = fontes;
-  if (!src) { aulaFalando(false); return; }
-  aulaAudio = new Audio(src);
-  aulaAudio.onended = () => {
-    aulaFalando(false);
-    const prox = aulaPendente; aulaPendente = null;
-    if (prox && aula) aulaTocarAgora(prox);
-  };
-  aulaAudio.onplaying = () => aulaFalando(true);
-  aulaAudio.onerror = () => { aulaFalando(false); if (resto.length) aulaTocarAgora(resto); };
-  aulaAudio.play().catch(() => { /* onerror cuida da reserva */ });
-}
-
-/// Nunca corta a fala no meio: se ainda está falando, o próximo áudio
-/// entra na fila e começa assim que a fala atual terminar.
-function aulaTocar(forcar = false) {
-  if (!aula) return;
-  const src = aulaFonte();
-  const falando = aulaAudio && !aulaAudio.paused && !aulaAudio.ended;
-  if (falando && !forcar) { aulaPendente = src; return; }
-  aulaPendente = null;
-  aulaTocarAgora(src);
-}
-
-function aulaAvancar() {
-  if (!aula) return;
-  if (aula.i >= aula.dados.passos.length - 1) { aulaSair(); return; }
-  aula.i += 1;
-  aulaMostrar();
-}
-
-function aulaSair() {
-  try { if (aulaAudio) { aulaAudio.onended = null; aulaAudio.pause(); } } catch (_) { /* ok */ }
-  aulaPendente = null;
-  aulaFalando(false);
-  aula = null;
-  aulaMostrar();
-}
-
-function aulaEvento(nome) {
-  if (!aula) return;
-  const p = aula.dados.passos[aula.i];
-  if (p.espera === nome) aulaAvancar();
-}
-
-async function aulaIniciar(modulo) {
-  const dados = await fetch(`/aulas/${modulo}.json`).then((r) => r.json());
-  aula = { dados, i: 0 };
-  aulaMostrar();
-}
-
-// O passo 5 espera o selo: verifica de tempos em tempos.
-setInterval(async () => {
-  if (!aula || aula.dados.passos[aula.i].espera !== "selo_cerca") return;
-  try { const { selos } = await api("/api/selos"); if (selos.some((x) => x.modulo === "cerca")) aulaEvento("selo_cerca"); } catch (_) { /* segue */ }
-}, 2000);
+// Aprender fica no site (escolinha): aqui é só operação.
+const ESCOLA = "https://cfia.ysafe.com.br/aprender";
+function abrirEscola(licao) { window.open(`${ESCOLA}#${licao || ""}`, "_blank", "noopener"); }
 
 // ---------- Ligar câmera: procurar → senha → funcionando ----------
 let ligarAlvo = null;
@@ -805,7 +663,7 @@ function iniciarLigar() {
   $("#ligar-form").onsubmit = ligarConectar;
   $("#ligar-manual").onsubmit = (ev) => { ev.preventDefault(); ligarEscolher(ev.target.ip.value, null); };
   $("#ligar-outra").onclick = () => { ligarResetar(); $("#ligar-passo1").scrollIntoView({ block: "start" }); };
-  $("#ligar-aula").onclick = () => aulaIniciar("cerca");
+  $("#ligar-aula").onclick = () => abrirEscola("linha");
   $("#ligar-demo").onclick = () => adicionarCamera(t("cam.demo_nome"), "demo");
 }
 
@@ -947,9 +805,6 @@ async function main() {
   const { resultado } = await api("/api/bench");
   renderBench(resultado);
   renderSelos();
-  $("#aula-proximo").onclick = aulaAvancar;
-  $("#aula-ouvir").onclick = () => aulaTocar(true);
-  $("#aula-sair").onclick = aulaSair;
 
   let tab = "inicio";
   try { tab = localStorage.getItem("cf-tab") || tab; } catch (_) { /* opcional */ }

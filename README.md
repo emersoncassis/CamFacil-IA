@@ -34,13 +34,15 @@ Tudo começa lá. Abre, ouve as boas-vindas, baixa e pronto.
 | | O que o site faz por você |
 |---|---|
 | <img src="docs/assets/icons/download.svg" width="20" alt=""/> | **Baixa o programa certo** para o seu computador: Windows, Linux ou Raspberry Pi/TV Box. Um clique ou um comando. |
-| <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Explica falando**: boas-vindas, passo a passo e por que o projeto existe, na voz de quem treinou instaladores no Brasil inteiro. |
+| <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Ensina do zero**: a [Escolinha de IA](https://cfia.ysafe.com.br/aprender) roda no navegador, com exercícios na prática e narração na voz de quem treinou instaladores no Brasil inteiro. |
 | <img src="docs/assets/icons/chave.svg" width="20" alt=""/> | **Login com Google**, sem senha nova. Cada técnico vê só os próprios clientes. |
 | <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **Pareia o computador do cliente** pelo QR code, pela câmera do celular dentro do site ou digitando o código. |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Mostra de longe o que o agente está vendo**: câmeras no ar e sem sinal, CPU e memória da máquina, IA ligada e os últimos alertas. Sem vídeo passando pela nuvem. |
 | <img src="docs/assets/icons/nuvem.svg" width="20" alt=""/> | **Ensina a ter o seu próprio painel**: o mesmo site, em Docker, na sua VPS. |
 
-**No programa, depois de baixar:** ele abre direto em **Câmeras** e procura sozinho na rede. Você escolhe a câmera, digita a senha e a imagem aparece. Depois vem a IA, com aula falada e animada: cerca virtual, linha de passagem, zona, saúde da câmera, alerta com som e tela piscando. A janela do terminal mostra o resumo ao vivo (CPU, memória, câmeras) e dá para deixar abrindo junto com o computador.
+**Na entrada você escolhe:** <img src="docs/assets/icons/aula.svg" width="16" alt=""/> **Aprender IA do zero**, na [Escolinha de IA](https://cfia.ysafe.com.br/aprender) (roda no navegador, sem baixar nada: seis lições com exercícios em que você desenha a linha e a zona e a IA diz se acertou), ou **Já trabalho com IA**, direto para o download e a operação.
+
+**No programa, depois de baixar:** só operação. Ele abre direto em **Câmeras** e procura sozinho na rede. Você escolhe a câmera, digita a senha e a imagem aparece. Depois, desenhe as regras ou peça “IA, sugira para mim”: alerta com som e tela piscando, saúde da câmera, balões para o cliente. A janela do terminal mostra o resumo ao vivo (CPU, memória, câmeras) e dá para deixar abrindo junto com o computador.
 
 > [!IMPORTANT]
 > **O CamFácil IA é um ambiente de aprendizagem e validação.** A solução final no seu cliente é uma câmera ou gravador com **IA de borda**, ou uma plataforma corporativa de IA em nuvem. Aqui você aprende, prova o valor e vende com segurança.

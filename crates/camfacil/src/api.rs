@@ -62,13 +62,6 @@ fn internal<E: std::fmt::Display>(e: E) -> (StatusCode, Json<Value>) {
 }
 
 async fn static_file(uri: Uri) -> Response {
-    if let Some(nome) = uri
-        .path()
-        .strip_prefix("/aulas/")
-        .filter(|n| n.ends_with(".ogg"))
-    {
-        return audio_aula(nome).await;
-    }
     match assets::find(uri.path()) {
         Some(a) => (
             [
@@ -689,34 +682,4 @@ async fn get_selos(State(app): State<Shared>) -> ApiResult {
         .map(|(m, t)| json!({ "modulo": m, "ganho_em": t }))
         .collect();
     Ok(Json(json!({ "selos": v })))
-}
-
-/// Áudios das aulas: pasta `aulas` ao lado do executável ou na pasta de dados
-/// (permite regravar sem recompilar); senão, a gravação embutida. Nome validado para não sair da pasta.
-async fn audio_aula(nome: &str) -> Response {
-    let valido = nome.len() < 64
-        && nome
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.')
-        && !nome.contains("..");
-    if !valido {
-        return (StatusCode::NOT_FOUND, "não encontrado").into_response();
-    }
-    let mut pastas = vec![cf_core::paths::data_dir().join("aulas")];
-    if let Some(d) = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.join("aulas")))
-    {
-        pastas.push(d);
-    }
-    for p in pastas {
-        if let Ok(b) = std::fs::read(p.join(nome)) {
-            return ([(header::CONTENT_TYPE, "audio/ogg")], b).into_response();
-        }
-    }
-    // Sem arquivo local: usa a gravação embutida no binário.
-    match assets::find(&format!("/aulas/{nome}")) {
-        Some(a) => ([(header::CONTENT_TYPE, a.mime)], a.body).into_response(),
-        None => (StatusCode::NOT_FOUND, "não encontrado").into_response(),
-    }
 }
