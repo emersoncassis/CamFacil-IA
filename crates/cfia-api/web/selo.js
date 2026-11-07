@@ -1,4 +1,4 @@
-// Selo da Escolinha de IA: cartão, imagem para stories (1080×1920) e compartilhar.
+// Selo da Formação de IA para CFTV: cartão, imagem para stories (1080×1920) e compartilhar.
 "use strict";
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
@@ -10,7 +10,7 @@
   };
   const dataBr = (iso) => { const [a, m, d] = (iso || "").split("-"); return d ? `${d}/${m}/${a}` : iso; };
   const urlSelo = (s) => `${location.origin}/selo/${encodeURIComponent(s.codigo)}`;
-  const textoCompart = (s) => `Concluí a Escolinha de IA do CamFácil IA: aprendi na prática a configurar IA de vídeo (linha de passagem, zona, alertas e saúde da câmera). Curso gratuito, no navegador: ${urlSelo(s)}`;
+  const textoCompart = (s) => `Concluí a Formação de IA para CFTV do CamFácil IA: aprendi na prática a configurar IA de vídeo (linha de passagem, zona, alertas e saúde da câmera). Curso gratuito, no navegador: ${urlSelo(s)}`;
 
   // Desenha a arte do selo num canvas. Formato stories por padrão.
   function arteSelo(s, larguraReal = 1080, alturaReal = 1920) {
@@ -33,7 +33,7 @@
     }
     const centro = (txt, y, fonte, cor = "#fff") => { g.fillStyle = cor; g.font = fonte; g.textAlign = "center"; g.fillText(txt, largura / 2, y); };
     centro("CAMFÁCIL IA", 280, "600 40px system-ui, -apple-system, Segoe UI, Roboto, sans-serif", "rgba(255,255,255,.7)");
-    centro("ESCOLINHA DE IA", 345, "700 56px system-ui, -apple-system, Segoe UI, Roboto, sans-serif", verde);
+    centro("FORMAÇÃO DE IA PARA CFTV", 345, "700 46px system-ui, -apple-system, Segoe UI, Roboto, sans-serif", verde);
     // medalha
     const cx = largura / 2, cy = 640, R = 190;
     g.save(); g.translate(cx, cy);
@@ -72,13 +72,13 @@
     const copiar = el("button", { class: "btn", type: "button" }, "Copiar texto e link");
     copiar.onclick = async () => { try { await navigator.clipboard.writeText(textoCompart(s)); copiar.textContent = "Copiado"; setTimeout(() => { copiar.textContent = "Copiar texto e link"; }, 1600); } catch (_) { /* sem permissão */ } };
     const partilhar = el("button", { class: "btn", type: "button" }, "Compartilhar…");
-    if (navigator.share) partilhar.onclick = () => navigator.share({ title: "Escolinha de IA · CamFácil IA", text: textoCompart(s), url }).catch(() => {}); else partilhar.hidden = true;
+    if (navigator.share) partilhar.onclick = () => navigator.share({ title: "Formação de IA para CFTV · CamFácil IA", text: textoCompart(s), url }).catch(() => {}); else partilhar.hidden = true;
     return el("div", { class: `selo-cartao${compacto ? " compacto" : ""}` },
       img,
       el("div", { class: "selo-info" },
         el("p", { class: "kicker" }, "Selo verificado"),
         el("h2", {}, s.nome),
-        el("p", { class: "hint" }, `Concluiu a Escolinha de IA em ${dataBr(s.criado_em)}${s.instagram ? ` · @${s.instagram}` : ""}.`),
+        el("p", { class: "hint" }, `Concluiu a Formação de IA para CFTV em ${dataBr(s.criado_em)}${s.instagram ? ` · @${s.instagram}` : ""}.`),
         el("p", { class: "tiny" }, "Para o Instagram: baixe a imagem e poste nos stories. Se você autorizou e informou o seu Instagram, o selo será repostado pelo Emerson, pelo Papo Segurança e pela Zion, marcando você."),
         el("div", { class: "selo-acoes" }, baixar, whats, linkedin, partilhar, copiar),
         el("p", { class: "tiny" }, el("a", { href: url }, url))));
@@ -91,14 +91,14 @@
       const r = await fetch(`/api/escola/selo/${encodeURIComponent(codigo)}`);
       if (!r.ok) throw new Error("Esse selo não existe ou o link está incompleto.");
       const { selo } = await r.json();
-      document.title = `${selo.nome} · Selo Escolinha de IA · CamFácil IA`;
+      document.title = `${selo.nome} · Selo Formação de IA para CFTV · CamFácil IA`;
       main.replaceChildren(cartaoSelo(selo),
         el("section", { class: "selo-chamada" },
           el("h3", {}, "Quer o seu também?"),
           el("p", { class: "hint" }, "Seis lições, cinco minutos, no navegador. Você desenha a linha e a zona e a IA diz se acertou."),
           el("a", { class: "btn primary", href: "/aprender" }, "Começar o curso")));
     } catch (e) {
-      main.replaceChildren(el("p", { class: "msg err" }, e.message), el("a", { class: "btn", href: "/aprender" }, "Ir para a escolinha"));
+      main.replaceChildren(el("p", { class: "msg err" }, e.message), el("a", { class: "btn", href: "/aprender" }, "Ir para o curso"));
     }
   }
 
