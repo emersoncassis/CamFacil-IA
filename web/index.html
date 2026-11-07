@@ -340,9 +340,39 @@
           </div>
           <p class="msg" id="ts-msg" role="status"></p>
         </div>
+        <div class="block" id="tg">
+          <h2>Telegram</h2>
+          <p class="hint" data-i18n="tg.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="tg.situacao"></dt><dd><span class="state"><span class="dot" id="tg-dot"></span><span id="tg-status"></span></span></dd>
+            <dt data-i18n="tg.bot"></dt><dd class="mono" id="tg-bot">—</dd>
+            <dt data-i18n="tg.envios"></dt><dd id="tg-envios">—</dd>
+          </dl>
+          <form class="add-cam" id="tg-form" autocomplete="off">
+            <input name="token" class="mono" type="password" autocapitalize="off" spellcheck="false" data-i18n-ph="tg.token_ph">
+            <button class="btn primary" type="submit" id="tg-salvar"><span data-i18n="tg.salvar"></span></button>
+          </form>
+          <p class="tiny mt" data-i18n="tg.como_criar"></p>
+          <div class="actions mt" id="tg-acoes" hidden>
+            <button class="btn sm" id="tg-testar" type="button"><span data-i18n="tg.testar"></span></button>
+            <button class="btn ghost sm" id="tg-remover" type="button" data-i18n="tg.remover"></button>
+            <label class="som-regra" title="" id="tg-fotos-wrap"><span class="switch"><input type="checkbox" id="tg-fotos"><span></span></span><span class="tiny" data-i18n="tg.fotos"></span></label>
+          </div>
+          <p class="msg" id="tg-msg" role="status"></p>
+          <div id="tg-contatos" hidden>
+            <h3 class="sub" data-i18n="tg.contatos"></h3>
+            <p class="hint" data-i18n="tg.contatos_dica"></p>
+            <div class="table-wrap mt">
+              <table class="table">
+                <thead><tr><th data-i18n="tg.col_nome"></th><th data-i18n="tg.col_chat"></th><th data-i18n="tg.col_visto"></th><th data-i18n="tg.col_autorizado"></th><th class="right"></th></tr></thead>
+                <tbody id="tg-chats"></tbody>
+              </table>
+            </div>
+            <p class="tiny mt" data-i18n="tg.comandos"></p>
+          </div>
+        </div>
         <div class="block">
           <ul class="list">
-            <li><div><strong>Telegram</strong><p data-i18n="int.telegram"></p></div><span class="badge" data-i18n="em_breve"></span></li>
             <li><div><strong>WhatsApp</strong><p data-i18n="int.whatsapp"></p></div><span class="badge" data-i18n="em_breve"></span></li>
             <li><div><strong data-i18n="int.marca"></strong><p data-i18n="int.marca_desc"></p></div><span class="badge" data-i18n="em_breve"></span></li>
           </ul>

@@ -55,6 +55,7 @@ function showTab(id) {
   saudeAtivar(id === "inicio");
   eloAtivar(id === "integracoes");
   tsAtivar(id === "integracoes");
+  tgAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
   ligarAtivar(id === "cameras");
 }
@@ -666,6 +667,79 @@ function tsAtivar(ativo) {
   if (ativo) { renderTailscale(); tsTimer = setInterval(renderTailscale, 10000); }
 }
 
+// ---------- Telegram ----------
+let tgTimer = null;
+
+function tgMsg(texto, tipo) { const m = $("#tg-msg"); m.textContent = texto; m.className = "msg " + (tipo || ""); }
+
+async function renderTelegram() {
+  let r;
+  try { r = await api("/api/telegram"); } catch (e) { tgMsg(e.message, "err"); return; }
+  const s = r.situacao;
+  const dot = $("#tg-dot");
+  let texto;
+  if (!s.configurado) { dot.className = "dot"; texto = t("tg.sem_token"); }
+  else if (s.escutando) { dot.className = "dot on"; texto = t("tg.escutando"); }
+  else { dot.className = "dot off"; texto = s.ultimo_erro || t("tg.parado"); }
+  $("#tg-status").textContent = texto;
+  $("#tg-bot").textContent = s.bot ? "@" + s.bot : "—";
+  $("#tg-envios").textContent = s.configurado
+    ? `${s.enviados} ${t("tg.enviados")} · ${s.na_fila} ${t("tg.fila")}${s.descartados ? ` · ${s.descartados} ${t("tg.descartados")}` : ""}` : "—";
+  $("#tg-acoes").hidden = !s.configurado;
+  $("#tg-contatos").hidden = !s.configurado;
+  $("#tg-form").hidden = s.configurado;
+  const f = $("#tg-fotos"); f.checked = s.fotos;
+  $("#tg-fotos-wrap").title = t("tg.fotos_dica");
+  if (s.configurado && s.ultimo_erro && !s.escutando) { /* já mostrado na situação */ }
+  const corpo = $("#tg-chats");
+  if (!r.chats.length) { corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "5" }, t("tg.nenhum_contato")))); return; }
+  corpo.replaceChildren(...r.chats.map((c) => {
+    const chk = el("input", { type: "checkbox", "aria-label": `${t("tg.col_autorizado")}: ${c.nome}` });
+    chk.checked = c.autorizado;
+    chk.onchange = async () => { try { await api(`/api/telegram/chats/${c.chat_id}`, { autorizado: chk.checked }); renderTelegram(); } catch (e) { chk.checked = !chk.checked; tgMsg(e.message, "err"); } };
+    const rem = el("button", { class: "btn ghost sm", type: "button" }, t("tg.remover_contato"));
+    rem.onclick = async () => { if (!confirm(t("tg.confirma_remover_contato"))) return; await api(`/api/telegram/chats/${c.chat_id}`, undefined, "DELETE"); renderTelegram(); };
+    return el("tr", {},
+      el("td", {}, c.nome || "—"),
+      el("td", { class: "mono" }, String(c.chat_id)),
+      el("td", {}, `${tempoRelativo(Math.floor(Date.now() / 1000) - c.visto_em)} ${t("tempo.atras")}`),
+      el("td", {}, el("label", { class: "switch" }, chk, el("span"))),
+      el("td", { class: "right" }, rem));
+  }));
+}
+
+async function tgSalvar(ev) {
+  ev.preventDefault();
+  const f = ev.target; const b = $("#tg-salvar");
+  const token = f.token.value.trim();
+  if (!token) return;
+  busy(b, true, "tg.salvando"); tgMsg("");
+  try {
+    const r = await api("/api/telegram", { token });
+    f.token.value = "";
+    tgMsg(`${t("tg.salvo")} @${r.bot || r.nome}`, "ok");
+    renderTelegram();
+  } catch (e) { tgMsg(e.message, "err"); }
+  busy(b, false, "tg.salvar");
+}
+
+async function tgTestar() {
+  const b = $("#tg-testar");
+  busy(b, true, "tg.testando"); tgMsg("");
+  try {
+    const r = await api("/api/telegram/testar", {});
+    tgMsg(`${t("tg.testado")} ${r.enviados} ${r.enviados === 1 ? t("tg.contato") : t("tg.contatos_n")} (@${r.bot}).`, "ok");
+  } catch (e) { tgMsg(e.message, "err"); }
+  busy(b, false, "tg.testar");
+  renderTelegram();
+}
+
+function tgAtivar(ativo) {
+  clearInterval(tgTimer);
+  tgTimer = null;
+  if (ativo) { renderTelegram(); tgTimer = setInterval(renderTelegram, 5000); }
+}
+
 // ---------- Aula guiada (agente guia) ----------
 // Aprender fica no site (escolinha): aqui é só operação.
 const ESCOLA = "https://cfia.ysafe.com.br/aprender";
@@ -906,6 +980,12 @@ async function main() {
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
+  $("#tg-form").onsubmit = tgSalvar;
+  $("#tg-testar").onclick = tgTestar;
+  $("#tg-remover").onclick = async () => { if (!confirm(t("tg.confirma_remover"))) return; try { await api("/api/telegram", undefined, "DELETE"); tgMsg(t("tg.removido"), "ok"); renderTelegram(); } catch (e) { tgMsg(e.message, "err"); } };
+  $("#tg-fotos").onchange = async (e) => { try { await api("/api/telegram/fotos", { ligado: e.target.checked }); } catch (err) { tgMsg(err.message, "err"); } };
+  // O bot escreve a hora no fuso do técnico: informa o do navegador.
+  api("/api/fuso", { minutos: -new Date().getTimezoneOffset() }).catch(() => {});
   $("#ts-copiar-cmd").onclick = async () => { try { await navigator.clipboard.writeText($("#ts-comando").textContent); tsMsg(t("ts.cmd_copiado"), "ok"); } catch (_) { /* sem permissão */ } };
   $("#elo-desparear").onclick = () => { if (confirm(t("elo.confirma_desparear"))) eloAcao(() => api("/api/elo/desparear", {})); };
 

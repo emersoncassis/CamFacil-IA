@@ -9,6 +9,7 @@ authors.workspace = true
 [dependencies]
 axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio", "json", "query"] }
 cf-core = { version = "0.1.0", path = "../cf-core" }
+cf-notify = { version = "0.1.0", path = "../cf-notify" }
 futures-util = { version = "0.3.34", default-features = false, features = ["sink", "std"] }
 qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
 rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }

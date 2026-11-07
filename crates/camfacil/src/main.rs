@@ -7,6 +7,7 @@ mod api;
 mod assets;
 mod autoinicio;
 mod elo;
+mod notificacoes;
 mod painel;
 mod resumo;
 mod tailscale;
@@ -21,6 +22,7 @@ pub struct App {
     pub elo: Arc<elo::Elo>,
     pub video: Arc<video::Video>,
     pub tailscale: tailscale::Estado,
+    pub telegram: std::sync::OnceLock<Arc<cf_notify::Telegram>>,
 }
 
 pub type Shared = Arc<App>;
@@ -106,7 +108,20 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         elo,
         video,
         tailscale: tailscale::Estado::default(),
+        telegram: std::sync::OnceLock::new(),
     });
+    // Telegram (SDD-04): alertas com foto e comandos, só quando há token salvo.
+    match cf_notify::Telegram::iniciar(
+        app.store.clone(),
+        Arc::new(notificacoes::Ponte::new(Arc::downgrade(&app))),
+    ) {
+        Ok(tg) => {
+            let n = tg.clone();
+            video::definir_notificador(Arc::new(move |a| n.notificar(a)));
+            let _ = app.telegram.set(tg);
+        }
+        Err(e) => eprintln!("Telegram desligado: {e}"),
+    }
     app.elo.definir_resumo(resumo::montar(Arc::downgrade(&app)));
     let rede = lan
         .then(|| cf_core::conectar::ip_local().map(|ip| format!("http://{ip}:{}", chosen.port)))
