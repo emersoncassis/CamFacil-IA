@@ -7,6 +7,7 @@ mod api;
 mod assets;
 mod autoinicio;
 mod elo;
+mod ia;
 mod notificacoes;
 mod painel;
 mod resumo;
@@ -23,6 +24,7 @@ pub struct App {
     pub video: Arc<video::Video>,
     pub tailscale: tailscale::Estado,
     pub telegram: std::sync::OnceLock<Arc<cf_notify::Telegram>>,
+    pub ia: Arc<ia::Ia>,
 }
 
 pub type Shared = Arc<App>;
@@ -109,7 +111,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         video,
         tailscale: tailscale::Estado::default(),
         telegram: std::sync::OnceLock::new(),
+        ia: Arc::new(ia::Ia::new(&dir)),
     });
+    // Nível médio: a thread do detector dorme até haver módulo médio ligado e
+    // runtime+modelo baixados (SDD-02).
+    ia::detector::iniciar(app.ia.clone(), app.video.clone(), app.store.clone());
     // Telegram (SDD-04): alertas com foto e comandos, só quando há token salvo.
     match cf_notify::Telegram::iniciar(
         app.store.clone(),

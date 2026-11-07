@@ -1,6 +1,6 @@
 # SDD-02 — Módulos de IA
 
-Status: proposto · Fase 2
+Status: leve e médio **implementados** (fases 2 e 3); pesado fora do programa local (PRD §6)
 
 ## Objetivo
 Definir um contrato simples para que qualquer pessoa da comunidade crie um módulo de IA, e o núcleo consiga baixar, ligar e desligar módulos conforme a máquina aguenta.
@@ -53,12 +53,12 @@ pub trait Module: Send {
 |---|---|---|
 | Movimento inteligente | diferença de quadros + filtro de área/tempo | leve |
 | Cerca/linha virtual | polígonos e linhas sobre movimento ou detecção | leve (movimento) / médio (pessoa) |
-| Pessoas e veículos | YOLO nano ONNX + rastreamento simples (IoU/ByteTrack) | médio |
-| Contagem e permanência | sobre o rastreamento | médio |
-| Placas | detector + OCR leve | pesado |
-| Face | YuNet + embedding | pesado |
+| Pessoas e veículos | YOLO11n ONNX + rastreamento simples por proximidade | médio · **implementado** |
+| Contagem e permanência | sobre o rastreamento | médio · **implementado** |
+| Placas | detector + OCR leve | pesado · fica para câmera/gravador com IA de borda ou parceiro |
+| Face | YuNet + embedding | pesado · idem |
 | Saúde da câmera | brilho, contraste, nitidez (Laplaciano), sem sinal | leve · **implementado** |
-| Mapa de calor | acumulação de posições | médio |
+| Mapa de calor | acumulação de posições | médio · **implementado** |
 
 ## Cerca virtual genérica
 - Regra = `{ nome, camera, forma: poligono|linha, gatilho, estados[], agenda }`.
@@ -80,3 +80,13 @@ O benchmark roda um modelo de referência por N segundos e mede quadros/s. O ní
 - Evento `saude` em `eventos` **só na mudança confirmada**, com `detalhe` = situação nova (inclusive a volta para `ok`). Sem spam.
 - Dashboard: tag de saúde na tabela "Suas câmeras" e no cabeçalho do ao vivo; balão `Imagem escura` / `Câmera coberta` / `Imagem desfocada` sobre o vídeo (pisca como alerta; sem sinal usa a cortina do próprio vídeo); bloco "Saúde das câmeras" na tela Início (`GET /api/saude`) com situação, há quanto tempo, último problema e últimas mudanças; som opcional por câmera (chave `saude:<camera_id>`, no navegador).
 - Custo: uma avaliação por segundo por câmera em quadro 160 px; sem impacto medido no ocioso.
+
+## Nível médio (status: implementado · fase 3)
+- **Runtime**: `ort` 2.0.0-rc.15 com `default-features = false, features = ["load-dynamic"]` (sem `ndarray`, sem download no build). A `libonnxruntime` **1.20.1** vem das releases oficiais `microsoft/onnxruntime` (linux x64/aarch64, windows x64/arm64, macOS arm64/x86_64), conferida por SHA-256 fixo em `crates/camfacil/src/ia/mod.rs`; só a biblioteca é extraída (tar/zip lidos à mão + `miniz_oxide`) para `data_dir/modelos/onnxruntime/`. `CAMFACIL_ORT_LIB` aponta para um runtime já instalado.
+- **Modelo**: `yolo11n.onnx` (640, opset 12, sem NMS) — ver `modelos/README.md`. URL fixa na release `modelos-v1` do repositório, fallback no branch `main`; SHA-256 em `modelos/yolo11n.onnx.sha256` (embutido no binário). Cópia por pendrive para `data_dir/modelos/` funciona offline.
+- **Download sob demanda**: ao ligar o primeiro módulo médio a dashboard chama `POST /api/ia/baixar`; `GET /api/ia` dá fase, bytes e erro; `POST /api/ia/cancelar`; `DELETE /api/ia` apaga. Barra de progresso e cancelar na tela Módulos de IA. Destravar exige `bench_level` ≥ médio (teste da máquina); o servidor também recusa.
+- **Detector** (`ia/detector.rs`): uma thread, uma sessão compartilhada, 2 threads intra-op, ≤ 3 inferências/s no total (intervalo 340 ms), sempre no quadro já reduzido do stream secundário (JPEG → RGB → letterbox 640). Dorme sem módulo médio ligado e libera o modelo da RAM após 1 min ocioso.
+- **Pós-processamento** (`cf-core/src/deteccao.rs`, com testes): classes pessoa, bicicleta, carro, moto, ônibus, caminhão; NMS; rastreamento por proximidade do pé; contagem por linha com sentido; zona ocupada por pessoa; permanência (pessoa parada > N s, N em `settings.permanencia_s`, padrão 60); mapa de calor em grade 32×18.
+- **Módulos**: `pessoas` (balão "IA viu: 4 pessoas · 1 ônibus"; zonas passam a usar pessoa em vez de movimento), `contagem` (linhas passam a contar pessoas/veículos detectados; o analisador por movimento solta essas regras para não contar duas vezes), `permanencia` (evento `permanencia`, balão com "parado há N s", alerta no Telegram com antirrepique `permanencia:<regra>`), `calor` (`GET/DELETE /api/cameras/{id}/calor`; camada que só o técnico liga no ao vivo). **Nunca caixas**: só balões e tags.
+- **Medido** (release, Xeon 2,1 GHz, 2 núcleos, 2 câmeras): ocioso 4,6 MB binário · 6,4 MB RAM · 0 % CPU; só leve com 2 câmeras 8,6 MB · 6 %; com detector ligado 134 MB RAM · ~55 % de um núcleo · 85 ms por inferência. O orçamento do ocioso continua; a IA média custa o que custa quando ligada.
+- Falta validar: download do modelo pela URL da release (a release `modelos-v1` ainda precisa ser publicada), Windows/macOS/Raspberry (aqui só linux x64), e máquinas fracas (o teste da máquina é quem destrava).

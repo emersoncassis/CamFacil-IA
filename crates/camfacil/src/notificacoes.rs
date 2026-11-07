@@ -69,8 +69,8 @@ impl Anfitriao for Ponte {
         let m = crate::video::modulos(&app.store);
         let ligados: Vec<&str> = crate::video::MODULOS
             .iter()
-            .filter(|(id, _, _)| m.ligado(id))
-            .map(|(_, nome, _)| *nome)
+            .filter(|(id, _, _, _)| m.ligado(id))
+            .map(|(_, nome, _, _)| *nome)
             .collect();
         linhas.push(format!(
             "Módulos ligados: {}",

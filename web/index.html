@@ -170,6 +170,8 @@
             <div class="aovivo-titulo">
               <h2 id="aovivo-nome"></h2>
               <span class="tag" id="aovivo-saude" hidden></span>
+              <span class="tag" id="aovivo-objetos" hidden></span>
+              <label class="som-regra" id="calor-wrap" hidden><span class="switch"><input type="checkbox" id="calor-toggle"><span></span></span><span class="tiny" data-i18n="calor.toggle"></span></label>
               <label class="som-regra" title="" id="aovivo-som-saude"><span class="switch"><input type="checkbox" id="som-saude"><span></span></span><span class="tiny" data-i18n="saude.som"></span></label>
             </div>
             <div class="seg" role="radiogroup" id="modo">
@@ -267,6 +269,28 @@
               <tbody id="levels"></tbody>
             </table>
           </div>
+        </div>
+        <div class="block" id="ia-bloco">
+          <div class="block-head">
+            <h2 data-i18n="ia.titulo"></h2>
+            <div class="actions">
+              <button class="btn sm" id="ia-baixar" type="button" hidden><span data-i18n="ia.baixar"></span></button>
+              <button class="btn sm" id="ia-cancelar" type="button" hidden data-i18n="ia.cancelar"></button>
+              <button class="btn ghost sm" id="ia-apagar" type="button" hidden data-i18n="ia.apagar"></button>
+            </div>
+          </div>
+          <p class="hint" data-i18n="ia.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="ia.situacao"></dt><dd><span class="state"><span class="dot" id="ia-dot"></span><span id="ia-status"></span></span></dd>
+            <dt data-i18n="ia.detector"></dt><dd id="ia-detector">—</dd>
+            <dt data-i18n="ia.pasta"></dt><dd class="mono tiny" id="ia-pasta">—</dd>
+          </dl>
+          <div class="sug-andamento" id="ia-andamento" hidden>
+            <div class="sug-barra"><i id="ia-barra"></i></div>
+            <p class="tiny" id="ia-andamento-texto"></p>
+          </div>
+          <p class="msg" id="ia-msg" role="status"></p>
+          <p class="tiny" data-i18n="ia.pendrive"></p>
         </div>
       </section>
 

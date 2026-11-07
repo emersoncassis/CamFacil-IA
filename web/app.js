@@ -52,6 +52,7 @@ function showTab(id) {
   document.querySelectorAll("[role=tabpanel]").forEach((p) => { p.hidden = p.id !== id; });
   try { localStorage.setItem("cf-tab", id); } catch (_) { /* opcional */ }
   if (id === "modulos") renderLevels();
+  iaAtivar(id === "modulos");
   saudeAtivar(id === "inicio");
   eloAtivar(id === "integracoes");
   tsAtivar(id === "integracoes");
@@ -124,28 +125,36 @@ async function runBench() {
 // ---------- Módulos ----------
 const MODULES = [
   ["leve", [["movimento", "Movimento inteligente"], ["cerca", "Cerca e linha virtual"], ["saude", "Saúde das câmeras"]]],
-  ["medio", [[null, "Pessoas e veículos"], [null, "Contagem"], [null, "Permanência"], [null, "Mapa de calor"]]],
+  ["medio", [["pessoas", "Pessoas e veículos"], ["contagem", "Contagem"], ["permanencia", "Permanência"], ["calor", "Mapa de calor"]]],
   ["pesado", [[null, "Leitura de placas"], [null, "Reconhecimento facial"]]],
 ];
 const RANK = { leve: 0, medio: 1, pesado: 2 };
 const ESCOLA_LICAO = { cerca: "linha", movimento: "visao", saude: "saude" };
+let modulosInfo = {};
 
 async function renderLevels() {
   let ligados = {};
   try { ligados = await api("/api/modulos"); } catch (_) { /* segue */ }
+  modulosInfo = ligados;
   const rows = [];
   for (const [lv, mods] of MODULES) {
     const untested = level == null && lv !== "leve";
     const locked = untested || (level != null && RANK[lv] > RANK[level]);
     for (const [id, name] of mods) {
       const disponivel = !!id && !locked;
-      const stateText = untested ? t("mod.testar") : locked ? t("mod.bloqueado")
-        : !id ? t("mod.precisa_modelo") : ligados[id] ? t("mod.ligado") : t("mod.desligado");
+      const stateText = !id ? t("mod.pesado_texto") : untested ? t("mod.testar") : locked ? t("mod.bloqueado")
+        : lv === "medio" && !ligados.ia_pronta ? (ligados[id] ? t("mod.baixar_modelo") : t("mod.desligado"))
+        : ligados[id] ? t("mod.ligado") : t("mod.desligado");
       const input = el("input", { type: "checkbox", "aria-label": name });
       if (!disponivel) input.setAttribute("disabled", "");
       if (id && ligados[id]) input.checked = true;
       input.onchange = async () => {
-        try { await api("/api/modulos", { modulo: id, ligado: input.checked }); renderLevels(); } catch (e) { input.checked = !input.checked; alert(e.message); }
+        try {
+          await api("/api/modulos", { modulo: id, ligado: input.checked });
+          // Primeiro módulo médio ligado sem modelo: começa o download.
+          if (input.checked && lv === "medio" && !ligados.ia_pronta) { await api("/api/ia/baixar", {}); }
+          renderLevels(); renderIa();
+        } catch (e) { input.checked = !input.checked; alert(e.message); }
       };
       const sw = el("label", { class: "switch", title: stateText }, input, el("span"));
       const acoes = el("div", { class: "actions end" });
@@ -153,6 +162,11 @@ async function renderLevels() {
         const b = el("button", { class: "btn sm", type: "button", title: t("mod.aprender_dica") }, t("mod.aprender"));
         b.onclick = () => abrirEscola(ESCOLA_LICAO[id]);
         acoes.append(b);
+      }
+      if (id === "permanencia") {
+        const n = el("input", { class: "perm-input mono", type: "number", min: "5", max: "3600", value: String(ligados.permanencia_s || 60), "aria-label": t("mod.permanencia_s") });
+        n.onchange = async () => { try { await api("/api/ia/permanencia", { segundos: Number(n.value) }); } catch (e) { alert(e.message); } };
+        acoes.append(el("span", { class: "perm-wrap" }, n, t("mod.permanencia_s")));
       }
       acoes.append(sw);
       rows.push(el("tr", { class: disponivel ? "" : "locked" },
@@ -163,6 +177,45 @@ async function renderLevels() {
     }
   }
   $("#levels").replaceChildren(...rows);
+}
+
+// ---------- Modelo de IA do nível médio (download sob demanda) ----------
+let iaTimer = null;
+function iaMsg(texto, tipo) { const m = $("#ia-msg"); m.textContent = texto; m.className = "msg " + (tipo || ""); }
+
+async function renderIa() {
+  let r;
+  try { r = await api("/api/ia"); } catch (_) { return; }
+  const a = r.andamento; const dot = $("#ia-dot");
+  let texto;
+  if (!r.suportado) { dot.className = "dot off"; texto = `${t("ia.nao_suportado")} (${r.plataforma})`; }
+  else if (r.baixando) { dot.className = "dot"; texto = t("ia.fase." + a.fase) || a.fase; }
+  else if (r.pronto) { dot.className = "dot on"; texto = `${t("ia.pronto")} (ONNX Runtime ${r.onnxruntime.versao} · ${r.modelo.nome})`; }
+  else if (a.fase === "erro" || a.fase === "cancelado") { dot.className = "dot off"; texto = `${t("ia.fase." + a.fase)}: ${a.erro || ""}`; }
+  else { dot.className = "dot"; texto = t("ia.faltando"); }
+  $("#ia-status").textContent = texto;
+  const d = r.detector;
+  $("#ia-detector").textContent = d.erro ? d.erro : d.carregado
+    ? `${t("ia.detector_ok")} ${d.inferencias} ${t("ia.detector_inferencias")} ${d.ultimo_ms} ${t("ia.detector_ms")}` : t("ia.detector_parado");
+  $("#ia-pasta").textContent = r.pasta;
+  $("#ia-baixar").hidden = r.pronto || r.baixando || !r.suportado;
+  $("#ia-cancelar").hidden = !r.baixando;
+  $("#ia-apagar").hidden = !r.pronto || r.baixando;
+  const and = $("#ia-andamento");
+  and.hidden = !r.baixando;
+  if (r.baixando) {
+    const pct = a.total ? Math.round(a.baixado / a.total * 100) : 0;
+    $("#ia-barra").style.width = `${a.fase === "extraindo" ? 100 : pct}%`;
+    const mb = (n) => (n / 1048576).toFixed(1).replace(".", ",");
+    $("#ia-andamento-texto").textContent = a.total ? `${mb(a.baixado)} de ${mb(a.total)} MB (${pct}%)` : `${mb(a.baixado)} MB`;
+  }
+  if (r.pronto && modulosInfo.ia_pronta === false) renderLevels();
+}
+
+function iaAtivar(ativo) {
+  clearInterval(iaTimer);
+  iaTimer = null;
+  if (ativo) { renderIa(); iaTimer = setInterval(renderIa, 1500); }
 }
 
 // ---------- Câmeras ----------
@@ -333,6 +386,9 @@ async function abrirCamera(id) {
   somS.onchange = () => { definirSom(`saude:${id}`, somS.checked); if (somS.checked) tocarAlerta(); };
   $("#aovivo-som-saude").title = t("saude.som_dica");
   $("#video").src = `/api/cameras/${id}/mjpeg?t=${Date.now()}`;
+  $("#aovivo-objetos").hidden = true;
+  try { modulosInfo = await api("/api/modulos"); } catch (_) { /* segue */ }
+  calorConfigurar();
   definirModo("ver");
   await carregarRegras();
   sugAbrirCamera();
@@ -352,11 +408,53 @@ function centro(r) {
 }
 
 function textoBalao(r, e) {
+  const aviso = e && e.aviso ? ` · ${e.aviso}` : "";
   if (r.forma === "zona") {
     const on = r.rotulo_on || t("regra.ocupada"), off = r.rotulo_off || t("regra.livre");
-    return `${r.nome} · ${e && e.ocupada ? on : off}`;
+    return `${r.nome} · ${e && e.ocupada ? on : off}${aviso}`;
   }
-  return `${r.nome} · ${e ? e.contagem : 0}`;
+  return `${r.nome} · ${e ? e.contagem : 0}${aviso}`;
+}
+
+// ---------- Nível médio no ao vivo: o que a IA viu e mapa de calor ----------
+let calorLigado = false;
+let calorTimer = null;
+
+function renderObjetos(estadoCam) {
+  const tag = $("#aovivo-objetos");
+  const obj = estadoCam && estadoCam.objetos ? estadoCam.objetos : [];
+  const vivo = estadoCam && estadoCam.ia_ms != null && estadoCam.ia_ms < 5000;
+  tag.hidden = !vivo;
+  tag.className = "tag ia";
+  tag.textContent = `${t("aovivo.visto")}: ${obj.length ? obj.map((o) => o[0]).join(" · ") : "—"}`;
+}
+
+function calorDesenhar(c) {
+  const svg = $("#desenho");
+  svg.querySelectorAll(".calor").forEach((e) => e.remove());
+  if (!calorLigado || !c || !c.maximo) return;
+  const cw = 1000 / c.colunas, ch = 1000 / c.linhas;
+  for (let y = 0; y < c.linhas; y++) for (let x = 0; x < c.colunas; x++) {
+    const v = c.celulas[y * c.colunas + x];
+    if (!v) continue;
+    const a = Math.min(0.75, 0.12 + 0.63 * (v / c.maximo));
+    svg.append(svgEl("rect", { class: "calor", x: x * cw, y: y * ch, width: cw, height: ch, fill: `rgba(6, 203, 63, ${a.toFixed(2)})` }));
+  }
+}
+
+async function calorAtualizar() {
+  if (camAberta == null || !calorLigado) { calorDesenhar(null); return; }
+  try { const { calor } = await api(`/api/cameras/${camAberta}/calor`); calorDesenhar(calor); } catch (_) { /* segue */ }
+}
+
+function calorConfigurar() {
+  const wrap = $("#calor-wrap"); const chk = $("#calor-toggle");
+  wrap.hidden = !modulosInfo.calor;
+  wrap.title = t("calor.dica");
+  chk.checked = calorLigado;
+  chk.onchange = () => { calorLigado = chk.checked; calorAtualizar(); };
+  clearInterval(calorTimer);
+  calorTimer = setInterval(calorAtualizar, 3000);
 }
 
 // ---------- Som e piscada do alerta ----------
@@ -423,6 +521,7 @@ function renderBaloes(estadoCam) {
   tag.hidden = !estadoCam;
   tag.className = "tag " + saudeClasse(saude);
   tag.textContent = t("saude." + saude);
+  renderObjetos(estadoCam);
   const baloes = SAUDE_PROBLEMA.includes(saude) && saude !== "sem_sinal"
     ? [el("div", { class: "cf-bubble is-alert saude" }, t("saude.balao." + saude))] : [];
   if (!regrasAbertas.length) { camada.replaceChildren(...baloes); return; }
@@ -492,6 +591,7 @@ function desenharSalvas() {
     for (const p of desenho.pontos) svg.append(svgEl("circle", { class: "vertice", cx: p.x * 1000, cy: p.y * 1000, r: 7 }));
   }
   if (typeof sugDesenhar === "function") sugDesenhar();
+  if (calorLigado) calorAtualizar();
 }
 
 function definirModo(m) {
@@ -980,6 +1080,9 @@ async function main() {
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
+  $("#ia-baixar").onclick = async () => { try { await api("/api/ia/baixar", {}); renderIa(); } catch (e) { iaMsg(e.message, "err"); } };
+  $("#ia-cancelar").onclick = async () => { try { await api("/api/ia/cancelar", {}); renderIa(); } catch (e) { iaMsg(e.message, "err"); } };
+  $("#ia-apagar").onclick = async () => { if (!confirm(t("ia.confirma_apagar"))) return; try { await api("/api/ia", undefined, "DELETE"); renderIa(); renderLevels(); } catch (e) { iaMsg(e.message, "err"); } };
   $("#tg-form").onsubmit = tgSalvar;
   $("#tg-testar").onclick = tgTestar;
   $("#tg-remover").onclick = async () => { if (!confirm(t("tg.confirma_remover"))) return; try { await api("/api/telegram", undefined, "DELETE"); tgMsg(t("tg.removido"), "ok"); renderTelegram(); } catch (e) { tgMsg(e.message, "err"); } };

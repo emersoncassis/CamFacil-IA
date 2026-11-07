@@ -300,3 +300,9 @@ button.link:hover { color: var(--text); }
 .sub { margin: var(--s4) 0 var(--s2); font-size: var(--fs-sm); font-weight: 500; color: var(--text-3); }
 .list.eventos li { padding: var(--s2) var(--s4); font-size: var(--fs-sm); }
 .list.eventos .tiny { flex: none; }
+
+/* ---------- Nível médio: objetos e mapa de calor ---------- */
+#desenho .calor { stroke: none; }
+.tag.ia::before { background: var(--c-green); }
+.perm-input { width: 64px; height: 28px; padding: 0 var(--s2); font-size: var(--fs-sm); text-align: right; }
+.perm-wrap { display: inline-flex; align-items: center; gap: var(--s2); font-size: var(--fs-xs); color: var(--text-3); }

@@ -4,6 +4,7 @@
 
 pub mod bench;
 pub mod conectar;
+pub mod deteccao;
 pub mod elo;
 pub mod onvif;
 pub mod paths;
