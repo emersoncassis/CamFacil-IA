@@ -74,7 +74,9 @@ fn kernel(seconds: Duration) -> (u64, f32) {
     let start = Instant::now();
     while start.elapsed() < seconds {
         for _ in 0..64 {
-            for (ca, cb) in a.chunks_exact(8).zip(b.chunks_exact(8)) {
+            let (ca8, _) = a.as_chunks::<8>();
+            let (cb8, _) = b.as_chunks::<8>();
+            for (ca, cb) in ca8.iter().zip(cb8) {
                 // Multiplicação e soma separadas: `mul_add` vira chamada de software
                 // lenta em binários genéricos (sem FMA), o que falsearia o resultado.
                 for k in 0..8 {
