@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Tema" parent="android:Theme.Material">
+        <item name="android:colorPrimary">@color/preto</item>
+        <item name="android:colorPrimaryDark">@color/preto</item>
+        <item name="android:colorAccent">@color/verde</item>
+        <item name="android:colorBackground">@color/preto</item>
+        <item name="android:windowBackground">@color/preto</item>
+        <item name="android:statusBarColor">@color/preto</item>
+        <item name="android:navigationBarColor">@color/preto</item>
+        <item name="android:textColorPrimary">@color/texto</item>
+        <item name="android:textColorSecondary">@color/texto_3</item>
+        <item name="android:colorControlNormal">@color/linha_forte</item>
+        <item name="android:colorControlActivated">@color/verde</item>
+        <item name="android:actionBarStyle">@style/Barra</item>
+    </style>
+    <style name="Barra" parent="android:Widget.Material.ActionBar.Solid">
+        <item name="android:background">@color/preto</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:titleTextStyle">@style/BarraTitulo</item>
+    </style>
+    <style name="BarraTitulo" parent="android:TextAppearance.Material.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/texto</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+</resources>
