@@ -208,7 +208,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 
 ## <img src="docs/assets/icons/mapa.svg" width="22" alt=""/> Roadmap
 
-Versão atual: **0.4.1** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
+Versão atual: **0.5.0** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
 
 - [x] **Fase 1** — Núcleo: binário, dashboard, benchmark, ONVIF, gerador RTSP
 - [x] **Fase 2** — Cerca virtual com balões e aula guiada · Formação de IA para CFTV no site, com narração e selo
@@ -220,7 +220,9 @@ Versão atual: **0.4.1** ([releases](https://github.com/emersoncassis/CamFacil-I
   - [x] App Android: servidor no próprio aparelho ou visualizador à distância
   - [x] MCP (configurar conversando com uma IA, desligado por padrão) · [ADR 0012](docs/adr/0012-mcp-json-rpc-proprio.md)
   - [x] Botões de portão e relé no app, com PIN, confirmação e log
-- [ ] **Fase 7** — Modo estúdio · [prévia](https://cfia.ysafe.com.br/estudio) (mockup, ainda não funciona)
+- [ ] **Fase 7** — Modo estúdio · [prévia](https://cfia.ysafe.com.br/estudio)
+  - [x] Receita de módulo validada (biometria bloqueada), gerador do notebook do Colab, importar modelo de estudo, compartilhar receitas no site
+  - [ ] Interface do estúdio (conversa, rotulagem, galeria) e rodar o modelo de estudo com classes próprias
 
 ### Em desenvolvimento / próximos passos
 - Modo estúdio: conversa → coleta → rotulagem → notebook do Colab → importar → compartilhar receitas entre técnicos (fase 7)
