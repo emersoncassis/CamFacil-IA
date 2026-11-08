@@ -41,7 +41,7 @@ function noTrajeto(k, de = PORTA, para = PERTO, dx = 0) {
 
 function cena(cls, conteudo = "", margem = false) {
   const faixa = margem ? `<g class="margem"><path fill-rule="evenodd" d="M0 0H${W}V${H}H0Z M${W * MARGEM} ${H * MARGEM}H${W * (1 - MARGEM)}V${H * (1 - MARGEM)}H${W * MARGEM}Z"/><rect class="util" x="${W * MARGEM}" y="${H * MARGEM}" width="${W * (1 - 2 * MARGEM)}" height="${H * (1 - 2 * MARGEM)}" rx="6"/><text class="margem-t" x="${W / 2}" y="${H - 16}">faixa da borda: aqui a IA vê a pessoa cortada</text><text class="util-t" x="${W * MARGEM + 14}" y="${H * MARGEM + 34}">área útil: desenhe aqui</text></g>` : "";
-  return `<svg class="cena ${cls}" viewBox="0 0 ${W} ${H}" role="img">
+  return `<div class="cena-caixa"><svg class="cena ${cls}" viewBox="0 0 ${W} ${H}" role="img">
     <defs>
       <clipPath id="clip-${cls}"><rect width="${W}" height="${H}" rx="14"/></clipPath>
       <linearGradient id="g-${cls}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06cb3f" stop-opacity="0"/><stop offset="1" stop-color="#06cb3f" stop-opacity=".18"/></linearGradient>
@@ -54,16 +54,18 @@ function cena(cls, conteudo = "", margem = false) {
       <rect class="varredura" x="0" y="0" width="${W}" height="70" fill="url(#g-${cls})"/>
     </g>
     <rect class="moldura" x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14"/>
-  </svg>`;
+  </svg></div>`;
 }
 // Quem entra vem de frente para a câmera; quem sai, de costas.
 const pessoaSvg = (lado = "frente") => `<g class="pessoa"><image href="/img/pessoa-${lado}.webp" width="${SPRITE.w}" height="${SPRITE.h}"/><g class="centro"><circle cx="63" cy="125" r="7"/><circle cx="63" cy="125" r="16" class="anel"/><path d="M63 97v14M63 139v14M35 125h14M77 125h14"/></g></g>`;
 const PESSOA = pessoaSvg("frente");
 
 function painel(cls, ok, titulo, legenda, conteudo, margem = false) {
-  return `<figure class="anim-painel ${cls}"><div class="anim-tit ${ok ? "ok" : "erro"}">${titulo}</div>${cena(cls, conteudo, margem)}<figcaption>${legenda}</figcaption></figure>`;
+  // O título vira botão: em tela estreita mostra um painel por vez (Errado | Certo).
+  return `<figure class="anim-painel ${cls} ${ok ? "lado-certo" : "lado-errado"}"><button type="button" class="anim-tit ${ok ? "ok" : "erro"}" data-lado="${ok ? "certo" : "errado"}">${titulo}</button>${cena(cls, conteudo, margem)}<figcaption>${legenda}</figcaption></figure>`;
 }
 
+const ANIM_ROTULO = { visao: "Como a IA enxerga", margem: "Faixa da borda", linha: "Errado × certo", zona: "Errado × certo" };
 const ANIM = {
   visao: () => `<div class="anim-grade um">${painel("visao", true, "Como a IA enxerga",
     "Ela não reconhece “uma pessoa”: percebe o que se mexeu em relação ao fundo e acompanha o <strong>centro</strong> dessa mancha (a mira verde). Repare: quando a pessoa sai cortada pela borda, a mira some. Toda regra olha para esse centro.", PESSOA)}</div>`,
@@ -111,6 +113,9 @@ function cruzou(a, b, p, q) {
 const dentro = (pt, r) => pt.x >= r.x && pt.x <= r.x + r.w && pt.y >= r.y && pt.y <= r.y + r.h;
 
 function coordSvg(svg, ev) {
+  // Converte pela matriz do próprio SVG: vale para qualquer tamanho que a cena tiver na tela.
+  const m = svg.getScreenCTM();
+  if (m) { const p = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(m.inverse()); return { x: p.x, y: p.y }; }
   const r = svg.getBoundingClientRect();
   return { x: ((ev.clientX - r.left) / r.width) * W, y: ((ev.clientY - r.top) / r.height) * H };
 }
@@ -160,8 +165,8 @@ function exercicioLinha(raiz, concluir) {
       <div class="ex-topo"><strong>Sua vez: desenhe a linha de passagem</strong><p class="hint">Dois cliques na imagem, atravessando o corredor na frente da porta. Depois passam três pessoas: duas entram e uma sai. A IA conta e diz se a sua linha pegou todo mundo.</p></div>
       ${cena("ex-linha", `<g class="formas"></g><g class="atores"></g><text class="placar" x="930" y="110">entraram: 0 · saíram: 0</text>`, true)}
       <div class="ex-acoes">
-        <button class="btn" type="button" data-apagar><svg class="ico sm"><use href="#i-redo"/></svg><span>Apagar e tentar de novo</span></button>
-        <label class="som-opcao"><span class="switch"><input type="checkbox" checked data-faixa><span></span></span><span class="tiny">Mostrar faixa da borda</span></label>
+        <button class="btn" type="button" data-apagar><svg class="ico sm"><use href="#i-redo"/></svg><span>Apagar<span class="longo"> e tentar de novo</span></span></button>
+        <label class="som-opcao"><span class="switch"><input type="checkbox" checked data-faixa><span></span></span><span class="tiny">Faixa da borda</span></label>
         <span class="tiny" data-dica>Clique na imagem para começar a linha.</span>
       </div>
       <p class="resultado" data-resultado role="status"></p>
@@ -254,7 +259,7 @@ function exercicioZona(raiz, concluir) {
       <div class="ex-topo"><strong>Sua vez: desenhe a zona do balcão</strong><p class="hint">Clique e arraste na imagem para marcar um retângulo na frente do balcão. Depois passam duas pessoas pelo corredor e uma entra e para para ser atendida.</p></div>
       ${cena("ex-zona", `<g class="formas"></g><g class="atores"></g><text class="aviso za" x="480" y="110"></text>`)}
       <div class="ex-acoes">
-        <button class="btn" type="button" data-apagar><svg class="ico sm"><use href="#i-redo"/></svg><span>Apagar e tentar de novo</span></button>
+        <button class="btn" type="button" data-apagar><svg class="ico sm"><use href="#i-redo"/></svg><span>Apagar<span class="longo"> e tentar de novo</span></span></button>
         <span class="tiny" data-dica>Arraste na imagem para desenhar.</span>
       </div>
       <p class="resultado" data-resultado role="status"></p>
@@ -389,7 +394,7 @@ function exercicioSaude(raiz, concluir) {
   raiz.innerHTML = `
     <div class="exercicio">
       <div class="ex-topo"><strong>Qual câmera está desfocada?</strong><p class="hint">A IA olha a imagem o tempo todo e avisa quando a câmera não está enxergando direito. Clique na que está com problema de foco.</p></div>
-      <div class="saude-grade" data-grade></div>
+      <div class="saude-caixa"><div class="saude-grade" data-grade></div></div>
       <p class="resultado" data-resultado role="status"></p>
     </div>`;
   const grade = $("[data-grade]", raiz); const res = $("[data-resultado]", raiz);
@@ -508,51 +513,157 @@ function tocar(id, forcar = false) {
 }
 function pararVoz() { vozPendente = null; vozAtual = null; voz.pause(); voz.removeAttribute("src"); voz.load(); }
 
-// ---------- Rolagem junto com a fala ----------
-// A página desce acompanhando o parágrafo que está sendo falado e para no
-// exercício. Se a pessoa rolar por conta própria, a rolagem automática solta.
-let rolarSozinho = true; let paragrafoAtual = -1; let alvoExercicio = null;
-const soltarRolagem = () => { rolarSozinho = false; };
-for (const ev of ["wheel", "touchmove", "keydown"]) addEventListener(ev, soltarRolagem, { passive: true });
-const movimentoReduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
-function rolarAte(alvo, bloco = "center") {
-  if (!alvo || !rolarSozinho) return;
-  alvo.scrollIntoView({ behavior: movimentoReduzido ? "auto" : "smooth", block: bloco });
+// ---------- Texto da lição em trechos que cabem na tela ----------
+// Nada rola: o texto é dividido em trechos do tamanho da caixa. A narração
+// passa os trechos sozinha e destaca o parágrafo que está sendo falado.
+let frases = [];   // [{ texto, par }]
+let paginas = [];  // [[índices de frases]]
+let pagina = 0;
+let fraseAtual = -1;
+
+function blocoTexto(idxs) {
+  const ps = [];
+  for (const i of idxs) {
+    const f = frases[i];
+    let p = ps[ps.length - 1];
+    if (!p || Number(p.dataset.par) !== f.par) { p = el("p", { class: "licao-texto", "data-par": String(f.par) }); ps.push(p); }
+    p.append(f.texto);
+  }
+  return ps;
 }
+
+function fatiar() {
+  const l = LICOES[atual];
+  const trecho = $("#trecho");
+  // Peças = palavras: a página enche até a borda da caixa e, se der, quebra no fim de uma frase.
+  frases = [];
+  l.texto.forEach((t, par) => (t.match(/\S+\s*/g) || [t]).forEach((f) => frases.push({ texto: f, par })));
+  $("#texto-pager").hidden = false; // reserva o espaço do paginador para medir
+  const max = trecho.clientHeight;
+  const cabe = (idxs) => { trecho.replaceChildren(...blocoTexto(idxs)); return trecho.scrollHeight <= max + 1; };
+  const fimDeFrase = (i) => /[.!?:]["”]?\s*$/.test(frases[i].texto) || (frases[i + 1] && frases[i + 1].par !== frases[i].par);
+  paginas = [];
+  let pag = [];
+  for (let i = 0; i < frases.length; i++) {
+    if (cabe([...pag, i]) || !pag.length) { pag.push(i); continue; }
+    // Não coube: volta até o último fim de frase, se a página não ficar vazia demais.
+    let corte = pag.length;
+    for (let k = pag.length - 1; k > 0; k--) if (fimDeFrase(pag[k])) { corte = k + 1; break; }
+    if (corte < pag.length) { trecho.replaceChildren(...blocoTexto(pag.slice(0, corte))); if (trecho.scrollHeight < max * 0.6) corte = pag.length; }
+    paginas.push(pag.slice(0, corte));
+    pag = [...pag.slice(corte), i];
+  }
+  if (pag.length) paginas.push(pag);
+  $("#texto-pager").hidden = paginas.length < 2;
+}
+
+function mostrarPagina(n) {
+  pagina = Math.max(0, Math.min(paginas.length - 1, n));
+  $("#trecho").replaceChildren(...blocoTexto(paginas[pagina] || []));
+  $("#texto-pos").textContent = `${pagina + 1} de ${paginas.length}`;
+  $("#texto-ant").disabled = pagina === 0;
+  $("#texto-prox").disabled = pagina >= paginas.length - 1;
+  if (fraseAtual >= 0) marcarLendo(frases[fraseAtual] && frases[fraseAtual].par);
+  // Chegou ao fim do texto e falta o exercício: a aba "Sua vez" chama.
+  const l = LICOES[atual];
+  if (pagina === paginas.length - 1 && l.exercicio && !feita(l.id)) chamarExercicio(false);
+}
+
+function marcarLendo(par) {
+  document.querySelectorAll("#trecho .licao-texto").forEach((p) => p.classList.toggle("lendo", par != null && Number(p.dataset.par) === par));
+}
+
 function acompanharFala() {
   const l = LICOES[atual];
-  if (!l || vozAtual !== l.audio || !voz.duration || !isFinite(voz.duration)) return;
-  const ps = [...document.querySelectorAll("#licao-corpo > .licao-texto")];
-  if (!ps.length) return;
-  const tam = ps.map((p) => p.textContent.length);
+  if (!l || vozAtual !== l.audio || !voz.duration || !isFinite(voz.duration) || !frases.length) return;
+  const tam = frases.map((f) => f.texto.length);
   const total = tam.reduce((a, b) => a + b, 0);
   const k = (voz.currentTime / voz.duration) * total;
   let soma = 0; let i = 0;
-  for (; i < ps.length - 1; i++) { soma += tam[i]; if (k < soma) break; }
-  if (i === paragrafoAtual) return;
-  paragrafoAtual = i;
-  ps.forEach((p, j) => p.classList.toggle("lendo", j === i));
-  rolarAte(ps[i]);
+  for (; i < frases.length - 1; i++) { soma += tam[i]; if (k < soma) break; }
+  if (i === fraseAtual) return;
+  const parAntes = fraseAtual >= 0 ? frases[fraseAtual].par : -1;
+  fraseAtual = i;
+  const pg = paginas.findIndex((p) => p.includes(i));
+  if (pg >= 0 && pg !== pagina) mostrarPagina(pg);
+  marcarLendo(frases[i].par);
+  // O palco acompanha: cada parágrafo mostra a sua animação.
+  if (frases[i].par !== parAntes) {
+    const anims = palco.filter((p) => p.tipo === "anim");
+    if (anims.length) abrirPalco(palco.indexOf(anims[Math.min(frases[i].par, anims.length - 1)]));
+  }
 }
+
 function fimDaFala(id) {
   const l = LICOES[atual];
   if (!l || id !== l.audio) return;
-  document.querySelectorAll("#licao-corpo > .licao-texto.lendo").forEach((p) => p.classList.remove("lendo"));
-  if (l.exercicio && !feita(l.id)) { rolarAte(alvoExercicio, "start"); return; } // para no exercício e espera
+  marcarLendo(null);
+  fraseAtual = -1;
+  if (l.exercicio && !feita(l.id)) { chamarExercicio(true); return; } // para no exercício e espera
   if (!l.final) chamarProxima();
 }
-// Pede para avançar: o botão pisca, a tela desce até ele e a voz avisa.
+
+// Em vez de rolar até o exercício, abre a aba dele e destaca.
+function chamarExercicio(abrir) {
+  const i = palco.findIndex((p) => p.tipo === "ex");
+  if (i < 0) return;
+  const aba = $("#palco-abas").children[i];
+  if (aba) aba.classList.add("chama");
+  if (abrir) {
+    abrirPalco(i);
+    const caixa = $("#licao-corpo");
+    caixa.classList.remove("destaque"); void caixa.offsetWidth; caixa.classList.add("destaque");
+  }
+}
+
+// Pede para avançar: o botão pisca e a voz avisa.
 function chamarProxima() {
   const prox = $("#proxima");
   if (prox.hidden || prox.disabled) return;
   prox.classList.add("piscar");
-  rolarSozinho = true;
-  rolarAte(prox);
   if (temNarracao) tocar("escola-avance");
 }
 
 async function narracaoDisponivel() {
   try { return (await fetch("/audio/escola-01.ogg", { method: "HEAD" })).ok; } catch (_) { return false; }
+}
+
+// ---------- Palco: animações, exercício e final, uma aba por vez ----------
+let palco = []; // [{ rotulo, tipo: "anim" | "ex" | "final", el }]
+let palcoAtual = -1;
+
+function abrirPalco(i) {
+  if (!palco[i]) return;
+  palcoAtual = i;
+  palco.forEach((p, j) => { p.el.hidden = j !== i; });
+  [...$("#palco-abas").children].forEach((b, j) => { b.setAttribute("aria-selected", String(j === i)); b.tabIndex = j === i ? 0 : -1; if (j === i) b.classList.remove("chama"); });
+  // No celular, no exercício o texto encolhe para a cena caber.
+  $("#licao").classList.toggle("foco-palco", palco[i].tipo === "ex");
+}
+
+function montarPalco(l) {
+  palco = [];
+  for (const nome of [].concat(l.anim || [])) {
+    const a = el("div", { class: "palco-item aula-anim" });
+    a.innerHTML = ANIM[nome]();
+    const grade = a.querySelector(".anim-grade");
+    if (grade && !grade.classList.contains("um")) grade.dataset.ver = "errado";
+    palco.push({ rotulo: ANIM_ROTULO[nome] || "Veja", tipo: "anim", el: a });
+  }
+  if (l.exercicio) palco.push({ rotulo: "Sua vez", tipo: "ex", el: el("div", { class: "palco-item" }) });
+  if (l.final) for (const f of telaFinal()) { f.el.classList.add("palco-item"); palco.push(f); }
+  const abas = $("#palco-abas");
+  abas.replaceChildren(...palco.map((p, i) => el("button", { type: "button", role: "tab", class: p.tipo === "ex" ? "aba-ex" : "", onclick: () => abrirPalco(i),
+    onkeydown: (ev) => {
+      const d = { ArrowRight: 1, ArrowLeft: -1 }[ev.key];
+      if (!d) return;
+      ev.preventDefault();
+      const n = (i + d + palco.length) % palco.length; abrirPalco(n); abas.children[n].focus();
+    } }, p.tipo === "ex" ? el("span", { class: "aba-ponto" }) : null, p.rotulo)));
+  abas.hidden = palco.length < 2;
+  $("#licao-corpo").replaceChildren(...palco.map((p) => p.el));
+  $("#licao-corpo").classList.remove("destaque");
+  $("#licao").classList.toggle("sem-palco", !palco.length);
 }
 
 // ---------- Tela ----------
@@ -563,45 +674,56 @@ function desenharTrilha() {
   const feitas = progresso().feitas || {};
   $("#trilha").replaceChildren(...LICOES.map((l, i) => {
     const ok = !!feitas[l.id];
-    const b = el("button", { type: "button", class: `trilha-item${i === atual ? " atual" : ""}${ok ? " feita" : ""}`, onclick: () => ir(i) },
-      el("span", { class: "num" }, ok ? "✓" : l.abertura ? "•" : String(i)),
-      el("span", {}, l.titulo));
+    const num = el("span", { class: "num" });
+    if (ok) num.append((() => { const s = svgEl("svg", { class: "ico sm" }); s.append(svgEl("use", { href: "#i-check" })); return s; })());
+    else num.textContent = l.abertura ? "·" : String(i);
+    const b = el("button", { type: "button", class: `trilha-item${i === atual ? " atual" : ""}${ok ? " feita" : ""}`, onclick: () => { fecharMenu(); ir(i); } }, num, el("span", {}, l.titulo));
+    if (i === atual) b.setAttribute("aria-current", "step");
     return el("li", {}, b);
   }));
   const licoes = LICOES.filter((l) => !l.abertura);
   const n = licoes.filter((l) => feitas[l.id]).length;
   $("#trilha-progresso").textContent = n === licoes.length ? "Formação concluída. Selo conquistado!" : `${n} de ${licoes.length} lições feitas · progresso salvo neste navegador`;
+  $("#licoes-rotulo").textContent = `Lições · ${n}/${licoes.length}`;
+}
+
+// Trilha de lições no celular: menu que abre por cima, sem empurrar a tela.
+function fecharMenu() { $("#trilha-painel").classList.remove("aberta"); $("#licoes-btn").setAttribute("aria-expanded", "false"); }
+function alternarMenu() {
+  const aberta = $("#trilha-painel").classList.toggle("aberta");
+  $("#licoes-btn").setAttribute("aria-expanded", String(aberta));
+  if (aberta) { const a = $("#trilha .atual"); if (a) a.focus(); }
 }
 
 function ir(i) {
   atual = Math.max(0, Math.min(LICOES.length - 1, i));
   const l = LICOES[atual];
   pararVoz(); // mudou de lição: a fala anterior para na hora
-  rolarSozinho = true; paragrafoAtual = -1; alvoExercicio = null;
+  fraseAtual = -1; pagina = 0;
   $("#proxima").classList.remove("piscar");
   const p = progresso(); p.atual = atual; salvar(p);
   history.replaceState(null, "", `/aprender#${l.id}`);
   const n = LICOES.filter((x) => !x.abertura).length;
   $("#licao-num").textContent = l.abertura ? "Apresentação" : `Lição ${atual} de ${n}`;
   $("#licao-titulo").textContent = l.titulo;
-  const corpo = $("#licao-corpo");
-  corpo.replaceChildren(...l.texto.map((t) => el("p", { class: "licao-texto" }, t)));
-  for (const nome of [].concat(l.anim || [])) { const a = el("div", { class: "aula-anim" }); a.innerHTML = ANIM[nome](); corpo.append(a); }
+  montarPalco(l);
   const prox = $("#proxima"); const trava = $("#licao-trava");
   const liberar = () => { prox.disabled = false; trava.textContent = ""; marcar(l.id); chamarProxima(); };
   if (l.exercicio) {
-    const ex = el("div"); corpo.append(ex); alvoExercicio = ex;
-    l.exercicio(ex, liberar);
+    l.exercicio(palco.find((x) => x.tipo === "ex").el, liberar);
     if (feita(l.id)) { prox.disabled = false; trava.textContent = "Já feita. Pode refazer ou seguir."; }
     else { prox.disabled = true; trava.textContent = "Faça o exercício para liberar a próxima."; }
   } else if (l.final) {
     marcar(l.id);
-    corpo.append(telaFinal());
     prox.disabled = true; trava.textContent = "";
   } else {
     marcar(l.id);
     prox.disabled = false; trava.textContent = "";
   }
+  abrirPalco(0);
+  $("#licao").classList.remove("foco-palco"); // ao entrar, o texto aparece inteiro
+  fatiar();
+  mostrarPagina(0);
   $("#voltar").disabled = atual === 0;
   $("#proxima").hidden = !!l.final;
   $("#proxima span").textContent = l.abertura ? "Começar a lição 1" : "Próxima lição";
@@ -609,34 +731,41 @@ function ir(i) {
   if (temNarracao && l.audio) tocar(l.audio, true);
   else if (!l.exercicio && !l.final) setTimeout(chamarProxima, 1500);
   desenharTrilha();
-  window.scrollTo({ top: 0, behavior: "instant" });
 }
 
+// Tela final: o selo, o que fazer agora e "quer ir mais fundo", cada um numa aba do palco.
 function telaFinal() {
   const feitas = progresso().feitas || {};
   const tudo = LICOES.every((l) => feitas[l.id]);
-  const caixa = el("div", { class: "final" });
-  const area = el("div", { class: "selo-area" });
-  caixa.append(area,
+  const icone = (id) => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: `#${id}` })); return s; };
+  const selo = el("div", { class: "selo-area" });
+  const operar = el("div", { class: "final-operar" },
+    el("p", { class: "hint" }, "Baixe o programa no computador que está na mesma rede das câmeras, digite a senha e a imagem aparece. Depois, em cada câmera, desenhe as regras ou peça: IA, sugira para mim."),
     el("div", { class: "final-acoes" },
-      el("a", { class: "btn primary grande", href: "/#baixar" }, (() => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#i-down" })); return s; })(), el("span", {}, "Baixar o programa e operar")),
+      el("a", { class: "btn primary grande", href: "/#baixar" }, icone("i-down"), el("span", {}, "Baixar o programa e operar")),
       el("a", { class: "btn", href: "/#site-t" }, "Acompanhar clientes de longe (opcional)")),
-    el("p", { class: "tiny" }, "Lembre: aqui é aprendizagem e validação. No cliente, a solução definitiva é a câmera ou o gravador com IA de borda, ou uma plataforma parceira. O CamFácil IA é a ponte."),
-    maisFundo());
+    el("p", { class: "tiny" }, "Lembre: aqui é aprendizagem e validação. No cliente, a solução definitiva é a câmera ou o gravador com IA de borda, ou uma plataforma parceira. O CamFácil IA é a ponte."));
   if (!tudo) {
-    area.append(el("div", { class: "selo" }, (() => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#i-selo" })); return s; })(),
+    selo.append(el("div", { class: "selo" }, icone("i-selo"),
       el("div", {}, el("strong", {}, "Selo ainda não liberado"), el("p", { class: "tiny" }, "Volte e faça os exercícios das lições que faltam."))));
-    return caixa;
-  }
-  montarSelo(area);
-  return caixa;
+  } else montarSelo(selo);
+  return [
+    { rotulo: "Seu selo", tipo: "final", el: selo },
+    { rotulo: "Operar", tipo: "final", el: operar },
+    { rotulo: "Ir mais fundo", tipo: "final", el: maisFundo() },
+  ];
 }
 
 // Para quem quer ir além do básico: fabricantes e quem ajuda a empresa a evoluir.
 function maisFundo() {
-  const item = (nome, desc, href) => el("li", {},
-    href ? el("a", { href, target: "_blank", rel: "noopener" }, el("strong", {}, nome)) : el("strong", {}, nome),
-    el("p", { class: "tiny" }, desc));
+  // Tela larga: os quatro abertos lado a lado. Estreita: acordeão, um por vez.
+  const largo = matchMedia("(min-width: 1100px) and (min-aspect-ratio: 1/1)").matches;
+  const item = (nome, desc, href) => {
+    const d = el("details", { class: "acord" }, el("summary", {}, el("strong", {}, nome)),
+      el("p", { class: "tiny" }, desc, " ", el("a", { href, target: "_blank", rel: "noopener" }, "Abrir o site →")));
+    if (largo) d.open = true; else d.setAttribute("name", "mais-fundo");
+    return el("li", {}, d);
+  };
   return el("section", { class: "mais-fundo" },
     el("h3", {}, "Quer ir mais fundo?"),
     el("p", { class: "hint" }, "O que você viu aqui é o nível básico. Para entender a inteligência de vídeo de verdade, equipamentos mais complexos e de alta qualidade, siga por aqui:"),
@@ -685,11 +814,37 @@ async function montarSelo(area) {
   area.replaceChildren(form);
 }
 
+let refatiar = 0;
+addEventListener("resize", () => {
+  clearTimeout(refatiar);
+  refatiar = setTimeout(() => {
+    const frase = fraseAtual >= 0 ? fraseAtual : (paginas[pagina] || [0])[0];
+    fatiar();
+    mostrarPagina(Math.max(0, paginas.findIndex((p) => p.includes(frase))));
+  }, 150);
+});
+
 async function main() {
   temNarracao = await narracaoDisponivel();
-  $("#ouvir").onclick = () => { const l = LICOES[atual]; if (!voz.paused && !voz.ended) voz.pause(); else { rolarSozinho = true; paragrafoAtual = -1; tocar(l.audio, true); } };
+  $("#ouvir").onclick = () => { const l = LICOES[atual]; if (!voz.paused && !voz.ended) voz.pause(); else { fraseAtual = -1; tocar(l.audio, true); } };
   $("#voltar").onclick = () => ir(atual - 1);
   $("#proxima").onclick = () => ir(atual + 1);
+  $("#texto-ant").onclick = () => mostrarPagina(pagina - 1);
+  $("#texto-prox").onclick = () => mostrarPagina(pagina + 1);
+  // Texto recolhido no exercício (celular): tocar abre de novo.
+  $("#licao-texto").addEventListener("click", (ev) => {
+    if ($("#licao").classList.contains("foco-palco") && !ev.target.closest("button")) $("#licao").classList.remove("foco-palco");
+  });
+  // Errado | Certo: em tela estreita, um painel da comparação por vez.
+  $("#licao-corpo").addEventListener("click", (ev) => {
+    const t = ev.target.closest(".anim-tit");
+    if (!t) return;
+    const g = t.closest(".anim-grade");
+    if (g && g.dataset.ver) g.dataset.ver = t.dataset.lado;
+  });
+  $("#licoes-btn").onclick = alternarMenu;
+  addEventListener("keydown", (ev) => { if (ev.key === "Escape") fecharMenu(); });
+  addEventListener("click", (ev) => { if (!ev.target.closest("#trilha-painel, #licoes-btn")) fecharMenu(); });
   const hash = location.hash.replace("#", "");
   const porHash = LICOES.findIndex((l) => l.id === hash || (hash === "cerca" && l.id === "linha"));
   const p = progresso();
