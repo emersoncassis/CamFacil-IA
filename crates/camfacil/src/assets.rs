@@ -52,6 +52,13 @@ pub const ASSETS: &[Asset] = &[
         "manutencao.js"
     ),
     asset!("/rede.css", "text/css; charset=utf-8", "rede.css"),
+    // Acesso de fora com HTTPS (MCP pelo Tailscale, ngrok).
+    asset!("/externo.css", "text/css; charset=utf-8", "externo.css"),
+    asset!(
+        "/externo.js",
+        "text/javascript; charset=utf-8",
+        "externo.js"
+    ),
     asset!("/rede.js", "text/javascript; charset=utf-8", "rede.js"),
     asset!("/ao-vivo", "text/html; charset=utf-8", "aovivo.html"),
     asset!("/aovivo.js", "text/javascript; charset=utf-8", "aovivo.js"),

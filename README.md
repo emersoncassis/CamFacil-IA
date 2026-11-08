@@ -230,6 +230,7 @@ Versão atual: **0.8.0** ([releases](https://github.com/emersoncassis/CamFacil-I
   - [x] Agente-Cam-Elo-IA e painel web (clientes, câmeras, alertas, ver ao vivo pelo Tailscale)
   - [x] App Android: servidor no próprio aparelho ou visualizador à distância
   - [x] MCP (configurar conversando com uma IA, desligado por padrão) · [ADR 0012](docs/adr/0012-mcp-json-rpc-proprio.md)
+  - [x] MCP por HTTPS para o Claude (Tailscale Serve/Funnel; ngrok temporário para testes) · [ADR 0015](docs/adr/0015-mcp-https-tailscale-e-ngrok.md)
   - [x] Botões de portão e relé no app, com PIN, confirmação e log
   - [x] Autocorreção de IP da câmera pelo MAC (opção por câmera, com conferência da imagem e antirrepique)
   - [x] Gravador (DVR/NVR): escolher os canais ao ligar, trocar o canal no Editar e corrigir o IP de todos os canais juntos

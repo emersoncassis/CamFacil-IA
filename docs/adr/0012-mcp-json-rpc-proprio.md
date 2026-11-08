@@ -24,3 +24,4 @@ O SDK oficial em Rust (`rmcp`) traz `schemars`, macros procedurais, `tokio-util`
 - Binário: + ~40 KB (estimativa pelo tamanho do código; sem crate nova). RAM ociosa: zero com o MCP desligado (só uma leitura de configuração por requisição em `/mcp`).
 - Protocolo acompanhado à mão: versões aceitas `2025-06-18`, `2025-03-26`, `2024-11-05`; recursos (`resources`, `prompts`, `sampling`) não implementados. Se um dia precisarmos de streaming/SSE ou OAuth, reavaliar o `rmcp`.
 - O MCP escuta onde a dashboard escuta (localhost; rede da loja com `--lan`; Tailscale). O token é obrigatório em todos os casos.
+- HTTPS para os conectores do claude.ai (Tailscale Serve/Funnel, token na URL, ngrok): ver [ADR 0015](0015-mcp-https-tailscale-e-ngrok.md).

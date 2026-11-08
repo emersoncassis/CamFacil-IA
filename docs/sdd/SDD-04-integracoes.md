@@ -74,3 +74,17 @@ OpenRouter (modelos gratuitos, padrão), OpenAI, Google, Anthropic. Interface ú
 - Portão e relé **não** são acionáveis pelo MCP (ação física exige PIN + confirmação de uma pessoa; SDD-06).
 - JSON-RPC implementado à mão (sem `rmcp`) para não trazer dependências; ver ADR 0012.
 - API da dashboard: `GET/POST /api/mcp` (`{ligado, escrita}`), `POST /api/mcp/token`.
+
+### MCP por HTTPS (ADR 0015) — implementado
+- **Por quê:** os conectores remotos do Claude (claude.ai e app) só aceitam HTTPS com certificado válido e chamam da nuvem.
+- **Integrações → MCP → "Endereço HTTPS para o Claude"** (seção aberta por padrão, sem rolar a página):
+  - **Tailscale Serve** (só a rede Tailscale): `tailscale serve --bg --https=<porta> --set-path=/mcp http://127.0.0.1:<porta local>/mcp` → `https://<máquina>.<tailnet>.ts.net/mcp`.
+  - **Tailscale Funnel** (internet, o que o claude.ai precisa): mesma coisa com `tailscale funnel`, após o diálogo "Isto publica o MCP na internet. Só quem tiver o token consegue usar. Continuar?"; exige MCP ligado e token; evento `mcp`.
+  - **ngrok (só testes)**: túnel só do `/mcp` (SDD-05).
+  - Mostra, prontos para copiar: a **URL para o claude.ai** (`…/mcp?token=…`), a URL HTTPS e o cabeçalho `Authorization: Bearer …`; o comando equivalente; e o passo a passo quando falta HTTPS (painel → DNS → HTTPS Certificates) ou Funnel (política → atributo `funnel`). "Desligar endereço HTTPS" tira só o `/mcp`; desligar o MCP também.
+  - Porta escolhida entre 443, 8443 e 10000 sem mexer no que o usuário já publica (Funnel vale para a porta inteira). Cliente Tailscale 1.52+.
+  - Android: sem Serve/Funnel (o app Tailscale não tem CLI); mensagem clara.
+- **Token na URL** só vale por proxy HTTPS local (conexão de loopback com `X-Forwarded-For`); por HTTP puro → 401. OAuth fica pendente.
+- **Claude Desktop / Claude Code** no mesmo computador: stdio (`camfacil --mcp`), sem HTTPS; a tela mostra o JSON do `claude_desktop_config.json` e `claude mcp add camfacil -- <caminho> --mcp`.
+- `/mcp/` (com barra) também atende. API: `GET /api/mcp/https` → `{instalado, versao, versao_ok, logado, nome, https_ok, funnel_ok, funnel_portas, publicado{modo,porta,url}, comandos, links, android}`; `POST /api/mcp/https` `{modo: serve|funnel|off, confirmado}`; `GET /api/mcp` ganhou `claude_code`.
+- Testes: parser de `status --json`/`serve status --json`/`version`, escolha de porta, comandos montados; servidor real respondendo `initialize`/`tools/list` por HTTP como o proxy entrega (cabeçalho, `?token=`, `/mcp/`, 202, 405, 401 sem proxy); `scripts/telas-mcp-https.py` (Playwright, 5 tamanhos).

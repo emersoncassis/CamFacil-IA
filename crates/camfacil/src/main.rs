@@ -18,6 +18,8 @@ mod i18n;
 mod ia;
 mod integracoes;
 mod mcp;
+mod mcp_https;
+mod ngrok;
 mod notificacoes;
 mod painel;
 mod rede;
@@ -220,6 +222,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     })
     .await;
     painel::encerrar();
+    // O túnel do ngrok cai junto com o programa.
+    ngrok::parar();
     r?;
     Ok(())
 }
