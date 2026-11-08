@@ -131,6 +131,11 @@ const ARQUIVOS: &[Arquivo] = &[
         "web/audio/escola-erro-zona-vazia.ogg"
     ),
     arq!(
+        "/audio/escola-avance.ogg",
+        "audio/ogg",
+        "web/audio/escola-avance.ogg"
+    ),
+    arq!(
         "/audio/escola-selo.ogg",
         "audio/ogg",
         "web/audio/escola-selo.ogg"
