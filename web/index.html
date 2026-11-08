@@ -80,6 +80,7 @@
           <h2 data-i18n="saude.titulo"></h2>
           <p class="hint" data-i18n="saude.desc"></p>
           <p class="note warn mt" id="saude-desligado" hidden><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="saude.desligado"></span></p>
+          <p class="note warn mt" id="rede-resumo" hidden><svg class="ico sm"><use href="#i-info"/></svg><span></span></p>
           <div class="table-wrap mt">
             <table class="table">
               <thead><tr><th data-i18n="saude.col_camera"></th><th data-i18n="saude.col_situacao"></th><th data-i18n="saude.col_desde"></th><th data-i18n="saude.col_ultimo"></th></tr></thead>
@@ -324,6 +325,22 @@
               <tbody id="rede-inventario"></tbody>
             </table>
           </div>
+        </div>
+
+        <div class="block">
+          <div class="block-head">
+            <h2 data-i18n="rede.diag"></h2>
+            <button class="btn sm" id="rede-diag-btn"><span data-i18n="rede.diag_btn"></span></button>
+          </div>
+          <p class="hint" data-i18n="rede.diag_desc"></p>
+          <ul class="list mt" id="rede-ip-mudou" hidden></ul>
+          <div class="table-wrap mt">
+            <table class="table rede-tabela">
+              <thead><tr><th data-i18n="rede.col_camera"></th><th data-i18n="rede.col_endereco"></th><th data-i18n="rede.col_alcance"></th><th data-i18n="rede.col_video"></th><th data-i18n="rede.col_dicas"></th></tr></thead>
+              <tbody id="rede-diag"></tbody>
+            </table>
+          </div>
+          <p class="msg" id="rede-diag-msg" role="status"></p>
         </div>
 
         <div class="block">
