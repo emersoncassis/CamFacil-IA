@@ -24,6 +24,7 @@
       <symbol id="i-win" viewBox="0 0 24 24"><path d="M4 5.5 11 4.5v7H4zM13 4.2 20 3v8.5h-7zM4 12.5h7v7L4 18.5zM13 12.5h7V21l-7-1.2z" fill="currentColor" stroke="none"/></symbol>
       <symbol id="i-tux" viewBox="0 0 24 24"><path d="M12 3c-2.2 0-3.5 1.8-3.5 4.2 0 1.4-.4 2.4-1.3 3.7C6 12.6 5 14.6 5 16.6c0 .7.1 1.3.4 1.8L4 19.6c-.4.4-.1 1.2.5 1.2h3.7c.5 0 .9-.3 1.1-.7.9.2 1.8.3 2.7.3s1.8-.1 2.7-.3c.2.4.6.7 1.1.7h3.7c.6 0 .9-.8.5-1.2l-1.4-1.2c.3-.5.4-1.1.4-1.8 0-2-1-4-2.2-5.7-.9-1.3-1.3-2.3-1.3-3.7C15.5 4.8 14.2 3 12 3z"/><circle cx="10.5" cy="7.5" r=".6" fill="currentColor"/><circle cx="13.5" cy="7.5" r=".6" fill="currentColor"/><path d="M11 9.5h2l-1 1z" fill="currentColor"/></symbol>
       <symbol id="i-rpi" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8 7V5M12 7V5M16 7V5M8 19v2M16 19v2"/><rect x="9" y="10.5" width="6" height="5" rx="1"/></symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></symbol>
       <symbol id="i-start" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     </defs>
   </svg>
@@ -87,6 +88,21 @@
       <section class="baixar" id="baixar" aria-labelledby="baixar-t">
         <h2 id="baixar-t">Baixar o CamFácil IA</h2>
         <div data-baixar></div>
+        <div class="apk-card">
+          <svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>
+          <div>
+            <h3 id="apk-t">App Android (APK)</h3>
+            <p>Veja as câmeras ao vivo e receba os alertas no celular ou na TV Box. Pareie pelo QR code da dashboard ou digitando o endereço do programa.</p>
+            <ol class="steps">
+              <li>Baixe pelo celular e toque no arquivo.</li>
+              <li>Se o Android avisar, toque em <strong>Configurações</strong> e ative <strong>Permitir desta fonte</strong> (instalar apps desconhecidos). O app é gratuito e fora da Play Store.</li>
+            </ol>
+            <div class="actions mt">
+              <a class="btn" href="https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk" download><svg class="ico sm"><use href="#i-down"/></svg><span>Baixar o APK</span></a>
+              <span class="tiny">Android 7 ou mais novo · menos de 1 MB</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="faixa" aria-labelledby="como-t">
@@ -131,9 +147,9 @@
       <div class="brand"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></div>
       <nav aria-label="Seções">
         <ul class="nav" role="tablist">
-          <li><button role="tab" data-tab="comecar"><svg class="ico"><use href="#i-start"/></svg><span>Começar</span></button></li>
-          <li><button role="tab" data-tab="agentes" aria-selected="true"><svg class="ico"><use href="#i-agent"/></svg><span>Agentes</span></button></li>
+          <li><button role="tab" data-tab="agentes" aria-selected="true"><svg class="ico"><use href="#i-agent"/></svg><span>Painel</span></button></li>
           <li><button role="tab" data-tab="dispositivos"><svg class="ico"><use href="#i-key"/></svg><span>Dispositivos</span></button></li>
+          <li><button role="tab" data-tab="comecar"><svg class="ico"><use href="#i-start"/></svg><span>Instalar</span></button></li>
         </ul>
       </nav>
       <div class="rail-foot">
@@ -147,8 +163,8 @@
       <section id="comecar" class="page" role="tabpanel" hidden>
         <header class="pagehead">
           <div>
-            <h1>Começar</h1>
-            <p class="lede">Três passos: baixar, ligar a câmera, parear com este painel. Leva poucos minutos. Nunca mexeu com IA? <a href="/aprender">Faça a formação</a> primeiro.</p>
+            <h1>Instalar num cliente novo</h1>
+            <p class="lede">Baixar, ligar a câmera, parear com este painel.</p>
           </div>
           <div class="ouvir" data-narracao="site-03-passo-a-passo,site-04-download,site-05-painel" hidden>
             <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir o passo a passo</span></button>
@@ -176,10 +192,10 @@
       <section id="agentes" class="page" role="tabpanel">
         <header class="pagehead">
           <div>
-            <h1>Agentes</h1>
-            <p class="lede">Cada Agente-Cam-Elo-IA instalado num cliente aparece aqui depois do pareamento. Só você vê os seus.</p>
+            <h1>Painel</h1>
+            <p class="lede">Seus clientes e as câmeras de cada um, ao vivo.</p>
           </div>
-          <button class="btn primary" id="como-parear"><svg class="ico"><use href="#i-link"/></svg><span>Parear agente</span></button>
+          <button class="btn" id="como-parear"><svg class="ico"><use href="#i-link"/></svg><span>Parear cliente</span></button>
         </header>
         <div class="block" id="passos" hidden>
           <h2>Como parear</h2>
@@ -204,14 +220,16 @@
           </form>
           <p class="msg" id="leitor-msg" role="status"></p>
         </div>
-        <div class="block">
-          <div class="table-wrap">
-            <table class="table">
-              <thead><tr><th>Cliente</th><th>Situação</th><th>Impressão</th><th>Versão</th><th class="right">Pareado em</th></tr></thead>
-              <tbody id="lista-agentes"></tbody>
-            </table>
-          </div>
-        </div>
+        <div id="lista-agentes" class="clientes"></div>
+        <details class="block dica-ts">
+          <summary>Ver ao vivo pelo celular (Tailscale)</summary>
+          <ol class="steps">
+            <li>No computador do cliente, instale o Tailscale e entre com a sua conta. O CamFácil IA percebe sozinho em até 1 minuto.</li>
+            <li>No celular, instale o Tailscale (ou use o app CamFácil IA para Android) e entre com a mesma conta.</li>
+            <li>Volte aqui e toque em <strong>Ver ao vivo</strong>. O vídeo vai direto do cliente para o seu celular, cifrado, sem passar pela nuvem.</li>
+          </ol>
+          <p class="hint">Baixe o app Android em <a href="https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk">camfacil-android.apk</a>.</p>
+        </details>
       </section>
 
       <!-- Dispositivos -->
