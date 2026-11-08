@@ -9,7 +9,7 @@ description = "Notificações do CamFácil IA: Telegram (Bot API oficial), fila 
 
 [dependencies]
 base64 = "0.23.1"
-cf-core = { version = "0.1.0", path = "../cf-core" }
+cf-core = { path = "../cf-core" }
 chacha20poly1305 = { version = "0.10", default-features = false, features = ["alloc", "getrandom"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "json"] }
 serde = { version = "1.0.229", features = ["derive"] }

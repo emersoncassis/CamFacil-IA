@@ -106,6 +106,15 @@ jobs:
         run: |
           cp scripts/install.sh scripts/install.ps1 dist/
           cd dist && sha256sum * > SHA256SUMS.txt && ls -la
+      - name: Publica os modelos de IA (release modelos-v1), se ainda não existir
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view modelos-v1 >/dev/null 2>&1; then
+            gh release create modelos-v1 modelos/yolo11n.onnx modelos/yolo11n.onnx.sha256 --title "Modelos de IA v1" \
+              --notes "YOLO11n em ONNX (Ultralytics, AGPL-3.0), 640×640, opset 12, para o nível médio do CamFácil IA. O programa baixa sob demanda e confere o SHA-256." \
+              || gh release upload modelos-v1 modelos/yolo11n.onnx modelos/yolo11n.onnx.sha256 --clobber
+          fi
       - name: Cria a versão no GitHub
         if: steps.versao.outputs.nova == 'sim'
         env:
