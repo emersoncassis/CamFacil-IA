@@ -1,49 +1,25 @@
 {
-  "_leia": "Mural de apoiadores, mais recente primeiro. Só entra quem autorizou no formulário. 'exemplo: true' aparece como convite (Seu nome aqui) e deve sair quando houver apoios reais.",
+  "_leia": "Mural de apoiadores. Só entra quem autorizou. 'fundador: true' conta nas vagas de Apoiadores Fundadores (os 10 primeiros).",
+  "fundadores_total": 10,
   "apoiadores": [
     {
       "nome": "Marconi",
       "empresa": "Mar Câmeras",
-      "nivel": "Apoiador principal",
-      "pediu": "",
+      "nivel": "Apoiador fundador",
+      "fundador": true,
       "criou": "Contagem Inteligente",
       "url": "https://contagem.marcameras.com.br/"
     },
     {
-      "exemplo": true,
-      "pediu": "Contagem de pessoas na entrada da loja"
+      "nome": "Papo Segurança",
+      "nivel": "Apoiador fundador",
+      "fundador": true,
+      "fez": "divulga os técnicos formados"
     },
     {
-      "exemplo": true,
-      "pediu": "Leitura de placas no portão do condomínio"
-    },
-    {
-      "exemplo": true,
-      "pediu": "Alerta de câmera tampada ou sem foco"
-    },
-    {
-      "exemplo": true,
-      "pediu": "Mapa de calor das prateleiras"
-    },
-    {
-      "exemplo": true,
-      "pediu": "Alerta no WhatsApp com a foto do evento"
-    },
-    {
-      "exemplo": true,
-      "pediu": "Fila no caixa: aviso quando passar de 5 pessoas"
-    },
-    {
-      "exemplo": true,
-      "pediu": "Detecção de capacete e colete na obra"
-    },
-    {
-      "exemplo": true,
-      "pediu": "Relatório mensal em PDF para o cliente"
-    },
-    {
-      "exemplo": true,
-      "pediu": "Mosaico com 9 câmeras ao vivo"
+      "nome": "Emerson de Carvalho Assis",
+      "nivel": "Criador",
+      "fez": "investiu do próprio bolso para o projeto existir"
     }
   ]
 }

@@ -1,7 +1,10 @@
-<!-- Mural de apoiadores. Para incluir alguém: adicione uma linha na tabela (mais recente primeiro).
-     Só publique o nome de quem autorizou no formulário. Nunca publique o comprovante. -->
+<!-- Mural de apoiadores. Fonte dos dados animados: site-docs/assets/mural.json (mantenha os dois iguais).
+     Só publique quem autorizou. Nunca publique o comprovante. -->
 
-| Apoiador | Recado | Pediu |
+**Apoiadores fundadores: 2 de 10 vagas preenchidas.** Os 10 primeiros ficam com o selo de fundador para sempre.
+
+| Apoiador | | |
 |---|---|---|
-| **Marconi** · Mar Câmeras · apoiador principal | Criou o [Contagem Inteligente](https://contagem.marcameras.com.br/) | |
-| *O seu nome pode ser o próximo aqui.* | | |
+| **Marconi** · Mar Câmeras | Fundador | Criou o [Contagem Inteligente](https://contagem.marcameras.com.br/) |
+| **Papo Segurança** | Fundador | Divulga os técnicos formados |
+| **Emerson de Carvalho Assis** | Criador | Investiu do próprio bolso para o projeto existir |

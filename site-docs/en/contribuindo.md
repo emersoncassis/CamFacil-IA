@@ -4,7 +4,7 @@ You don't need to be a developer to help: field testing, reporting a problem and
 
 ## Support the project
 
-CamFácil IA is free and open source, and it will stay that way. Behind it there is time, study, years of classroom teaching and money out of my own pocket: about R$ 7,000 just to get it started.
+CamFácil IA is free and open source, and it will stay that way. Behind it there is time, study, years of classroom teaching and money out of my own pocket: over R$ 10,000 just to get it started.
 
 If it helped you learn, sell or save time, buy me a coffee. Every bit of support keeps the project alive and open for the next installer.
 

@@ -4,7 +4,7 @@ Você não precisa ser programador para ajudar: testar em campo, relatar um prob
 
 ## Apoie o projeto
 
-O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem tempo, estudo, anos de sala de aula e dinheiro do próprio bolso: só para começar, foram cerca de R$ 7 mil.
+O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem tempo, estudo, anos de sala de aula e dinheiro do próprio bolso: só para começar, foram mais de R$ 10 mil.
 
 Se ele te ajudou a aprender, a vender ou a ganhar tempo, pague um café. Cada apoio mantém o projeto vivo e aberto para o próximo técnico.
 

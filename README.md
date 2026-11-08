@@ -245,7 +245,7 @@ Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular a
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Apoie o projeto
 
-O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem tempo, estudo, anos de sala de aula e dinheiro do próprio bolso: só para começar, foram cerca de R$ 7 mil.
+O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem tempo, estudo, anos de sala de aula e dinheiro do próprio bolso: só para começar, foram mais de R$ 10 mil.
 
 Se ele te ajudou a aprender, a vender ou a ganhar tempo, **pague um café**. Cada apoio mantém o projeto vivo e aberto para o próximo técnico.
 
@@ -267,6 +267,8 @@ Se ele te ajudou a aprender, a vender ou a ganhar tempo, **pague um café**. Cad
 | **Até R$ 500** · pedido de funcionalidade | Sua sugestão é lida e avaliada por mim |
 | **A partir de R$ 1.000** · conversa | Uma hora de conversa comigo pelo Google Meet |
 | **A partir de R$ 5.000** · desenvolvimento | Desenvolvemos juntos uma aplicação para você, com base no CamFácil IA |
+
+Os **10 primeiros** apoiadores viram **Apoiadores Fundadores**, com selo para sempre no mural. Já estão lá **Marconi (Mar Câmeras)**, que criou o [Contagem Inteligente](https://contagem.marcameras.com.br/), e o **Papo Segurança**.
 
 Ideias e pedidos de funcionalidade passam pelo apoio. Prefere fazer você mesmo? O código é aberto: abra um pull request, que eu avalio quando possível.
 

@@ -17,18 +17,19 @@
     var nome = el.querySelector(".mv-nome"), pediu = el.querySelector(".mv-pediu");
     var calmo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     fetch(el.getAttribute("data-mural")).then(function (r) { return r.json(); }).then(function (d) {
-      var lista = (d.apoiadores || []).filter(function (a) { return a.exemplo || a.nome; });
-      if (!lista.length) return;
+      var reais = (d.apoiadores || []).filter(function (a) { return a.nome; });
+      // Só apoiadores reais passam no mural; as vagas abertas aparecem na aba Apoiar
+      var fila = reais.map(function (a) { return { real: a }; });
+      if (!fila.length) return;
       el.hidden = false;
       var i = 0, timer = null;
       function mostrar() {
-        var a = lista[i % lista.length]; i++;
+        var item = fila[i % fila.length]; i++;
         el.classList.remove("mv-entra");
-        el.classList.toggle("mv-exemplo", !!a.exemplo);
-        el.classList.toggle("mv-destaque", !!a.nivel);
-        nome.textContent = a.exemplo ? "Seu nome aqui" : a.nome + (a.empresa ? " · " + a.empresa : "");
-        pediu.textContent = a.exemplo ? "Exemplo · pediu: " + a.pediu
-          : (a.nivel ? a.nivel : "Apoiador") + (a.criou ? " · criou o " + a.criou : "") + (a.pediu ? " · pediu: " + a.pediu : "");
+        var a = item.real;
+        el.classList.toggle("mv-destaque", !!a.fundador);
+        nome.textContent = a.nome + (a.empresa ? " · " + a.empresa : "");
+        pediu.textContent = (a.nivel || "Apoiador") + (a.criou ? " · criou o " + a.criou : "") + (a.fez ? " · " + a.fez : "") + (a.pediu ? " · pediu: " + a.pediu : "");
         void el.offsetWidth; // reinicia a animação
         el.classList.add("mv-entra");
       }
