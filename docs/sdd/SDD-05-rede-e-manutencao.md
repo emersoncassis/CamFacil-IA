@@ -8,10 +8,10 @@ ONVIF (fabricante, modelo, firmware) + tabela ARP (MAC) + varredura ping da sub-
 ## Foto da rede saudável
 Na primeira varredura com tudo funcionando, grava `{camera_id, ip, mac, fabricante, modelo}` como referência.
 
-## Diagnóstico (status: itens 1 e 2 implementados · fase 4; 3 e 4 pendentes)
+## Diagnóstico (status: itens 1, 2 e 3 implementados · fases 4 e 6; 4 pendente)
 1. Câmera sem resposta → busca o MAC dela na ARP atual.
 2. MAC em outro IP → "A câmera X trocou de IP (de .101 para .117)" + botão "corrigir RTSP".
-3. Dois MACs no mesmo IP / respostas alternadas → conflito de IP.
+3. Dois MACs no mesmo IP / respostas alternadas → conflito de IP. **Implementado (fase 6):** `cf_core::rede::conflitos_ip` olha as últimas 6 fotos da rede: conflito na mesma varredura (MAC do ARP ≠ MAC do ONVIF, campo `outros_macs`) ou entre varreduras (o IP alterna de dono duas vezes ou mais e o MAC antigo não está noutro IP — troca simples de dono pelo DHCP não conta). `GET /api/rede/foto` devolve `conflitos`; a tela Rede mostra o aviso e marca a linha do inventário.
 4. Também: câmeras instáveis (quedas por hora), senha padrão de fábrica, banda por câmera.
 Limite: MAC só é visível na mesma sub-rede.
 

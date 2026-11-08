@@ -43,6 +43,8 @@ impl Chat {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Mensagem {
+    #[serde(default)]
+    pub message_id: i64,
     pub chat: Chat,
     #[serde(default)]
     pub text: Option<String>,
@@ -190,6 +192,18 @@ impl Bot {
             .map_err(traduzir)?;
         let v: Value = ler(r).await?;
         Ok(v.get("message_id").and_then(Value::as_i64).unwrap_or(0))
+    }
+
+    /// Apaga uma mensagem (num chat privado o bot pode apagar as recebidas
+    /// com menos de 48 h).
+    pub async fn delete_message(&self, chat_id: i64, message_id: i64) -> Result<(), String> {
+        let _: Value = self
+            .chamar(
+                "deleteMessage",
+                json!({ "chat_id": chat_id, "message_id": message_id }),
+            )
+            .await?;
+        Ok(())
     }
 
     /// Dados de um chat (título, usuário) para montar o link do arquivo.

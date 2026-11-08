@@ -239,7 +239,7 @@ async fn escutar(app: &Shared, router: &axum::Router, ip: Ipv4Addr) -> bool {
             println!("Acesso de fora (Tailscale): http://{ip}:{porta}");
             let r = router.clone();
             tokio::spawn(async move {
-                let _ = axum::serve(l, r).await;
+                let _ = axum::serve(l, r.into_make_service_with_connect_info::<SocketAddr>()).await;
             });
             true
         }

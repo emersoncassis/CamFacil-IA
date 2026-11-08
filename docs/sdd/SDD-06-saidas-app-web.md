@@ -14,6 +14,13 @@ Status: proposto · Fase 5 e 6
 - Perfis: técnico (tudo) e cliente (ver, alertas, botões liberados).
 - Telas: câmeras ao vivo (stream secundário), alertas com foto, módulos, hardware, botões.
 - **Botões personalizáveis**: o técnico define nome, ícone, posição e ação (HTTP para controlador de acesso, relé de rede, webhook). O comando é executado pelo servidor local; PIN/biometria em ações críticas; log de quem acionou.
+- **Botões de portão e relé — implementado (fase 6):**
+  - Cadastro em Integrações → Portão e relé: nome, ícone (portão, relé, luz), URL `http(s)://`, método (GET/POST/PUT), usuário/senha opcionais (HTTP Basic) e corpo opcional. A ação inteira fica **cifrada** pelo cofre (`botao_acao_<id>`); a lista só mostra o endereço sem usuário, senha nem parâmetros. Máximo de 12 botões.
+  - **PIN** de 4 a 8 números (PBKDF2-SHA256, 60 mil iterações, sal próprio; nunca em claro). 5 erros travam os botões por 5 min.
+  - **Confirmação**: `POST /api/botoes/{id}/preparar` (PIN + nome de quem aciona) devolve um código de uso único válido por 20 s; só `POST /api/botoes/{id}/acionar` com esse código executa a chamada (timeout 8 s), feita pelo servidor local.
+  - **Log**: eventos `acionamento` (botão · quem · de onde [painel/app, IP] · resultado) e `acionamento_negado` (PIN errado); `GET /api/botoes/log`. Cadastro, remoção e troca de PIN viram `botao_config`.
+  - Tela para o celular: `GET /botoes` (HTML/CSS/JS puro embutido). O app Android abre essa rota no WebView pelo menu "Portão e relé" (só no modo local); nada nativo.
+  - O MCP só lista botões, nunca aciona.
 - **Conexão fraca**: mede atraso, perda de quadros e banda; após alguns segundos ruins troca para snapshot; volta só quando estabiliza; botão manual.
 
 ## Web app (instalação progressiva)

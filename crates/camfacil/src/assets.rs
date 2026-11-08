@@ -55,6 +55,10 @@ pub const ASSETS: &[Asset] = &[
     asset!("/rede.js", "text/javascript; charset=utf-8", "rede.js"),
     asset!("/ao-vivo", "text/html; charset=utf-8", "aovivo.html"),
     asset!("/aovivo.js", "text/javascript; charset=utf-8", "aovivo.js"),
+    asset!("/botoes.html", "text/html; charset=utf-8", "botoes.html"),
+    asset!("/botoes.js", "text/javascript; charset=utf-8", "botoes.js"),
+    asset!("/botoes.css", "text/css; charset=utf-8", "botoes.css"),
+    asset!("/fase6.js", "text/javascript; charset=utf-8", "fase6.js"),
 ];
 
 pub fn find(path: &str) -> Option<&'static Asset> {

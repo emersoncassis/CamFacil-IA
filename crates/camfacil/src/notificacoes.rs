@@ -175,6 +175,12 @@ impl Anfitriao for Ponte {
             if ligado { "ligado" } else { "desligado" }
         ))
     }
+
+    fn backup(&self, senha: &str) -> Result<(String, Vec<u8>), String> {
+        let app = self.app.upgrade().ok_or("Programa encerrando.")?;
+        let bytes = crate::backup::exportar(&app, senha)?;
+        Ok((crate::backup::nome_arquivo(&app), bytes))
+    }
 }
 
 fn hora_local(app: &App) -> String {

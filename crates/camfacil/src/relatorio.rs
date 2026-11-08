@@ -8,6 +8,7 @@
 //! As formas das regras desenhadas sobre a foto são só para o técnico ver onde
 //! as regras estão; é um documento de trabalho, não a tela do cliente.
 
+use crate::i18n::{t, tf};
 use crate::{App, Shared};
 use axum::{
     extract::{Path as AxPath, State},
@@ -460,9 +461,6 @@ const PRETO: Cor = Cor::Cinza(0.0);
 const VERDE: Cor = Cor::Rgb(0.02, 0.6, 0.25);
 const LINHA: Cor = Cor::Cinza(0.8);
 
-/// Texto do PRD para a página final.
-const PROXIMO_PASSO: &str = "Este relatório foi gerado pelo CamFácil IA, um ambiente de aprendizagem e validação. Ele serve para provar, no seu negócio e com as suas câmeras, que a inteligência artificial de vídeo entrega valor: as regras acima funcionaram neste período, com esta máquina.\n\nO CamFácil IA não é a solução definitiva: roda num computador comum, sem redundância, sem gravação e sem suporte 24 h. A solução de uso real é uma destas:\n\n• Câmeras ou gravador com IA de borda — a inteligência roda dentro do próprio equipamento, sem depender deste computador, com gravação integrada e garantia do fabricante.\n• Plataforma parceira de IA em nuvem — análise profissional, painel multicliente, busca em gravações e monitoramento, com assinatura.\n\nO técnico responsável apresenta a seguir a proposta com os equipamentos e o investimento. Os dados deste relatório (regras validadas, eventos por dia, limites desta máquina) são a base para dimensionar a solução certa, sem prometer mais do que o cliente viu funcionar.";
-
 struct Ctx<'a> {
     pdf: &'a mut Pdf,
     y: f32,
@@ -481,17 +479,10 @@ impl Ctx<'_> {
             8.0,
             false,
             CINZA,
-            &format!("página {}", self.pag),
+            &tf("pdf.pagina", &[("n", &self.pag.to_string())]),
         );
         p.linha(MARGEM, A4_A - 36.0, A4_L - MARGEM, A4_A - 36.0, 0.5, LINHA);
-        p.texto_centro(
-            A4_L / 2.0,
-            24.0,
-            7.5,
-            false,
-            CINZA,
-            "CamFácil IA — ambiente de aprendizagem e validação, sem garantias (AGPL-3.0). Para uso real: IA de borda ou plataforma parceira.",
-        );
+        p.texto_centro(A4_L / 2.0, 24.0, 7.5, false, CINZA, &t("pdf.rodape"));
         self.y = A4_A - 60.0;
     }
 
@@ -588,24 +579,29 @@ impl Ctx<'_> {
 
 fn situacao_cam(e: &Option<crate::video::EstadoCamera>) -> String {
     match e {
-        Some(e) if e.online => format!(
-            "ao vivo · {:.1} q/s · {}",
-            e.fps,
-            crate::notificacoes::saude_pt(&e.saude)
+        Some(e) if e.online => tf(
+            "pdf.cam.ao_vivo",
+            &[
+                ("fps", &format!("{:.1}", e.fps)),
+                ("saude", crate::notificacoes::saude_pt(&e.saude)),
+            ],
         ),
-        Some(e) => format!(
-            "fora do ar · {}",
-            e.erro.clone().unwrap_or_else(|| "conectando".into())
+        Some(e) => tf(
+            "pdf.cam.fora",
+            &[(
+                "erro",
+                &e.erro.clone().unwrap_or_else(|| t("pdf.cam.conectando")),
+            )],
         ),
-        None => "desligada".into(),
+        None => t("pdf.cam.desligada"),
     }
 }
 
-fn nome_regra(forma: &str) -> &'static str {
+fn nome_regra(forma: &str) -> String {
     match forma {
-        "zona" => "zona",
-        "linha" => "linha",
-        _ => "regra",
+        "zona" => t("pdf.forma.zona"),
+        "linha" => t("pdf.forma.linha"),
+        _ => t("pdf.forma.regra"),
     }
 }
 
@@ -627,7 +623,7 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
         .and_then(|s| serde_json::from_str(&s).ok());
     let mut pdf = Pdf::new();
     let cliente = if d.cliente.trim().is_empty() {
-        "Cliente".to_string()
+        t("pdf.cliente_padrao")
     } else {
         d.cliente.trim().to_string()
     };
@@ -635,7 +631,7 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
         pdf: &mut pdf,
         y: 0.0,
         pag: 0,
-        cab: format!("Relatório de validação · {cliente}"),
+        cab: tf("pdf.cabecalho", &[("cliente", &cliente)]),
     };
 
     // ---- Capa ----
@@ -649,7 +645,7 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
             26.0,
             true,
             Cor::Cinza(1.0),
-            "Relatório de validação",
+            &t("pdf.capa.titulo"),
         );
         p.texto(
             MARGEM,
@@ -657,29 +653,22 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
             13.0,
             false,
             Cor::Cinza(0.85),
-            "Inteligência artificial de vídeo nas câmeras do cliente",
+            &t("pdf.capa.subtitulo"),
         );
-        p.texto(
-            MARGEM,
-            A4_A - 160.0,
-            9.0,
-            false,
-            VERDE,
-            "CamFácil IA · ambiente de aprendizagem e validação",
-        );
+        p.texto(MARGEM, A4_A - 160.0, 9.0, false, VERDE, &t("pdf.capa.selo"));
         let mut y = A4_A - 260.0;
         let item = |p: &mut Pagina, y: f32, k: &str, v: &str| {
             p.texto(MARGEM, y, 9.0, false, CINZA, k);
             p.texto(MARGEM + 110.0, y, 11.0, true, PRETO, v);
         };
-        item(p, y, "Cliente", &cliente);
+        item(p, y, &t("pdf.capa.cliente"), &cliente);
         y -= 26.0;
-        item(p, y, "Data", &data_hora_pt(agora_u, off));
+        item(p, y, &t("pdf.capa.data"), &data_hora_pt(agora_u, off));
         y -= 26.0;
         item(
             p,
             y,
-            "Técnico",
+            &t("pdf.capa.tecnico"),
             if d.tecnico.trim().is_empty() {
                 "—"
             } else {
@@ -687,13 +676,13 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
             },
         );
         y -= 26.0;
-        item(p, y, "Câmeras", &cams.len().to_string());
+        item(p, y, &t("pdf.capa.cameras"), &cams.len().to_string());
         y -= 26.0;
         let total_regras: usize = cams
             .iter()
             .map(|k| app.store.regras(k.id).map(|r| r.len()).unwrap_or(0))
             .sum();
-        item(p, y, "Regras de IA", &total_regras.to_string());
+        item(p, y, &t("pdf.capa.regras"), &total_regras.to_string());
         y -= 26.0;
         let alertas = eventos
             .iter()
@@ -704,12 +693,12 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
                 )
             })
             .count();
-        item(p, y, "Alertas em 7 dias", &alertas.to_string());
+        item(p, y, &t("pdf.capa.alertas"), &alertas.to_string());
         y -= 26.0;
         item(
             p,
             y,
-            "Máquina",
+            &t("pdf.capa.maquina"),
             &format!(
                 "{} {} · {}",
                 std::env::consts::OS,
@@ -718,39 +707,32 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
                     .as_ref()
                     .and_then(|b| b.get("nivel"))
                     .and_then(|n| n.as_str())
-                    .map(|n| format!("nível {n}"))
-                    .unwrap_or_else(|| "sem teste da máquina".into())
+                    .map(|n| tf("pdf.capa.nivel", &[("nivel", n)]))
+                    .unwrap_or_else(|| t("pdf.capa.sem_teste"))
             ),
         );
         c.y = y - 40.0;
     }
     if !d.observacoes.trim().is_empty() {
-        c.sub("Observações do técnico");
+        c.sub(&t("pdf.observacoes"));
         c.paragrafo(d.observacoes.trim(), 10.0, PRETO);
     }
 
     // ---- Resumo das câmeras ----
     c.nova();
-    c.titulo("Resumo das câmeras");
-    c.paragrafo(
-        "Situação de cada câmera neste momento e quantas regras de inteligência estão configuradas. O stream usado é o secundário (leve), próprio para IA.",
-        9.5,
-        CINZA,
-    );
+    c.titulo(&t("pdf.resumo.titulo"));
+    c.paragrafo(&t("pdf.resumo.desc"), 9.5, CINZA);
     let linhas: Vec<Vec<String>> = cams
         .iter()
         .map(|k| {
             let e = app.video.canal(k.id).map(|c| c.estado());
             let fonte = match k.fonte.as_str() {
-                "rtsp" => "câmera IP",
-                "demo" => "demonstração",
-                "webcam" => "webcam",
-                "arquivo" => "arquivo de vídeo",
-                f => f,
+                f @ ("rtsp" | "demo" | "webcam" | "arquivo") => t(&format!("pdf.fonte.{f}")),
+                f => f.to_string(),
             };
             vec![
                 k.nome.clone(),
-                fonte.to_string(),
+                fonte,
                 situacao_cam(&e),
                 app.store
                     .regras(k.id)
@@ -761,10 +743,15 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
         })
         .collect();
     if linhas.is_empty() {
-        c.paragrafo("Nenhuma câmera ligada.", 10.0, PRETO);
+        c.paragrafo(&t("pdf.nenhuma_camera"), 10.0, PRETO);
     } else {
         c.tabela(
-            &["Câmera", "Fonte", "Situação agora", "Regras"],
+            &[
+                &t("pdf.col.camera"),
+                &t("pdf.col.fonte"),
+                &t("pdf.col.situacao"),
+                &t("pdf.col.regras"),
+            ],
             &[0.3, 0.17, 0.41, 0.12],
             &linhas,
         );
@@ -775,10 +762,10 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
         .filter(|(id, _, _, _)| m.ligado(id))
         .map(|(_, nome, _, _)| *nome)
         .collect();
-    c.sub("Módulos de IA ligados");
+    c.sub(&t("pdf.modulos.titulo"));
     c.paragrafo(
         &if ligados.is_empty() {
-            "Nenhum módulo ligado.".to_string()
+            t("pdf.modulos.nenhum")
         } else {
             ligados.join(" · ")
         },
@@ -790,7 +777,7 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
     for k in &cams {
         let regras = app.store.regras(k.id).unwrap_or_default();
         c.nova();
-        c.titulo(&format!("Câmera: {}", k.nome));
+        c.titulo(&tf("pdf.camera.titulo", &[("nome", &k.nome)]));
         let foto = app
             .video
             .canal(k.id)
@@ -833,20 +820,16 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
                     8.0,
                     false,
                     CINZA,
-                    "Foto atual do stream secundário. As formas em verde mostram onde estão as regras (só neste documento; o cliente vê apenas os balões).",
+                    &t("pdf.camera.legenda_foto"),
                 );
                 c.y -= 22.0;
             }
             None => {
-                c.paragrafo(
-                    "Sem imagem no momento (câmera fora do ar ou ainda conectando).",
-                    10.0,
-                    CINZA,
-                );
+                c.paragrafo(&t("pdf.camera.sem_imagem"), 10.0, CINZA);
             }
         }
         if regras.is_empty() {
-            c.paragrafo("Nenhuma regra configurada nesta câmera.", 10.0, PRETO);
+            c.paragrafo(&t("pdf.camera.sem_regras"), 10.0, PRETO);
         } else {
             let linhas: Vec<Vec<String>> = regras
                 .iter()
@@ -856,28 +839,28 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
                         "zona" => format!(
                             "{} / {}",
                             if r.rotulo_on.is_empty() {
-                                "Ocupada"
+                                t("pdf.balao.ocupada")
                             } else {
-                                &r.rotulo_on
+                                r.rotulo_on.clone()
                             },
                             if r.rotulo_off.is_empty() {
-                                "Livre"
+                                t("pdf.balao.livre")
                             } else {
-                                &r.rotulo_off
+                                r.rotulo_off.clone()
                             }
                         ),
-                        _ => "contagem de passagens".into(),
+                        _ => t("pdf.balao.contagem"),
                     };
-                    vec![
-                        r.nome.clone(),
-                        nome_regra(&r.forma).into(),
-                        rot,
-                        n7.to_string(),
-                    ]
+                    vec![r.nome.clone(), nome_regra(&r.forma), rot, n7.to_string()]
                 })
                 .collect();
             c.tabela(
-                &["Regra", "Tipo", "Balão", "Alertas 7 dias"],
+                &[
+                    &t("pdf.col.regra"),
+                    &t("pdf.col.tipo"),
+                    &t("pdf.col.balao"),
+                    &t("pdf.col.alertas7"),
+                ],
                 &[0.34, 0.14, 0.34, 0.18],
                 &linhas,
             );
@@ -886,20 +869,16 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
 
     // ---- Estatística 7 dias ----
     c.nova();
-    c.titulo("Alertas dos últimos 7 dias");
-    c.paragrafo(
-        "Quantas vezes cada regra disparou, por dia. Dias sem alerta aparecem com zero. É o que o cliente viu funcionar.",
-        9.5,
-        CINZA,
-    );
+    c.titulo(&t("pdf.semana.titulo"));
+    c.paragrafo(&t("pdf.semana.desc"), 9.5, CINZA);
     let hoje = (agora_u + off).div_euclid(86_400);
     let dias: Vec<i64> = (0..7).rev().map(|i| hoje - i).collect();
-    let mut cab: Vec<String> = vec!["Regra (câmera)".into()];
+    let mut cab: Vec<String> = vec![t("pdf.col.regra_camera")];
     for d in &dias {
         let (_, m, dd) = data_civil(d * 86_400, 0);
         cab.push(format!("{dd:02}/{m:02}"));
     }
-    cab.push("Total".into());
+    cab.push(t("pdf.col.total"));
     let mut por_regra: BTreeMap<i64, [u32; 7]> = BTreeMap::new();
     for e in &eventos {
         if !matches!(
@@ -925,7 +904,7 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
         }
     }
     if linhas.is_empty() {
-        c.paragrafo("Nenhuma regra configurada ainda.", 10.0, PRETO);
+        c.paragrafo(&t("pdf.semana.sem_regras"), 10.0, PRETO);
     } else {
         let cab_ref: Vec<&str> = cab.iter().map(|s| s.as_str()).collect();
         let mut fr = vec![0.30];
@@ -935,7 +914,7 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
     }
 
     // ---- Saúde das câmeras e da máquina ----
-    c.titulo("Saúde das câmeras e da máquina");
+    c.titulo(&t("pdf.saude.titulo"));
     let mut saude_linhas: Vec<Vec<String>> = Vec::new();
     for k in &cams {
         let probs = eventos
@@ -952,26 +931,26 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
                     crate::notificacoes::saude_pt(&e.detalhe)
                 )
             })
-            .unwrap_or_else(|| "nenhum".into());
+            .unwrap_or_else(|| t("pdf.saude.nenhum"));
         saude_linhas.push(vec![k.nome.clone(), probs.to_string(), ultimo]);
     }
     if !saude_linhas.is_empty() {
         c.tabela(
-            &["Câmera", "Problemas em 7 dias", "Último problema"],
+            &[
+                &t("pdf.col.camera"),
+                &t("pdf.col.problemas7"),
+                &t("pdf.col.ultimo_problema"),
+            ],
             &[0.34, 0.22, 0.44],
             &saude_linhas,
         );
     }
-    c.sub("Esta máquina (últimos 7 dias)");
+    c.sub(&t("pdf.maquina.titulo"));
     let hw = crate::hardware::monitor()
         .and_then(|m| m.log.desde(agora_u - 7 * 86_400).ok())
         .unwrap_or_default();
     if hw.is_empty() {
-        c.paragrafo(
-            "Sem medições ainda (o monitor grava uma por minuto).",
-            10.0,
-            PRETO,
-        );
+        c.paragrafo(&t("pdf.maquina.sem_medicoes"), 10.0, PRETO);
     } else {
         let n = hw.len() as f32;
         let media =
@@ -989,37 +968,57 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
             .count();
         let linhas = vec![
             vec![
-                "Processador".into(),
-                format!("média {:.0} %", media(&|a| a.cpu)),
-                format!("pico {:.0} %", max(&|a| a.cpu)),
-            ],
-            vec![
-                "Memória".into(),
-                format!("média {:.0} %", media(&|a| a.ram_pct)),
-                format!(
-                    "pico {:.0} % de {} MB",
-                    max(&|a| a.ram_pct),
-                    ultima.ram_total_mb
+                t("pdf.maquina.processador"),
+                tf(
+                    "pdf.maquina.media_pct",
+                    &[("v", &format!("{:.0}", media(&|a| a.cpu)))],
+                ),
+                tf(
+                    "pdf.maquina.pico_pct",
+                    &[("v", &format!("{:.0}", max(&|a| a.cpu)))],
                 ),
             ],
             vec![
-                "Temperatura".into(),
+                t("pdf.maquina.memoria"),
+                tf(
+                    "pdf.maquina.media_pct",
+                    &[("v", &format!("{:.0}", media(&|a| a.ram_pct)))],
+                ),
+                tf(
+                    "pdf.maquina.pico_ram",
+                    &[
+                        ("v", &format!("{:.0}", max(&|a| a.ram_pct))),
+                        ("total", &ultima.ram_total_mb.to_string()),
+                    ],
+                ),
+            ],
+            vec![
+                t("pdf.maquina.temperatura"),
                 if temp.is_empty() {
-                    "sem sensor".into()
+                    t("pdf.maquina.sem_sensor")
                 } else {
-                    format!(
-                        "média {:.0} °C",
-                        temp.iter().sum::<f32>() / temp.len() as f32
+                    tf(
+                        "pdf.maquina.media_c",
+                        &[(
+                            "v",
+                            &format!("{:.0}", temp.iter().sum::<f32>() / temp.len() as f32),
+                        )],
                     )
                 },
                 if temp.is_empty() {
                     "—".into()
                 } else {
-                    format!("pico {:.0} °C", temp.iter().cloned().fold(0.0, f32::max))
+                    tf(
+                        "pdf.maquina.pico_c",
+                        &[(
+                            "v",
+                            &format!("{:.0}", temp.iter().cloned().fold(0.0, f32::max)),
+                        )],
+                    )
                 },
             ],
             vec![
-                "Disco livre".into(),
+                t("pdf.maquina.disco"),
                 ultima
                     .disco_livre_mb
                     .map(|d| format!("{:.1} GB", d as f32 / 1024.0))
@@ -1027,13 +1026,17 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
                 String::new(),
             ],
             vec![
-                "Alertas da máquina".into(),
+                t("pdf.maquina.alertas"),
                 hw_alertas.to_string(),
-                "CPU > 85 % por 10 min, RAM > 90 %, disco < 1 GB, > 80 °C".into(),
+                t("pdf.maquina.limites"),
             ],
         ];
         c.tabela(
-            &["Medida", "Média", "Pico / detalhe"],
+            &[
+                &t("pdf.col.medida"),
+                &t("pdf.col.media"),
+                &t("pdf.col.pico"),
+            ],
             &[0.3, 0.3, 0.4],
             &linhas,
         );
@@ -1045,9 +1048,16 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
             .unwrap_or(0.0);
         let cm = b.get("cameras_medio").and_then(|v| v.as_u64()).unwrap_or(0);
         c.paragrafo(
-            &format!(
-                "Teste da máquina: nível {} · {fps:.1} quadros/s estimados para detecção de pessoas · até {cm} câmeras com pessoas e veículos.",
-                b.get("nivel").and_then(|v| v.as_str()).unwrap_or("?")
+            &tf(
+                "pdf.bench",
+                &[
+                    (
+                        "nivel",
+                        b.get("nivel").and_then(|v| v.as_str()).unwrap_or("?"),
+                    ),
+                    ("fps", &format!("{fps:.1}")),
+                    ("cameras", &cm.to_string()),
+                ],
             ),
             9.5,
             PRETO,
@@ -1061,21 +1071,17 @@ pub fn gerar(app: &App, d: &Dados) -> Result<Vec<u8>, String> {
         .and_then(|s| serde_json::from_str::<Value>(&s).ok())
     {
         if let Some(v) = s.get("veredito").and_then(|v| v.as_str()) {
-            c.paragrafo(&format!("Teste de estresse: {v}"), 9.5, PRETO);
+            c.paragrafo(&tf("pdf.estresse", &[("veredito", v)]), 9.5, PRETO);
         }
     }
 
     // ---- Próximo passo ----
     c.nova();
-    c.titulo("Próximo passo");
-    c.paragrafo(PROXIMO_PASSO, 10.5, PRETO);
+    c.titulo(&t("pdf.proximo.titulo"));
+    c.paragrafo(&t("pdf.proximo_passo"), 10.5, PRETO);
     c.y -= 20.0;
-    c.sub("Proposta");
-    c.paragrafo(
-        "Equipamentos sugeridos, prazo e investimento: a preencher pelo técnico junto com o fabricante ou a plataforma parceira escolhida.",
-        10.0,
-        CINZA,
-    );
+    c.sub(&t("pdf.proposta.titulo"));
+    c.paragrafo(&t("pdf.proposta.desc"), 10.0, CINZA);
     for _ in 0..6 {
         c.garantir(24.0);
         c.pdf
@@ -1246,11 +1252,97 @@ pub async fn post_telegram(State(app): State<Shared>, AxPath(nome): AxPath<Strin
         .get()
         .ok_or_else(|| erro(StatusCode::SERVICE_UNAVAILABLE, "Telegram indisponível"))?;
     let n = tg
-        .enviar_arquivo(&nome, bytes, "Relatório de validação do CamFácil IA")
+        .enviar_arquivo(&nome, bytes, &t("pdf.telegram_legenda"))
         .await
         .map_err(|e| erro(StatusCode::UNPROCESSABLE_ENTITY, e))?;
     Ok(Json(json!({ "enviados": n })))
 }
+
+/// Chaves de tradução usadas no PDF (conferidas no teste).
+#[cfg(test)]
+const CHAVES_PDF: &[&str] = &[
+    "pdf.proximo_passo",
+    "pdf.pagina",
+    "pdf.rodape",
+    "pdf.cam.ao_vivo",
+    "pdf.cam.fora",
+    "pdf.cam.conectando",
+    "pdf.cam.desligada",
+    "pdf.forma.zona",
+    "pdf.forma.linha",
+    "pdf.forma.regra",
+    "pdf.cliente_padrao",
+    "pdf.cabecalho",
+    "pdf.capa.titulo",
+    "pdf.capa.subtitulo",
+    "pdf.capa.selo",
+    "pdf.capa.cliente",
+    "pdf.capa.data",
+    "pdf.capa.tecnico",
+    "pdf.capa.cameras",
+    "pdf.capa.regras",
+    "pdf.capa.alertas",
+    "pdf.capa.maquina",
+    "pdf.capa.nivel",
+    "pdf.capa.sem_teste",
+    "pdf.observacoes",
+    "pdf.resumo.titulo",
+    "pdf.resumo.desc",
+    "pdf.fonte.rtsp",
+    "pdf.fonte.demo",
+    "pdf.fonte.webcam",
+    "pdf.fonte.arquivo",
+    "pdf.nenhuma_camera",
+    "pdf.col.camera",
+    "pdf.col.fonte",
+    "pdf.col.situacao",
+    "pdf.col.regras",
+    "pdf.modulos.titulo",
+    "pdf.modulos.nenhum",
+    "pdf.camera.titulo",
+    "pdf.camera.legenda_foto",
+    "pdf.camera.sem_imagem",
+    "pdf.camera.sem_regras",
+    "pdf.balao.ocupada",
+    "pdf.balao.livre",
+    "pdf.balao.contagem",
+    "pdf.col.regra",
+    "pdf.col.tipo",
+    "pdf.col.balao",
+    "pdf.col.alertas7",
+    "pdf.semana.titulo",
+    "pdf.semana.desc",
+    "pdf.col.regra_camera",
+    "pdf.col.total",
+    "pdf.semana.sem_regras",
+    "pdf.saude.titulo",
+    "pdf.saude.nenhum",
+    "pdf.col.problemas7",
+    "pdf.col.ultimo_problema",
+    "pdf.maquina.titulo",
+    "pdf.maquina.sem_medicoes",
+    "pdf.maquina.processador",
+    "pdf.maquina.memoria",
+    "pdf.maquina.temperatura",
+    "pdf.maquina.disco",
+    "pdf.maquina.alertas",
+    "pdf.maquina.media_pct",
+    "pdf.maquina.pico_pct",
+    "pdf.maquina.pico_ram",
+    "pdf.maquina.sem_sensor",
+    "pdf.maquina.media_c",
+    "pdf.maquina.pico_c",
+    "pdf.maquina.limites",
+    "pdf.col.medida",
+    "pdf.col.media",
+    "pdf.col.pico",
+    "pdf.bench",
+    "pdf.estresse",
+    "pdf.proximo.titulo",
+    "pdf.proposta.titulo",
+    "pdf.proposta.desc",
+    "pdf.telegram_legenda",
+];
 
 #[cfg(test)]
 mod tests {
@@ -1344,5 +1436,15 @@ mod tests {
         assert!(!nome_valido("../x.pdf"));
         assert!(!nome_valido("a/b.pdf"));
         assert!(!nome_valido("x.txt"));
+    }
+
+    #[test]
+    fn textos_do_pdf_no_arquivo_de_traducao() {
+        for k in CHAVES_PDF {
+            assert!(
+                crate::i18n::existe(k),
+                "falta a chave {k} em web/i18n/pt-BR.json"
+            );
+        }
     }
 }

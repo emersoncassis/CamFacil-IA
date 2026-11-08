@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>Portão e relé · CamFácil IA</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/tokens.css">
+  <link rel="stylesheet" href="/botoes.css">
+</head>
+<body>
+  <header>
+    <img src="/icon.svg" width="20" height="20" alt="">
+    <strong data-i18n="bt.titulo"></strong>
+    <a href="/" data-i18n="bt.painel"></a>
+  </header>
+  <main>
+    <label class="quem"><span data-i18n="bt.quem"></span><input id="quem" maxlength="40" autocomplete="name" data-i18n-ph="bt.ph_quem"></label>
+    <div class="grade" id="grade"></div>
+    <p class="msg" id="msg" role="status"></p>
+  </main>
+  <dialog id="dlg">
+    <form id="dlg-pin" method="dialog">
+      <h2 id="dlg-titulo"></h2>
+      <p class="dica" data-i18n="bt.digite_pin"></p>
+      <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" required>
+      <p class="msg" id="dlg-msg" role="alert"></p>
+      <div class="acoes">
+        <button type="button" class="btn" id="dlg-cancelar" data-i18n="bt.cancelar"></button>
+        <button type="submit" class="btn primario" data-i18n="bt.continuar"></button>
+      </div>
+    </form>
+    <div id="dlg-confirmar" hidden>
+      <h2 id="dlg-pergunta"></h2>
+      <p class="dica" id="dlg-expira"></p>
+      <div class="acoes">
+        <button type="button" class="btn" id="dlg-nao" data-i18n="bt.cancelar"></button>
+        <button type="button" class="btn primario" id="dlg-sim" data-i18n="bt.confirmar"></button>
+      </div>
+    </div>
+  </dialog>
+  <script src="/botoes.js"></script>
+</body>
+</html>
