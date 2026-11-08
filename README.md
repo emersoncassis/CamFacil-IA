@@ -184,13 +184,14 @@ Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também 
 | | | |
 |:---:|---|---|
 | <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Aula em cada clique** | Agente guia com voz explica cada botão, mostra o certo e o erro comum, e propõe um desafio |
-| <img src="docs/assets/icons/lupa.svg" width="20" alt=""/> | **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante |
+| <img src="docs/assets/icons/lupa.svg" width="20" alt=""/> | **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante; login salvo (cifrado) para as câmeras que usam o mesmo usuário e senha; editar e remover câmera |
+| <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Ao vivo** | Mosaico de 1, 2, 3 ou 4 câmeras e, embaixo, o status: aparelho, IA (regras ativas, modelos rodando), alertas, para quem vai cada alerta e serviços ativos |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP e senha padrão |
 | <img src="docs/assets/icons/diagrama.svg" width="20" alt=""/> | **Diagrama da rede** | Desenha o unifilar da instalação e explica em voz |
 | <img src="docs/assets/icons/mensagem.svg" width="20" alt=""/> | **Telegram e WhatsApp** | Alertas e comandos com QR code |
 | | ↳ WhatsApp usa uma [Evolution API](https://github.com/EvolutionAPI/evolution-api) que você sobe no mesmo servidor Docker do painel: `docker run -d -p 8080:8080 -e AUTHENTICATION_API_KEY=troque atendai/evolution-api:v2.2.3` e aponte a URL na dashboard (chip dedicado, nunca o seu número) | SDD-04 |
 | <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Modo TV** | Tela de quiosque para o cliente, com a sua logo |
-| <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Servidor no próprio celular ou TV Box, ou visualizador à distância via Tailscale, com alertas |
+| <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Servidor no próprio celular ou TV Box (com IA de pessoas, YOLO), endereço da rede da loja com QR e botão do Tailscale; ou visualizador à distância, com alertas |
 | <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com a sua marca para fechar a venda |
 | <img src="docs/assets/icons/robo.svg" width="20" alt=""/> | **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
 | <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** *(em desenvolvimento)* | Descreva uma inteligência nova, rotule, treine no Colab e compartilhe com outros técnicos (só estudo) |
@@ -224,11 +225,16 @@ Versão atual: **0.5.3** ([releases](https://github.com/emersoncassis/CamFacil-I
   - [x] Receita de módulo validada (biometria bloqueada), gerador do notebook do Colab, importar modelo de estudo, compartilhar receitas no site
   - [ ] Interface do estúdio (conversa, rotulagem, galeria) e rodar o modelo de estudo com classes próprias
 
+### Regra de tela
+Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular ao monitor. O que não cabe vira aba, seção que abre ou página (regra 9 do [`CLAUDE.md`](CLAUDE.md), detalhes no [`DESIGN.md`](DESIGN.md)).
+
 ### Em desenvolvimento / próximos passos
-- Modo estúdio: conversa → coleta → rotulagem → notebook do Colab → importar → compartilhar receitas entre técnicos (fase 7)
+- **Modo estúdio funcionando no básico** (em andamento): descrever → coletar fotos → rotular no navegador → notebook do Colab → importar → compartilhar; rodar o modelo de estudo com classes próprias
+- Estúdio: conversa com IA para montar a receita e pré-marcação automática das fotos
+- Mosaico ao vivo com mais de 4 câmeras (6, 9, 16)
 - Rede: senha de fábrica, quedas por hora e banda por câmera (conflito de IP já avisa na tela Rede)
 - Telegram: backup agendado; foto do alerta com a linha/zona desenhada (`/backup <senha>` já existe)
-- Android: IA de nível médio (YOLO) no aparelho, câmera do próprio celular como fonte, chave de assinatura fixa do APK
+- Android: câmera do próprio celular como fonte, chave de assinatura fixa do APK, APK por arquitetura (hoje ~20 MB com a IA)
 - Testes em campo: rede real, Windows, TV Box com controle remoto
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Contribua
