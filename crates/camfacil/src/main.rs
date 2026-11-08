@@ -93,6 +93,9 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let dir = paths::data_dir();
+    if paths::apagar_se_pedido() {
+        println!("Todos os dados do CamFácil IA foram apagados. Começando do zero.");
+    }
     std::fs::create_dir_all(&dir)?;
     let store = Arc::new(Store::open(&dir.join("camfacil.db"))?);
 

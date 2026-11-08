@@ -359,7 +359,29 @@ function manutencaoAtivar(ativo) {
   manutencaoCarregada = true;
 }
 
+// ---------- Dados do programa: onde estão e apagar tudo ----------
+async function dadosIniciar() {
+  const mb = (v) => `${(v || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;
+  try {
+    const d = await api("/api/dados");
+    $("#dados-pasta").textContent = d.pasta;
+    $("#dados-mb").textContent = mb(d.mb);
+    const tem = !!d.antiga;
+    $("#dados-antiga-rot").hidden = !tem; $("#dados-antiga").hidden = !tem;
+    if (tem) $("#dados-antiga").textContent = `${d.antiga} · ${mb(d.antiga_mb)}`;
+  } catch (_) { /* segue */ }
+  $("#dados-apagar").onclick = async () => {
+    if (!(await confirmar(t("dados.confirma"), t("dados.apagar"), t("dados.confirma_dica")))) return;
+    try {
+      await api("/api/dados/apagar-tudo", { confirmar: "APAGAR" });
+      $("#dados-msg").className = "msg ok";
+      $("#dados-msg").textContent = t("dados.apagado");
+    } catch (e) { $("#dados-msg").className = "msg err"; $("#dados-msg").textContent = e.message; }
+  };
+}
+
 function iniciarManutencao() {
+  dadosIniciar();
   tvIniciar();
   hwIniciar();
   relIniciar();

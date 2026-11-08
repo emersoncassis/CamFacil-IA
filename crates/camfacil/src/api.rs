@@ -193,6 +193,8 @@ pub fn router(app: Shared) -> Router {
                 axum::extract::DefaultBodyLimit::max(crate::estudio::ONNX_MAX + 1024),
             ),
         )
+        .route("/api/dados", get(get_dados))
+        .route("/api/dados/apagar-tudo", post(post_apagar_tudo))
         .route("/api/backup", post(crate::backup::post_exportar))
         .route("/api/backup/telegram", post(crate::backup::post_telegram))
         .route(
@@ -713,6 +715,41 @@ async fn post_elo_desparear(State(app): State<Shared>) -> ApiResult {
         .desparear()
         .map(|_| Json(json!({"ok": true})))
         .map_err(|m| bad(StatusCode::CONFLICT, m))
+}
+
+// ---------- Dados do programa (pasta ao lado do executável) ----------
+
+async fn get_dados() -> Json<Value> {
+    let dir = cf_core::paths::data_dir();
+    let antiga = cf_core::paths::pasta_antiga_existente();
+    Json(json!({
+        "pasta": dir.display().to_string(),
+        "mb": cf_core::paths::tamanho(&dir) as f64 / 1_048_576.0,
+        "antiga": antiga.as_ref().map(|p| p.display().to_string()),
+        "antiga_mb": antiga.as_ref().map(|p| cf_core::paths::tamanho(p) as f64 / 1_048_576.0),
+    }))
+}
+
+#[derive(Deserialize)]
+struct PedidoApagarTudo {
+    confirmar: String,
+}
+
+/// Apaga TUDO: câmeras, regras, histórico, fotos, logins, chaves e a pasta
+/// antiga. O banco está aberto, então marca e fecha o programa; ao abrir de
+/// novo, ele apaga e começa do zero. Também desliga o "abrir com o computador".
+async fn post_apagar_tudo(Json(p): Json<PedidoApagarTudo>) -> ApiResult {
+    if p.confirmar.trim() != "APAGAR" {
+        return Err(bad(StatusCode::BAD_REQUEST, "digite APAGAR para confirmar"));
+    }
+    let _ = crate::autoinicio::definir(false);
+    let marca = cf_core::paths::data_dir().join(cf_core::paths::MARCA_APAGAR);
+    std::fs::write(&marca, b"1").map_err(internal)?;
+    tokio::spawn(async {
+        tokio::time::sleep(Duration::from_millis(800)).await;
+        std::process::exit(0);
+    });
+    Ok(Json(json!({ "ok": true })))
 }
 
 // ---------- Login padrão das câmeras (o mesmo para todas) ----------
