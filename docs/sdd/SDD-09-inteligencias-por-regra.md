@@ -72,6 +72,14 @@ A observação passa a usar as classes do detector (quando ele está olhando) e 
 - Sem detector, cai no comportamento antigo (movimento, tudo conta como pessoa).
 - Ao aceitar, a regra já nasce com inteligência, classes e tempo.
 
+## Editar depois de criada
+
+Botão **Editar** na lista de regras abre o mesmo formulário já preenchido: nome, textos, classes, tempo, cor e som mudam (`PATCH /api/regras/{id}`). A inteligência fica fixa.
+
+## Alertas da própria câmera
+
+Módulo `camera` ("Alertas da câmera"), desligado por padrão como todos. Com ele ligado, uma conexão por aparelho escuta a API de eventos do fabricante (Intelbras/Dahua `eventManager.cgi`, Hikvision `alertStream`), com login Digest/Basic. Cada alerta (ignorando batimento e perda de vídeo) vira evento `camera` "… (recebido da câmera)", no máximo um por tipo a cada 10 s por câmera, e segue para o Telegram como os demais. O canal do alerta é casado com o canal da câmera no gravador. Desligar o módulo fecha as conexões. Validado só contra um servidor de teste que imita a Intelbras; falta confirmar em equipamento real.
+
 ## Fora de escopo
 
 Densidade por área (pessoas por metro quadrado), placas e reconhecimento de modelo/cor de veículo, e juntar inteligências na mesma regra. Quem precisa disso usa as regras em paralelo ou parceiros (PRD §6).

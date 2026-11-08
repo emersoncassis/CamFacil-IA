@@ -1225,5 +1225,11 @@
   "regra.modulo_nome.calor": "Mapa de calor",
   "regra.tipo_legado_nome": "Movimento",
   "regra.tipo_legado_desc": "Aviso simples por movimento, sem saber o que é. Não precisa de IA.",
-  "regra.classe_estudo": "objeto do estudo"
+  "regra.classe_estudo": "objeto do estudo",
+  "vivo.mod.camera": "Alerta da câmera",
+  "vis.mod.camera": "Alertas da câmera",
+  "regra.editar": "Editar",
+  "regra.editar_titulo": "Editar regra",
+  "regra.intel_fixa": "O que a regra faz não muda depois de criada. Para outra coisa, crie outra regra.",
+  "regra.salvar_edicao": "Salvar alterações"
 }

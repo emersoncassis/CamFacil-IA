@@ -244,6 +244,11 @@ Versão atual: **0.8.2** ([releases](https://github.com/emersoncassis/CamFacil-I
   - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
   - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
 
+### Novidades da 0.9.1
+- **Nada vem ligado**: movimento, cerca, saúde e os demais módulos começam desligados. Você escolhe quais alertas quer, inclusive ficar só com IA de vídeo e sem o movimento por pixel (que enche o histórico).
+- **Alertas da própria câmera** (módulo novo, desligado por padrão): o programa escuta os eventos que a câmera ou o gravador manda (Intelbras/Dahua e Hikvision: movimento, cruzou a linha, invadiu a área…) e registra cada um como "recebido da câmera". Ligue e desligue em Módulos de IA.
+- **Editar a regra depois de criada**: botão Editar na lista de regras (nome, textos, quem observa, tempo, cor e som). O que a regra faz não muda; para outra coisa, crie outra regra.
+
 ### Novidades da 0.9.0
 - **Uma inteligência por regra** ([SDD-09](docs/sdd/SDD-09-inteligencias-por-regra.md)): passagem (linha), presença, densidade, permanência e mapa de calor (zona). Cada uma mostra o peso (leve, médio, pesado) e só pode ser escolhida se o módulo dela estiver ligado.
 - **Quem a regra observa**: pessoa, carro, moto, bicicleta, ônibus e caminhão, em qualquer combinação. "Linha só de carro e moto", "zona que avisa com 3 ou mais carros", "permanência só de moto".

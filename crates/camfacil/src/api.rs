@@ -1834,7 +1834,7 @@ async fn get_modulos(State(app): State<Shared>) -> Json<Value> {
         .and_then(|v| v.parse::<u64>().ok())
         .unwrap_or(60);
     Json(json!({
-        "movimento": m.movimento, "cerca": m.cerca, "saude": m.saude,
+        "movimento": m.movimento, "cerca": m.cerca, "saude": m.saude, "camera": m.camera,
         "pessoas": m.pessoas, "contagem": m.contagem, "permanencia": m.permanencia, "calor": m.calor,
         "permanencia_s": perm,
         "ia_pronta": app.ia.pronto(),

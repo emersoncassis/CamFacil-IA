@@ -294,7 +294,7 @@
     ]);
 
     // IA
-    const on = mod ? ["movimento", "cerca", "saude", "pessoas", "contagem", "permanencia", "calor"].filter((k) => mod[k]) : [];
+    const on = mod ? ["movimento", "cerca", "saude", "camera", "pessoas", "contagem", "permanencia", "calor"].filter((k) => mod[k]) : [];
     const total = Object.values(regras).reduce((x, r) => x + r.length, 0);
     const comRegra = Object.values(regras).filter((r) => r.length).length;
     const det = ia && ia.detector || {};

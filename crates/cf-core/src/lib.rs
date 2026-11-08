@@ -7,6 +7,7 @@ pub mod conectar;
 pub mod deteccao;
 pub mod digest;
 pub mod elo;
+pub mod eventos_camera;
 pub mod gravador;
 pub mod inteligencias;
 pub mod nomes_canais;

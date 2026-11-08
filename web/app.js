@@ -127,7 +127,7 @@ async function runBench() {
 
 // ---------- Módulos ----------
 const MODULES = [
-  ["leve", [["movimento", "Movimento inteligente"], ["cerca", "Cerca e linha virtual"], ["saude", "Saúde das câmeras"]]],
+  ["leve", [["movimento", "Movimento inteligente"], ["cerca", "Cerca e linha virtual"], ["saude", "Saúde das câmeras"], ["camera", "Alertas da câmera"]]],
   ["medio", [["pessoas", "Pessoas e veículos"], ["contagem", "Contagem"], ["permanencia", "Permanência"], ["calor", "Mapa de calor"]]],
   ["pesado", [[null, "Leitura de placas"], [null, "Reconhecimento facial"]]],
 ];
@@ -707,7 +707,9 @@ function renderBaloes(estadoCam) {
     chk.checked = somLigado(r.id);
     chk.onchange = () => { definirSom(r.id, chk.checked); if (chk.checked) tocarAlerta(r.ajustes && r.ajustes.som); };
     const som = el("label", { class: "som-regra", title: t("regra.som_dica") }, el("span", { class: "switch" }, chk, el("span")), el("span", { class: "tiny" }, t("regra.som")));
-    return el("tr", {}, el("td", {}, r.nome), el("td", {}, tipoDaRegra(r)), el("td", {}, agora), el("td", {}, som), el("td", { class: "right" }, rem));
+    const edt = el("button", { class: "btn ghost sm", type: "button" }, t("regra.editar"));
+    edt.onclick = () => editarRegra(r);
+    return el("tr", {}, el("td", {}, r.nome), el("td", {}, tipoDaRegra(r)), el("td", {}, agora), el("td", {}, som), el("td", { class: "right" }, edt, rem));
   });
   $("#regras").replaceChildren(...(linhas.length ? linhas : [el("tr", { class: "empty" }, el("td", { colspan: "5" }, t("regra.nenhuma")))]));
 }
@@ -758,7 +760,17 @@ function desenharSalvas() {
   if (calorLigado) calorAtualizar();
 }
 
+function fecharFormRegra() {
+  regraEditando = null;
+  $("#regra-form").hidden = true;
+  const b = $("#regra-form").querySelector('button[type="submit"]');
+  if (b) b.textContent = t("regra.salvar");
+}
+
 function definirModo(m) {
+  regraEditando = null;
+  const bt = $("#regra-form").querySelector('button[type="submit"]');
+  if (bt) bt.textContent = t("regra.salvar");
   desenho = { modo: m, pontos: [], fechada: false };
   $("#viewer").classList.toggle("desenhando", m !== "ver");
   document.querySelector(`#modo input[value="${m}"]`).checked = true;
@@ -789,7 +801,25 @@ async function concluirDesenho() {
 // marcar o que está disponível (módulo ligado); "Movimento" é o aviso simples
 // de sempre, que não precisa de nada.
 let catalogo = null;
+let regraEditando = null;
 const CORES_PADRAO = "verde";
+
+/// Abre o mesmo formulário já preenchido. A inteligência fica fixa; classes,
+/// tempo, textos, cor e som mudam.
+async function editarRegra(r) {
+  regraEditando = r;
+  desenho = { modo: "ver", pontos: [], fechada: true };
+  const f = $("#regra-form");
+  f.hidden = false;
+  f.classList.toggle("zona", r.forma === "zona");
+  f.reset();
+  f.nome.value = r.nome;
+  f.rotulo_on.value = r.rotulo_on || "";
+  f.rotulo_off.value = r.rotulo_off || "";
+  f.querySelector('button[type="submit"]').textContent = t("regra.salvar_edicao");
+  await montarFormRegra(r.forma, r);
+  f.nome.focus();
+}
 
 async function carregarCatalogo() {
   try { catalogo = await api("/api/inteligencias"); } catch (_) { /* usa o último */ }
@@ -819,16 +849,17 @@ function atualizarParametro() {
   inp.min = i.parametro.min; inp.max = i.parametro.max; inp.value = i.parametro.padrao;
 }
 
-async function montarFormRegra() {
+async function montarFormRegra(forma = desenho.modo, regra = null) {
   await carregarCatalogo();
   abaRegra("intel");
   const cat = catalogo || { inteligencias: [], classes: [], sons: ["bipe"], cores: [CORES_PADRAO] };
-  const da_forma = cat.inteligencias.filter((i) => i.forma === desenho.modo);
+  const da_forma = cat.inteligencias.filter((i) => i.forma === forma);
   const itens = [...da_forma, { id: "legado", peso: "leve", disponivel: true }];
-  const primeira = (itens.find((i) => i.disponivel) || itens[itens.length - 1]).id;
+  const atual = regra ? ((regra.ajustes && regra.ajustes.intel) || "legado") : null;
+  const primeira = atual || (itens.find((i) => i.disponivel) || itens[itens.length - 1]).id;
   $("#intel-lista").replaceChildren(...itens.map((i) => {
     const radio = el("input", { type: "radio", name: "intel", value: i.id });
-    radio.disabled = !i.disponivel;
+    radio.disabled = !i.disponivel || (atual !== null && i.id !== atual);
     radio.checked = i.id === primeira;
     radio.onchange = atualizarParametro;
     const chave = i.id === "legado" ? "legado" : i.id;
@@ -845,20 +876,21 @@ async function montarFormRegra() {
   // Quem: pessoa marcada de início.
   $("#classes-lista").replaceChildren(...cat.classes.map((c) => {
     const chk = el("input", { type: "checkbox", value: c.indice });
-    chk.checked = c.indice === 0;
+    chk.checked = regra ? ((regra.ajustes && regra.ajustes.classes) || []).includes(c.indice) : c.indice === 0;
     return el("label", { class: "chip" }, chk, el("span", {}, t("classe." + c.id)));
   }));
   if (cat.estudo) $("#classes-lista").append(el("p", { class: "tiny span-all" }, t("regra.estudo_dica")));
   // Cor e som.
   $("#cores-lista").replaceChildren(...cat.cores.map((c) => {
     const radio = el("input", { type: "radio", name: "cor", value: c, "aria-label": t("cor." + c) });
-    radio.checked = c === CORES_PADRAO;
+    radio.checked = c === ((regra && regra.ajustes && regra.ajustes.cor) || CORES_PADRAO);
     return el("label", { class: "cor-item cor-" + c, title: t("cor." + c) }, radio, el("span", {}));
   }));
   const sel = $("#som-escolha");
   sel.replaceChildren(...cat.sons.map((id) => el("option", { value: id }, t("som." + id))));
-  sel.value = "bipe";
+  sel.value = (regra && regra.ajustes && regra.ajustes.som) || "bipe";
   atualizarParametro();
+  if (regra && regra.ajustes && regra.ajustes.parametro > 0) $("#param-wrap input").value = regra.ajustes.parametro;
 }
 
 function cliqueViewer(ev) {
@@ -877,6 +909,22 @@ function cliqueViewer(ev) {
 async function salvarRegra(ev) {
   ev.preventDefault();
   const f = new FormData($("#regra-form"));
+  if (regraEditando) {
+    const ed = regraEditando;
+    const cls = [...document.querySelectorAll("#classes-lista input:checked")].map((c) => Number(c.value));
+    const legado = !ed.ajustes || !ed.ajustes.intel || ed.ajustes.intel === "legado";
+    if (!legado && !cls.length && !(catalogo && catalogo.estudo)) { abaRegra("quem"); alert(t("regra.escolha_quem")); return; }
+    const corE = (document.querySelector('#cores-lista input:checked') || {}).value || CORES_PADRAO;
+    const pE = Number(f.get("parametro"));
+    const corpo = { camera_id: camAberta, nome: f.get("nome"), rotulo_on: f.get("rotulo_on") || "", rotulo_off: f.get("rotulo_off") || "", cor: corE, som: f.get("som") || "bipe" };
+    if (!legado) { corpo.classes = cls; if (!$("#param-wrap").hidden && pE > 0) corpo.parametro = pE; }
+    try {
+      await api(`/api/regras/${ed.id}`, corpo, "PATCH");
+      fecharFormRegra();
+      await carregarRegras();
+    } catch (e) { alert(e.message); }
+    return;
+  }
   const intel = intelEscolhida();
   const classes = [...document.querySelectorAll("#classes-lista input:checked")].map((c) => Number(c.value));
   if (intel !== "legado" && !classes.length && !(catalogo && catalogo.estudo)) {

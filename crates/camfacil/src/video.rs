@@ -573,6 +573,8 @@ pub struct Modulos {
     pub movimento: bool,
     pub cerca: bool,
     pub saude: bool,
+    /// Alertas que a própria câmera manda (movimento, linha…).
+    pub camera: bool,
     pub pessoas: bool,
     pub contagem: bool,
     pub permanencia: bool,
@@ -585,6 +587,7 @@ impl Modulos {
             "movimento" => self.movimento,
             "cerca" => self.cerca,
             "saude" => self.saude,
+            "camera" => self.camera,
             "pessoas" => self.pessoas,
             "contagem" => self.contagem,
             "permanencia" => self.permanencia,
@@ -609,6 +612,12 @@ pub const MODULOS: &[(&str, &str, &[&str], &str)] = &[
         "leve",
     ),
     ("saude", "Saúde das câmeras", &["saude", "saúde"], "leve"),
+    (
+        "camera",
+        "Alertas da câmera",
+        &["camera", "câmera", "alertas da camera"],
+        "leve",
+    ),
     (
         "pessoas",
         "Pessoas e veículos",
@@ -677,13 +686,15 @@ pub fn definir_modulo(
 }
 
 pub fn modulos(store: &Store) -> Modulos {
-    let on = |k: &str| store.get(k).ok().flatten().as_deref() != Some("0");
-    // Médios desligados por padrão (precisam do download do modelo).
-    let on_medio = |k: &str| store.get(k).ok().flatten().as_deref() == Some("1");
+    // Nada vem ligado: quem escolhe os alertas é o técnico (os médios ainda
+    // precisam do download do modelo).
+    let on = |k: &str| store.get(k).ok().flatten().as_deref() == Some("1");
+    let on_medio = on;
     Modulos {
         movimento: on("modulo_movimento"),
         cerca: on("modulo_cerca"),
         saude: on("modulo_saude"),
+        camera: on("modulo_camera"),
         pessoas: on_medio("modulo_pessoas"),
         contagem: on_medio("modulo_contagem"),
         permanencia: on_medio("modulo_permanencia"),

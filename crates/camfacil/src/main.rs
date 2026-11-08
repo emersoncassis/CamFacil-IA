@@ -3,6 +3,7 @@
 //! Sobe a dashboard local numa porta livre (sem conflitar com PDV/NVR do cliente)
 //! e expõe a API da fase 1. Ver `docs/sdd/SDD-01-nucleo.md`.
 
+mod alertas_camera;
 mod api;
 mod arquivo;
 mod assets;
@@ -208,6 +209,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     app.elo.definir_resumo(resumo::montar(Arc::downgrade(&app)));
     // Monitor de hardware com log (SDD-05): uma amostra por minuto.
     hardware::iniciar(Arc::downgrade(&app));
+    // Alertas da própria câmera/gravador (só escuta com o módulo ligado).
+    alertas_camera::iniciar(Arc::downgrade(&app));
     // Rede (SDD-05): foto da rede, diagnóstico e diagrama, sob demanda.
     rede::iniciar(app.clone());
     let rede = lan
