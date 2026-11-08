@@ -147,6 +147,12 @@ impl Ia {
 
     /// Caminho da biblioteca do ONNX Runtime, se já baixada (ou apontada por
     /// `CAMFACIL_ORT_LIB`, para quem já tem o runtime instalado).
+    /// Há como rodar o nível médio aqui? Pacote oficial para baixar, ou a
+    /// biblioteca já embutida (app Android: vem no APK, CAMFACIL_ORT_LIB).
+    pub fn suportado(&self) -> bool {
+        pacote_ort().is_some() || self.lib_ort().is_some()
+    }
+
     pub fn lib_ort(&self) -> Option<PathBuf> {
         if let Some(p) = std::env::var_os("CAMFACIL_ORT_LIB") {
             let p = PathBuf::from(p);

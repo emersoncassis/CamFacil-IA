@@ -41,7 +41,7 @@ object Config {
     fun definirIniciarNoBoot(c: Context, v: Boolean) = prefs(c).edit().putBoolean("servidor_boot", v).apply()
 
     /** Aceitar acesso pela rede Wi-Fi da loja (`--lan`); sem isso, só este aparelho e o Tailscale. */
-    fun aceitarRede(c: Context): Boolean = prefs(c).getBoolean("servidor_lan", false)
+    fun aceitarRede(c: Context): Boolean = prefs(c).getBoolean("servidor_lan", true)
     fun definirAceitarRede(c: Context, v: Boolean) = prefs(c).edit().putBoolean("servidor_lan", v).apply()
 
     /** Porta em que o servidor deste aparelho respondeu da última vez. */

@@ -140,8 +140,15 @@
         <div class="block" id="ligar-passo2" data-sub="ligar" hidden>
           <div class="passo"><span class="num">2</span><h2><span data-i18n="ligar.senha_titulo"></span> <span class="mono" id="ligar-ip"></span></h2></div>
           <form class="form" id="ligar-form" autocomplete="off">
-            <label><span data-i18n="cam.usuario"></span><input name="usuario" value="admin" autocapitalize="off"></label>
-            <label><span data-i18n="cam.senha"></span><input name="senha" type="password" id="ligar-senha"></label>
+            <div class="span-4 login-salvo" id="ligar-salvo" hidden>
+              <p class="tiny"><span data-i18n="login.usando"></span> <strong class="mono" id="ligar-salvo-usuario"></strong></p>
+              <div class="actions">
+                <button class="btn ghost sm" type="button" id="ligar-outro-login"><span data-i18n="login.outro"></span></button>
+                <button class="btn ghost sm" type="button" id="ligar-esquecer"><span data-i18n="login.esquecer"></span></button>
+              </div>
+            </div>
+            <label data-login><span data-i18n="cam.usuario"></span><input name="usuario" value="admin" autocapitalize="off"></label>
+            <label data-login><span data-i18n="cam.senha"></span><input name="senha" type="password" id="ligar-senha"></label>
             <label class="span-2"><span data-i18n="ligar.nome"></span><input name="nome" maxlength="60" data-i18n-ph="cam.nome_ph"></label>
             <div class="actions span-4">
               <button class="btn primary" type="submit" id="ligar-conectar"><span data-i18n="ligar.conectar"></span></button>
@@ -151,6 +158,13 @@
           <p class="msg" id="ligar-msg" role="status"></p>
           <div class="ligar-ok" id="ligar-ok" hidden>
             <p class="msg ok" id="ligar-ok-texto"></p>
+            <div class="login-perguntar" id="ligar-perguntar" hidden>
+              <p data-i18n="login.perguntar"></p>
+              <div class="actions">
+                <button class="btn primary sm" type="button" id="ligar-salvar-sim"><span data-i18n="login.sim"></span></button>
+                <button class="btn sm" type="button" id="ligar-salvar-nao"><span data-i18n="login.nao"></span></button>
+              </div>
+            </div>
             <div class="actions">
               <button class="btn primary sm" id="ligar-aula" type="button"><span data-i18n="ligar.aprender"></span></button>
               <button class="btn sm" id="ligar-outra" type="button"><span data-i18n="ligar.outra"></span></button>

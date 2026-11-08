@@ -841,5 +841,13 @@
   "secao.grafico": "Gráfico",
   "secao.configurar": "Configurar",
   "secao.fotos": "Fotos guardadas",
-  "confirma.sim": "Confirmar"
+  "confirma.sim": "Confirmar",
+  "login.usando": "Usando o login salvo das câmeras:",
+  "login.outro": "Usar outro login",
+  "login.esquecer": "Esquecer login salvo",
+  "login.perguntar": "As outras câmeras usam este mesmo usuário e senha? Se sim, eu guardo (cifrado) e você não precisa digitar de novo.",
+  "login.sim": "Sim, usar nas outras",
+  "login.nao": "Não, cada uma tem o seu",
+  "login.salvo_ok": "Login salvo. Nas próximas câmeras é só tocar em Conectar.",
+  "login.esquecido": "Login esquecido. Digite usuário e senha na próxima câmera."
 }
