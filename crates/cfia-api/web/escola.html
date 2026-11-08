@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/escola.css">
 </head>
-<body class="escola-body">
+<body class="escola-body tela">
   <svg class="sprite" aria-hidden="true">
     <defs>
       <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></symbol>
@@ -32,36 +32,56 @@
       <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
       <symbol id="i-redo" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
       <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+      <symbol id="i-prox" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-ant" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
       <symbol id="i-selo" viewBox="0 0 24 24"><path d="M12 3l2.4 2 3.1-.3.9 3 2.6 1.7-1.3 2.8 1.3 2.8-2.6 1.7-.9 3-3.1-.3L12 21l-2.4-2-3.1.3-.9-3L3 14.6l1.3-2.8L3 9l2.6-1.7.9-3 3.1.3z"/><path d="m9 12 2 2 4-4"/></symbol>
     </defs>
   </svg>
 
-  <header class="topo">
+  <header class="topo-escola">
     <a class="brand" href="/"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></a>
+    <span class="badge escola-badge">Formação de IA para CFTV</span>
     <nav class="topo-nav">
-      <span class="badge escola-badge">Formação de IA para CFTV</span>
-      <a class="btn sm" href="/#baixar">Já trabalho com IA</a>
+      <button class="btn sm licoes-btn" type="button" id="licoes-btn" aria-expanded="false" aria-controls="trilha-painel"><svg class="ico sm"><use href="#i-menu"/></svg><span id="licoes-rotulo">Lições</span></button>
+      <a class="btn sm ja-trabalho" href="/#baixar">Já trabalho com IA</a>
     </nav>
   </header>
 
   <main class="escola">
-    <aside class="trilha" aria-label="Lições">
+    <aside class="trilha-painel" id="trilha-painel" aria-label="Lições">
       <p class="kicker">Curso · do zero, no navegador</p>
       <h2>Formação de IA para CFTV</h2>
       <p class="hint">Seis lições, uns 5 minutos. Você clica, vê acontecer e faz na prática. Nada para instalar. No fim, o seu selo.</p>
       <ol id="trilha" class="trilha-lista"></ol>
       <p class="tiny" id="trilha-progresso"></p>
+      <p class="tiny trilha-foot">Ambiente de aprendizagem e validação, sem garantias (AGPL-3.0). <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="/">Página inicial</a></p>
     </aside>
 
     <section class="licao" id="licao" aria-live="polite">
-      <p class="kicker" id="licao-num"></p>
-      <h1 id="licao-titulo"></h1>
-      <div class="ouvir" id="ouvir-caixa" hidden>
-        <button class="btn sm" type="button" id="ouvir"><svg class="ico sm"><use href="#i-play"/></svg><span>Ouvir a lição</span></button>
-        <span class="fala" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="tiny">Na voz do Emerson</span>
+      <header class="licao-cab">
+        <div class="licao-tit">
+          <p class="kicker" id="licao-num"></p>
+          <h1 id="licao-titulo"></h1>
+        </div>
+        <div class="ouvir" id="ouvir-caixa" hidden>
+          <button class="btn sm" type="button" id="ouvir"><svg class="ico sm"><use href="#i-play"/></svg><span>Ouvir a lição</span></button>
+          <span class="fala" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="tiny">Na voz do Emerson</span>
+        </div>
+      </header>
+      <div class="licao-texto-caixa" id="licao-texto">
+        <div class="trecho" id="trecho"></div>
+        <div class="texto-pager" id="texto-pager">
+          <button class="btn ghost sm" type="button" id="texto-ant" aria-label="Trecho anterior"><svg class="ico sm"><use href="#i-ant"/></svg></button>
+          <span class="tiny mono" id="texto-pos"></span>
+          <button class="btn ghost sm" type="button" id="texto-prox" aria-label="Próximo trecho"><svg class="ico sm"><use href="#i-prox"/></svg></button>
+        </div>
       </div>
-      <div id="licao-corpo" class="licao-corpo"></div>
+      <div class="palco-lado">
+        <div class="palco-abas" id="palco-abas" role="tablist" aria-label="O que ver nesta lição"></div>
+        <div class="palco" id="licao-corpo"></div>
+      </div>
       <div class="licao-nav">
         <button class="btn ghost" type="button" id="voltar"><svg class="ico sm"><use href="#i-back"/></svg><span>Voltar</span></button>
         <p class="tiny" id="licao-trava"></p>
@@ -69,8 +89,6 @@
       </div>
     </section>
   </main>
-
-  <footer class="foot site-foot">Ambiente de aprendizagem e validação, sem garantias (AGPL-3.0). <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="/">Página inicial</a></footer>
 
   <script src="/selo.js" defer></script>
   <script src="/escola.js" defer></script>

@@ -8,39 +8,53 @@
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="/app.css">
 </head>
-<body>
+<body class="tela doc-tela">
+  <header class="doc-topo">
+    <a class="brand" href="/"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></a>
+    <a class="btn sm" href="/">Página inicial</a>
+  </header>
   <main class="doc">
-    <p><a href="/">← CamFácil IA</a></p>
-    <h1>Termos de uso</h1>
-    <p class="tiny">Versão 1.0 · 7 de novembro de 2026</p>
-
-    <h2>1. O que é</h2>
-    <p>O CamFácil IA é software livre (AGPL-3.0) para técnicos de segurança eletrônica aprenderem e validarem inteligência de vídeo. Este site serve apenas para login, pareamento e acompanhamento dos agentes. É gratuito e fornecido <strong>no estado em que se encontra, sem garantias</strong>.</p>
-
-    <h2>2. Uso de estudo e validação</h2>
-    <p>O CamFácil IA não é sistema de segurança, alarme ou monitoramento profissional e não deve ser a única proteção de pessoas ou patrimônio. Para uso real, utilize câmeras, gravadores e plataformas de mercado que cumpram a LGPD.</p>
-
-    <h2>3. Sua responsabilidade como técnico</h2>
-    <ul>
-      <li>Você instala, configura e opera o CamFácil IA no cliente e é o responsável pelo tratamento das imagens perante o cliente e as pessoas filmadas.</li>
-      <li>Você obtém a autorização do cliente e mantém a sinalização de ambiente monitorado.</li>
-      <li>Você mantém sua conta Google e seus dispositivos seguros, e revoga os que não usa mais.</li>
-    </ul>
-
-    <h2>4. Proibido</h2>
-    <ul>
-      <li>Usar o site ou os agentes para acessar câmeras sem autorização do proprietário.</li>
-      <li>Tentar acessar contas, dispositivos ou agentes de outros técnicos.</li>
-      <li>Atacar, sobrecarregar ou tentar contornar a segurança do serviço.</li>
-    </ul>
-
-    <h2>5. Suspensão</h2>
-    <p>Contas usadas em violação destes termos podem ser suspensas, com o pareamento dos agentes desfeito.</p>
-
-    <h2>6. Mudanças</h2>
-    <p>Estes termos podem mudar. A versão vigente fica sempre nesta página, com a data de atualização.</p>
-
-    <p>Veja também a <a href="/privacidade">política de privacidade</a>.</p>
+    <header class="doc-cab">
+      <h1>Termos de uso</h1>
+      <p class="tiny">Versão 1.0 · 7 de novembro de 2026</p>
+    </header>
+    <div class="paginas" data-paginas>
+      <section class="pag" id="o-que-e">
+        <h2>1. O que é</h2>
+        <p>O CamFácil IA é software livre (AGPL-3.0) para técnicos de segurança eletrônica aprenderem e validarem inteligência de vídeo. Este site serve apenas para login, pareamento e acompanhamento dos agentes. É gratuito e fornecido <strong>no estado em que se encontra, sem garantias</strong>.</p>
+      </section>
+      <section class="pag" id="estudo">
+        <h2>2. Uso de estudo e validação</h2>
+        <p>O CamFácil IA não é sistema de segurança, alarme ou monitoramento profissional e não deve ser a única proteção de pessoas ou patrimônio. Para uso real, utilize câmeras, gravadores e plataformas de mercado que cumpram a LGPD.</p>
+      </section>
+      <section class="pag" id="responsabilidade">
+        <h2>3. Sua responsabilidade como técnico</h2>
+        <ul>
+          <li>Você instala, configura e opera o CamFácil IA no cliente e é o responsável pelo tratamento das imagens perante o cliente e as pessoas filmadas.</li>
+          <li>Você obtém a autorização do cliente e mantém a sinalização de ambiente monitorado.</li>
+          <li>Você mantém sua conta Google e seus dispositivos seguros, e revoga os que não usa mais.</li>
+        </ul>
+      </section>
+      <section class="pag" id="proibido">
+        <h2>4. Proibido</h2>
+        <ul>
+          <li>Usar o site ou os agentes para acessar câmeras sem autorização do proprietário.</li>
+          <li>Tentar acessar contas, dispositivos ou agentes de outros técnicos.</li>
+          <li>Atacar, sobrecarregar ou tentar contornar a segurança do serviço.</li>
+        </ul>
+      </section>
+      <section class="pag" id="suspensao">
+        <h2>5. Suspensão</h2>
+        <p>Contas usadas em violação destes termos podem ser suspensas, com o pareamento dos agentes desfeito.</p>
+      </section>
+      <section class="pag" id="mudancas">
+        <h2>6. Mudanças</h2>
+        <p>Estes termos podem mudar. A versão vigente fica sempre nesta página, com a data de atualização.</p>
+        <p>Veja também a <a href="/privacidade">política de privacidade</a>.</p>
+      </section>
+    </div>
   </main>
+  <footer class="foot doc-foot">Software livre (AGPL-3.0). <a href="/privacidade">Privacidade</a> · <a href="/">Página inicial</a></footer>
+  <script src="/doc.js" defer></script>
 </body>
 </html>

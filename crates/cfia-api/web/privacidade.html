@@ -8,46 +8,64 @@
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="/app.css">
 </head>
-<body>
+<body class="tela doc-tela">
+  <header class="doc-topo">
+    <a class="brand" href="/"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></a>
+    <a class="btn sm" href="/">Página inicial</a>
+  </header>
   <main class="doc">
-    <p><a href="/">← CamFácil IA</a></p>
-    <h1>Política de privacidade</h1>
-    <p class="tiny">Versão 1.0 · 7 de novembro de 2026</p>
-
-    <p>Esta política vale para o site <strong>cfia.ysafe.com.br</strong>, usado por técnicos instaladores para parear e acompanhar os Agentes-Cam-Elo-IA do projeto open source CamFácil IA. Responsável pelo tratamento: Emerson de Carvalho Assis, mantenedor do projeto.</p>
-
-    <h2>O que coletamos</h2>
-    <ul>
-      <li><strong>Conta do técnico:</strong> identificador da conta Google, e-mail e nome, recebidos no login com Google.</li>
-      <li><strong>Dispositivos:</strong> a chave pública gerada pelo seu navegador e um apelido (ex.: "Chrome no Windows").</li>
-      <li><strong>Agentes:</strong> a chave pública de cada agente, a versão, o apelido do cliente que você digitar e as datas de pareamento e de último contato.</li>
-      <li><strong>Segurança:</strong> registros de login, pareamento e revogação, com endereço IP e data.</li>
-    </ul>
-
-    <h2>O que não coletamos</h2>
-    <p>Vídeo, imagens, áudio, senhas de câmeras, endereços RTSP e dados dos clientes finais <strong>não passam por este site</strong>. A conexão de vídeo é feita diretamente entre a rede do cliente e o seu navegador. Esses dados ficam sob responsabilidade do técnico que instala e opera o CamFácil IA.</p>
-
-    <h2>Para que usamos</h2>
-    <ul>
-      <li>Autenticar você e manter a sessão (base legal: execução do serviço que você solicitou).</li>
-      <li>Garantir que só você acesse os seus agentes e investigar abusos (base legal: legítimo interesse e segurança).</li>
-    </ul>
-
-    <h2>Compartilhamento</h2>
-    <p>Não vendemos nem compartilhamos seus dados. O login usa o Google, conforme a política de privacidade do Google. O site é hospedado em servidor próprio do projeto.</p>
-
-    <h2>Retenção</h2>
-    <ul>
-      <li>Sessões: até 30 dias, ou até você sair.</li>
-      <li>Registros de segurança: 12 meses.</li>
-      <li>Conta: até você pedir a exclusão. Ao excluir, apagamos dispositivos e sessões e desfazemos o pareamento dos agentes.</li>
-    </ul>
-
-    <h2>Seus direitos (LGPD, art. 18)</h2>
-    <p>Você pode pedir acesso, correção, portabilidade ou exclusão dos seus dados. Abra um pedido em <a href="https://github.com/emersoncassis/CamFacil-IA/issues">github.com/emersoncassis/CamFacil-IA/issues</a>, com o título "Privacidade" e sem dados pessoais no texto público. O mantenedor responde pelo contato do seu perfil.</p>
-
-    <h2>Segurança</h2>
-    <p>Conexão sempre criptografada (HTTPS), nenhuma senha guardada, isolamento dos dados de cada técnico também no banco de dados, e chaves do navegador que não podem ser exportadas.</p>
+    <header class="doc-cab">
+      <h1>Política de privacidade</h1>
+      <p class="tiny">Versão 1.0 · 7 de novembro de 2026</p>
+    </header>
+    <div class="paginas" data-paginas>
+      <section class="pag" id="sobre" data-titulo="A quem se aplica">
+        <h2>A quem se aplica</h2>
+        <p>Esta política vale para o site <strong>cfia.ysafe.com.br</strong>, usado por técnicos instaladores para parear e acompanhar os Agentes-Cam-Elo-IA do projeto open source CamFácil IA. Responsável pelo tratamento: Emerson de Carvalho Assis, mantenedor do projeto.</p>
+      </section>
+      <section class="pag" id="coletamos">
+        <h2>O que coletamos</h2>
+        <ul>
+          <li><strong>Conta do técnico:</strong> identificador da conta Google, e-mail e nome, recebidos no login com Google.</li>
+          <li><strong>Dispositivos:</strong> a chave pública gerada pelo seu navegador e um apelido (ex.: "Chrome no Windows").</li>
+          <li><strong>Agentes:</strong> a chave pública de cada agente, a versão, o apelido do cliente que você digitar e as datas de pareamento e de último contato.</li>
+          <li><strong>Segurança:</strong> registros de login, pareamento e revogação, com endereço IP e data.</li>
+        </ul>
+      </section>
+      <section class="pag" id="nao-coletamos">
+        <h2>O que não coletamos</h2>
+        <p>Vídeo, imagens, áudio, senhas de câmeras, endereços RTSP e dados dos clientes finais <strong>não passam por este site</strong>. A conexão de vídeo é feita diretamente entre a rede do cliente e o seu navegador. Esses dados ficam sob responsabilidade do técnico que instala e opera o CamFácil IA.</p>
+      </section>
+      <section class="pag" id="usamos">
+        <h2>Para que usamos</h2>
+        <ul>
+          <li>Autenticar você e manter a sessão (base legal: execução do serviço que você solicitou).</li>
+          <li>Garantir que só você acesse os seus agentes e investigar abusos (base legal: legítimo interesse e segurança).</li>
+        </ul>
+      </section>
+      <section class="pag" id="compartilhamento">
+        <h2>Compartilhamento</h2>
+        <p>Não vendemos nem compartilhamos seus dados. O login usa o Google, conforme a política de privacidade do Google. O site é hospedado em servidor próprio do projeto.</p>
+      </section>
+      <section class="pag" id="retencao">
+        <h2>Retenção</h2>
+        <ul>
+          <li>Sessões: até 30 dias, ou até você sair.</li>
+          <li>Registros de segurança: 12 meses.</li>
+          <li>Conta: até você pedir a exclusão. Ao excluir, apagamos dispositivos e sessões e desfazemos o pareamento dos agentes.</li>
+        </ul>
+      </section>
+      <section class="pag" id="direitos">
+        <h2>Seus direitos (LGPD, art. 18)</h2>
+        <p>Você pode pedir acesso, correção, portabilidade ou exclusão dos seus dados. Abra um pedido em <a href="https://github.com/emersoncassis/CamFacil-IA/issues">github.com/emersoncassis/CamFacil-IA/issues</a>, com o título "Privacidade" e sem dados pessoais no texto público. O mantenedor responde pelo contato do seu perfil.</p>
+      </section>
+      <section class="pag" id="seguranca">
+        <h2>Segurança</h2>
+        <p>Conexão sempre criptografada (HTTPS), nenhuma senha guardada, isolamento dos dados de cada técnico também no banco de dados, e chaves do navegador que não podem ser exportadas.</p>
+      </section>
+    </div>
   </main>
+  <footer class="foot doc-foot">Software livre (AGPL-3.0). <a href="/termos">Termos</a> · <a href="/">Página inicial</a></footer>
+  <script src="/doc.js" defer></script>
 </body>
 </html>

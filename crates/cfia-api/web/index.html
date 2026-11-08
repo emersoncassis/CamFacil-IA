@@ -38,42 +38,63 @@
       <symbol id="i-rpi" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8 7V5M12 7V5M16 7V5M8 19v2M16 19v2"/><rect x="9" y="10.5" width="6" height="5" rx="1"/></symbol>
       <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></symbol>
       <symbol id="i-start" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></symbol>
+      <symbol id="i-tools" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M16.5 13v7M13 16.5h7"/></symbol>
+      <symbol id="i-curso" viewBox="0 0 24 24"><path d="m2.5 9 9.5-4.5L21.5 9 12 13.5z"/><path d="M6.5 11v4.5c1.5 1.5 3.5 2.2 5.5 2.2s4-.7 5.5-2.2V11"/><path d="M21.5 9v5"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></symbol>
+      <symbol id="i-painel" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="12" rx="1.5"/><path d="M3.5 13h17M9 20h6M12 16.5V20"/><circle cx="7" cy="8.5" r="1" fill="currentColor"/></symbol>
+      <symbol id="i-ant" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+      <symbol id="i-prox" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></symbol>
     </defs>
   </svg>
 
-  <!-- Boas-vindas (sem login) -->
-  <div class="site" id="entrar" hidden>
-    <header class="topo">
-      <div class="brand"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></div>
-      <a class="btn sm" href="/api/auth/google"><svg class="ico sm"><use href="#i-google"/></svg><span>Entrar</span></a>
+  <!-- Boas-vindas (sem login): tela única, uma seção por vez -->
+  <div class="site tela" id="entrar" hidden>
+    <header class="topo-site">
+      <a class="brand" href="#inicio"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></a>
+      <nav class="secoes" aria-label="Seções do site">
+        <ul role="tablist">
+          <li><button role="tab" type="button" data-secao="inicio" aria-controls="inicio"><svg class="ico"><use href="#i-home"/></svg><span>Início</span></button></li>
+          <li><button role="tab" type="button" data-secao="baixar" aria-controls="baixar"><svg class="ico"><use href="#i-down"/></svg><span>Baixar</span></button></li>
+          <li><button role="tab" type="button" data-secao="ferramentas" aria-controls="ferramentas"><svg class="ico"><use href="#i-tools"/></svg><span>Ferramentas</span></button></li>
+          <li><button role="tab" type="button" data-secao="formacao" aria-controls="formacao"><svg class="ico"><use href="#i-curso"/></svg><span>Formação</span></button></li>
+          <li><button role="tab" type="button" data-secao="quem" aria-controls="quem"><svg class="ico"><use href="#i-user"/></svg><span>Quem fez</span></button></li>
+          <li><button role="tab" type="button" data-secao="painel" aria-controls="painel"><svg class="ico"><use href="#i-painel"/></svg><span>Painel</span></button></li>
+        </ul>
+      </nav>
+      <div class="topo-acoes">
+        <button class="btn ghost sm voz-topo" type="button" id="voz-topo" hidden><svg class="ico sm"><use href="#i-pause"/></svg><span>Pausar a voz</span></button>
+        <a class="btn sm" href="/api/auth/google"><svg class="ico sm"><use href="#i-google"/></svg><span>Entrar</span></a>
+      </div>
     </header>
 
-    <main class="landing">
-      <section class="escolha" aria-label="Por onde começar">
-        <a class="escolha-card aprender" href="/aprender">
-          <span class="kicker">Nunca mexi com IA</span>
-          <strong>Formação de IA para CFTV</strong>
-          <p>Curso no navegador, sem baixar nada: você clica, vê acontecer e desenha a linha e a zona na prática. Seis lições, uns 5 minutos, e o seu selo no final.</p>
-          <span class="escolha-cta">Começar curso · 5 min <svg class="ico sm"><use href="#i-start"/></svg></span>
-        </a>
-        <a class="escolha-card operar" href="#baixar">
-          <span class="kicker">Já trabalho com IA</span>
-          <strong>Ir direto para a operação</strong>
-          <p>Baixe o programa, ligue as câmeras do cliente com a senha e deixe a IA sugerir as regras. Acompanhe de longe por aqui.</p>
-          <span class="escolha-cta">Baixar e operar <svg class="ico sm"><use href="#i-down"/></svg></span>
-        </a>
-      </section>
-
-      <section class="hero">
+    <main class="secoes-palco">
+      <!-- Início -->
+      <section class="secao inicio" id="inicio" role="tabpanel" aria-label="Início">
         <div class="hero-texto">
-        <p class="kicker">Gratuito · código aberto · roda em PC velho</p>
-        <h1>Ligue as câmeras do cliente e veja a IA funcionando em minutos.</h1>
-        <p class="lede">Baixe, abra no computador da rede, digite a senha da câmera e pronto. Quer aprender antes? A formação ensina no navegador, sem instalar nada.</p>
-        <p class="tiny"><a href="/manifesto">Por que isso existe: o manifesto →</a></p>
-        <div class="ouvir" data-narracao="site-01-boas-vindas,site-02-por-que,site-03-passo-a-passo,site-04-download,site-05-painel" hidden>
-          <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir as boas-vindas</span></button>
-          <span class="tiny">Na voz do Emerson, criador do projeto</span>
-        </div>
+          <p class="kicker">Gratuito · código aberto · roda em PC velho</p>
+          <h1>Ligue as câmeras do cliente e veja a IA funcionando em minutos.</h1>
+          <p class="lede">Baixe, abra no computador da rede, digite a senha da câmera e pronto. Quer aprender antes? A formação ensina no navegador, sem instalar nada.</p>
+          <div class="escolha" aria-label="Por onde começar">
+            <a class="escolha-card aprender" href="/aprender">
+              <span class="kicker">Nunca mexi com IA</span>
+              <strong>Formação de IA para CFTV</strong>
+              <span class="escolha-cta">Começar curso · 5 min <svg class="ico sm"><use href="#i-start"/></svg></span>
+            </a>
+            <a class="escolha-card operar" href="#baixar">
+              <span class="kicker">Já trabalho com IA</span>
+              <strong>Ir direto para a operação</strong>
+              <span class="escolha-cta">Baixar e operar <svg class="ico sm"><use href="#i-down"/></svg></span>
+            </a>
+          </div>
+          <div class="hero-pe">
+            <div class="ouvir" data-narracao="site-01-boas-vindas,site-02-por-que,site-03-passo-a-passo,site-04-download,site-05-painel" hidden>
+              <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir as boas-vindas</span></button>
+              <span class="tiny">Na voz do Emerson, criador do projeto</span>
+            </div>
+            <a class="tiny" href="/manifesto">Por que isso existe: o manifesto →</a>
+          </div>
         </div>
         <div class="cena-hero" aria-hidden="true">
           <svg viewBox="0 0 960 540">
@@ -98,65 +119,106 @@
         </div>
       </section>
 
-      <section class="baixar" id="baixar" aria-labelledby="baixar-t">
-        <h2 id="baixar-t">Baixar o CamFácil IA</h2>
-        <div data-baixar></div>
+      <!-- Baixar -->
+      <section class="secao baixar" id="baixar" role="tabpanel" aria-labelledby="baixar-t" hidden>
+        <div class="baixar-dl">
+          <h2 id="baixar-t">Baixar o CamFácil IA</h2>
+          <div data-baixar data-grupo="baixar"></div>
+        </div>
+        <details class="acord como" name="baixar" id="como">
+          <summary><span id="como-t">Como funciona</span><svg class="ico sm"><use href="#i-prox"/></svg></summary>
+          <ol class="trilha">
+            <li><span class="num">1</span><div><strong>Baixe e abra</strong><p>No computador que está na mesma rede das câmeras. Ele abre sozinho no navegador.</p></div></li>
+            <li><span class="num">2</span><div><strong>Digite a senha da câmera</strong><p>O programa acha as câmeras na rede. Você escolhe, digita usuário e senha, e a imagem aparece.</p></div></li>
+            <li><span class="num">3</span><div><strong>Depois, a IA</strong><p>Desenhe a linha e a zona, ou peça “IA, sugira para mim”. Não sabe por onde começar? Faça a <a href="/aprender">formação</a> antes. E, se quiser, acompanhe de longe por este site.</p></div></li>
+          </ol>
+        </details>
       </section>
 
-      <section class="faixa" aria-labelledby="como-t">
-        <h2 id="como-t">Como funciona</h2>
-        <ol class="trilha">
-          <li><span class="num">1</span><div><strong>Baixe e abra</strong><p>No computador que está na mesma rede das câmeras. Ele abre sozinho no navegador.</p></div></li>
-          <li><span class="num">2</span><div><strong>Digite a senha da câmera</strong><p>O programa acha as câmeras na rede. Você escolhe, digita usuário e senha, e a imagem aparece.</p></div></li>
-          <li><span class="num">3</span><div><strong>Depois, a IA</strong><p>Desenhe a linha e a zona, ou peça “IA, sugira para mim”. Não sabe por onde começar? Faça a <a href="/aprender">formação</a> antes. E, se quiser, acompanhe de longe por este site.</p></div></li>
+      <!-- Ferramentas -->
+      <section class="secao ferramentas" id="ferramentas" role="tabpanel" aria-labelledby="ferr-t" hidden>
+        <div class="secao-cab">
+          <h2 id="ferr-t">As ferramentas</h2>
+          <p>Cada peça faz uma coisa. Todas são <strong>abertas, livres e gratuitas</strong> (AGPL-3.0): o código está no <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> e ninguém pode fechar isso de você.</p>
+        </div>
+        <div class="ferr-mestre">
+          <div class="ferr-lista" role="tablist" aria-label="Ferramentas" aria-orientation="vertical">
+            <button role="tab" type="button" data-ferr="programa"><span class="ferr-tag">No computador do cliente</span><span>CamFácil IA, o programa</span></button>
+            <button role="tab" type="button" data-ferr="elo"><span class="ferr-tag">Dentro do programa</span><span>Agente-Cam-Elo-IA, o elo</span></button>
+            <button role="tab" type="button" data-ferr="painel-m"><span class="ferr-tag">Neste site</span><span>Painel de monitoramento</span></button>
+            <button role="tab" type="button" data-ferr="android"><span class="ferr-tag">No celular e na TV Box</span><span>App Android</span></button>
+            <button role="tab" type="button" data-ferr="formacao-f"><span class="ferr-tag">No navegador</span><span>Formação de IA para CFTV</span></button>
+            <button role="tab" type="button" data-ferr="estudio" class="ferr-dev"><span class="ferr-tag">Em desenvolvimento</span><span>Modo estúdio</span></button>
+          </div>
+          <div class="ferr-detalhe">
+            <article class="ferr" data-ferr="programa" role="tabpanel"><p class="ferr-tag">No computador do cliente</p><h3>CamFácil IA, o programa</h3><p>O servidor local. Liga as câmeras, roda a IA (linha, zona, saúde da câmera), manda os alertas e mostra tudo na dashboard do navegador. Roda em PC velho, mini PC, Raspberry e TV Box. Os dados ficam no cliente.</p><a class="btn sm" href="#baixar">Baixar o programa</a></article>
+            <article class="ferr" data-ferr="elo" role="tabpanel" hidden><p class="ferr-tag">Dentro do programa</p><h3>Agente-Cam-Elo-IA, o elo</h3><p>É a ponte entre o programa do cliente e o seu painel. Você pareia uma vez pelo QR code e ele passa a mandar só o resumo: câmeras no ar, máquina, alertas. O vídeo nunca passa por ele.</p></article>
+            <article class="ferr" data-ferr="painel-m" role="tabpanel" hidden><p class="ferr-tag">Neste site</p><h3>Painel de monitoramento</h3><p>Onde você, técnico, vê todos os seus clientes: quem está no ar, quais câmeras caíram, os últimos alertas e o botão de ver ao vivo pelo Tailscale. Pode ser este site ou o seu próprio servidor.</p><a class="btn sm" href="#painel">Ver como acompanhar</a></article>
+            <article class="ferr" data-ferr="android" role="tabpanel" hidden><p class="ferr-tag">No celular e na TV Box</p><h3>App Android</h3><p>Faz as duas coisas: vira o próprio servidor das câmeras (TV Box ou celular parado) ou vê um cliente à distância, com alertas no celular.</p></article>
+            <article class="ferr" data-ferr="formacao-f" role="tabpanel" hidden><p class="ferr-tag">No navegador</p><h3>Formação de IA para CFTV</h3><p>Curso curto e prático, com narração e exercício de verdade: linha, zona, alertas e saúde da câmera. No fim, o seu selo para compartilhar.</p><a class="btn sm" href="/aprender">Começar o curso</a></article>
+            <article class="ferr ferr-dev" data-ferr="estudio" role="tabpanel" hidden><p class="ferr-tag">Em desenvolvimento</p><h3>Modo estúdio</h3><p>Você descreve uma inteligência nova, coleta fotos, rotula, treina no Google Colab e compartilha o que aprendeu com outros técnicos.</p><a class="btn sm" href="/estudio">Ver a prévia</a></article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Formação -->
+      <section class="secao formacao" id="formacao" role="tabpanel" aria-labelledby="form-t" hidden>
+        <div class="formacao-texto">
+          <p class="kicker">Nunca mexi com IA</p>
+          <h2 id="form-t">Formação de IA para CFTV</h2>
+          <p>Curso no navegador, sem baixar nada: você clica, vê acontecer e desenha a linha e a zona na prática. Seis lições, uns 5 minutos, e o seu selo no final.</p>
+          <a class="btn primary grande" href="/aprender"><span>Começar curso · 5 min</span><svg class="ico"><use href="#i-start"/></svg></a>
+        </div>
+        <ol class="formacao-licoes" aria-label="Lições">
+          <li><a href="/aprender#visao"><span class="num">1</span>Como a IA enxerga</a></li>
+          <li><a href="/aprender#linha"><span class="num">2</span>A linha de passagem</a></li>
+          <li><a href="/aprender#zona"><span class="num">3</span>A zona</a></li>
+          <li><a href="/aprender#alerta"><span class="num">4</span>Balões, alertas e som</a></li>
+          <li><a href="/aprender#saude"><span class="num">5</span>Saúde da câmera</a></li>
+          <li><a href="/aprender#pratica"><span class="num">6</span>Da formação para a loja</a></li>
         </ol>
       </section>
 
-      <section class="faixa" id="ferramentas" aria-labelledby="ferr-t">
-        <h2 id="ferr-t">As ferramentas</h2>
-        <p>Cada peça faz uma coisa. Todas são <strong>abertas, livres e gratuitas</strong> (AGPL-3.0): o código está no <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> e ninguém pode fechar isso de você.</p>
-        <div class="ferr-grade">
-          <article class="ferr"><p class="ferr-tag">No computador do cliente</p><h3>CamFácil IA, o programa</h3><p>O servidor local. Liga as câmeras, roda a IA (linha, zona, saúde da câmera), manda os alertas e mostra tudo na dashboard do navegador. Roda em PC velho, mini PC, Raspberry e TV Box. Os dados ficam no cliente.</p></article>
-          <article class="ferr"><p class="ferr-tag">Dentro do programa</p><h3>Agente-Cam-Elo-IA, o elo</h3><p>É a ponte entre o programa do cliente e o seu painel. Você pareia uma vez pelo QR code e ele passa a mandar só o resumo: câmeras no ar, máquina, alertas. O vídeo nunca passa por ele.</p></article>
-          <article class="ferr"><p class="ferr-tag">Neste site</p><h3>Painel de monitoramento</h3><p>Onde você, técnico, vê todos os seus clientes: quem está no ar, quais câmeras caíram, os últimos alertas e o botão de ver ao vivo pelo Tailscale. Pode ser este site ou o seu próprio servidor.</p></article>
-          <article class="ferr"><p class="ferr-tag">No celular e na TV Box</p><h3>App Android</h3><p>Faz as duas coisas: vira o próprio servidor das câmeras (TV Box ou celular parado) ou vê um cliente à distância, com alertas no celular.</p></article>
-          <article class="ferr"><p class="ferr-tag">No navegador</p><h3>Formação de IA para CFTV</h3><p>Curso curto e prático, com narração e exercício de verdade: linha, zona, alertas e saúde da câmera. No fim, o seu selo para compartilhar.</p></article>
-          <article class="ferr ferr-dev"><p class="ferr-tag">Em desenvolvimento</p><h3>Modo estúdio</h3><p>Você descreve uma inteligência nova, coleta fotos, rotula, treina no Google Colab e compartilha o que aprendeu com outros técnicos. <a href="/estudio">Ver a prévia →</a></p></article>
+      <!-- Quem fez -->
+      <section class="secao autor" id="quem" role="tabpanel" aria-labelledby="quem-t" hidden>
+        <div class="autor-texto">
+          <h2 id="quem-t">Quem fez e por quê</h2>
+          <p>Eu sou o <strong>Emerson de Carvalho Assis</strong>. Fui instrutor técnico da Intelbras e treinei profissionais de segurança eletrônica no Brasil inteiro. Vi técnicos excelentes travarem na rede IP e na inteligência artificial: não por falta de capacidade, mas por falta de um lugar para errar e testar.</p>
+          <p>O CamFácil IA é esse lugar. Ele não substitui a câmera com IA de borda nem a plataforma em nuvem: é a ponte. Você aprende, valida no cliente e depois oferece a solução certa.</p>
+          <div class="autor-acoes">
+            <div class="ouvir" data-narracao="site-02-por-que" hidden>
+              <button class="btn sm" type="button"><svg class="ico sm"><use href="#i-play"/></svg><span>Ouvir</span></button>
+            </div>
+            <a class="btn sm" href="/manifesto">Ler o manifesto</a>
+          </div>
         </div>
       </section>
 
-      <section class="faixa autor" aria-labelledby="quem-t">
-        <h2 id="quem-t">Quem fez e por quê</h2>
-        <p>Eu sou o <strong>Emerson de Carvalho Assis</strong>. Fui instrutor técnico da Intelbras e treinei profissionais de segurança eletrônica no Brasil inteiro. Vi técnicos excelentes travarem na rede IP e na inteligência artificial: não por falta de capacidade, mas por falta de um lugar para errar e testar.</p>
-        <p>O CamFácil IA é esse lugar. Ele não substitui a câmera com IA de borda nem a plataforma em nuvem: é a ponte. Você aprende, valida no cliente e depois oferece a solução certa.</p>
-        <div class="ouvir" data-narracao="site-02-por-que" hidden>
-          <button class="btn sm" type="button"><svg class="ico sm"><use href="#i-play"/></svg><span>Ouvir</span></button>
+      <!-- Painel -->
+      <section class="secao painel-site" id="painel" role="tabpanel" aria-label="Painel" hidden>
+        <div class="painel-bloco">
+          <h2 id="site-t">Acompanhar de longe (opcional)</h2>
+          <p>Entre com a sua conta Google para parear os computadores dos seus clientes e ver se estão no ar. O vídeo das câmeras nunca passa por este site.</p>
+          <a class="btn primary" href="/api/auth/google"><svg class="ico"><use href="#i-google"/></svg><span>Entrar com Google</span></a>
+          <p class="msg err" id="entrar-erro" role="alert"></p>
         </div>
-      </section>
-
-      <section class="faixa" aria-labelledby="site-t">
-        <h2 id="site-t">Acompanhar de longe (opcional)</h2>
-        <p>Entre com a sua conta Google para parear os computadores dos seus clientes e ver se estão no ar. O vídeo das câmeras nunca passa por este site.</p>
-        <a class="btn primary" href="/api/auth/google"><svg class="ico"><use href="#i-google"/></svg><span>Entrar com Google</span></a>
-        <p class="msg err" id="entrar-erro" role="alert"></p>
-      </section>
-
-      <section class="faixa" aria-labelledby="painel-t">
-        <h2 id="painel-t">Quer o painel no seu próprio servidor?</h2>
-        <p>O painel é um contêiner Docker. Instala em qualquer VPS Linux (Hostinger, HostGator, Google Cloud, AWS…) ou no seu PC, com HTTPS automático:</p>
-        <div class="cmd"><code class="mono">curl -fsSL https://cfia.ysafe.com.br/instalar-painel.sh | sudo sh</code><button class="btn ghost sm" type="button" data-copiar><svg class="ico sm"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
-        <p class="tiny">Passo a passo completo no <a href="https://github.com/emersoncassis/CamFacil-IA#painel-no-seu-servidor">README do projeto</a>.</p>
+        <details class="acord painel-bloco proprio" id="proprio">
+          <summary><span id="painel-t">Quer o painel no seu próprio servidor?</span><svg class="ico sm"><use href="#i-prox"/></svg></summary>
+          <p>O painel é um contêiner Docker. Instala em qualquer VPS Linux (Hostinger, HostGator, Google Cloud, AWS…) ou no seu PC, com HTTPS automático:</p>
+          <div class="cmd"><code class="mono">curl -fsSL https://cfia.ysafe.com.br/instalar-painel.sh | sudo sh</code><button class="btn ghost sm" type="button" data-copiar><svg class="ico sm"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
+          <p class="tiny">Passo a passo completo no <a href="https://github.com/emersoncassis/CamFacil-IA#painel-no-seu-servidor">README do projeto</a>.</p>
+        </details>
       </section>
     </main>
 
-    <footer class="foot site-foot">Ambiente de aprendizagem e validação, sem garantias (AGPL-3.0). <a href="/manifesto">Manifesto</a> · <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></footer>
+    <footer class="foot site-foot"><span class="foot-aviso">Ambiente de aprendizagem e validação, </span>sem garantias (AGPL-3.0). <a href="/manifesto">Manifesto</a> · <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></footer>
   </div>
 
-  <!-- App -->
-  <div class="shell" id="app" hidden>
+  <!-- App (logado) -->
+  <div class="shell tela" id="app" hidden>
     <aside class="rail">
       <div class="brand"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></div>
-      <nav aria-label="Seções">
+      <nav aria-label="Seções" class="rail-nav">
         <ul class="nav" role="tablist">
           <li><button role="tab" data-tab="agentes" aria-selected="true"><svg class="ico"><use href="#i-agent"/></svg><span>Painel</span></button></li>
           <li><button role="tab" data-tab="dispositivos"><svg class="ico"><use href="#i-key"/></svg><span>Dispositivos</span></button></li>
@@ -169,8 +231,8 @@
       </div>
     </aside>
 
-    <main>
-      <!-- Começar -->
+    <main class="app-main">
+      <!-- Instalar -->
       <section id="comecar" class="page" role="tabpanel" hidden>
         <header class="pagehead">
           <div>
@@ -181,35 +243,55 @@
             <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir o passo a passo</span></button>
           </div>
         </header>
-        <div class="block">
-          <div class="passo"><span class="num">1</span><h2>Baixe no computador da rede das câmeras</h2></div>
-          <div data-baixar></div>
+        <div class="passos-abas" role="tablist" aria-label="Passos">
+          <button role="tab" type="button" data-passo="1" aria-selected="true"><span class="num">1</span><span>Baixar</span></button>
+          <button role="tab" type="button" data-passo="2"><span class="num">2</span><span>Ligar a câmera</span></button>
+          <button role="tab" type="button" data-passo="3"><span class="num">3</span><span>Parear</span></button>
         </div>
-        <div class="block">
-          <div class="passo"><span class="num">2</span><h2>Ligue a câmera</h2></div>
+        <div class="passo-corpo" data-passo="1">
+          <h2 class="sr">Baixe no computador da rede das câmeras</h2>
+          <p class="hint passo-sub">Baixe no computador da rede das câmeras.</p>
+          <div data-baixar data-grupo="instalar"></div>
+        </div>
+        <div class="passo-corpo" data-passo="2" hidden>
+          <h2>Ligue a câmera</h2>
           <p class="hint">O programa abre direto em <strong>Ligar câmera</strong> e procura as câmeras na rede. Escolha uma, digite usuário e senha, clique em Conectar. A imagem aparece na hora. Não achou? Digite o IP da câmera.</p>
+          <div class="actions mt"><button class="btn" type="button" data-ir-passo="3">Próximo: parear <svg class="ico sm"><use href="#i-prox"/></svg></button></div>
         </div>
-        <div class="block">
-          <div class="passo"><span class="num">3</span><h2>Pareie com este painel (opcional)</h2></div>
+        <div class="passo-corpo" data-passo="3" hidden>
+          <h2>Pareie com este painel (opcional)</h2>
           <ol class="steps">
             <li>No programa, vá em <strong>Integrações → Parear com o site</strong>.</li>
             <li>Aponte a câmera do celular para o QR code. Ele abre este painel já com o código.</li>
-            <li>Confirme aqui e depois em <strong>Confirmar</strong> na tela do cliente. O agente aparece em <strong>Agentes</strong>.</li>
+            <li>Confirme aqui e depois em <strong>Confirmar</strong> na tela do cliente. O agente aparece no <strong>Painel</strong>.</li>
           </ol>
+          <div class="actions mt"><button class="btn" type="button" data-abrir-parear>Já instalei, parear agora</button></div>
         </div>
       </section>
 
-      <!-- Agentes -->
+      <!-- Painel -->
       <section id="agentes" class="page" role="tabpanel">
         <header class="pagehead">
           <div>
             <h1>Painel</h1>
             <p class="lede">Seus clientes e as câmeras de cada um, ao vivo.</p>
           </div>
-          <button class="btn" id="como-parear"><svg class="ico"><use href="#i-link"/></svg><span>Parear cliente</span></button>
+          <div class="actions">
+            <button class="btn" id="como-parear" type="button"><svg class="ico"><use href="#i-link"/></svg><span>Parear cliente</span></button>
+            <button class="btn ghost" id="ver-ts" type="button"><svg class="ico"><use href="#i-phone"/></svg><span>Ao vivo no celular</span></button>
+          </div>
         </header>
-        <div class="block" id="passos" hidden>
-          <h2>Como parear</h2>
+
+        <div class="vista" data-vista="lista">
+          <div class="lista-barra" id="lista-barra" hidden>
+            <label class="filtro"><svg class="ico sm"><use href="#i-busca"/></svg><input type="search" id="filtro" placeholder="Filtrar clientes" aria-label="Filtrar clientes" autocomplete="off"></label>
+            <div class="pager" id="pager-clientes"></div>
+          </div>
+          <div id="lista-agentes" class="clientes"></div>
+        </div>
+
+        <div class="vista" data-vista="parear" id="passos" hidden>
+          <div class="vista-cab"><button class="btn ghost sm" type="button" data-voltar><svg class="ico sm"><use href="#i-ant"/></svg><span>Clientes</span></button><h2>Como parear</h2></div>
           <ol class="steps">
             <li>No computador do cliente, abra o CamFácil IA e vá em <strong>Integrações → Parear com o site</strong>.</li>
             <li>Aponte a câmera do celular para o QR code que aparecer. Ele abre esta página já com o código.</li>
@@ -231,16 +313,21 @@
           </form>
           <p class="msg" id="leitor-msg" role="status"></p>
         </div>
-        <div id="lista-agentes" class="clientes"></div>
-        <details class="block dica-ts">
-          <summary>Ver ao vivo pelo celular (Tailscale)</summary>
+
+        <div class="vista" data-vista="ts" hidden>
+          <div class="vista-cab"><button class="btn ghost sm" type="button" data-voltar><svg class="ico sm"><use href="#i-ant"/></svg><span>Clientes</span></button><h2>Ver ao vivo pelo celular (Tailscale)</h2></div>
           <ol class="steps">
             <li>No computador do cliente, instale o Tailscale e entre com a sua conta. O CamFácil IA percebe sozinho em até 1 minuto.</li>
             <li>No celular, instale o Tailscale (ou use o app CamFácil IA para Android) e entre com a mesma conta.</li>
             <li>Volte aqui e toque em <strong>Ver ao vivo</strong>. O vídeo vai direto do cliente para o seu celular, cifrado, sem passar pela nuvem.</li>
           </ol>
           <p class="hint">Baixe o app Android em <a href="https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk">camfacil-android.apk</a>.</p>
-        </details>
+        </div>
+
+        <div class="vista" data-vista="detalhe" hidden>
+          <div class="vista-cab"><button class="btn ghost sm" type="button" data-voltar><svg class="ico sm"><use href="#i-ant"/></svg><span>Clientes</span></button><h2 id="detalhe-nome"></h2><span class="state" id="detalhe-estado"></span></div>
+          <div id="detalhe-corpo" class="detalhe-corpo"></div>
+        </div>
       </section>
 
       <!-- Dispositivos -->
@@ -251,14 +338,13 @@
             <p class="lede">Cada navegador onde você entrou tem uma chave própria. Os agentes só aceitam comandos dos dispositivos autorizados no pareamento. Revogue os que você não usa mais.</p>
           </div>
         </header>
-        <div class="block">
-          <div class="table-wrap">
-            <table class="table">
-              <thead><tr><th>Dispositivo</th><th>Impressão</th><th>Criado em</th><th class="right"></th></tr></thead>
-              <tbody id="lista-dispositivos"></tbody>
-            </table>
-          </div>
+        <div class="table-wrap" id="disp-wrap">
+          <table class="table">
+            <thead><tr><th>Dispositivo</th><th class="col-impressao">Impressão</th><th>Criado em</th><th class="right"></th></tr></thead>
+            <tbody id="lista-dispositivos"></tbody>
+          </table>
         </div>
+        <div class="pager" id="pager-disp"></div>
       </section>
 
       <!-- Parear -->
@@ -282,7 +368,7 @@
         </div>
       </section>
 
-      <footer class="foot">Ambiente de aprendizagem e validação, sem garantias (AGPL-3.0). <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></footer>
+      <footer class="foot app-foot">Ambiente de aprendizagem e validação, sem garantias (AGPL-3.0). <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></footer>
     </main>
   </div>
 
