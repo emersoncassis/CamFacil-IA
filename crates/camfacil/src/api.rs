@@ -1,6 +1,6 @@
 //! Rotas HTTP da fase 1.
 
-use crate::{assets, Shared};
+use crate::{assets, integracoes, Shared};
 use axum::{
     extract::Path,
     extract::State,
@@ -70,19 +70,46 @@ pub fn router(app: Shared) -> Router {
             "/api/telegram/chats/{id}",
             post(post_telegram_chat).delete(delete_telegram_chat),
         )
+        .route(
+            "/api/whatsapp",
+            get(integracoes::get_whatsapp)
+                .post(integracoes::post_whatsapp)
+                .delete(integracoes::delete_whatsapp),
+        )
+        .route(
+            "/api/whatsapp/testar",
+            post(integracoes::post_whatsapp_testar),
+        )
+        .route("/api/whatsapp/qr", post(integracoes::post_whatsapp_qr))
+        .route(
+            "/api/whatsapp/fotos",
+            post(integracoes::post_whatsapp_fotos),
+        )
+        .route(
+            "/api/whatsapp/webhook/registrar",
+            post(integracoes::post_whatsapp_webhook_registrar),
+        )
+        .route(
+            "/api/whatsapp/webhook/{token}",
+            post(integracoes::post_whatsapp_webhook),
+        )
+        .route(
+            "/api/whatsapp/contatos/{jid}",
+            post(integracoes::post_whatsapp_contato).delete(integracoes::delete_whatsapp_contato),
+        )
         .route("/api/tailscale", get(get_tailscale))
         .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
         .fallback(static_file)
         .with_state(app)
 }
 
-type ApiResult = Result<Json<Value>, (StatusCode, Json<Value>)>;
+pub(crate) type ApiResult = Result<Json<Value>, (StatusCode, Json<Value>)>;
 
-fn bad(status: StatusCode, msg: impl ToString) -> (StatusCode, Json<Value>) {
+pub(crate) fn bad(status: StatusCode, msg: impl ToString) -> (StatusCode, Json<Value>) {
     (status, Json(json!({ "erro": msg.to_string() })))
 }
 
-fn internal<E: std::fmt::Display>(e: E) -> (StatusCode, Json<Value>) {
+pub(crate) fn internal<E: std::fmt::Display>(e: E) -> (StatusCode, Json<Value>) {
     bad(StatusCode::INTERNAL_SERVER_ERROR, e)
 }
 
