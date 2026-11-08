@@ -119,7 +119,9 @@ code, kbd, pre { font-family: var(--md-code-font-family); }
 .player__bar span { display: block; height: 100%; width: 0; background: var(--c-green); transition: width 0.25s linear; }
 .player__nota { font-size: 0.62rem; color: var(--c-500); margin: 0.2rem 0 0; }
 
-.manifesto__acoes { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem; }
+.manifesto__acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1.1rem; max-width: 26rem; }
+.md-typeset .manifesto__acoes .md-button { text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.45em; }
+.cafe-ico { width: 1.05em; height: 1.05em; flex: none; color: var(--c-green); }
 .md-typeset .manifesto__acoes .md-button {
   margin: 0; font-size: 0.7rem; padding: 0.45em 1.1em; border-radius: 6px;
   border: 1px solid var(--c-line-strong); color: var(--c-100); background: transparent; font-weight: 500;
@@ -162,10 +164,16 @@ code, kbd, pre { font-family: var(--md-code-font-family); }
   .manifesto__lead { font-size: 0.74rem; line-height: 1.5; }
   .player { max-width: none; margin-top: 0.8rem; padding: 0.45rem 0.8rem 0.45rem 0.45rem; }
   .player__btn { width: 2.3rem; height: 2.3rem; }
-  .manifesto__acoes { margin-top: 0.7rem; gap: 0.4rem; }
-  .md-typeset .manifesto__acoes .md-button { padding: 0.4em 0.8em; }
+  .player__nota { display: none; }
+  .manifesto__acoes { margin-top: 0.7rem; gap: 0.4rem; display: grid; grid-template-columns: 1fr 1fr; }
+  .md-typeset .manifesto__acoes .md-button { padding: 0.45em 0.5em; font-size: 0.64rem; text-align: center; }
   .md-typeset .partes details.parte > summary { padding-top: 0.5rem; padding-bottom: 0.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .player__btn, .player__bar span { transition: none; }
 }
+
+/* Botão de apoio: discreto, verde só no ícone */
+.md-typeset .manifesto__acoes .md-button--cafe .twemoji,
+.md-typeset .md-button .twemoji { color: var(--c-green); }
+.md-typeset .md-button--primary .twemoji { color: var(--c-black); }

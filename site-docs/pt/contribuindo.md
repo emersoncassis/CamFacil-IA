@@ -2,6 +2,14 @@
 
 Você não precisa ser programador para ajudar: testar em campo, relatar um problema e compartilhar com outro técnico já conta.
 
+## Apoie o projeto
+
+O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem tempo, estudo, anos de sala de aula e dinheiro do próprio bolso: só para começar, foram cerca de R$ 7 mil.
+
+Se ele te ajudou a aprender, a vender ou a ganhar tempo, pague um café. Cada apoio mantém o projeto vivo e aberto para o próximo técnico.
+
+[:fontawesome-solid-mug-hot: Apoiar no Buy Me a Coffee](https://buymeacoffee.com/emersoncarvalho){ .md-button .md-button--primary target="_blank" rel="noopener" }
+
 ## Para quem programa
 
 1. Leia o [PRD](https://github.com/emersoncassis/CamFacil-IA/blob/main/docs/PRD.md), principalmente o que fica **fora do escopo**.

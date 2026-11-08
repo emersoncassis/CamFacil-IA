@@ -2,6 +2,8 @@
 
 Obrigado por querer ajudar técnicos de todo o Brasil a aprender IA de vídeo.
 
+Não programa? Testar em campo, relatar problemas e compartilhar com outro técnico já ajuda muito. E, se quiser apoiar com dinheiro, [pague um café](https://buymeacoffee.com/emersoncarvalho).
+
 ## Antes de começar
 1. Leia o [PRD](docs/PRD.md), principalmente a seção **6 — Fora do escopo**. O CamFácil IA ensina e valida; não concorre com câmeras de borda nem com plataformas de IA em nuvem.
 2. Leia o SDD da área que você vai mexer em [`docs/sdd/`](docs/sdd).
