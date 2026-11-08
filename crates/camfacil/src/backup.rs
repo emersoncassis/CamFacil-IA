@@ -1,7 +1,7 @@
 //! Backup cifrado da configuração (PRD §5.7): exportar e importar.
 //!
 //! O arquivo `.cfbkp` leva câmeras, regras, módulos, modo TV (com a logo),
-//! contatos do Telegram e selos; não leva eventos, identidade da máquina,
+//! contatos do Telegram e do WhatsApp, integrações e selos; não leva eventos, identidade da máquina,
 //! porta nem aparelhos pareados. É protegido por uma senha escolhida na hora:
 //! PBKDF2-HMAC-SHA256 (feito aqui com o `sha2` que já está no binário) deriva
 //! a chave e o ChaCha20-Poly1305 do cofre cifra. Segredos que no banco estão
@@ -219,7 +219,8 @@ pub fn importar(app: &crate::App, arquivo: &[u8], senha: &str) -> Result<Restaur
     Ok(Restaurado {
         cameras: c.config.cameras.len(),
         regras: c.config.regras.len(),
-        contatos: c.config.telegram.iter().filter(|t| t.autorizado).count(),
+        contatos: c.config.telegram.iter().filter(|t| t.autorizado).count()
+            + c.config.whatsapp.iter().filter(|w| w.autorizado).count(),
         logo: !logo.is_empty(),
         criado_em: c.criado_em,
         app: c.app,

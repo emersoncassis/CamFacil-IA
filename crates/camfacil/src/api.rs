@@ -1,6 +1,6 @@
 //! Rotas HTTP da fase 1.
 
-use crate::{assets, Shared};
+use crate::{arquivo, assets, integracoes, termos, Shared};
 use axum::{
     extract::Path,
     extract::State,
@@ -70,6 +70,54 @@ pub fn router(app: Shared) -> Router {
             "/api/telegram/chats/{id}",
             post(post_telegram_chat).delete(delete_telegram_chat),
         )
+        .route(
+            "/api/whatsapp",
+            get(integracoes::get_whatsapp)
+                .post(integracoes::post_whatsapp)
+                .delete(integracoes::delete_whatsapp),
+        )
+        .route(
+            "/api/whatsapp/testar",
+            post(integracoes::post_whatsapp_testar),
+        )
+        .route("/api/whatsapp/qr", post(integracoes::post_whatsapp_qr))
+        .route(
+            "/api/whatsapp/fotos",
+            post(integracoes::post_whatsapp_fotos),
+        )
+        .route(
+            "/api/whatsapp/webhook/registrar",
+            post(integracoes::post_whatsapp_webhook_registrar),
+        )
+        .route(
+            "/api/whatsapp/webhook/{token}",
+            post(integracoes::post_whatsapp_webhook),
+        )
+        .route(
+            "/api/whatsapp/contatos/{jid}",
+            post(integracoes::post_whatsapp_contato).delete(integracoes::delete_whatsapp_contato),
+        )
+        .route(
+            "/api/webhook",
+            get(integracoes::get_webhook)
+                .post(integracoes::post_webhook)
+                .delete(integracoes::delete_webhook),
+        )
+        .route(
+            "/api/webhook/testar",
+            post(integracoes::post_webhook_testar),
+        )
+        .route(
+            "/api/arquivo",
+            get(arquivo::get_arquivo).post(arquivo::post_arquivo),
+        )
+        .route("/api/arquivo/{nome}", get(arquivo::get_foto_arquivo))
+        .route("/api/termos", get(termos::get_termos))
+        .route("/api/termos/tecnico", post(termos::post_termos_tecnico))
+        .route("/api/termos/cliente", post(termos::post_termos_cliente))
+        .route("/api/termos/cliente.md", get(termos::get_termos_cliente_md))
+        .route("/api/termos/placa.md", get(termos::get_termos_placa_md))
+        .route("/api/termos/apagar", post(termos::post_termos_apagar))
         .route("/api/tailscale", get(get_tailscale))
         .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
         // Fase 5 (Manutenção): módulos próprios.
@@ -111,13 +159,13 @@ pub fn router(app: Shared) -> Router {
         .with_state(app)
 }
 
-type ApiResult = Result<Json<Value>, (StatusCode, Json<Value>)>;
+pub(crate) type ApiResult = Result<Json<Value>, (StatusCode, Json<Value>)>;
 
-fn bad(status: StatusCode, msg: impl ToString) -> (StatusCode, Json<Value>) {
+pub(crate) fn bad(status: StatusCode, msg: impl ToString) -> (StatusCode, Json<Value>) {
     (status, Json(json!({ "erro": msg.to_string() })))
 }
 
-fn internal<E: std::fmt::Display>(e: E) -> (StatusCode, Json<Value>) {
+pub(crate) fn internal<E: std::fmt::Display>(e: E) -> (StatusCode, Json<Value>) {
     bad(StatusCode::INTERNAL_SERVER_ERROR, e)
 }
 
@@ -972,6 +1020,7 @@ struct TokenReq {
 
 /// Salva o token (cifrado) depois de confirmar com o Telegram que ele vale.
 async fn post_telegram(State(app): State<Shared>, Json(r): Json<TokenReq>) -> ApiResult {
+    termos::exigir_tecnico(&app)?;
     let tg = telegram(&app)?;
     let eu = tg
         .definir_token(&r.token)

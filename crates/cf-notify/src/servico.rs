@@ -194,7 +194,8 @@ impl Telegram {
         self.cofre.decifrar(&g)
     }
 
-    fn bot(&self) -> Option<Bot> {
+    /// Cliente da Bot API com o token salvo (usado também pelo arquivo de alertas).
+    pub fn bot(&self) -> Option<Bot> {
         self.token().map(|t| Bot::new(&t))
     }
 
