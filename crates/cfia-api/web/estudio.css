@@ -217,3 +217,34 @@
   .vms-pilares p { display: none; }
 }
 @media (max-height: 700px) { .vms-pilares p { display: none; } }
+
+/* Entrada do estúdio: dois blocos fechados */
+.est.em-casa, .est.em-vms { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "passo"; }
+.est-trilha[hidden], .est-nav[hidden] { display: none; }
+.casa-blocos { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); }
+.casa-bloco { min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; gap: var(--s3); padding: var(--s5); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color .12s, background-color .12s; }
+.casa-bloco:hover { border-color: var(--accent); }
+.casa-bloco:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.casa-bloco strong { font-size: var(--fs-xl); line-height: 1.15; }
+.casa-txt { color: var(--text-2); font-size: var(--fs-sm); line-height: 1.55; }
+.casa-tag { padding: 2px 10px; border-radius: var(--r-pill); border: 1px solid var(--accent); color: var(--accent); font-size: var(--fs-xs); }
+.casa-tag.futuro { border-color: var(--c-warn); color: var(--c-warn); }
+.casa-futuro { border-style: dashed; }
+.casa-futuro:hover { border-color: var(--c-warn); }
+.casa-passos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; counter-reset: p; }
+.casa-passos li { counter-increment: p; padding: 2px 10px; border: 1px solid var(--line); border-radius: var(--r-pill); color: var(--text-2); font-size: var(--fs-xs); }
+.casa-passos li::before { content: counter(p) " · "; color: var(--text-3); }
+.casa-abrir { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 500; }
+.est-casa .est-aviso { flex: none; }
+.est-voltar-casa { display: flex; align-items: center; gap: 6px; padding: 4px var(--s2); background: none; border: 0; color: var(--text-2); font: inherit; font-weight: 500; cursor: pointer; }
+.est-voltar-casa:hover { color: var(--text); }
+@media (max-width: 760px) {
+  .casa-blocos { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
+  .casa-bloco { padding: var(--s3) var(--s4); gap: var(--s2); }
+  .casa-bloco strong { font-size: var(--fs-lg); }
+  .est-casa .est-aviso { display: none; }
+}
+@media (max-height: 700px) { .casa-txt { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; } }
+@media (max-height: 640px) and (max-width: 760px) { .casa-passos { display: none; } }
+@media (max-width: 999px), (max-height: 620px) { .est-voltar-casa { padding: 0; } }
+@media (min-width: 761px) { .casa-blocos { align-content: center; grid-template-rows: minmax(0, 340px); } }

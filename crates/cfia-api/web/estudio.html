@@ -22,7 +22,32 @@
   </header>
 
   <main class="est" id="estudio">
+    <!-- Entrada do estúdio: dois blocos fechados -->
+    <section class="est-passo est-casa" id="casa" aria-labelledby="t-casa" hidden>
+      <header class="est-cab">
+        <h1 id="t-casa">Estúdio</h1>
+        <p>Escolha o que fazer. Tudo aberto, livre e só para estudo.</p>
+      </header>
+      <div class="casa-blocos">
+        <button type="button" class="casa-bloco" id="abrir-treino">
+          <span class="casa-tag">Versão básica · funciona</span>
+          <strong>Treine sua IA</strong>
+          <span class="casa-txt">Ensine a câmera a reconhecer algo novo: você descreve, junta fotos, rotula, treina no Google Colab, importa no programa e compartilha com outros técnicos.</span>
+          <ol class="casa-passos"><li>Descrever</li><li>Coletar</li><li>Rotular</li><li>Treinar</li><li>Importar</li><li>Compartilhar</li></ol>
+          <span class="casa-abrir">Começar <svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></span>
+        </button>
+        <button type="button" class="casa-bloco casa-futuro" id="abrir-vms">
+          <span class="casa-tag futuro">Em breve · só desenho</span>
+          <strong>VMS sob medida</strong>
+          <span class="casa-txt">Com um assistente de código (Claude Code, Codex ou outro) ligado ao CamFácil IA por MCP, você monta o seu próprio VMS sobre a IA local e a integração nativa com Intelbras, Hikvision, Dahua e outros.</span>
+          <span class="casa-abrir">Ver o desenho <svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></span>
+        </button>
+      </div>
+      <p class="est-aviso">Só para estudo e aprendizagem. Modelos do estúdio não devem ser usados em produção: para uso real, câmeras e gravadores com IA de borda ou plataformas corporativas. Reconhecimento facial e biometria ficam bloqueados.</p>
+    </section>
+
     <nav class="est-trilha" aria-label="Passos do estúdio">
+      <button type="button" class="est-voltar-casa" data-casa><svg class="ico sm" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg><span>Treine sua IA</span></button>
       <ol class="est-passos" role="tablist">
         <li><button type="button" role="tab" data-ir="descrever"><span class="num">1</span><span class="rot">Descrever</span></button></li>
         <li><button type="button" role="tab" data-ir="coletar"><span class="num">2</span><span class="rot">Coletar</span></button></li>
@@ -31,7 +56,6 @@
         <li><button type="button" role="tab" data-ir="importar"><span class="num">5</span><span class="rot">Importar</span></button></li>
         <li><button type="button" role="tab" data-ir="compartilhar"><span class="num">6</span><span class="rot">Compartilhar</span></button></li>
       </ol>
-      <button type="button" class="est-futuro" id="abrir-vms"><span class="est-futuro-tag">Em breve</span><span>VMS sob medida</span></button>
       <p class="est-aviso-curto" aria-hidden="true">Só estudo: não use em produção. Sem biometria.</p>
       <p class="est-aviso">Só para estudo e aprendizagem. Modelos do estúdio não devem ser usados em produção: para uso real, câmeras e gravadores com IA de borda ou plataformas corporativas. Reconhecimento facial e biometria ficam bloqueados.</p>
       <p class="est-receita-atual tiny" id="receita-atual" hidden></p>
@@ -283,7 +307,7 @@
         <div><strong>Integração nativa</strong><p class="tiny">APIs dos fabricantes: Intelbras, Hikvision, Dahua e outros. Gravadores e câmeras sem gambiarra.</p></div>
         <div><strong>Assistente de código</strong><p class="tiny">O MCP entrega ao assistente o que o CamFácil IA sabe fazer. Ele constrói algo que funciona e não falha.</p></div>
       </div>
-      <div class="actions"><button class="btn" type="button" id="fechar-vms">Voltar ao estúdio</button></div>
+      <div class="actions"><button class="btn" type="button" id="fechar-vms" data-casa>Voltar ao estúdio</button></div>
     </section>
 
     <nav class="est-nav" aria-label="Avançar e voltar">
