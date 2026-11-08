@@ -612,6 +612,35 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px soli
   .apoio-grade { grid-template-columns: 1fr; }
 }
 
+/* Entrar no mural: bloco fechado; o formulário só abre no clique. */
+.apoiar-mural { min-width: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.mural-bloco { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); padding: var(--s5); min-height: 220px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color .12s; }
+.mural-bloco:hover { border-color: var(--accent); }
+.mural-bloco:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.mural-bloco strong { font-size: var(--fs-xl); line-height: 1.15; }
+.mural-bloco-ico { width: 28px; height: 28px; fill: none; stroke: var(--accent); stroke-width: 1.6; }
+.mural-bloco-txt { color: var(--text-2); font-size: var(--fs-sm); line-height: 1.55; }
+.mural-bloco .casa-abrir { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.mural-ver { color: var(--text-2); align-self: flex-start; }
+.apoiar-mural.aberto .mural-bloco, .apoiar-mural.aberto .mural-ver { display: none; }
+.mural-form-topo { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.mural-form-topo h3 { margin: 0; }
+.apoio-mais { margin: 0; }
+.apoio-mais > .apoio-grade { padding-top: var(--s2); }
+@media (max-width: 760px) {
+  .mural-bloco { min-height: 0; padding: var(--s4); }
+  .mural-bloco strong { font-size: var(--fs-lg); }
+  .apoiar.mural-aberto .apoiar-pix { display: none; }
+}
+@media (max-width: 760px) and (max-height: 720px) {
+  .apoiar-form { padding: var(--s3); }
+  .apoiar-form > .tiny { display: none; }
+  .apoiar-form .apoio-grade { gap: var(--s1) var(--s3); }
+  .apoiar-form .apoio-ok { margin: var(--s2) 0; }
+  /* "Quer contar mais?" aberto: mostra só os campos extras. */
+  .apoiar-form:has(.apoio-mais[open]) > .apoio-grade > label { display: none; }
+}
+
 /* ---------- Mural ao vivo: a IA "detecta" cada apoiador na cena ---------- */
 .mural-vivo { position: absolute; left: 4%; bottom: 6%; z-index: 2; display: grid; gap: 2px; min-width: min(78%, 340px); max-width: 86%; padding: 10px 16px 11px; text-decoration: none; color: var(--text); background: rgba(0, 0, 0, .78); border-radius: var(--r); overflow: hidden; backdrop-filter: blur(6px); }
 .mural-vivo[hidden] { display: none; }

@@ -739,3 +739,22 @@ async function main() {
 }
 
 main();
+
+// Apoiar: "Entrar no mural" é um bloco fechado; o formulário só aparece no clique.
+(() => {
+  const abrir = document.getElementById("abrir-mural");
+  const form = document.getElementById("form-mural");
+  const fechar = document.getElementById("fechar-mural");
+  if (!abrir || !form) return;
+  const caixa = abrir.closest(".apoiar-mural");
+  const secao = abrir.closest(".apoiar");
+  const mostrar = (on) => {
+    form.hidden = !on;
+    caixa.classList.toggle("aberto", on);
+    if (secao) secao.classList.toggle("mural-aberto", on);
+    abrir.setAttribute("aria-expanded", String(on));
+    if (on) { const n = form.querySelector("input[name=nome]"); if (n) n.focus({ preventScroll: true }); } else abrir.focus({ preventScroll: true });
+  };
+  abrir.addEventListener("click", () => mostrar(true));
+  if (fechar) fechar.addEventListener("click", () => mostrar(false));
+})();

@@ -249,24 +249,40 @@
             <p class="tiny">Ideias e pedidos de funcionalidade passam pelo apoio. Prefere fazer você mesmo? O código é aberto: abra um <a href="https://github.com/emersoncassis/CamFacil-IA/pulls">pull request</a>. Fora do Brasil: <a href="https://buymeacoffee.com/emersoncarvalho">Buy Me a Coffee</a>.</p>
           </details>
         </div>
-        <form class="apoio-form apoiar-form" data-titulo="Apoio ao CamFácil IA" data-assunto="Apoio ao CamFácil IA" data-anexo="(comprovante em anexo)" data-msg-enviando="Enviando…" data-msg-ok="Recebido! Muito obrigado pelo apoio. Seu nome entra no mural depois que eu conferir." data-msg-erro="Não foi possível enviar agora. Tente de novo em instantes." data-msg-grande="O comprovante passou de 6 MB. Mande um print menor.">
-          <h3>Entrar no mural</h3>
-          <p class="tiny">Fez o Pix? Preencha, anexe o comprovante e envie. Chega direto para mim. <a href="https://emersoncassis.github.io/CamFacil-IA/apoiadores/">Ver o mural →</a></p>
+        <div class="apoiar-mural">
+          <button type="button" class="mural-bloco" id="abrir-mural" aria-expanded="false" aria-controls="form-mural">
+            <svg class="mural-bloco-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+            <strong>Entrar no mural</strong>
+            <span class="mural-bloco-txt">Fez o Pix? Seu nome e um recado entram no mural de apoiadores. Leva um minuto.</span>
+            <span class="casa-abrir">Entrar <svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></span>
+          </button>
+          <a class="tiny mural-ver" href="https://emersoncassis.github.io/CamFacil-IA/apoiadores/">Ver o mural de apoiadores →</a>
+        <form id="form-mural" hidden class="apoio-form apoiar-form" data-titulo="Apoio ao CamFácil IA" data-assunto="Apoio ao CamFácil IA" data-anexo="(comprovante em anexo)" data-msg-enviando="Enviando…" data-msg-ok="Recebido! Muito obrigado pelo apoio. Seu nome entra no mural depois que eu conferir." data-msg-erro="Não foi possível enviar agora. Tente de novo em instantes." data-msg-grande="O comprovante passou de 6 MB. Mande um print menor.">
+          <div class="mural-form-topo">
+            <h3>Entrar no mural</h3>
+            <button class="btn ghost sm" type="button" id="fechar-mural"><svg class="ico sm" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg><span>Voltar</span></button>
+          </div>
+          <p class="tiny">Só o nome já basta. Chega direto para mim.</p>
           <div class="apoio-grade">
-            <label>Nome para o mural<input data-campo="Nome" name="nome" required maxlength="60"></label>
-            <label>Instagram ou LinkedIn (opcional)<input data-campo="Link" name="link" maxlength="120"></label>
-            <label>Valor<input data-campo="Valor" name="valor" inputmode="decimal" placeholder="R$" maxlength="20"></label>
-            <label>Tipo de apoio
-              <select data-campo="Tipo" name="tipo">
-                <option>Doação livre</option>
-                <option>Pedido de funcionalidade</option>
-                <option>Conversa de uma hora</option>
-                <option>Desenvolvimento juntos</option>
-              </select>
-            </label>
-            <label class="largo">Recado<textarea data-campo="Recado" name="recado" rows="1" maxlength="400"></textarea></label>
-            <label class="largo">O que você quer? Uma funcionalidade, o assunto da conversa ou a aplicação (opcional)<textarea data-campo="O que quer" name="pedido" rows="1" maxlength="600"></textarea></label>
-            <label class="largo">Comprovante (foto ou PDF)<input type="file" name="comprovante" accept="image/*,application/pdf"></label>
+            <label>Seu nome<input data-campo="Nome" name="nome" required maxlength="60" autocomplete="name"></label>
+            <label>Comprovante (foto ou PDF)<input type="file" name="comprovante" accept="image/*,application/pdf"></label>
+            <label class="largo">Recado (opcional)<textarea data-campo="Recado" name="recado" rows="1" maxlength="400"></textarea></label>
+            <details class="acord largo apoio-mais">
+              <summary><span>Quer contar mais? (opcional)</span><svg class="ico sm"><use href="#i-prox"/></svg></summary>
+              <div class="apoio-grade">
+                <label>Instagram ou LinkedIn<input data-campo="Link" name="link" maxlength="120"></label>
+                <label>Valor<input data-campo="Valor" name="valor" inputmode="decimal" placeholder="R$" maxlength="20"></label>
+                <label>Tipo de apoio
+                  <select data-campo="Tipo" name="tipo">
+                    <option>Doação livre</option>
+                    <option>Pedido de funcionalidade</option>
+                    <option>Conversa de uma hora</option>
+                    <option>Desenvolvimento juntos</option>
+                  </select>
+                </label>
+                <label>O que você gostaria (funcionalidade, conversa, aplicação)<textarea data-campo="O que quer" name="pedido" rows="1" maxlength="600"></textarea></label>
+              </div>
+            </details>
             <input class="apoio-isca" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
           </div>
           <label class="apoio-ok"><input type="checkbox" name="publicar" data-campo="Publicar no mural" data-sim="sim, autorizo" data-nao="não" checked> Autorizo publicar meu nome, link e recado no mural</label>
@@ -275,6 +291,7 @@
             <span class="apoio-aviso tiny" role="status" aria-live="polite"></span>
           </div>
         </form>
+        </div>
       </section>
     </main>
 
