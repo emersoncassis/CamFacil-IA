@@ -379,5 +379,17 @@
   "rede.dica.sem_resposta": "Ninguém responde em {host}:{porta}. Confira energia (PoE), cabo e se a porta RTSP é essa mesmo.",
   "rede.dica.instavel": "Perdeu {perda} de 3 tentativas. Confira conector, cabo e a fonte PoE.",
   "rede.dica.lenta": "Resposta lenta ({ms} ms). Rede sobrecarregada ou Wi-Fi no caminho.",
-  "rede.dica.gateway_fora": "O roteador não respondeu. Se a internet também caiu, o problema é antes das câmeras."
+  "rede.dica.gateway_fora": "O roteador não respondeu. Se a internet também caiu, o problema é antes das câmeras.",
+  "rede.diagrama.titulo": "Diagrama unifilar",
+  "rede.diagrama.desc": "Desenhado a partir da última foto da rede: roteador, switch, este PC e gravadores, e as câmeras, com IP e MAC. A varredura não vê cabos, então as ligações abaixo do roteador são presumidas. Baixe o SVG para anexar à documentação da obra ou imprimir.",
+  "rede.diagrama.baixar": "Baixar SVG",
+  "rede.diagrama.sem_foto": "Tire uma foto da rede para gerar o diagrama.",
+  "rede.diagrama.internet": "Internet",
+  "rede.diagrama.roteador_nao_achado": "Não respondeu",
+  "rede.diagrama.switch_presumido": "Switch (presumido)",
+  "rede.diagrama.sem_nome": "Sem nome",
+  "rede.diagrama.sem_mac": "MAC desconhecido",
+  "rede.diagrama.resumo": "Rede {rede} · foto de {data} · {n} aparelhos",
+  "rede.diagrama.aviso": "Gerado pelo CamFácil IA. Ligações físicas presumidas: confira no local.",
+  "rede.diagrama.historico": "SVG"
 }

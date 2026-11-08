@@ -24,6 +24,7 @@
       <symbol id="i-link2" viewBox="0 0 24 24"><path d="M4 7h11v10H4z"/><path d="m15 11 5-3v8l-5-3"/><path d="M7 12h5M9.5 9.5v5"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
       <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
       <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
     </defs>
   </svg>
@@ -341,6 +342,15 @@
             </table>
           </div>
           <p class="msg" id="rede-diag-msg" role="status"></p>
+        </div>
+
+        <div class="block">
+          <div class="block-head">
+            <h2 data-i18n="rede.diagrama.titulo"></h2>
+            <a class="btn sm" id="rede-diagrama-baixar" href="/api/rede/diagrama.svg?baixar=true" download hidden><svg class="ico sm"><use href="#i-download"/></svg><span data-i18n="rede.diagrama.baixar"></span></a>
+          </div>
+          <p class="hint" data-i18n="rede.diagrama.desc"></p>
+          <div class="rede-diagrama mt" id="rede-diagrama"></div>
         </div>
 
         <div class="block">

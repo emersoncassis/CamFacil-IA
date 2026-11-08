@@ -15,6 +15,7 @@ pub mod saude;
 pub mod store;
 pub mod sugestao;
 pub mod system;
+pub mod unifilar;
 pub mod visao;
 
 /// Versão do binário, exibida na dashboard.

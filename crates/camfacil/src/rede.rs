@@ -448,6 +448,80 @@ pub async fn get_resumo(State(app): State<Shared>) -> ApiResult {
     })))
 }
 
+// ---------------- API: diagrama unifilar ----------------
+
+/// Textos da dashboard (`web/i18n/pt-BR.json`, embutido), lidos uma vez.
+fn traducoes() -> &'static std::collections::HashMap<String, String> {
+    static T: OnceLock<std::collections::HashMap<String, String>> = OnceLock::new();
+    T.get_or_init(|| {
+        crate::assets::find("/i18n/pt-BR.json")
+            .and_then(|a| serde_json::from_slice::<serde_json::Map<String, Value>>(a.body).ok())
+            .map(|m| {
+                // Só as chaves de texto (há listas, como `isencao.itens`).
+                m.into_iter()
+                    .filter_map(|(k, v)| v.as_str().map(|s| (k, s.to_string())))
+                    .collect()
+            })
+            .unwrap_or_default()
+    })
+}
+
+fn traduzir(k: &str) -> String {
+    traducoes().get(k).cloned().unwrap_or_else(|| k.to_string())
+}
+
+#[derive(Deserialize)]
+pub struct DiagramaQuery {
+    foto: Option<i64>,
+    #[serde(default)]
+    baixar: bool,
+}
+
+/// `GET /api/rede/diagrama.svg?foto=ID&baixar=true`: diagrama unifilar da
+/// foto pedida (ou da última). Na tela usa os tokens; baixado, cores de papel.
+pub async fn get_diagrama(
+    State(app): State<Shared>,
+    axum::extract::Query(q): axum::extract::Query<DiagramaQuery>,
+) -> axum::response::Response {
+    use axum::http::header;
+    let fotos = app.store.fotos_rede(30).unwrap_or_default();
+    let achada = match q.foto {
+        Some(id) => fotos.into_iter().find(|(i, _)| *i == id),
+        None => fotos.into_iter().next(),
+    };
+    let Some((id, foto)) = achada else {
+        return (StatusCode::NOT_FOUND, "foto não encontrada").into_response();
+    };
+    let tema = if q.baixar {
+        cf_core::unifilar::Tema::Papel
+    } else {
+        cf_core::unifilar::Tema::Pagina
+    };
+    let offset = cf_notify::servico::offset_local_s(&app.store);
+    let svg = cf_core::unifilar::desenhar(&foto, tema, offset, &traduzir);
+    let mut r = (
+        [
+            (
+                header::CONTENT_TYPE,
+                "image/svg+xml; charset=utf-8".to_string(),
+            ),
+            (header::CACHE_CONTROL, "no-store".to_string()),
+        ],
+        svg,
+    )
+        .into_response();
+    if q.baixar {
+        let nome = format!(
+            "attachment; filename=\"unifilar-{}-foto{id}.svg\"",
+            foto.rede.split('/').next().unwrap_or("rede")
+        );
+        if let Ok(v) = header::HeaderValue::from_str(&nome) {
+            r.headers_mut().insert(header::CONTENT_DISPOSITION, v);
+        }
+    }
+    r
+}
+
 #[derive(Deserialize)]
 pub struct Atualizar {
     para: String,
@@ -510,6 +584,19 @@ mod tests {
             nome: format!("Cam {id}"),
             host: host.into(),
             porta: 554,
+        }
+    }
+
+    #[test]
+    fn traducoes_do_diagrama_existem() {
+        for k in [
+            "rede.diagrama.titulo",
+            "rede.diagrama.resumo",
+            "rede.diagrama.switch_presumido",
+            "rede.tipo.camera",
+            "rede.eu",
+        ] {
+            assert_ne!(traduzir(k), k, "falta a chave {k}");
         }
     }
 

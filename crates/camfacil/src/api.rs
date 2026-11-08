@@ -82,6 +82,7 @@ pub fn router(app: Shared) -> Router {
             get(crate::rede::get_diagnostico).post(crate::rede::post_diagnostico),
         )
         .route("/api/rede/resumo", get(crate::rede::get_resumo))
+        .route("/api/rede/diagrama.svg", get(crate::rede::get_diagrama))
         .route(
             "/api/rede/cameras/{id}/atualizar",
             post(crate::rede::post_atualizar),

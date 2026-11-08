@@ -27,3 +27,7 @@
 .rede-dicas .mudou_ip, .rede-dicas .instavel, .rede-dicas .lenta, .rede-dicas .fora_da_faixa { color: var(--c-warn); }
 .rede-dicas .sem_resposta, .rede-dicas .dns_falhou, .rede-dicas .gateway_fora { color: var(--c-danger); }
 #rede-ip-mudou li { border: 1px solid var(--c-warn); border-radius: var(--r); }
+
+.rede-diagrama { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.rede-diagrama svg { display: block; max-width: none; height: auto; }
+.rede-diagrama .hint { margin: 0; padding: var(--s4); }
