@@ -1,6 +1,6 @@
 # SDD-04 — Integrações (Telegram, WhatsApp, webhook, LLM, MCP)
 
-Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implementado** (fase 3b); webhook, LLM e MCP propostos (fase 3b e 6)
+Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implementado** (fase 3b); webhook **implementado** (fase 3b); LLM e MCP propostos (fase 6)
 
 ## Telegram (padrão) — status: implementado
 - Bot API oficial via HTTPS (long polling `getUpdates` com timeout de 30 s, só enquanto há token; sem porta aberta). Cliente próprio com `reqwest` (rustls, provedor `ring` já usado pelo binário; sem `aws-lc`), multipart do `sendPhoto` montado à mão. Crate `cf-notify`.
@@ -49,8 +49,11 @@ Só contatos autorizados na dashboard. Ações registradas no log.
 - LGPD: chats de bot não têm criptografia ponta a ponta. Canal privado, modo LGPD quando possível, prazo para apagar mensagens antigas.
 - Aceite obrigatório do [termo de responsabilidade do técnico](../legal/TERMO-RESPONSABILIDADE-TECNICO.md) antes de ativar (vale também para WhatsApp e provedores de IA).
 
-## Webhook
-POST JSON por evento para URL configurada, com assinatura HMAC.
+## Webhook — status: implementado (fase 3b)
+- `POST` com JSON por alerta para a URL configurada em Integrações → Webhook (`crates/cf-notify/src/webhook.rs`). Campos: `programa`, `versao`, `tipo` (`regra`, `permanencia`, `saude`, `teste`), `camera_id`, `camera`, `regra_id`, `regra`, `quando` (unix), `hora` (local), `texto` (o mesmo do Telegram) e `foto_url` (foto do instante guardada neste PC, só alcançável na rede local).
+- Cabeçalho opcional `Nome: valor` (ex.: `Authorization: Bearer …`) guardado **cifrado** pelo cofre; é a autenticação do lado de lá. A assinatura HMAC prevista antes ficou de fora: Home Assistant, n8n e Node-RED já validam por cabeçalho ou token na URL, e menos código é menos risco.
+- Retentativa 3× (1 s, 3 s) por evento, antirrepique de 30 s por regra, fila em memória de 64; falhas e último erro aparecem na tela. Botão "Enviar teste" manda um evento `tipo: teste` na hora e mostra o status HTTP devolvido.
+- API local: `GET/POST/DELETE /api/webhook`, `POST /api/webhook/testar`.
 
 ## Provedores LLM
 OpenRouter (modelos gratuitos, padrão), OpenAI, Google, Anthropic. Interface única `LlmProvider`. Aviso: gratuitos sem garantia e podem usar dados para treino — não enviar imagens do cliente por eles sem consentimento.

@@ -97,6 +97,16 @@ pub fn router(app: Shared) -> Router {
             "/api/whatsapp/contatos/{jid}",
             post(integracoes::post_whatsapp_contato).delete(integracoes::delete_whatsapp_contato),
         )
+        .route(
+            "/api/webhook",
+            get(integracoes::get_webhook)
+                .post(integracoes::post_webhook)
+                .delete(integracoes::delete_webhook),
+        )
+        .route(
+            "/api/webhook/testar",
+            post(integracoes::post_webhook_testar),
+        )
         .route("/api/tailscale", get(get_tailscale))
         .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
         .fallback(static_file)

@@ -448,6 +448,30 @@
             <p class="tiny mt" data-i18n="wa.comandos"></p>
           </div>
         </div>
+        <div class="block" id="webhook">
+          <h2>Webhook</h2>
+          <p class="hint" data-i18n="wh.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="wh.situacao"></dt><dd><span class="state"><span class="dot" id="wh-dot"></span><span id="wh-status"></span></span></dd>
+            <dt data-i18n="wh.envios"></dt><dd id="wh-envios">—</dd>
+          </dl>
+          <form class="form-grid" id="wh-form" autocomplete="off">
+            <input name="url" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="wh.url_ph" required>
+            <input name="cabecalho" class="mono" type="password" autocapitalize="off" spellcheck="false" data-i18n-ph="wh.cabecalho_ph">
+            <button class="btn primary" type="submit" id="wh-salvar"><span data-i18n="wh.salvar"></span></button>
+          </form>
+          <div class="actions mt" id="wh-acoes" hidden>
+            <button class="btn sm" id="wh-testar" type="button"><span data-i18n="wh.testar"></span></button>
+            <button class="btn ghost sm" id="wh-editar" type="button" data-i18n="wh.editar"></button>
+            <button class="btn ghost sm" id="wh-remover" type="button" data-i18n="wh.remover"></button>
+          </div>
+          <p class="msg" id="wh-msg" role="status"></p>
+          <details class="avancado mt">
+            <summary data-i18n="wh.exemplo"></summary>
+            <p class="hint" data-i18n="wh.exemplo_dica"></p>
+            <pre class="json-exemplo mono" id="wh-exemplo"></pre>
+          </details>
+        </div>
         <div class="block">
           <ul class="list">
             <li><div><strong data-i18n="int.marca"></strong><p data-i18n="int.marca_desc"></p></div><span class="badge" data-i18n="em_breve"></span></li>

@@ -169,3 +169,65 @@ pub async fn delete_whatsapp_contato(
     }
     Ok(Json(json!({ "removido": true })))
 }
+
+// ---------- Webhook genérico ----------
+
+fn webhook(app: &Shared) -> Result<&Arc<cf_notify::Webhook>, Falha> {
+    app.webhook.get().ok_or_else(|| {
+        bad(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Webhook indisponível (não foi possível abrir o cofre de segredos)",
+        )
+    })
+}
+
+pub async fn get_webhook(State(app): State<Shared>) -> ApiResult {
+    let wh = webhook(&app)?;
+    // Exemplo do JSON que sai, para o técnico montar a automação do outro lado.
+    let exemplo = cf_notify::webhook::Evento {
+        programa: "CamFácil IA",
+        versao: cf_core::VERSION,
+        tipo: "regra".into(),
+        camera_id: 1,
+        camera: "Portão".into(),
+        regra_id: Some(3),
+        regra: Some("Cerca da frente".into()),
+        quando: 1_762_500_000,
+        hora: "22:14".into(),
+        texto: "22:14 — Cerca da frente: passagem (entrada) · Portão".into(),
+        foto_url: Some(format!(
+            "{}/api/arquivo/foto/1/1762500000-regra-3.jpg",
+            url_base_local(&app)
+        )),
+    };
+    Ok(Json(
+        json!({ "situacao": wh.situacao(), "exemplo": exemplo }),
+    ))
+}
+
+#[derive(Deserialize)]
+pub struct ConfigWh {
+    url: String,
+    #[serde(default)]
+    cabecalho: String,
+}
+
+pub async fn post_webhook(State(app): State<Shared>, Json(c): Json<ConfigWh>) -> ApiResult {
+    webhook(&app)?
+        .configurar(&c.url, &c.cabecalho)
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+pub async fn delete_webhook(State(app): State<Shared>) -> ApiResult {
+    webhook(&app)?.remover().map_err(internal)?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+pub async fn post_webhook_testar(State(app): State<Shared>) -> ApiResult {
+    let status = webhook(&app)?
+        .enviar_teste()
+        .await
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    Ok(Json(json!({ "status": status })))
+}

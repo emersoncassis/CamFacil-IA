@@ -118,16 +118,70 @@ function iniciarWhatsApp() {
   $("#wa-copiar").onclick = async () => { try { await navigator.clipboard.writeText($("#wa-webhook-url").textContent); ieMsg("#wa-wh-msg", t("wa.copiado"), "ok"); } catch (_) { /* sem permissão */ } };
 }
 
+// ---------- Webhook genérico ----------
+let whEditando = false;
+
+async function renderWebhook() {
+  let r;
+  try { r = await api("/api/webhook"); } catch (e) { ieMsg("#wh-msg", e.message, "err"); return; }
+  const s = r.situacao;
+  const dot = $("#wh-dot");
+  if (!s.configurado) { dot.className = "dot"; $("#wh-status").textContent = t("wh.sem_config"); }
+  else if (s.ultimo_erro) { dot.className = "dot off"; $("#wh-status").textContent = s.ultimo_erro; }
+  else { dot.className = "dot on"; $("#wh-status").textContent = `${t("wh.ativo")} · ${s.url}${s.cabecalho_nome ? ` · ${t("wh.cabecalho")} ${s.cabecalho_nome}` : ""}`; }
+  $("#wh-envios").textContent = s.configurado ? `${s.enviados} ${t("wh.enviados")} · ${s.falhas} ${t("wh.falhas")}` : "—";
+  $("#wh-form").hidden = s.configurado && !whEditando;
+  $("#wh-acoes").hidden = !s.configurado;
+  if (whEditando && s.url && !$("#wh-form").url.value) $("#wh-form").url.value = s.url;
+  $("#wh-exemplo").textContent = JSON.stringify(r.exemplo, null, 2);
+}
+
+async function whSalvar(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  ieMsg("#wh-msg", "");
+  try {
+    await api("/api/webhook", { url: f.url.value.trim(), cabecalho: f.cabecalho.value.trim() });
+    f.cabecalho.value = ""; whEditando = false;
+    ieMsg("#wh-msg", t("wh.salvo"), "ok");
+    renderWebhook();
+  } catch (e) { ieMsg("#wh-msg", e.message, "err"); }
+}
+
+async function whTestar() {
+  const b = $("#wh-testar");
+  busy(b, true, "wh.testando"); ieMsg("#wh-msg", "");
+  try { const r = await api("/api/webhook/testar", {}); ieMsg("#wh-msg", `${t("wh.testado")} ${r.status}.`, "ok"); }
+  catch (e) { ieMsg("#wh-msg", e.message, "err"); }
+  busy(b, false, "wh.testar");
+  renderWebhook();
+}
+
+function iniciarWebhook() {
+  $("#wh-form").onsubmit = whSalvar;
+  $("#wh-testar").onclick = whTestar;
+  $("#wh-editar").onclick = () => { whEditando = true; renderWebhook(); $("#wh-form").url.focus(); };
+  $("#wh-remover").onclick = async () => {
+    if (!confirm(t("wh.confirma_remover"))) return;
+    try { await api("/api/webhook", undefined, "DELETE"); ieMsg("#wh-msg", t("wh.removido"), "ok"); renderWebhook(); }
+    catch (e) { ieMsg("#wh-msg", e.message, "err"); }
+  };
+}
+
 // ---------- Ativação junto com a aba Integrações ----------
 // showTab (app.js) só esconde/mostra o painel; aqui observamos o atributo
 // `hidden` para ligar e desligar a atualização periódica sem mexer no app.js.
 function integracoesExtraAtivar(ativo) {
   clearInterval(waTimer); waTimer = null;
-  if (ativo) { renderWhatsApp(); waTimer = setInterval(renderWhatsApp, 5000); }
+  if (ativo) {
+    renderWhatsApp(); renderWebhook();
+    waTimer = setInterval(() => { renderWhatsApp(); renderWebhook(); }, 5000);
+  }
 }
 
 function iniciarIntegracoesExtra() {
   iniciarWhatsApp();
+  iniciarWebhook();
   const painel = $("#integracoes");
   new MutationObserver(() => integracoesExtraAtivar(!painel.hidden)).observe(painel, { attributes: true, attributeFilter: ["hidden"] });
   integracoesExtraAtivar(!painel.hidden);
