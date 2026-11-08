@@ -34,8 +34,8 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val end = Config.endereco(this)
-        if (end == null) {
-            startActivity(Intent(this, ParearActivity::class.java))
+        if (end == null || Config.modo(this) == null) {
+            startActivity(Intent(this, InicioActivity::class.java))
             finish()
             return
         }
@@ -88,7 +88,9 @@ class MainActivity : Activity() {
             erro.visibility = View.GONE
             web.reload()
         })
-        caixa.addView(Ui.botao(this, getString(R.string.erro_parear)) { parear() })
+        caixa.addView(Ui.botao(this, getString(R.string.erro_parear)) {
+            if (Config.servidor(this)) startActivity(Intent(this, ServidorActivity::class.java)) else parear()
+        }.apply { if (Config.servidor(this@MainActivity)) setText(R.string.menu_servidor) })
         return caixa
     }
 
@@ -109,7 +111,9 @@ class MainActivity : Activity() {
 
         override fun onReceivedError(view: WebView, req: WebResourceRequest, e: WebResourceError) {
             if (!req.isForMainFrame) return
-            erroTexto.text = getString(R.string.erro_texto, base)
+            erroTexto.text = getString(
+                if (Config.enderecoEhLocal(this@MainActivity)) R.string.erro_texto_servidor else R.string.erro_texto, base,
+            )
             erro.visibility = View.VISIBLE
         }
     }
@@ -157,9 +161,11 @@ class MainActivity : Activity() {
             menu.add(0, 2, 1, if (Config.alertasLigados(this)) R.string.menu_alertas_desligar else R.string.menu_alertas_ligar)
             menu.add(0, 6, 2, R.string.menu_bateria)
         }
-        menu.add(0, 3, 3, R.string.menu_recarregar)
-        menu.add(0, 4, 4, R.string.menu_parear)
-        if (local) menu.add(0, 5, 5, R.string.menu_site)
+        if (Config.servidor(this)) menu.add(0, 7, 3, R.string.menu_servidor)
+        menu.add(0, 3, 4, R.string.menu_recarregar)
+        if (!Config.servidor(this)) menu.add(0, 4, 5, R.string.menu_parear)
+        if (local) menu.add(0, 5, 6, R.string.menu_site)
+        menu.add(0, 8, 7, R.string.menu_trocar_modo)
         return true
     }
 
@@ -176,6 +182,8 @@ class MainActivity : Activity() {
             4 -> parear()
             5 -> abrirFora(Config.SITE)
             6 -> pedirBateria()
+            7 -> startActivity(Intent(this, ServidorActivity::class.java))
+            8 -> InicioActivity.trocarModo(this)
             else -> return super.onOptionsItemSelected(item)
         }
         return true

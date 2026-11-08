@@ -6,6 +6,7 @@ pub mod cofre;
 pub mod comandos;
 pub mod servico;
 pub mod telegram;
+pub mod tls;
 pub mod webhook;
 pub mod whatsapp;
 

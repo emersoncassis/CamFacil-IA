@@ -221,7 +221,7 @@ impl Ia {
 
     async fn baixar_tudo(&self) -> Result<(), String> {
         std::fs::create_dir_all(&self.dir).map_err(|e| e.to_string())?;
-        let cliente = reqwest::Client::builder()
+        let cliente = cf_notify::tls::raizes_do_sistema(reqwest::Client::builder())
             .connect_timeout(Duration::from_secs(20))
             .user_agent(concat!("CamFacilIA/", env!("CARGO_PKG_VERSION")))
             .build()

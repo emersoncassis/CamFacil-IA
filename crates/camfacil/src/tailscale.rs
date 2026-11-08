@@ -78,6 +78,8 @@ pub fn binario() -> Option<PathBuf> {
 pub fn comando_instalar() -> &'static str {
     if cfg!(windows) {
         "winget install tailscale.tailscale"
+    } else if cfg!(target_os = "android") {
+        "instale o app Tailscale (tailscale.com) pela loja e entre na mesma conta do celular"
     } else if cfg!(target_os = "macos") {
         "brew install --cask tailscale"
     } else {
@@ -150,8 +152,43 @@ pub fn interpretar_status(json: &str) -> Situacao {
     }
 }
 
+/// Há como saber do Tailscale aqui? No Android o app oficial não expõe o
+/// comando `tailscale`; o IP vem da rota (ver `ip_pela_rota`).
+fn disponivel() -> bool {
+    cfg!(target_os = "android") || binario().is_some()
+}
+
+/// IP Tailscale pela tabela de rotas, sem rodar comando nem mandar pacote:
+/// um `connect` UDP só escolhe a interface de saída. Se o caminho até o DNS do
+/// Tailscale (100.100.100.100) sai por um IP 100.64.0.0/10 diferente do usado
+/// para a internet, é a VPN do Tailscale (e não o CGNAT da operadora).
+pub fn ip_pela_rota() -> Option<Ipv4Addr> {
+    fn origem(destino: &str) -> Option<Ipv4Addr> {
+        let s = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+        s.connect(destino).ok()?;
+        match s.local_addr().ok()?.ip() {
+            IpAddr::V4(ip) if !ip.is_unspecified() => Some(ip),
+            _ => None,
+        }
+    }
+    let ts = origem("100.100.100.100:53")?;
+    let o = ts.octets();
+    let cgnat = o[0] == 100 && (64..128).contains(&o[1]);
+    (cgnat && origem("8.8.8.8:53") != Some(ts)).then_some(ts)
+}
+
 /// Situação atual, sem travar: dois comandos curtos com timeout.
 pub async fn situacao() -> Situacao {
+    if cfg!(target_os = "android") {
+        let ip = ip_pela_rota();
+        return Situacao {
+            instalado: ip.is_some(),
+            logado: ip.is_some(),
+            ip,
+            nome: None,
+            erro: None,
+        };
+    }
     if binario().is_none() {
         return Situacao::default();
     }
@@ -179,6 +216,9 @@ pub async fn situacao() -> Situacao {
 
 /// Só o IPv4 Tailscale desta máquina (`tailscale ip -4`), se logado.
 pub async fn ip() -> Option<Ipv4Addr> {
+    if cfg!(target_os = "android") {
+        return ip_pela_rota();
+    }
     rodar(&["ip", "-4"])
         .await
         .ok()?
@@ -220,7 +260,7 @@ pub fn vigiar(app: Shared, router: axum::Router, porta: u16, lan: bool) {
     }
     tokio::spawn(async move {
         loop {
-            if binario().is_some() {
+            if disponivel() {
                 if let Some(ip) = ip().await {
                     escutar(&app, &router, ip).await;
                 }
@@ -250,6 +290,15 @@ mod tests {
         assert!(s.instalado && !s.logado && s.ip.is_none());
         assert!(s.erro.unwrap().contains("NeedsLogin"));
         assert!(interpretar_status("lixo").erro.is_some());
+    }
+
+    #[test]
+    fn ip_pela_rota_so_devolve_cgnat() {
+        // Sem Tailscale na máquina de teste dá None; com ele, só 100.64.0.0/10.
+        if let Some(ip) = ip_pela_rota() {
+            let o = ip.octets();
+            assert!(o[0] == 100 && (64..128).contains(&o[1]));
+        }
     }
 
     #[test]
