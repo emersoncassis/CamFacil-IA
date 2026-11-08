@@ -333,7 +333,7 @@ async function renderSaude() {
 function saudeAtivar(ativo) {
   clearInterval(saudeTimer);
   saudeTimer = null;
-  if (ativo) { renderSaude(); saudeTimer = setInterval(renderSaude, 5000); }
+  if (ativo) { renderSaude(); redeResumoInicio(); saudeTimer = setInterval(renderSaude, 5000); }
 }
 
 async function carregarCameras() {
