@@ -27,6 +27,12 @@ pub struct Sugestao {
     pub motivo: String,
     /// 0 a 1.
     pub confianca: f32,
+    /// Qual inteligência a regra usa: "passagem" (linha) ou "permanencia" (zona).
+    pub intel: String,
+    /// Classes que a IA viu fazendo isso (carro, pessoa…).
+    pub classes: Vec<usize>,
+    /// Permanência: segundos sugeridos (0 = não se aplica).
+    pub parametro: u32,
 }
 
 #[derive(Default)]
@@ -45,6 +51,12 @@ pub struct Observador {
     pontos: Vec<(f32, f32)>,
     trilhas: std::collections::HashSet<u32>,
     pub quadros: u64,
+    /// Quem se moveu / quem ficou parado, por classe (SDD-09): decide se a
+    /// regra é de passagem ou de permanência, e de quê.
+    moveu: HashMap<usize, std::collections::HashSet<u32>>,
+    parou: HashMap<usize, std::collections::HashSet<u32>>,
+    /// Quadros (de 1/5 s) parados por classe.
+    parado_total: HashMap<usize, u32>,
 }
 
 impl Observador {
@@ -58,8 +70,16 @@ impl Observador {
 
     /// Alimenta com as trilhas do quadro atual: (id, x, y) normalizados.
     pub fn alimentar(&mut self, trilhas: &[(u32, f32, f32)]) {
+        let v: Vec<(u32, f32, f32, usize)> =
+            trilhas.iter().map(|&(i, x, y)| (i, x, y, 0)).collect();
+        self.alimentar_classes(&v, 1);
+    }
+
+    /// Como `alimentar`, mas sabendo a classe de cada trilha. `eq` = quantos
+    /// quadros de 1/5 s esta chamada vale (o detector olha ~3 vezes por segundo).
+    pub fn alimentar_classes(&mut self, trilhas: &[(u32, f32, f32, usize)], eq: u32) {
         self.quadros += 1;
-        for &(id, x, y) in trilhas {
+        for &(id, x, y, classe) in trilhas {
             let c = celula(x, y);
             if let Some(&(ox, oy)) = self.ultimo.get(&id) {
                 let (dx, dy) = (x - ox, y - oy);
@@ -74,12 +94,15 @@ impl Observador {
                     }
                     self.parado.insert(id, 0);
                     self.trilhas.insert(id);
+                    self.moveu.entry(classe).or_default().insert(id);
                 } else {
                     let p = self.parado.entry(id).or_default();
-                    *p += 1;
+                    *p += eq;
                     // Parado por mais de ~2 s (a 5 q/s) conta como permanência.
                     if *p > 10 {
-                        self.permanencia[c] += 1;
+                        self.permanencia[c] += eq;
+                        self.parou.entry(classe).or_default().insert(id);
+                        *self.parado_total.entry(classe).or_default() += eq;
                     }
                 }
             }
@@ -144,13 +167,31 @@ impl Observador {
         let disc = ((self.sxx - self.syy).powi(2) + 4.0 * self.sxy.powi(2)).sqrt();
         let foco = (disc / traco) as f32;
         let horizontal = ux.abs() > uy.abs();
+        // Quem passa mais do que para: classes com pelo menos 2 e 20 % do fluxo.
+        let total_mov: usize = self.moveu.values().map(|v| v.len()).sum::<usize>().max(1);
+        let mut fluxo: Vec<(usize, usize)> = self
+            .moveu
+            .iter()
+            .map(|(c, v)| (*c, v.len()))
+            .filter(|(c, n)| {
+                *n >= 2 && *n * 5 >= total_mov && *n > self.parou.get(c).map_or(0, |p| p.len())
+            })
+            .collect();
+        fluxo.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+        if fluxo.is_empty() {
+            return None;
+        }
+        let quem = fluxo
+            .iter()
+            .map(|(c, n)| crate::deteccao::plural(*c, *n))
+            .collect::<Vec<_>>()
+            .join(" e ");
         Some(Sugestao {
             forma: Forma::Linha,
             nome: "Passagem".into(),
             pontos: vec![p0, p1],
             motivo: format!(
-                "{} pessoas passaram, {}.",
-                self.trilhas.len(),
+                "{quem} passaram, {}.",
                 if horizontal {
                     "de lado"
                 } else {
@@ -158,6 +199,9 @@ impl Observador {
                 }
             ),
             confianca: (foco * (self.trilhas.len() as f32 / 10.0).min(1.0)).clamp(0.0, 1.0),
+            intel: "passagem".into(),
+            classes: fluxo.iter().map(|(c, _)| *c).collect(),
+            parametro: 0,
         })
     }
 
@@ -203,6 +247,28 @@ impl Observador {
             return None;
         }
         let segundos = soma / 5;
+        // Quem fica parado: classes com pelo menos 25 % do tempo parado.
+        let tot: u32 = self.parado_total.values().sum::<u32>().max(1);
+        let mut parados: Vec<(usize, u32)> = self
+            .parado_total
+            .iter()
+            .map(|(c, v)| (*c, *v))
+            .filter(|(_, v)| *v * 4 >= tot)
+            .collect();
+        parados.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+        let quem = parados
+            .iter()
+            .map(|(c, _)| crate::deteccao::nome_classe(*c).unwrap_or("objeto"))
+            .collect::<Vec<_>>()
+            .join(" e ");
+        // Tempo típico de quem parou, menos uma folga: alerta antes de ir embora.
+        let pessoas_paradas = parados
+            .iter()
+            .map(|(c, _)| self.parou.get(c).map_or(0, |p| p.len() as u32))
+            .sum::<u32>()
+            .max(1);
+        let tipico = (parados.iter().map(|(_, v)| *v).sum::<u32>() / 5) / pessoas_paradas;
+        let parametro = ((tipico as f32 * 0.6).round() as u32).clamp(10, 600);
         Some(Sugestao {
             forma: Forma::Zona,
             nome: "Atendimento".into(),
@@ -212,8 +278,14 @@ impl Observador {
                 Ponto { x: bx, y: by },
                 Ponto { x: ax, y: by },
             ],
-            motivo: format!("Pessoas paradas aqui por {segundos} s no total."),
+            motivo: format!(
+                "{} parado aqui por {segundos} s no total.",
+                if quem.is_empty() { "Alguém" } else { &quem }
+            ),
             confianca: (soma as f32 / 300.0).clamp(0.2, 1.0),
+            intel: "permanencia".into(),
+            classes: parados.iter().map(|(c, _)| *c).collect(),
+            parametro,
         })
     }
 }
@@ -260,6 +332,40 @@ mod tests {
         assert_eq!(z.pontos.len(), 4);
         assert!(z.pontos[0].x < 0.7 && z.pontos[2].x > 0.7);
         assert!(z.pontos[0].y < 0.5 && z.pontos[2].y > 0.5);
+        assert_eq!(z.intel, "permanencia");
+    }
+
+    #[test]
+    fn carro_que_estaciona_vira_permanencia_e_pessoa_que_passa_vira_passagem() {
+        let mut o = Observador::new();
+        // Três pessoas atravessam (classe 0).
+        for p in 0..3u32 {
+            for i in 0..40 {
+                let x = 0.02 + i as f32 * 0.024;
+                o.alimentar_classes(&[(p + 1, x, 0.6, 0)], 1);
+            }
+            o.alimentar_classes(&[], 1);
+        }
+        // Um carro chega e fica parado (classe 2), 30 s a 3 olhadas por segundo.
+        for i in 0..8 {
+            o.alimentar_classes(&[(50, 0.9 - i as f32 * 0.02, 0.3, 2)], 2);
+        }
+        for _ in 0..90 {
+            o.alimentar_classes(&[(50, 0.74, 0.3, 2)], 2);
+        }
+        let s = o.sugerir();
+        let l = s.iter().find(|s| s.forma == Forma::Linha).expect("linha");
+        assert_eq!(
+            (l.intel.as_str(), l.classes.as_slice()),
+            ("passagem", &[0][..])
+        );
+        let z = s.iter().find(|s| s.forma == Forma::Zona).expect("zona");
+        assert_eq!(
+            (z.intel.as_str(), z.classes.as_slice()),
+            ("permanencia", &[2][..])
+        );
+        assert!(z.parametro >= 10, "{z:?}");
+        assert!(z.motivo.contains("carro"), "{}", z.motivo);
     }
 
     #[test]

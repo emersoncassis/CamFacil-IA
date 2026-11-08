@@ -50,6 +50,7 @@ pub fn router(app: Shared) -> Router {
         )
         .route("/api/cameras/{id}/regras", get(get_regras).post(post_regra))
         .route("/api/regras/{id}", patch(patch_regra).delete(delete_regra))
+        .route("/api/inteligencias", get(get_inteligencias))
         .route("/api/estado", get(get_estado))
         .route("/api/eventos", get(get_eventos))
         .route("/api/saude", get(get_saude))
@@ -1473,6 +1474,38 @@ async fn get_mjpeg(
         .into_response()
 }
 
+/// Catálogo das inteligências de regra (SDD-09), já dizendo o que está
+/// disponível agora (módulo ligado) e por que não.
+async fn get_inteligencias(State(app): State<Shared>) -> ApiResult {
+    let m = crate::video::modulos(&app.store);
+    let itens: Vec<Value> = cf_core::inteligencias::INTELIGENCIAS
+        .iter()
+        .map(|i| {
+            json!({
+                "id": i.id,
+                "forma": i.forma,
+                "peso": i.peso,
+                "modulo": i.modulo,
+                "disponivel": m.ligado(i.modulo),
+                "parametro": i.parametro.map(|(u, mn, pd, mx)| json!({
+                    "unidade": u, "min": mn, "padrao": pd, "max": mx
+                })),
+            })
+        })
+        .collect();
+    let classes: Vec<Value> = cf_core::inteligencias::CLASSES_ESCOLHA
+        .iter()
+        .map(|(i, n)| json!({ "indice": i, "id": n }))
+        .collect();
+    Ok(Json(json!({
+        "inteligencias": itens,
+        "classes": classes,
+        "sons": cf_core::inteligencias::SONS,
+        "cores": cf_core::inteligencias::CORES,
+        "estudo": app.ia.estudo.lock().unwrap().as_ref().map(|e| e.nome.clone()),
+    })))
+}
+
 async fn get_regras(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
     Ok(Json(
         json!({ "regras": app.store.regras(id).map_err(internal)? }),
@@ -1488,6 +1521,19 @@ pub(crate) struct NovaRegra {
     pub rotulo_on: String,
     #[serde(default)]
     pub rotulo_off: String,
+    /// SDD-09: passagem, presenca, permanencia, densidade ou calor.
+    /// Vazio = comportamento de antes (regras antigas e do MCP).
+    #[serde(default)]
+    pub intel: String,
+    /// Índices das classes que a regra observa (vazio = padrão da forma).
+    #[serde(default)]
+    pub classes: Vec<usize>,
+    #[serde(default)]
+    pub parametro: u32,
+    #[serde(default)]
+    pub cor: String,
+    #[serde(default)]
+    pub som: String,
 }
 
 /// Valida e grava uma regra (usado pela dashboard e pelo MCP).
@@ -1534,6 +1580,45 @@ pub(crate) fn criar_regra(
         &r.pontos[..]
     };
     let rot = |s: &str| s.trim().chars().take(24).collect::<String>();
+    let forma_v = if r.forma == "linha" {
+        cf_core::visao::Forma::Linha
+    } else {
+        cf_core::visao::Forma::Zona
+    };
+    let intel = cf_core::visao::Intel::de_texto(&r.intel)
+        .ok_or_else(|| erro(StatusCode::BAD_REQUEST, "inteligência desconhecida"))?;
+    let estudo = app.ia.estudo.lock().unwrap().is_some();
+    if let Some(m) = cf_core::inteligencias::validar(
+        &forma_v,
+        intel,
+        &r.classes,
+        r.parametro,
+        &r.cor,
+        &r.som,
+        estudo,
+    ) {
+        return Err((StatusCode::BAD_REQUEST, m));
+    }
+    if intel != cf_core::visao::Intel::Legado {
+        let i = cf_core::inteligencias::INTELIGENCIAS
+            .iter()
+            .find(|i| cf_core::visao::Intel::de_texto(i.id) == Some(intel));
+        if let Some(i) = i {
+            if !crate::video::modulos(&app.store).ligado(i.modulo) {
+                return Err(erro(
+                    StatusCode::CONFLICT,
+                    "ligue o módulo dessa inteligência antes de usá-la",
+                ));
+            }
+        }
+    }
+    let ajustes = cf_core::visao::AjustesRegra {
+        intel,
+        classes: r.classes.clone(),
+        parametro: r.parametro,
+        cor: r.cor.clone(),
+        som: r.som.clone(),
+    };
     let id = app
         .store
         .criar_regra(
@@ -1545,6 +1630,11 @@ pub(crate) fn criar_regra(
             &rot(&r.rotulo_off),
         )
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    if ajustes != cf_core::visao::AjustesRegra::default() {
+        app.store
+            .definir_ajustes(id, &ajustes)
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    }
     app.video.recarregar_regras(cam);
     Ok(id)
 }
@@ -1566,6 +1656,15 @@ struct EditarRegra {
     rotulo_on: String,
     #[serde(default)]
     rotulo_off: String,
+    /// Opcionais: só muda o que vier.
+    #[serde(default)]
+    classes: Option<Vec<usize>>,
+    #[serde(default)]
+    parametro: Option<u32>,
+    #[serde(default)]
+    cor: Option<String>,
+    #[serde(default)]
+    som: Option<String>,
 }
 
 async fn patch_regra(
@@ -1583,6 +1682,46 @@ async fn patch_regra(
         .map_err(internal)?
     {
         return Err(bad(StatusCode::NOT_FOUND, "regra não encontrada"));
+    }
+    if r.classes.is_some() || r.parametro.is_some() || r.cor.is_some() || r.som.is_some() {
+        let atual = app
+            .store
+            .regras(r.camera_id)
+            .map_err(internal)?
+            .into_iter()
+            .find(|x| x.id == id)
+            .ok_or_else(|| bad(StatusCode::NOT_FOUND, "regra não encontrada"))?;
+        let mut a = atual.ajustes.clone();
+        if let Some(c) = r.classes {
+            a.classes = c;
+        }
+        if let Some(p) = r.parametro {
+            a.parametro = p;
+        }
+        if let Some(c) = r.cor {
+            a.cor = c;
+        }
+        if let Some(s) = r.som {
+            a.som = s;
+        }
+        let forma = if atual.forma == "linha" {
+            cf_core::visao::Forma::Linha
+        } else {
+            cf_core::visao::Forma::Zona
+        };
+        let estudo = app.ia.estudo.lock().unwrap().is_some();
+        if let Some(m) = cf_core::inteligencias::validar(
+            &forma,
+            a.intel,
+            &a.classes,
+            a.parametro,
+            &a.cor,
+            &a.som,
+            estudo,
+        ) {
+            return Err(bad(StatusCode::BAD_REQUEST, &m));
+        }
+        app.store.definir_ajustes(id, &a).map_err(internal)?;
     }
     app.video.recarregar_regras(r.camera_id);
     Ok(Json(json!({ "id": id })))

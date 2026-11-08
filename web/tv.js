@@ -50,20 +50,9 @@ function textoBalao(r, e) {
 
 const SAUDE_PROBLEMA = ["escura", "coberta", "desfocada"];
 
-function tocarAlerta() {
-  try {
-    somCtx = somCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const t0 = somCtx.currentTime;
-    for (const [i, f] of [[0, 880], [0.18, 1320]]) {
-      const o = somCtx.createOscillator(); const g = somCtx.createGain();
-      o.type = "sine"; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t0 + i);
-      g.gain.exponentialRampToValueAtTime(0.25, t0 + i + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i + 0.16);
-      o.connect(g).connect(somCtx.destination);
-      o.start(t0 + i); o.stop(t0 + i + 0.18);
-    }
-  } catch (_) { /* TV sem áudio */ }
+function tocarAlerta(som) {
+  somCtx = somCtx || (() => { try { return new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { return null; } })();
+  CFSons.tocar(somCtx, som || "bipe");
 }
 
 function piscar(raiz) {
@@ -83,7 +72,7 @@ function conferirAlertas(cam, tile) {
     const er = e && e.regras ? e.regras[r.id] : null;
     const agora = !!(er && er.alerta_ms > 0);
     const chave = `${cam.id}:${r.id}`;
-    if (agora && alertaAntes[chave] === false) { piscar(tile.raiz); if (!tocou && config.som) { tocarAlerta(); tocou = true; } }
+    if (agora && alertaAntes[chave] === false) { piscar(tile.raiz); if (!tocou && config.som) { tocarAlerta(r.ajustes && r.ajustes.som); tocou = true; } }
     alertaAntes[chave] = agora;
   }
 }

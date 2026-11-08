@@ -270,9 +270,31 @@
           </div>
           </details>
           <form class="form regra-form" id="regra-form" hidden autocomplete="off">
-            <label class="span-2"><span data-i18n="regra.nome"></span><input name="nome" required maxlength="40"></label>
-            <label class="zona-only"><span data-i18n="regra.on"></span><input name="rotulo_on" maxlength="24"></label>
-            <label class="zona-only"><span data-i18n="regra.off"></span><input name="rotulo_off" maxlength="24"></label>
+            <label class="span-4"><span data-i18n="regra.nome"></span><input name="nome" required maxlength="40"></label>
+            <div class="abas-regra span-4" role="tablist" id="regra-abas">
+              <button type="button" role="tab" class="aba-regra" data-aba="intel" aria-selected="true" data-i18n="regra.aba_intel"></button>
+              <button type="button" role="tab" class="aba-regra" data-aba="quem" aria-selected="false" data-i18n="regra.aba_quem"></button>
+              <button type="button" role="tab" class="aba-regra" data-aba="alerta" aria-selected="false" data-i18n="regra.aba_alerta"></button>
+            </div>
+            <div class="aba-painel span-4" data-painel="intel" role="tabpanel">
+              <p class="tiny" data-i18n="regra.intel_dica"></p>
+              <div class="intel-lista" id="intel-lista" role="radiogroup"></div>
+            </div>
+            <div class="aba-painel span-4" data-painel="quem" role="tabpanel" hidden>
+              <p class="tiny" data-i18n="regra.quem_dica"></p>
+              <div class="chips" id="classes-lista"></div>
+              <label class="param" id="param-wrap" hidden><span id="param-rotulo"></span><input type="number" name="parametro" min="1" inputmode="numeric"></label>
+            </div>
+            <div class="aba-painel span-4" data-painel="alerta" role="tabpanel" hidden>
+              <div class="form linha-form">
+                <label class="zona-only"><span data-i18n="regra.on"></span><input name="rotulo_on" maxlength="24"></label>
+                <label class="zona-only"><span data-i18n="regra.off"></span><input name="rotulo_off" maxlength="24"></label>
+              </div>
+              <div class="campo-regra"><span class="tiny" data-i18n="regra.cor"></span><div class="cores" id="cores-lista" role="radiogroup"></div></div>
+              <div class="campo-regra"><span class="tiny" data-i18n="regra.som_escolha"></span>
+                <div class="som-linha"><select name="som" id="som-escolha"></select><button type="button" class="btn sm" id="som-prova" data-i18n="regra.som_prova"></button></div>
+              </div>
+            </div>
             <div class="actions span-4">
               <button class="btn primary" type="submit" data-i18n="regra.salvar"></button>
               <button class="btn" type="button" id="regra-cancelar" data-i18n="regra.cancelar"></button>
@@ -1064,6 +1086,7 @@
     </div>
   </dialog>
 
+  <script src="/sons.js"></script>
   <script src="/app.js"></script>
   <script src="/manutencao.js"></script>
   <script src="/integracoes-extra.js"></script>

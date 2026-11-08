@@ -196,6 +196,19 @@ fn laco(ia: Arc<Ia>, video: Arc<Video>, store: Arc<Store>) {
                             m.permanencia,
                             m.calor,
                         );
+                        // "IA, sugira": aprende com as classes (carro, pessoa…).
+                        if let Some(o) = canal.observacao.lock().unwrap().as_mut() {
+                            if o.inicio.elapsed() < o.duracao {
+                                let tr: Vec<(u32, f32, f32, usize)> = md
+                                    .rastreador
+                                    .trilhas()
+                                    .iter()
+                                    .filter(|t| t.confirmacoes >= 2)
+                                    .map(|t| (t.id, t.pos.x, t.pos.y, t.classe))
+                                    .collect();
+                                o.obs.alimentar_classes(&tr, 2);
+                            }
+                        }
                         md.deteccoes = dets;
                         md.quando = Some(agora);
                         md.estudo = estudo.as_ref().map(|e| Arc::new(e.nomes.clone()));

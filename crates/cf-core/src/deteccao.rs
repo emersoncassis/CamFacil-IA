@@ -5,7 +5,7 @@
 //! permanência em zona e mapa de calor. O ONNX Runtime em si fica no binário
 //! (`camfacil::ia`); aqui é só matemática testável.
 
-use crate::visao::{cruzou, dentro, Forma, Ponto, Regra};
+use crate::visao::{cruzou, dentro, Forma, Intel, Ponto, Regra};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -32,6 +32,16 @@ pub const CLASSE_ESTUDO: usize = 1000;
 /// objeto de um modelo de estudo.
 pub fn conta_em_zona(classe: usize) -> bool {
     classe == 0 || classe >= CLASSE_ESTUDO
+}
+
+/// A regra observa esta classe? Sem classes escolhidas vale o comportamento
+/// de antes do SDD-09: linha conta qualquer uma, zona só pessoa/estudo.
+pub fn regra_casa(r: &Regra, classe: usize) -> bool {
+    let cs = &r.ajustes.classes;
+    if cs.is_empty() {
+        return r.forma == Forma::Linha || conta_em_zona(classe);
+    }
+    cs.contains(&classe)
 }
 
 pub fn nome_classe(c: usize) -> Option<&'static str> {
@@ -305,6 +315,14 @@ pub enum EventoMedio {
     Permanencia {
         regra: i64,
         segundos: u64,
+        /// Classe de quem ficou parado.
+        classe: usize,
+    },
+    /// Densidade: a zona passou do limite de objetos ao mesmo tempo.
+    Densidade {
+        regra: i64,
+        quantas: usize,
+        classe: usize,
     },
 }
 
@@ -412,17 +430,20 @@ impl Rastreador {
     ) -> Vec<EventoMedio> {
         let mut ev = Vec::new();
         self.casar(dets, agora);
-        let pessoas: Vec<&Trilha> = self
-            .trilhas
-            .iter()
-            .filter(|t| conta_em_zona(t.classe))
-            .collect();
-
+        let mut calor_por_regra = false;
         for r in regras {
+            let intel = r.ajustes.intel;
             match r.forma {
-                Forma::Linha if contagem && r.pontos.len() >= 2 => {
+                Forma::Linha if r.pontos.len() >= 2 => {
+                    if !contagem || !matches!(intel, Intel::Legado | Intel::Passagem) {
+                        continue;
+                    }
                     let (a, b) = (r.pontos[0], r.pontos[1]);
-                    for t in self.trilhas.iter().filter(|t| t.confirmacoes >= 2) {
+                    for t in self
+                        .trilhas
+                        .iter()
+                        .filter(|t| t.confirmacoes >= 2 && regra_casa(r, t.classe))
+                    {
                         if let Some(s) = cruzou(a, b, t.anterior, t.pos) {
                             ev.push(EventoMedio::LinhaCruzada {
                                 regra: r.id,
@@ -433,31 +454,62 @@ impl Rastreador {
                     }
                 }
                 Forma::Zona if r.pontos.len() >= 3 => {
-                    let dentro_zona: Vec<&&Trilha> = pessoas
+                    let dentro_zona: Vec<&Trilha> = self
+                        .trilhas
                         .iter()
-                        .filter(|t| t.confirmacoes >= 2 && dentro(t.pos, &r.pontos))
+                        .filter(|t| {
+                            t.confirmacoes >= 2
+                                && regra_casa(r, t.classe)
+                                && dentro(t.pos, &r.pontos)
+                        })
                         .collect();
-                    let ocupada = !dentro_zona.is_empty();
-                    let antes = self.zonas.insert(r.id, ocupada).unwrap_or(false);
-                    if ocupada && !antes {
-                        ev.push(EventoMedio::ZonaOcupada {
-                            regra: r.id,
-                            quantas: dentro_zona.len(),
-                            classe: dentro_zona[0].classe,
-                        });
-                    } else if !ocupada && antes {
-                        ev.push(EventoMedio::ZonaLivre { regra: r.id });
+                    match intel {
+                        Intel::Legado | Intel::Presenca => {
+                            let ocupada = !dentro_zona.is_empty();
+                            let antes = self.zonas.insert(r.id, ocupada).unwrap_or(false);
+                            if ocupada && !antes {
+                                ev.push(EventoMedio::ZonaOcupada {
+                                    regra: r.id,
+                                    quantas: dentro_zona.len(),
+                                    classe: dentro_zona[0].classe,
+                                });
+                            } else if !ocupada && antes {
+                                ev.push(EventoMedio::ZonaLivre { regra: r.id });
+                            }
+                        }
+                        Intel::Densidade => {
+                            let limite = (r.ajustes.parametro as usize).max(2);
+                            let alta = dentro_zona.len() >= limite;
+                            let antes = self.zonas.insert(r.id, alta).unwrap_or(false);
+                            if alta && !antes {
+                                ev.push(EventoMedio::Densidade {
+                                    regra: r.id,
+                                    quantas: dentro_zona.len(),
+                                    classe: dentro_zona[0].classe,
+                                });
+                            } else if !alta && antes {
+                                ev.push(EventoMedio::ZonaLivre { regra: r.id });
+                            }
+                        }
+                        Intel::Calor => calor_por_regra = true,
+                        Intel::Passagem | Intel::Permanencia => {}
                     }
-                    if permanencia {
+                    if permanencia && matches!(intel, Intel::Legado | Intel::Permanencia) {
+                        let limite = if r.ajustes.parametro > 0 {
+                            Duration::from_secs(r.ajustes.parametro as u64)
+                        } else {
+                            self.ajustes.permanencia
+                        };
                         for t in dentro_zona {
                             let parado = agora.saturating_duration_since(t.parada_desde);
-                            if parado >= self.ajustes.permanencia
+                            if parado >= limite
                                 && !self.permanencias_avisadas.contains_key(&(t.id, r.id))
                             {
                                 self.permanencias_avisadas.insert((t.id, r.id), ());
                                 ev.push(EventoMedio::Permanencia {
                                     regra: r.id,
                                     segundos: parado.as_secs(),
+                                    classe: t.classe,
                                 });
                             }
                         }
@@ -467,8 +519,23 @@ impl Rastreador {
             }
         }
         if calor {
-            for t in self.trilhas.iter().filter(|t| conta_em_zona(t.classe)) {
-                self.calor.marcar(t.pos);
+            if calor_por_regra {
+                // Mapa de calor só do que passa nas zonas de calor, na classe pedida.
+                for r in regras.iter().filter(|r| {
+                    r.forma == Forma::Zona && r.ajustes.intel == Intel::Calor && r.pontos.len() >= 3
+                }) {
+                    for t in self
+                        .trilhas
+                        .iter()
+                        .filter(|t| regra_casa(r, t.classe) && dentro(t.pos, &r.pontos))
+                    {
+                        self.calor.marcar(t.pos);
+                    }
+                }
+            } else {
+                for t in self.trilhas.iter().filter(|t| conta_em_zona(t.classe)) {
+                    self.calor.marcar(t.pos);
+                }
             }
         }
         // Esquece avisos de trilhas que já sumiram.
@@ -656,6 +723,7 @@ mod tests {
             id: 9,
             nome: "Doca".into(),
             forma: Forma::Zona,
+            ajustes: Default::default(),
             pontos: vec![
                 Ponto { x: 0.0, y: 0.0 },
                 Ponto { x: 1.0, y: 0.0 },
@@ -695,12 +763,14 @@ mod tests {
                 id: 1,
                 nome: "Porta".into(),
                 forma: Forma::Linha,
+                ajustes: Default::default(),
                 pontos: vec![Ponto { x: 0.5, y: 0.0 }, Ponto { x: 0.5, y: 1.0 }],
             },
             Regra {
                 id: 2,
                 nome: "Balcão".into(),
                 forma: Forma::Zona,
+                ajustes: Default::default(),
                 pontos: vec![
                     Ponto { x: 0.7, y: 0.0 },
                     Ponto { x: 1.0, y: 0.0 },
@@ -758,6 +828,7 @@ mod tests {
             id: 9,
             nome: "Caixa".into(),
             forma: Forma::Zona,
+            ajustes: Default::default(),
             pontos: vec![
                 Ponto { x: 0.0, y: 0.0 },
                 Ponto { x: 1.0, y: 0.0 },
@@ -805,5 +876,177 @@ mod tests {
                 .any(|e| matches!(e, EventoMedio::Permanencia { .. })),
             "{ev2:?}"
         );
+    }
+
+    fn zona_cheia(id: i64, intel: Intel, classes: Vec<usize>, parametro: u32) -> Vec<Regra> {
+        vec![Regra {
+            id,
+            nome: "Z".into(),
+            forma: Forma::Zona,
+            ajustes: crate::visao::AjustesRegra {
+                intel,
+                classes,
+                parametro,
+                ..Default::default()
+            },
+            pontos: vec![
+                Ponto { x: 0.0, y: 0.0 },
+                Ponto { x: 1.0, y: 0.0 },
+                Ponto { x: 1.0, y: 1.0 },
+                Ponto { x: 0.0, y: 1.0 },
+            ],
+        }]
+    }
+
+    fn carro(cx: f32, cy: f32) -> Deteccao {
+        Deteccao {
+            classe: 2,
+            ..pessoa(cx, cy)
+        }
+    }
+
+    #[test]
+    fn linha_so_de_carro_ignora_pessoa() {
+        let linha = vec![Regra {
+            id: 3,
+            nome: "Portão".into(),
+            forma: Forma::Linha,
+            pontos: vec![Ponto { x: 0.5, y: 0.0 }, Ponto { x: 0.5, y: 1.0 }],
+            ajustes: crate::visao::AjustesRegra {
+                intel: Intel::Passagem,
+                classes: vec![2],
+                ..Default::default()
+            },
+        }];
+        let mut r = Rastreador::default();
+        let t0 = Instant::now();
+        let mut ev = Vec::new();
+        for i in 0..12u64 {
+            let x = 0.1 + 0.07 * i as f32;
+            ev.extend(r.processar(
+                &[pessoa(x, 0.5), carro(x, 0.6)],
+                &linha,
+                t0 + Duration::from_millis(200 * i),
+                true,
+                false,
+                false,
+            ));
+        }
+        let cruzamentos: Vec<_> = ev
+            .iter()
+            .filter_map(|e| match e {
+                EventoMedio::LinhaCruzada { classe, .. } => Some(*classe),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(cruzamentos, vec![2], "{ev:?}");
+    }
+
+    #[test]
+    fn densidade_dispara_com_o_limite_e_so_da_classe() {
+        let regras = zona_cheia(5, Intel::Densidade, vec![2], 3);
+        let mut r = Rastreador::default();
+        let t0 = Instant::now();
+        let mut ev = Vec::new();
+        for i in 0..4u64 {
+            let dets = [
+                carro(0.2, 0.5),
+                carro(0.5, 0.5),
+                pessoa(0.8, 0.5),
+                pessoa(0.7, 0.2),
+                pessoa(0.6, 0.3),
+            ];
+            ev.extend(r.processar(
+                &dets,
+                &regras,
+                t0 + Duration::from_millis(300 * i),
+                false,
+                false,
+                false,
+            ));
+        }
+        assert!(
+            !ev.iter()
+                .any(|e| matches!(e, EventoMedio::Densidade { .. })),
+            "2 carros < 3: {ev:?}"
+        );
+        for i in 4..8u64 {
+            let dets = [carro(0.2, 0.5), carro(0.5, 0.5), carro(0.8, 0.5)];
+            ev.extend(r.processar(
+                &dets,
+                &regras,
+                t0 + Duration::from_millis(300 * i),
+                false,
+                false,
+                false,
+            ));
+        }
+        let altas: Vec<_> = ev
+            .iter()
+            .filter(|e| {
+                matches!(
+                    e,
+                    EventoMedio::Densidade {
+                        quantas: 3,
+                        classe: 2,
+                        ..
+                    }
+                )
+            })
+            .collect();
+        assert_eq!(altas.len(), 1, "{ev:?}");
+    }
+
+    #[test]
+    fn permanencia_so_do_carro_e_sem_aviso_de_entrada() {
+        let regras = zona_cheia(6, Intel::Permanencia, vec![2], 5);
+        let mut r = Rastreador::default();
+        let t0 = Instant::now();
+        let mut ev = Vec::new();
+        for i in 0..20u64 {
+            ev.extend(r.processar(
+                &[carro(0.5, 0.5), pessoa(0.2, 0.5)],
+                &regras,
+                t0 + Duration::from_millis(500 * i),
+                false,
+                true,
+                false,
+            ));
+        }
+        let perms: Vec<_> = ev
+            .iter()
+            .filter(|e| matches!(e, EventoMedio::Permanencia { classe: 2, .. }))
+            .collect();
+        assert_eq!(perms.len(), 1, "{ev:?}");
+        assert!(
+            !ev.iter().any(|e| matches!(
+                e,
+                EventoMedio::ZonaOcupada { .. } | EventoMedio::Permanencia { classe: 0, .. }
+            )),
+            "uma inteligência por regra: {ev:?}"
+        );
+    }
+
+    #[test]
+    fn calor_so_conta_a_classe_na_zona() {
+        let regras = zona_cheia(7, Intel::Calor, vec![0], 0);
+        let mut r = Rastreador::default();
+        let t0 = Instant::now();
+        for i in 0..4u64 {
+            r.processar(
+                &[pessoa(0.3, 0.5), carro(0.8, 0.5)],
+                &regras,
+                t0 + Duration::from_millis(200 * i),
+                false,
+                false,
+                true,
+            );
+        }
+        let total: u32 = r.calor.celulas.iter().sum();
+        assert!(total >= 2, "pessoa marcou o calor: {total}");
+        let x_carro = (0.8 * r.calor.colunas as f32) as usize;
+        let y = (0.5 * r.calor.linhas as f32) as usize;
+        let na_celula_do_carro = r.calor.celulas[y * r.calor.colunas + x_carro];
+        assert_eq!(na_celula_do_carro, 0, "carro não conta no calor de pessoa");
     }
 }

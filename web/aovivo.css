@@ -126,3 +126,13 @@ button { font: inherit; color: inherit; }
 .vv-som-ligar[hidden] + .vv-mudo + .vv-layouts { margin-left: 0; }
 @media (max-width: 480px) { .vv-som-txt { display: none; } }
 .vv-mosaico[data-n="4"] .cf-bubble { max-width: 48%; }
+
+/* Cor da linha/zona escolhida na regra (SDD-09) */
+.vv-forma.cor-verde { color: var(--linha-verde); }
+.vv-forma.cor-ambar { color: var(--linha-ambar); }
+.vv-forma.cor-vermelho { color: var(--linha-vermelho); }
+.vv-forma.cor-azul { color: var(--linha-azul); }
+.vv-forma.cor-branco { color: var(--linha-branco); }
+.vv-forma.cor-magenta { color: var(--linha-magenta); }
+.vv-forma[class*="cor-"] { stroke: currentColor; fill: color-mix(in srgb, currentColor 12%, transparent); stroke-dasharray: none; }
+.vv-forma.linha[class*="cor-"] { fill: none; }

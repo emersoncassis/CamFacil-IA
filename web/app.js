@@ -623,21 +623,10 @@ function definirSom(id, ligado) {
   try { const m = JSON.parse(localStorage.getItem("cf-som") || "{}"); m[id] = ligado; localStorage.setItem("cf-som", JSON.stringify(m)); } catch (_) { /* opcional */ }
 }
 
-/// Dois bipes curtos, gerados na hora (sem arquivo de áudio).
-function tocarAlerta() {
-  try {
-    somCtx = somCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const t0 = somCtx.currentTime;
-    for (const [i, f] of [[0, 880], [0.18, 1320]]) {
-      const o = somCtx.createOscillator(); const g = somCtx.createGain();
-      o.type = "sine"; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t0 + i);
-      g.gain.exponentialRampToValueAtTime(0.25, t0 + i + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i + 0.16);
-      o.connect(g).connect(somCtx.destination);
-      o.start(t0 + i); o.stop(t0 + i + 0.18);
-    }
-  } catch (_) { /* navegador sem áudio */ }
+/// Toca o som escolhido (bipe, sino, alarme, gota), gerado na hora.
+function tocarAlerta(som) {
+  somCtx = somCtx || (() => { try { return new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { return null; } })();
+  CFSons.tocar(somCtx, som || "bipe");
 }
 
 function piscarTela() {
@@ -662,10 +651,21 @@ function conferirAlertas(estadoCam) {
     const chave = `${camAberta}:${r.id}`;
     if (agora && alertaAntes[chave] === false) {
       piscarTela();
-      if (!tocou && somLigado(r.id)) { tocarAlerta(); tocou = true; }
+      if (!tocou && somLigado(r.id)) { tocarAlerta(r.ajustes && r.ajustes.som); tocou = true; }
     }
     alertaAntes[chave] = agora;
   }
+}
+
+/// "Passagem · carro, moto" / "Permanência · pessoa" / "Zona" (regras antigas).
+function tipoDaRegra(r) {
+  const a = r.ajustes || {};
+  if (!a.intel || a.intel === "legado") return t("regra." + r.forma);
+  const nomes = (a.classes || []).map((c) => {
+    const k = catalogo && catalogo.classes.find((x) => x.indice === c);
+    return k ? t("classe." + k.id).toLowerCase() : t("regra.classe_estudo");
+  });
+  return [t("intel." + a.intel), nomes.join(", ")].filter(Boolean).join(" · ");
 }
 
 function renderBaloes(estadoCam) {
@@ -705,9 +705,9 @@ function renderBaloes(estadoCam) {
     };
     const chk = el("input", { type: "checkbox", "aria-label": `${t("regra.som")}: ${r.nome}` });
     chk.checked = somLigado(r.id);
-    chk.onchange = () => { definirSom(r.id, chk.checked); if (chk.checked) tocarAlerta(); };
+    chk.onchange = () => { definirSom(r.id, chk.checked); if (chk.checked) tocarAlerta(r.ajustes && r.ajustes.som); };
     const som = el("label", { class: "som-regra", title: t("regra.som_dica") }, el("span", { class: "switch" }, chk, el("span")), el("span", { class: "tiny" }, t("regra.som")));
-    return el("tr", {}, el("td", {}, r.nome), el("td", {}, t("regra." + r.forma)), el("td", {}, agora), el("td", {}, som), el("td", { class: "right" }, rem));
+    return el("tr", {}, el("td", {}, r.nome), el("td", {}, tipoDaRegra(r)), el("td", {}, agora), el("td", {}, som), el("td", { class: "right" }, rem));
   });
   $("#regras").replaceChildren(...(linhas.length ? linhas : [el("tr", { class: "empty" }, el("td", { colspan: "5" }, t("regra.nenhuma")))]));
 }
@@ -741,9 +741,10 @@ function desenharSalvas() {
   // ligar "Mostrar linhas e zonas" (padrão: só os balões, regra 4).
   if (desenho.modo !== "ver" || mostrarFormas) {
     for (const r of regrasAbertas) {
+      const cor = r.ajustes && r.ajustes.cor ? ` cor-${r.ajustes.cor}` : "";
       svg.append(r.forma === "linha"
-        ? svgEl("polyline", { class: "forma linha salva", points: pts(r.pontos) })
-        : svgEl("polygon", { class: "forma salva", points: pts(r.pontos) }));
+        ? svgEl("polyline", { class: "forma linha salva" + cor, points: pts(r.pontos) })
+        : svgEl("polygon", { class: "forma salva" + cor, points: pts(r.pontos) }));
     }
   }
   if (desenho.pontos.length) {
@@ -771,7 +772,7 @@ function pontoDoClique(ev) {
   return { x: Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height)) };
 }
 
-function concluirDesenho() {
+async function concluirDesenho() {
   desenho.fechada = true;
   desenharSalvas();
   const f = $("#regra-form");
@@ -780,6 +781,84 @@ function concluirDesenho() {
   f.reset();
   $("#desenho-dica").textContent = t("desenho.dica_nome");
   f.nome.focus();
+  await montarFormRegra();
+}
+
+// ---------- Inteligência, quem, cor e som da regra (SDD-09) ----------
+// Uma regra faz uma coisa só. A lista mostra o peso de cada uma e só deixa
+// marcar o que está disponível (módulo ligado); "Movimento" é o aviso simples
+// de sempre, que não precisa de nada.
+let catalogo = null;
+const CORES_PADRAO = "verde";
+
+async function carregarCatalogo() {
+  try { catalogo = await api("/api/inteligencias"); } catch (_) { /* usa o último */ }
+  return catalogo;
+}
+
+function abaRegra(nome) {
+  document.querySelectorAll("#regra-abas .aba-regra").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.aba === nome)));
+  document.querySelectorAll("#regra-form .aba-painel").forEach((p) => { p.hidden = p.dataset.painel !== nome; });
+}
+
+function intelEscolhida() {
+  const r = document.querySelector('#intel-lista input[name="intel"]:checked');
+  return r ? r.value : "legado";
+}
+
+function atualizarParametro() {
+  const id = intelEscolhida();
+  const i = catalogo && catalogo.inteligencias.find((x) => x.id === id);
+  const wrap = $("#param-wrap");
+  const legado = id === "legado";
+  document.querySelectorAll("#classes-lista input").forEach((c) => { c.disabled = legado; });
+  if (!i || !i.parametro) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  $("#param-rotulo").textContent = t(i.parametro.unidade === "quantos" ? "regra.param_quantos" : "regra.param_segundos");
+  const inp = wrap.querySelector("input");
+  inp.min = i.parametro.min; inp.max = i.parametro.max; inp.value = i.parametro.padrao;
+}
+
+async function montarFormRegra() {
+  await carregarCatalogo();
+  abaRegra("intel");
+  const cat = catalogo || { inteligencias: [], classes: [], sons: ["bipe"], cores: [CORES_PADRAO] };
+  const da_forma = cat.inteligencias.filter((i) => i.forma === desenho.modo);
+  const itens = [...da_forma, { id: "legado", peso: "leve", disponivel: true }];
+  const primeira = (itens.find((i) => i.disponivel) || itens[itens.length - 1]).id;
+  $("#intel-lista").replaceChildren(...itens.map((i) => {
+    const radio = el("input", { type: "radio", name: "intel", value: i.id });
+    radio.disabled = !i.disponivel;
+    radio.checked = i.id === primeira;
+    radio.onchange = atualizarParametro;
+    const chave = i.id === "legado" ? "legado" : i.id;
+    const nome = i.id === "legado" ? t("regra.tipo_legado_nome") : t("intel." + i.id);
+    const desc = i.id === "legado" ? t("regra.tipo_legado_desc") : t("intel." + i.id + ".desc");
+    const extra = i.disponivel ? "" : t("regra.modulo_desligado").replace("{modulo}", t("regra.modulo_nome." + i.modulo));
+    return el("label", { class: "intel-item" + (i.disponivel ? "" : " off"), "data-intel": chave },
+      radio,
+      el("span", { class: "intel-txt" },
+        el("strong", {}, nome),
+        el("span", { class: "tiny" }, extra || desc)),
+      el("span", { class: "peso peso-" + i.peso }, t("peso." + i.peso)));
+  }));
+  // Quem: pessoa marcada de início.
+  $("#classes-lista").replaceChildren(...cat.classes.map((c) => {
+    const chk = el("input", { type: "checkbox", value: c.indice });
+    chk.checked = c.indice === 0;
+    return el("label", { class: "chip" }, chk, el("span", {}, t("classe." + c.id)));
+  }));
+  if (cat.estudo) $("#classes-lista").append(el("p", { class: "tiny span-all" }, t("regra.estudo_dica")));
+  // Cor e som.
+  $("#cores-lista").replaceChildren(...cat.cores.map((c) => {
+    const radio = el("input", { type: "radio", name: "cor", value: c, "aria-label": t("cor." + c) });
+    radio.checked = c === CORES_PADRAO;
+    return el("label", { class: "cor-item cor-" + c, title: t("cor." + c) }, radio, el("span", {}));
+  }));
+  const sel = $("#som-escolha");
+  sel.replaceChildren(...cat.sons.map((id) => el("option", { value: id }, t("som." + id))));
+  sel.value = "bipe";
+  atualizarParametro();
 }
 
 function cliqueViewer(ev) {
@@ -798,10 +877,23 @@ function cliqueViewer(ev) {
 async function salvarRegra(ev) {
   ev.preventDefault();
   const f = new FormData($("#regra-form"));
+  const intel = intelEscolhida();
+  const classes = [...document.querySelectorAll("#classes-lista input:checked")].map((c) => Number(c.value));
+  if (intel !== "legado" && !classes.length && !(catalogo && catalogo.estudo)) {
+    abaRegra("quem");
+    alert(t("regra.escolha_quem"));
+    return;
+  }
+  const cor = (document.querySelector('#cores-lista input:checked') || {}).value || CORES_PADRAO;
+  const p = Number(f.get("parametro"));
   try {
     await api(`/api/cameras/${camAberta}/regras`, {
       nome: f.get("nome"), forma: desenho.modo, pontos: desenho.pontos,
       rotulo_on: f.get("rotulo_on") || "", rotulo_off: f.get("rotulo_off") || "",
+      intel: intel === "legado" ? "" : intel,
+      classes: intel === "legado" ? [] : classes,
+      parametro: !$("#param-wrap").hidden && p > 0 ? p : 0,
+      cor, som: f.get("som") || "bipe",
     });
     definirModo("ver");
     await carregarRegras();
@@ -831,6 +923,9 @@ function iniciarCameras() {
   $("#viewer").addEventListener("click", cliqueViewer);
   $("#viewer").addEventListener("dblclick", () => { if (desenho.modo === "zona" && desenho.pontos.length >= 3 && !desenho.fechada) concluirDesenho(); });
   $("#regra-form").onsubmit = salvarRegra;
+  document.querySelectorAll("#regra-abas .aba-regra").forEach((b) => { b.onclick = () => abaRegra(b.dataset.aba); });
+  $("#som-prova").onclick = () => tocarAlerta($("#som-escolha").value);
+  carregarCatalogo();
   $("#regra-cancelar").onclick = () => definirModo("ver");
   $("#cam-form").onsubmit = salvarCamera;
   $("#cam-form").nome.addEventListener("input", () => { camNomeTocado = true; });
@@ -1347,7 +1442,10 @@ async function sugAceitar(sg, pct, botao) {
   document.querySelectorAll("#sug-lista button").forEach((b) => { b.disabled = true; });
   clearTimeout(sugTimer); sugTimer = null;
   try {
-    await api(`/api/cameras/${camAberta}/regras`, { nome: sg.nome, forma: sg.forma, pontos: sg.pontos, rotulo_on: "", rotulo_off: "" });
+    await api(`/api/cameras/${camAberta}/regras`, {
+      nome: sg.nome, forma: sg.forma, pontos: sg.pontos, rotulo_on: "", rotulo_off: "",
+      intel: sg.intel || "", classes: sg.classes || [], parametro: sg.parametro || 0,
+    });
     await sugParar();
     await carregarRegras();
     $("#sug-lista").replaceChildren(el("li", {}, el("span", { class: "msg ok" }, `${sg.nome} ${t("sug.criada")}`)));

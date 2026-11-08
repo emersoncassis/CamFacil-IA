@@ -54,6 +54,61 @@ pub enum Forma {
     Linha,
 }
 
+/// O que a regra faz (uma inteligência por regra, SDD-09).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum Intel {
+    /// Regra criada antes do SDD-09: linha conta passagem; zona avisa quem
+    /// entra e, com o módulo ligado, também a permanência. Só pessoa (zona).
+    #[default]
+    Legado,
+    /// Linha: conta quem cruza, com sentido.
+    Passagem,
+    /// Zona: avisa quando alguém entra e quando sai (cerca).
+    Presenca,
+    /// Zona: avisa quando alguém fica parado por N segundos.
+    Permanencia,
+    /// Zona: avisa quando há N ou mais dentro ao mesmo tempo.
+    Densidade,
+    /// Zona: acumula o mapa de calor só do que passa nela.
+    Calor,
+}
+
+impl Intel {
+    pub fn de_texto(s: &str) -> Option<Self> {
+        Some(match s {
+            "passagem" => Self::Passagem,
+            "presenca" => Self::Presenca,
+            "permanencia" => Self::Permanencia,
+            "densidade" => Self::Densidade,
+            "calor" => Self::Calor,
+            "" | "legado" => Self::Legado,
+            _ => return None,
+        })
+    }
+}
+
+/// Ajustes de uma regra além do desenho: inteligência, classes, cor e som.
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct AjustesRegra {
+    #[serde(default)]
+    pub intel: Intel,
+    /// Classes que a regra observa (índices do COCO ou de um modelo de
+    /// estudo). Vazio = o padrão da inteligência legada.
+    #[serde(default)]
+    pub classes: Vec<usize>,
+    /// Densidade: quantos ao mesmo tempo. Permanência: segundos (0 = padrão
+    /// global). Passagem/presença/calor: não usa.
+    #[serde(default)]
+    pub parametro: u32,
+    /// Cor da linha/zona no overlay (nome do token: verde, ambar…).
+    #[serde(default)]
+    pub cor: String,
+    /// Som do alerta (bipe, sino…); vazio = padrão.
+    #[serde(default)]
+    pub som: String,
+}
+
 /// Regra desenhada pelo técnico.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Regra {
@@ -61,6 +116,8 @@ pub struct Regra {
     pub nome: String,
     pub forma: Forma,
     pub pontos: Vec<Ponto>,
+    #[serde(default)]
+    pub ajustes: AjustesRegra,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -553,12 +610,14 @@ mod tests {
                 id: 1,
                 nome: "Porta".into(),
                 forma: Forma::Linha,
+                ajustes: Default::default(),
                 pontos: vec![p(0.5, 0.1), p(0.5, 0.95)],
             },
             Regra {
                 id: 2,
                 nome: "Balcão".into(),
                 forma: Forma::Zona,
+                ajustes: Default::default(),
                 pontos: vec![p(0.7, 0.2), p(0.95, 0.2), p(0.95, 0.9), p(0.7, 0.9)],
             },
         ];

@@ -100,12 +100,15 @@
     const rs = regras[id] || [];
     const formas = ler("cf-formas") === "1";
     const svg = camada.querySelector("svg");
-    const chaveFormas = formas ? rs.map((r) => r.id + pts(r.pontos || [])).join("|") : "";
+    const chaveFormas = formas ? rs.map((r) => r.id + (r.ajustes && r.ajustes.cor || "") + pts(r.pontos || [])).join("|") : "";
     if (svg.dataset.chave !== chaveFormas) {
       svg.dataset.chave = chaveFormas;
-      svg.replaceChildren(...(formas ? rs.map((r) => (r.forma === "linha"
-        ? svgEl("polyline", { class: "vv-forma linha", points: pts(r.pontos || []) })
-        : svgEl("polygon", { class: "vv-forma", points: pts(r.pontos || []) }))) : []));
+      svg.replaceChildren(...(formas ? rs.map((r) => {
+        const cor = r.ajustes && r.ajustes.cor ? ` cor-${r.ajustes.cor}` : "";
+        return r.forma === "linha"
+          ? svgEl("polyline", { class: "vv-forma linha" + cor, points: pts(r.pontos || []) })
+          : svgEl("polygon", { class: "vv-forma" + cor, points: pts(r.pontos || []) });
+      }) : []));
     }
     const caixa = camada.querySelector("[data-baloes]");
     const vistos = new Set();
@@ -152,25 +155,14 @@
     m.setAttribute("aria-label", t(mudo ? "vivo.som_desmutar" : "vivo.som_mutar"));
     m.title = m.getAttribute("aria-label");
   }
-  function tocarAlerta() {
+  function tocarAlerta(som) {
     if (mudo || !somCtx) return;
-    try {
-      if (somCtx.state === "suspended") somCtx.resume();
-      const t0 = somCtx.currentTime;
-      for (const [i, f] of [[0, 880], [0.18, 1320]]) {
-        const o = somCtx.createOscillator(); const g = somCtx.createGain();
-        o.type = "sine"; o.frequency.value = f;
-        g.gain.setValueAtTime(0.0001, t0 + i);
-        g.gain.exponentialRampToValueAtTime(0.25, t0 + i + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + i + 0.16);
-        o.connect(g).connect(somCtx.destination);
-        o.start(t0 + i); o.stop(t0 + i + 0.18);
-      }
-    } catch (_) { /* sem áudio */ }
+    CFSons.tocar(somCtx, som || "bipe");
   }
   /// Confere as mudanças de todas as câmeras e toca uma vez se algo disparou.
   function conferirAlertas() {
     let tocar = false;
+    let somEscolhido = "";
     for (const c of cams) {
       const e = estadoCams[String(c.id)];
       if (!e) continue;
@@ -182,11 +174,11 @@
         const er = e.regras ? e.regras[r.id] : null;
         const agora = !!(er && er.alerta_ms > 0);
         const chave = `${c.id}:${r.id}`;
-        if (agora && alertaAntes[chave] === false && somLigado(r.id)) tocar = true;
+        if (agora && alertaAntes[chave] === false && somLigado(r.id)) { if (!tocar) somEscolhido = (r.ajustes && r.ajustes.som) || ""; tocar = true; }
         alertaAntes[chave] = agora;
       }
     }
-    if (tocar) tocarAlerta();
+    if (tocar) tocarAlerta(somEscolhido);
     return tocar;
   }
 

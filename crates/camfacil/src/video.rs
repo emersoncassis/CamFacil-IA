@@ -491,7 +491,12 @@ impl Canal {
                         i.ocupadas.insert(*regra, false);
                         let _ = store.registrar_evento(self.id, Some(*regra), "zona_livre", "", t);
                     }
-                    EventoMedio::Permanencia { regra, segundos } => {
+                    EventoMedio::Permanencia {
+                        regra,
+                        segundos,
+                        classe,
+                    } => {
+                        let que = nome_objeto(*classe, estudo.as_deref());
                         i.alertas.insert(*regra, Instant::now());
                         i.avisos.insert(*regra, format!("parado há {segundos} s"));
                         let det = format!("{segundos} s");
@@ -500,9 +505,25 @@ impl Canal {
                         avisos.push((
                             format!("permanencia:{regra}"),
                             format!(
-                                "{hora} — {}: pessoa parada há {segundos} s · {cam}",
+                                "{hora} — {}: {que} parado há {segundos} s · {cam}",
                                 nome(*regra)
                             ),
+                        ));
+                    }
+                    EventoMedio::Densidade {
+                        regra,
+                        quantas,
+                        classe,
+                    } => {
+                        i.ocupadas.insert(*regra, true);
+                        i.alertas.insert(*regra, Instant::now());
+                        *i.contagens.entry(*regra).or_default() += 1;
+                        let det = rotulo_contagem(*classe, *quantas, estudo.as_deref());
+                        i.avisos.insert(*regra, det.clone());
+                        let _ = store.registrar_evento(self.id, Some(*regra), "densidade", &det, t);
+                        avisos.push((
+                            format!("densidade:{regra}"),
+                            format!("{hora} — {}: {det} ao mesmo tempo · {cam}", nome(*regra)),
                         ));
                     }
                 }
@@ -1034,7 +1055,14 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
         return;
     }
     if let Some(o) = canal.observacao.lock().unwrap().as_mut() {
-        if o.inicio.elapsed() < o.duracao {
+        // Com o detector olhando, ele alimenta (sabe a classe); sem ele, o movimento.
+        let detector_vivo = canal
+            .medio
+            .lock()
+            .unwrap()
+            .quando
+            .is_some_and(|q| q.elapsed() < Duration::from_secs(3));
+        if o.inicio.elapsed() < o.duracao && !detector_vivo {
             o.obs.alimentar(&an.centros());
         }
     }

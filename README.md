@@ -244,6 +244,14 @@ Versão atual: **0.8.2** ([releases](https://github.com/emersoncassis/CamFacil-I
   - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
   - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
 
+### Novidades da 0.9.0
+- **Uma inteligência por regra** ([SDD-09](docs/sdd/SDD-09-inteligencias-por-regra.md)): passagem (linha), presença, densidade, permanência e mapa de calor (zona). Cada uma mostra o peso (leve, médio, pesado) e só pode ser escolhida se o módulo dela estiver ligado.
+- **Quem a regra observa**: pessoa, carro, moto, bicicleta, ônibus e caminhão, em qualquer combinação. "Linha só de carro e moto", "zona que avisa com 3 ou mais carros", "permanência só de moto".
+- **Densidade** (N ou mais ao mesmo tempo) e **permanência** com tempo próprio por regra; o aviso diz o que é ("carro parado há 65 s").
+- **Cor da linha** (6 opções) e **som do alerta** (bipe, sino, alarme, gota, sem som) por regra, no Ao vivo, em Câmeras e no Modo TV.
+- **IA, sugira para mim** agora vê o que passa: se mais carros e pessoas passam, sugere **passagem** das classes certas; se alguém ou um carro chega e fica parado, sugere **permanência** daquela classe, com o tempo sugerido.
+- Formulário da regra em 3 abas (O que faz, Quem, Alerta), sem rolagem em nenhum tamanho de tela. Regras antigas continuam como eram.
+
 ### Novidades da 0.8.2
 - **Nada fica rodando escondido**: ngrok e ffmpeg morrem junto com o programa, mesmo se ele for fechado à força (janela fechada, Gerenciador de Tarefas). No Windows, por Job Object; no Linux/Android, por sinal do sistema. Ao abrir, derruba um ngrok que uma versão anterior tenha deixado.
 - **Desinstalar** (Manutenção > Dados): para ngrok, endereço HTTPS do Tailscale e o abrir com o computador, tira o atalho e o programa e, se marcado, apaga os dados.

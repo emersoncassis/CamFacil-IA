@@ -211,8 +211,21 @@ dialog h2 { margin: 0 0 var(--s3); font-size: var(--fs-lg); font-weight: 600; }
 .forma { fill: rgba(6, 203, 63, 0.12); stroke: var(--accent); stroke-width: 3; vector-effect: non-scaling-stroke; }
 .forma.linha { fill: none; }
 .forma.salva { fill: rgba(255, 255, 255, 0.06); stroke: var(--c-300); stroke-dasharray: 6 4; }
+.forma.salva.cor-verde, .vv-forma.cor-verde { color: var(--linha-verde); }
+.forma.salva.cor-ambar, .vv-forma.cor-ambar { color: var(--linha-ambar); }
+.forma.salva.cor-vermelho, .vv-forma.cor-vermelho { color: var(--linha-vermelho); }
+.forma.salva.cor-azul, .vv-forma.cor-azul { color: var(--linha-azul); }
+.forma.salva.cor-branco, .vv-forma.cor-branco { color: var(--linha-branco); }
+.forma.salva.cor-magenta, .vv-forma.cor-magenta { color: var(--linha-magenta); }
+.forma.salva[class*="cor-"], .vv-forma[class*="cor-"] { stroke: currentColor; fill: color-mix(in srgb, currentColor 12%, transparent); }
+.forma.linha.salva[class*="cor-"], .vv-forma.linha[class*="cor-"] { fill: none; }
 .vertice { fill: var(--accent); }
-.regra-form { margin-top: var(--s4); }
+/* Cartão por cima do vídeo: cabe em qualquer tela sem rolar (regra 9) */
+.regra-form { position: fixed; z-index: 60; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100vw - 2 * var(--s3))); max-height: calc(100dvh - 2 * var(--s3)); overflow: hidden; display: flex; flex-direction: column; gap: var(--s3); margin: 0; padding: var(--s4); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r); box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.65); }
+.regra-form[hidden] { display: none; }
+.regra-form .actions { margin-top: auto; }
+.intel-item:not(:has(input:checked)) .tiny { display: none; }
+.intel-item.off .tiny { display: block; }
 .regra-form .zona-only { display: none; }
 .regra-form.zona .zona-only { display: flex; }
 .add-cam { display: flex; gap: var(--s2); margin-top: var(--s3); max-width: 720px; }
@@ -361,3 +374,45 @@ button.link:hover { color: var(--text); }
 .stream-dica { position: absolute; top: 40px; right: var(--s2); z-index: 2; max-width: min(300px, calc(100% - 16px)); margin: 0; padding: var(--s2) var(--s3); border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--c-black); color: var(--text-2); font-size: var(--fs-xs); }
 .viewer.desenhando .stream-pill, .viewer.desenhando .stream-dica { display: none; }
 @media (pointer: coarse) { .stream-pill { height: 32px; padding: 0 var(--s3); } .stream-dica { top: 46px; } }
+
+/* Formulário da regra: três abas para caber numa tela só (regra 9) */
+.abas-regra { display: flex; gap: var(--s1); border-bottom: 1px solid var(--line); }
+.aba-regra { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--text-3); padding: var(--s2) var(--s3); font: inherit; font-size: var(--fs-sm); cursor: pointer; }
+.aba-regra[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.aba-painel { display: flex; flex-direction: column; gap: var(--s2); min-height: 0; }
+.aba-painel[hidden] { display: none; }
+.intel-lista { display: flex; flex-direction: column; gap: var(--s1); }
+.intel-item { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s3); border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; }
+.intel-item:has(input:checked) { border-color: var(--accent); background: var(--surface-2); }
+.intel-item.off { opacity: 0.55; cursor: not-allowed; }
+.intel-txt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.peso { font-size: var(--fs-xs); border: 1px solid var(--line-strong); border-radius: var(--r-pill); padding: 1px var(--s2); color: var(--text-2); }
+.peso-medio { color: var(--c-warn); border-color: var(--c-warn); }
+.peso-pesado { color: var(--c-danger); border-color: var(--c-danger); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.chip { display: inline-flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); border: 1px solid var(--line-strong); border-radius: var(--r-pill); font-size: var(--fs-sm); cursor: pointer; }
+.chip:has(input:checked) { border-color: var(--accent); background: var(--surface-2); }
+.chip:has(input:disabled) { opacity: 0.45; cursor: not-allowed; }
+.campo-regra { display: flex; flex-direction: column; gap: var(--s1); }
+.cores { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.cor-item { position: relative; display: inline-flex; cursor: pointer; }
+.cor-item input { position: absolute; opacity: 0; inset: 0; }
+.cor-item span { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line-strong); background: currentColor; }
+.cor-item:has(input:checked) span { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px currentColor; }
+.cor-item:has(input:focus-visible) span { outline: 2px solid var(--focus); outline-offset: 3px; }
+.cor-item.cor-verde { color: var(--linha-verde); } .cor-item.cor-ambar { color: var(--linha-ambar); }
+.cor-item.cor-vermelho { color: var(--linha-vermelho); } .cor-item.cor-azul { color: var(--linha-azul); }
+.cor-item.cor-branco { color: var(--linha-branco); } .cor-item.cor-magenta { color: var(--linha-magenta); }
+.som-linha { display: flex; gap: var(--s2); align-items: center; }
+.som-linha select { flex: 1; min-width: 0; }
+.param { display: flex; flex-direction: column; gap: var(--s1); max-width: 320px; }
+.regra-form .intel-item, .regra-form .chip { flex-direction: row; align-items: center; gap: var(--s3); color: var(--text); }
+.regra-form .intel-item { padding: var(--s2) var(--s3); }
+.regra-form .intel-item input, .regra-form .chip input { width: 16px; height: 16px; flex: none; padding: 0; margin: 0; accent-color: var(--accent); }
+.regra-form .intel-item .tiny { color: var(--text-3); }
+.regra-form .cor-item { flex-direction: row; }
+.regra-form .cor-item input { width: 100%; height: 100%; padding: 0; margin: 0; }
+.regra-form .abas-regra { flex: none; }
+.regra-form .campo-regra, .regra-form .param { color: var(--text-2); }
+.regra-form .linha-form { display: flex; gap: var(--s3); max-width: none; }
+.regra-form .linha-form label { flex: 1; }

@@ -21,6 +21,7 @@ pub const ASSETS: &[Asset] = &[
     asset!("/tokens.css", "text/css; charset=utf-8", "tokens.css"),
     asset!("/app.css", "text/css; charset=utf-8", "app.css"),
     asset!("/app.js", "text/javascript; charset=utf-8", "app.js"),
+    asset!("/sons.js", "text/javascript; charset=utf-8", "sons.js"),
     asset!(
         "/integracoes-extra.css",
         "text/css; charset=utf-8",

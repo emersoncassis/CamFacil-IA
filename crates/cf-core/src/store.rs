@@ -209,6 +209,17 @@ fn migrar_cameras(c: &Connection) -> Result<()> {
     if !colunas.iter().any(|n| n == "canal") {
         c.execute_batch("ALTER TABLE cameras ADD COLUMN canal INTEGER NOT NULL DEFAULT 0;")?;
     }
+    // SDD-09: inteligência, classes, cor e som da regra (JSON; vazio = legado).
+    let regras_cols: Vec<String> = {
+        let mut st = c.prepare("PRAGMA table_info(regras)")?;
+        let v = st
+            .query_map([], |r| r.get::<_, String>(1))?
+            .collect::<Result<_>>()?;
+        v
+    };
+    if !regras_cols.iter().any(|n| n == "ajustes") {
+        c.execute_batch("ALTER TABLE regras ADD COLUMN ajustes TEXT NOT NULL DEFAULT '';")?;
+    }
     Ok(())
 }
 
@@ -276,6 +287,7 @@ pub struct RegraSalva {
     pub pontos: Vec<crate::visao::Ponto>,
     pub rotulo_on: String,
     pub rotulo_off: String,
+    pub ajustes: crate::visao::AjustesRegra,
 }
 
 impl RegraSalva {
@@ -290,6 +302,7 @@ impl RegraSalva {
             nome: self.nome.clone(),
             forma,
             pontos: self.pontos.clone(),
+            ajustes: self.ajustes.clone(),
         })
     }
 }
@@ -392,7 +405,7 @@ impl Store {
     pub fn regras(&self, camera_id: i64) -> Result<Vec<RegraSalva>> {
         let c = self.lock();
         let mut st = c.prepare(
-            "SELECT id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off FROM regras WHERE camera_id = ?1 ORDER BY id",
+            "SELECT id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off, ajustes FROM regras WHERE camera_id = ?1 ORDER BY id",
         )?;
         let v = st
             .query_map(params![camera_id], |r| {
@@ -405,10 +418,22 @@ impl Store {
                     pontos: serde_json::from_str(&pontos).unwrap_or_default(),
                     rotulo_on: r.get(5)?,
                     rotulo_off: r.get(6)?,
+                    ajustes: {
+                        let j: String = r.get(7)?;
+                        serde_json::from_str(&j).unwrap_or_default()
+                    },
                 })
             })?
             .collect();
         v
+    }
+
+    /// Grava inteligência, classes, cor e som da regra (SDD-09).
+    pub fn definir_ajustes(&self, id: i64, a: &crate::visao::AjustesRegra) -> Result<bool> {
+        Ok(self.lock().execute(
+            "UPDATE regras SET ajustes = ?2 WHERE id = ?1",
+            params![id, serde_json::to_string(a).unwrap_or_default()],
+        )? > 0)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -671,6 +696,9 @@ pub struct RegraBackup {
     pub pontos: String,
     pub rotulo_on: String,
     pub rotulo_off: String,
+    /// JSON dos ajustes (SDD-09); ausente em backups antigos.
+    #[serde(default)]
+    pub ajustes: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -721,7 +749,7 @@ impl Store {
             })?
             .collect::<Result<_>>()?;
         let mut st = c.prepare(
-            "SELECT id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off FROM regras ORDER BY id",
+            "SELECT id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off, ajustes FROM regras ORDER BY id",
         )?;
         b.regras = st
             .query_map([], |r| {
@@ -733,6 +761,7 @@ impl Store {
                     pontos: r.get(4)?,
                     rotulo_on: r.get(5)?,
                     rotulo_off: r.get(6)?,
+                    ajustes: r.get(7)?,
                 })
             })?
             .collect::<Result<_>>()?;
@@ -813,8 +842,8 @@ impl Store {
         migrar_macs_antigos(&tx)?;
         for r in &b.regras {
             tx.execute(
-                "INSERT INTO regras (id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                "INSERT INTO regras (id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off, ajustes)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![
                     r.id,
                     r.camera_id,
@@ -822,7 +851,8 @@ impl Store {
                     r.forma,
                     r.pontos,
                     r.rotulo_on,
-                    r.rotulo_off
+                    r.rotulo_off,
+                    r.ajustes
                 ],
             )?;
         }
@@ -1235,5 +1265,47 @@ mod tests {
         assert_eq!(s.cameras().unwrap().len(), 1);
         drop(s);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn ajustes_da_regra_sobrevivem_ao_backup_e_regra_antiga_vira_legado() {
+        use crate::visao::{AjustesRegra, Intel};
+        let s = Store::memory().unwrap();
+        let cam = s.criar_camera("C", "demo", "").unwrap();
+        let pts = [
+            crate::visao::Ponto { x: 0.1, y: 0.1 },
+            crate::visao::Ponto { x: 0.9, y: 0.1 },
+            crate::visao::Ponto { x: 0.5, y: 0.9 },
+        ];
+        let antiga = s.criar_regra(cam, "Antiga", "zona", &pts, "", "").unwrap();
+        let nova = s.criar_regra(cam, "Carros", "zona", &pts, "", "").unwrap();
+        let a = AjustesRegra {
+            intel: Intel::Densidade,
+            classes: vec![2, 3],
+            parametro: 4,
+            cor: "ambar".into(),
+            som: "sino".into(),
+        };
+        s.definir_ajustes(nova, &a).unwrap();
+        let rs = s.regras(cam).unwrap();
+        assert_eq!(
+            rs.iter().find(|r| r.id == antiga).unwrap().ajustes.intel,
+            Intel::Legado
+        );
+        assert_eq!(rs.iter().find(|r| r.id == nova).unwrap().ajustes, a);
+        let json = serde_json::to_string(&s.exportar_config().unwrap()).unwrap();
+        let dest = Store::memory().unwrap();
+        dest.importar_config(&serde_json::from_str(&json).unwrap(), 1)
+            .unwrap();
+        let c = dest.cameras().unwrap()[0].id;
+        assert_eq!(
+            dest.regras(c)
+                .unwrap()
+                .iter()
+                .find(|r| r.id == nova)
+                .unwrap()
+                .ajustes,
+            a
+        );
     }
 }

@@ -115,7 +115,12 @@ fn ferramentas() -> Value {
                 "forma": { "type": "string", "enum": ["zona", "linha"] },
                 "pontos": { "type": "array", "items": obj(json!({ "x": { "type": "number", "minimum": 0, "maximum": 1 }, "y": { "type": "number", "minimum": 0, "maximum": 1 } }), &["x", "y"]) },
                 "rotulo_on": { "type": "string", "description": "Texto do balão quando a zona está ocupada (ex.: Ocupada)" },
-                "rotulo_off": { "type": "string", "description": "Texto do balão quando livre (ex.: Livre)" }
+                "rotulo_off": { "type": "string", "description": "Texto do balão quando livre (ex.: Livre)" },
+                "intel": { "type": "string", "enum": ["passagem", "presenca", "densidade", "permanencia", "calor"], "description": "Uma inteligência por regra. passagem = linha; as demais = zona. Exige o módulo ligado (contagem, pessoas, permanencia, calor). Sem este campo vale o aviso simples por movimento." },
+                "classes": { "type": "array", "items": { "type": "integer", "enum": [0, 1, 2, 3, 5, 7] }, "description": "O que a regra observa: 0 pessoa, 1 bicicleta, 2 carro, 3 moto, 5 ônibus, 7 caminhão" },
+                "parametro": { "type": "integer", "description": "densidade: quantos ao mesmo tempo (2 a 50); permanencia: segundos parado (5 a 3600)" },
+                "cor": { "type": "string", "enum": ["verde", "ambar", "vermelho", "azul", "branco", "magenta"] },
+                "som": { "type": "string", "enum": ["bipe", "sino", "alarme", "gota", "silencio"] }
             }), &["camera_id", "nome", "forma", "pontos"]),
             "annotations": { "readOnlyHint": false, "destructiveHint": false }
         },

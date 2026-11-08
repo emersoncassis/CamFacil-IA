@@ -27,6 +27,14 @@
   --c-danger: #f06a55;
   --c-alert: #ff9c9c;       /* balão de inteligência em alerta */
 
+  /* Cores que o técnico escolhe para a linha/zona no overlay (SDD-09) */
+  --linha-verde: var(--c-green);
+  --linha-ambar: var(--c-warn);
+  --linha-vermelho: var(--c-danger);
+  --linha-azul: #5aa9ff;
+  --linha-branco: var(--c-100);
+  --linha-magenta: #e66ab8;
+
   /* Papéis */
   --bg: var(--c-black);
   --surface: var(--c-900);

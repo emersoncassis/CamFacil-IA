@@ -155,12 +155,14 @@ fn regras_teste() -> Vec<Regra> {
             id: 1,
             nome: "Zona de teste".into(),
             forma: Forma::Zona,
+            ajustes: Default::default(),
             pontos: vec![p(0.3, 0.2), p(0.7, 0.2), p(0.7, 0.9), p(0.3, 0.9)],
         },
         Regra {
             id: 2,
             nome: "Linha de teste".into(),
             forma: Forma::Linha,
+            ajustes: Default::default(),
             pontos: vec![p(0.5, 0.1), p(0.5, 0.95)],
         },
     ]
