@@ -24,6 +24,7 @@
 </p>
 <p>
   <a href="https://emersoncassis.github.io/CamFacil-IA/"><img src="https://img.shields.io/badge/manifesto%20e%20docs-PT%20%C2%B7%20EN%20%C2%B7%20ES-06CB3F?style=flat-square&labelColor=000000" alt="Manifesto e documentação em português, inglês e espanhol"/></a>
+  <a href="https://buymeacoffee.com/emersoncarvalho"><img src="https://img.shields.io/badge/apoie%20o%20projeto-pague%20um%20caf%C3%A9-06CB3F?style=flat-square&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoie o projeto: pague um café"/></a>
 </p>
 
 </div>
@@ -241,6 +242,14 @@ Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular a
 - Telegram: backup agendado; foto do alerta com a linha/zona desenhada (`/backup <senha>` já existe)
 - Android: câmera do próprio celular como fonte, chave de assinatura fixa do APK, APK por arquitetura (hoje ~20 MB com a IA)
 - Testes em campo: rede real, Windows, TV Box com controle remoto
+
+## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Apoie o projeto
+
+O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem tempo, estudo, anos de sala de aula e dinheiro do próprio bolso: só para começar, foram cerca de R$ 7 mil.
+
+Se ele te ajudou a aprender, a vender ou a ganhar tempo, **pague um café**. Cada apoio mantém o projeto vivo e aberto para o próximo técnico.
+
+<a href="https://buymeacoffee.com/emersoncarvalho"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-apoiar%20o%20CamF%C3%A1cil%20IA-06CB3F?style=for-the-badge&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoiar no Buy Me a Coffee" height="40"/></a>
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Contribua
 

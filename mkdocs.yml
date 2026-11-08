@@ -44,6 +44,9 @@ extra:
       link: https://github.com/emersoncassis/CamFacil-IA
     - icon: fontawesome/solid/globe
       link: https://cfia.ysafe.com.br
+    - icon: fontawesome/solid/mug-hot
+      link: https://buymeacoffee.com/emersoncarvalho
+      name: Apoie o projeto com um café
 
 plugins:
   - search
