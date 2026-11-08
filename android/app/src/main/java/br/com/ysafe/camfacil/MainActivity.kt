@@ -15,6 +15,7 @@ import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -54,8 +55,21 @@ class MainActivity : Activity() {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
+            // Tela única (zero rolagem): a página segue o viewport do aparelho, sem
+            // zoom automático nem fonte aumentada pelo Android (textZoom 100).
+            settings.useWideViewPort = true
+            settings.loadWithOverviewMode = false
+            settings.setSupportZoom(false)
+            settings.builtInZoomControls = false
+            settings.displayZoomControls = false
+            settings.textZoom = 100
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = View.OVER_SCROLL_NEVER
             settings.userAgentString = settings.userAgentString + " CamFacilAndroid/" + versao()
             webViewClient = Cliente()
+            // Sem WebChromeClient o WebView engole alert() e confirm() (confirm vira
+            // "não"): era isso que impedia remover câmera pelo app.
+            webChromeClient = WebChromeClient()
             setDownloadListener { url, _, _, _, _ -> abrirFora(url) }
         }
         raiz.addView(web)

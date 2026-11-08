@@ -24,6 +24,7 @@ class CamerasActivity : Activity() {
             setBackgroundColor(getColor(R.color.preto))
             settings.javaScriptEnabled = true
             settings.allowFileAccess = false
+            settings.textZoom = 100
             addJavascriptInterface(Ponte(this, base), "CF")
             loadUrl("file:///android_asset/cameras.html")
         }
