@@ -58,6 +58,7 @@ function showTab(id) {
   tsAtivar(id === "integracoes");
   tgAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
+  redeAtivar(id === "rede");
   ligarAtivar(id === "cameras");
   manutencaoAtivar(id === "manutencao");
 }
@@ -333,7 +334,7 @@ async function renderSaude() {
 function saudeAtivar(ativo) {
   clearInterval(saudeTimer);
   saudeTimer = null;
-  if (ativo) { renderSaude(); saudeTimer = setInterval(renderSaude, 5000); }
+  if (ativo) { renderSaude(); redeResumoInicio(); saudeTimer = setInterval(renderSaude, 5000); }
 }
 
 async function carregarCameras() {
@@ -1078,6 +1079,7 @@ async function main() {
   iniciarLigar();
   iniciarAutoinicio();
   iniciarIntegracoesExtra();
+  iniciarRede();
   $("#sug-iniciar").onclick = sugIniciar;
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));

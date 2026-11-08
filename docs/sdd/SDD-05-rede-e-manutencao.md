@@ -2,22 +2,23 @@
 
 Status: proposto · Fase 4 e 5
 
-## Inventário
+## Inventário (status: implementado · fase 4)
 ONVIF (fabricante, modelo, firmware) + tabela ARP (MAC) + varredura ping da sub-rede. Roda **só sob demanda**.
 
 ## Foto da rede saudável
 Na primeira varredura com tudo funcionando, grava `{camera_id, ip, mac, fabricante, modelo}` como referência.
 
-## Diagnóstico
+## Diagnóstico (status: itens 1 e 2 implementados · fase 4; 3 e 4 pendentes)
 1. Câmera sem resposta → busca o MAC dela na ARP atual.
 2. MAC em outro IP → "A câmera X trocou de IP (de .101 para .117)" + botão "corrigir RTSP".
 3. Dois MACs no mesmo IP / respostas alternadas → conflito de IP.
 4. Também: câmeras instáveis (quedas por hora), senha padrão de fábrica, banda por câmera.
 Limite: MAC só é visível na mesma sub-rede.
 
-## Plano de IPs e diagrama unifilar
+## Plano de IPs e diagrama unifilar (status: diagrama implementado · fase 4; plano de IPs pendente)
 - Sugere faixas (ex.: câmeras .100–.150) e exporta documentação.
 - Diagrama unifilar em SVG gerado no servidor: roteador → switch → máquina/gravador → câmeras, com IP e MAC.
+  Implementação: `cf-core/src/unifilar.rs`, `GET /api/rede/diagrama.svg?foto=ID&baixar=true`. Na tela usa os tokens; baixado, cores claras de papel. Ligações abaixo do roteador são presumidas (a varredura não vê cabos) e o carimbo avisa.
 
 ## Monitor de hardware
 - Amostra a cada 10 s (sysinfo): CPU, RAM, disco, temperatura e top 5 processos.

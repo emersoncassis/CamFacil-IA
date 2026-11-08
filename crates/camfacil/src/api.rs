@@ -161,6 +161,21 @@ pub fn router(app: Shared) -> Router {
                 crate::backup::TAMANHO_MAX + 1024,
             )),
         )
+        .route(
+            "/api/rede/foto",
+            get(crate::rede::get_foto).post(crate::rede::post_foto),
+        )
+        .route("/api/rede/fotos/{id}", get(crate::rede::get_foto_id))
+        .route(
+            "/api/rede/diagnostico",
+            get(crate::rede::get_diagnostico).post(crate::rede::post_diagnostico),
+        )
+        .route("/api/rede/resumo", get(crate::rede::get_resumo))
+        .route("/api/rede/diagrama.svg", get(crate::rede::get_diagrama))
+        .route(
+            "/api/rede/cameras/{id}/atualizar",
+            post(crate::rede::post_atualizar),
+        )
         .fallback(static_file)
         .with_state(app)
 }

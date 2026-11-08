@@ -15,6 +15,7 @@ mod ia;
 mod integracoes;
 mod notificacoes;
 mod painel;
+mod rede;
 mod relatorio;
 mod resumo;
 mod tailscale;
@@ -181,6 +182,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     app.elo.definir_resumo(resumo::montar(Arc::downgrade(&app)));
     // Monitor de hardware com log (SDD-05): uma amostra por minuto.
     hardware::iniciar(Arc::downgrade(&app));
+    // Rede (SDD-05): foto da rede, diagnóstico e diagrama, sob demanda.
+    rede::iniciar(app.clone());
     let rede = lan
         .then(|| cf_core::conectar::ip_local().map(|ip| format!("http://{ip}:{}", chosen.port)))
         .flatten();
