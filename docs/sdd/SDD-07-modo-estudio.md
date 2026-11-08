@@ -1,6 +1,6 @@
 # SDD-07 — Modo estúdio
 
-Status: em desenvolvimento (fase 7) · fundações prontas, sem interface ainda
+Status: em desenvolvimento (fase 7) · versão básica funcionando de ponta a ponta (sem conversa com IA)
 
 > **Somente para estudo e aprendizagem.** Modelos criados no modo estúdio não devem ser usados em produção. Para uso real, o técnico deve procurar soluções homologadas: câmeras e gravadores com IA de borda (ex.: Intelbras) ou plataformas corporativas de IA em nuvem (ex.: Zion, 3dEYE). O aviso aparece ao abrir o modo estúdio e em todo modelo exportado.
 
@@ -39,18 +39,32 @@ O técnico descreve em linguagem natural uma inteligência nova ("detectar caixa
 |---|---|---|
 | Receita de módulo (JSON v1, validação pt-BR, bloqueio de biometria, SHA-256) | **Pronto** | `crates/cf-core/src/receita.rs`, `docs/esquemas/receita-v1.schema.json`, [ADR 0013](../adr/0013-formato-da-receita-do-estudio.md) |
 | Gerador do notebook do Colab (Drive, fotos YOLO, YOLO nano com checkpoints no Drive, ONNX + manifesto com hash, "apagar tudo") | **Pronto** | `crates/cf-core/src/notebook.rs`; no site: `POST /api/estudio/notebook` |
-| Importar modelo de estudo no programa local (receita + manifesto, depois o ONNX; confere hash; desligado; exige termo do técnico) | **Pronto, sem executar** | `crates/camfacil/src/estudio.rs`, `/api/estudio/modelos` |
-| Rodar o modelo de estudo (classes próprias) | Pendente: o detector só conhece as classes do COCO | `crates/camfacil/src/ia/detector.rs`, `cf_core::deteccao` |
-| Compartilhar receitas no site (publicar, listar, baixar, apagar; RLS) | **Pronto (API)** | `crates/cfia-api/src/estudio.rs`, migration `0004_receitas_estudo.sql` |
-| Interface do estúdio (conversa, rotular, galeria de receitas) | Pendente; `/estudio` continua mockup | `crates/cfia-api/web/estudio.*` |
-| Conversa com a IA gerando receita, vocabulário aberto, pré-marcação em WebAssembly | Pendente | — |
+| Assistente `/estudio` em seis passos, tela única sem rolagem (360×640 a 1920×1080) | **Pronto (básico)** | `crates/cfia-api/web/estudio.{html,css,js}` |
+| 1. Descrever: formulário guiado (nome, lugar, objetos, regra linha/zona/contagem) → receita conferida pelo núcleo, erros em pt-BR | **Pronto** | `POST /api/estudio/validar` (mesma validação do `cf-core`) |
+| 2. Coletar: fotos de uma câmera em intervalos, numa pasta local, sem enviar | **Pronto** | programa local: `crates/camfacil/src/estudio.rs`, Módulos → Modo estúdio |
+| 3. Rotular no navegador (abrir pasta/fotos, caixas por classe, teclado, "nada nesta foto", exporta `.zip` YOLO `images/ labels/ data.yaml` montado em JS) | **Pronto**; fotos nunca vão ao servidor | `estudio.js` (zip "store" próprio) |
+| 4. Treinar: baixa o `.ipynb` e abre o Colab | **Pronto** | `POST /api/estudio/notebook` |
+| Importar modelo de estudo no programa local (receita + manifesto, depois o ONNX; confere hash; exige termo do técnico) | **Pronto** | `crates/camfacil/src/estudio.rs`, `/api/estudio/modelos`, Módulos → Modo estúdio |
+| Rodar o modelo de estudo (classes próprias, ligado à mão, um por vez, nome da classe no balão da regra, nunca caixas para o cliente) | **Pronto** | `crates/camfacil/src/ia/detector.rs`, `cf_core::deteccao::{decodificar_estudo, CLASSE_ESTUDO}` |
+| Compartilhar receitas no site (publicar logado, galeria pública com busca, paginação, baixar e "usar") | **Pronto** | `crates/cfia-api/src/estudio.rs`, migration `0004_receitas_estudo.sql` |
+| Conversa com a IA gerando receita (chave do técnico cifrada) | Pendente; botão aparece desabilitado e explicado | — |
+| Vocabulário aberto e pré-marcação em WebAssembly | Pendente | — |
+| Posição da linha/zona vinda da receita | Pendente: o técnico desenha a regra em Câmeras; a receita leva posições padrão | — |
+
+### Como o modelo de estudo roda
+- Ligar um modelo (`POST /api/estudio/modelos/{id}/ligar {ligado}`) desliga os outros e avisa o detector, que troca a sessão ONNX na hora: um modelo por vez, sem dobrar a RAM. Volta ligado depois de reiniciar o programa.
+- Mesma saída do YOLO do Ultralytics (`[1, 4+nc, N]`), `nc` = classes da receita; lado e confiança da receita. Saída com `nc` diferente vira erro claro no estado do detector.
+- As classes entram como `CLASSE_ESTUDO + i` (1000+), para nunca se confundirem com o COCO (`0` = pessoa). Zona, permanência e calor contam pessoa ou qualquer objeto de estudo.
+- Balão da regra: "Doca · empilhadeira"; contagem do painel: "2 × pallet". Caixas só na ferramenta de rotular do técnico.
 
 ### API do site
 - `POST /api/estudio/receitas` (logado) `{receita, autor?, publica?}` — publica ou atualiza pela `id` da receita.
 - `GET /api/estudio/receitas?q=` — públicas; `GET /api/estudio/receitas/minhas` (logado).
 - `GET /api/estudio/receitas/{id}/receita.json` — baixa (conta download); `DELETE /api/estudio/receitas/{id}` (dono).
+- `POST /api/estudio/validar` `{receita}` — confere e devolve a receita canônica e o SHA-256 (ou `erros` em pt-BR); nada fica no servidor.
 - `POST /api/estudio/notebook` `{receita}` — devolve o `.ipynb`; nada fica no servidor.
 
 ### API do programa local
-- `GET /api/estudio/modelos` — lista com aviso e `executa: false`.
-- `POST /api/estudio/modelos` `{receita, manifesto?}` → `PUT /api/estudio/modelos/{id}/onnx` (corpo = arquivo, até 64 MB) → `DELETE /api/estudio/modelos/{id}`.
+- `GET /api/estudio/modelos` — lista com aviso, `ativo` e `executa` por modelo.
+- `POST /api/estudio/modelos` `{receita, manifesto?}` → `PUT /api/estudio/modelos/{id}/onnx` (corpo = arquivo, até 64 MB) → `POST /api/estudio/modelos/{id}/ligar` `{ligado}` → `DELETE /api/estudio/modelos/{id}`.
+- `POST /api/estudio/coleta` `{camera_id, receita, intervalo_s (2–3600), total (1–500)}` — guarda fotos em `pasta de dados/estudio/<receita>/fotos` (exige termo do técnico; uma coleta por vez); `GET /api/estudio/coleta`; `POST /api/estudio/coleta/parar`; `DELETE /api/estudio/coleta/{receita}` ("apagar tudo" das fotos).
