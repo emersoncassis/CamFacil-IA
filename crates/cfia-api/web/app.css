@@ -349,3 +349,15 @@ a.btn { text-decoration: none; }
 .escolha-card.aprender .escolha-cta { color: var(--accent); }
 .escolha + .hero { padding-top: var(--s6); }
 @media (max-width: 760px) { .escolha { grid-template-columns: minmax(0, 1fr); padding-top: var(--s5); } .escolha-card { padding: var(--s4); } }
+
+/* Painel logado: um cartão por cliente, com as câmeras e o ao vivo. */
+.clientes { display: grid; gap: var(--s4); }
+.cliente { display: grid; gap: var(--s2); }
+.cliente > header { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.cliente-nome { font-size: var(--fs-lg); font-weight: 600; flex: 1 1 14rem; min-width: 0; }
+.cliente-vazio h2 { margin: 0 0 var(--s2); }
+.vivo-barra { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--s3); }
+.vivo-barra p { margin: 0; }
+.cam-link { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.dica-ts { margin-top: var(--s4); }
+.dica-ts summary { cursor: pointer; color: var(--text-2); }

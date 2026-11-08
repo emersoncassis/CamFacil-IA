@@ -147,9 +147,9 @@
       <div class="brand"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></div>
       <nav aria-label="Seções">
         <ul class="nav" role="tablist">
-          <li><button role="tab" data-tab="comecar"><svg class="ico"><use href="#i-start"/></svg><span>Começar</span></button></li>
-          <li><button role="tab" data-tab="agentes" aria-selected="true"><svg class="ico"><use href="#i-agent"/></svg><span>Agentes</span></button></li>
+          <li><button role="tab" data-tab="agentes" aria-selected="true"><svg class="ico"><use href="#i-agent"/></svg><span>Painel</span></button></li>
           <li><button role="tab" data-tab="dispositivos"><svg class="ico"><use href="#i-key"/></svg><span>Dispositivos</span></button></li>
+          <li><button role="tab" data-tab="comecar"><svg class="ico"><use href="#i-start"/></svg><span>Instalar</span></button></li>
         </ul>
       </nav>
       <div class="rail-foot">
@@ -163,8 +163,8 @@
       <section id="comecar" class="page" role="tabpanel" hidden>
         <header class="pagehead">
           <div>
-            <h1>Começar</h1>
-            <p class="lede">Três passos: baixar, ligar a câmera, parear com este painel. Leva poucos minutos. Nunca mexeu com IA? <a href="/aprender">Faça a formação</a> primeiro.</p>
+            <h1>Instalar num cliente novo</h1>
+            <p class="lede">Baixar, ligar a câmera, parear com este painel.</p>
           </div>
           <div class="ouvir" data-narracao="site-03-passo-a-passo,site-04-download,site-05-painel" hidden>
             <button class="btn" type="button"><svg class="ico"><use href="#i-play"/></svg><span>Ouvir o passo a passo</span></button>
@@ -192,10 +192,10 @@
       <section id="agentes" class="page" role="tabpanel">
         <header class="pagehead">
           <div>
-            <h1>Agentes</h1>
-            <p class="lede">Cada Agente-Cam-Elo-IA instalado num cliente aparece aqui depois do pareamento. Só você vê os seus.</p>
+            <h1>Painel</h1>
+            <p class="lede">Seus clientes e as câmeras de cada um, ao vivo.</p>
           </div>
-          <button class="btn primary" id="como-parear"><svg class="ico"><use href="#i-link"/></svg><span>Parear agente</span></button>
+          <button class="btn" id="como-parear"><svg class="ico"><use href="#i-link"/></svg><span>Parear cliente</span></button>
         </header>
         <div class="block" id="passos" hidden>
           <h2>Como parear</h2>
@@ -220,14 +220,16 @@
           </form>
           <p class="msg" id="leitor-msg" role="status"></p>
         </div>
-        <div class="block">
-          <div class="table-wrap">
-            <table class="table">
-              <thead><tr><th>Cliente</th><th>Situação</th><th>Impressão</th><th>Versão</th><th class="right">Pareado em</th></tr></thead>
-              <tbody id="lista-agentes"></tbody>
-            </table>
-          </div>
-        </div>
+        <div id="lista-agentes" class="clientes"></div>
+        <details class="block dica-ts">
+          <summary>Ver ao vivo pelo celular (Tailscale)</summary>
+          <ol class="steps">
+            <li>No computador do cliente, instale o Tailscale e entre com a sua conta. O CamFácil IA percebe sozinho em até 1 minuto.</li>
+            <li>No celular, instale o Tailscale (ou use o app CamFácil IA para Android) e entre com a mesma conta.</li>
+            <li>Volte aqui e toque em <strong>Ver ao vivo</strong>. O vídeo vai direto do cliente para o seu celular, cifrado, sem passar pela nuvem.</li>
+          </ol>
+          <p class="hint">Baixe o app Android em <a href="https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk">camfacil-android.apk</a>.</p>
+        </details>
       </section>
 
       <!-- Dispositivos -->
