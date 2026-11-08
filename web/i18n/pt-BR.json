@@ -692,5 +692,11 @@
   "mcp.ligado": "MCP ligado.",
   "mcp.desligado": "MCP desligado.",
   "mcp.token_trocado": "Token trocado.",
-  "mcp.copiado": "Token copiado."
+  "mcp.copiado": "Token copiado.",
+  "rede.conflito.mesma_varredura": "Conflito de IP em {ip}: dois aparelhos responderam por este endereço agora mesmo — {macs}.",
+  "rede.conflito.entre_varreduras": "Possível conflito de IP em {ip}: o endereço alterna de dono entre as fotos da rede — {macs}.",
+  "rede.conflito.camera": "É o IP da câmera {camera}, que pode cair e voltar sozinha.",
+  "rede.conflito.dica": "Deixe cada aparelho com um IP fixo único (ou reserve no DHCP do roteador) e tire outra foto da rede.",
+  "rede.conflito.marca": "conflito",
+  "rede.conflito.fab_desconhecido": "fabricante desconhecido"
 }
