@@ -4,7 +4,10 @@
 //! - **Desligado por padrão**; liga na dashboard (Integrações → MCP), com aviso.
 //! - Transporte HTTP: `POST /mcp` (JSON-RPC 2.0, resposta JSON simples, sem
 //!   SSE) no mesmo servidor da dashboard, com **token** obrigatório
-//!   (`Authorization: Bearer …`), guardado cifrado pelo cofre.
+//!   (`Authorization: Bearer …`), guardado cifrado pelo cofre. Para os
+//!   conectores remotos do claude.ai (que não deixam pôr cabeçalho), o token
+//!   também vale na URL (`/mcp?token=…`), **só** quando o pedido chega por um
+//!   proxy HTTPS nesta máquina (Tailscale Serve/Funnel ou ngrok): ver ADR 0015.
 //! - Transporte stdio: `camfacil --mcp` é uma ponte que lê JSON-RPC por linha
 //!   no stdin e repassa ao programa já aberto nesta máquina (lê o token do
 //!   banco local; nada sai da máquina).
@@ -18,8 +21,8 @@
 use crate::api::{bad, internal, ApiResult};
 use crate::{App, Shared};
 use axum::{
-    extract::State,
-    http::{header, HeaderMap, StatusCode},
+    extract::{ConnectInfo, State},
+    http::{header, Extensions, HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
     Json,
 };
@@ -42,6 +45,14 @@ fn agora() -> i64 {
 
 pub fn ligado(app: &App) -> bool {
     app.store.get(CHAVE_LIGADO).ok().flatten().as_deref() == Some("1")
+}
+
+/// Há token guardado (o MCP pela rede nunca funciona sem ele).
+pub fn tem_token(app: &App) -> bool {
+    Cofre::abrir()
+        .ok()
+        .and_then(|c| token(&app.store, &c))
+        .is_some()
 }
 
 fn escrita(app: &App) -> bool {
@@ -351,8 +362,43 @@ fn origem_ok(h: &HeaderMap) -> bool {
     }
 }
 
-/// `POST /mcp`.
-pub async fn post_mcp(State(app): State<Shared>, headers: HeaderMap, corpo: String) -> Response {
+/// Token da URL (`?token=…`), aceito só quando o pedido vem de um proxy
+/// HTTPS desta máquina: a conexão é de loopback (o Tailscale e o ngrok
+/// conectam em 127.0.0.1) e o proxy marcou `X-Forwarded-For`. Pela LAN ou
+/// pelo IP Tailscale direto (HTTP puro) o token na URL é recusado, para não
+/// trafegar em texto aberto.
+fn token_da_url(uri: &Uri, ext: &Extensions, h: &HeaderMap) -> Option<String> {
+    let loopback = ext
+        .get::<ConnectInfo<std::net::SocketAddr>>()
+        .is_some_and(|c| c.0.ip().is_loopback());
+    if !loopback || !h.contains_key("x-forwarded-for") {
+        return None;
+    }
+    uri.query()?
+        .split('&')
+        .find_map(|kv| kv.strip_prefix("token="))
+        .map(|t| t.trim().to_string())
+        .filter(|t| !t.is_empty())
+}
+
+fn nao_autorizado(msg: &str) -> Response {
+    let mut r = bad(StatusCode::UNAUTHORIZED, msg).into_response();
+    r.headers_mut().insert(
+        header::WWW_AUTHENTICATE,
+        header::HeaderValue::from_static("Bearer realm=\"camfacil-mcp\""),
+    );
+    r
+}
+
+/// `POST /mcp`. Atende igual quando vem pelo proxy do Tailscale/ngrok
+/// (127.0.0.1): transporte "Streamable HTTP" do MCP só com respostas JSON.
+pub async fn post_mcp(
+    State(app): State<Shared>,
+    uri: Uri,
+    ext: Extensions,
+    headers: HeaderMap,
+    corpo: String,
+) -> Response {
     if !ligado(&app) {
         return bad(StatusCode::NOT_FOUND, "MCP desligado").into_response();
     }
@@ -366,12 +412,13 @@ pub async fn post_mcp(State(app): State<Shared>, headers: HeaderMap, corpo: Stri
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.strip_prefix("Bearer "))
-        .unwrap_or("")
-        .trim()
-        .to_string();
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+        .or_else(|| token_da_url(&uri, &ext, &headers))
+        .unwrap_or_default();
     match token(&app.store, &cofre) {
         Some(t) if iguais(&t, &dado) => {}
-        _ => return bad(StatusCode::UNAUTHORIZED, "token inválido").into_response(),
+        _ => return nao_autorizado("token inválido"),
     }
     let msg: Value = match serde_json::from_str(&corpo) {
         Ok(v) => v,
@@ -393,6 +440,15 @@ pub async fn post_mcp(State(app): State<Shared>, headers: HeaderMap, corpo: Stri
 /// `GET /mcp`: sem fluxo SSE neste servidor.
 pub async fn get_mcp() -> Response {
     (StatusCode::METHOD_NOT_ALLOWED, [(header::ALLOW, "POST")]).into_response()
+}
+
+/// Servidor só com o `/mcp` (para túnel que não filtra caminho, como o ngrok).
+pub fn router_so_mcp(app: Shared) -> axum::Router {
+    use axum::routing::post;
+    axum::Router::new()
+        .route("/mcp", post(post_mcp).get(get_mcp))
+        .route("/mcp/", post(post_mcp).get(get_mcp))
+        .with_state(app)
 }
 
 // ---------------- Dashboard ----------------
@@ -418,14 +474,20 @@ pub async fn get_config(State(app): State<Shared>) -> ApiResult {
         .flatten()
         .unwrap_or_else(|| "7070".into());
     let url = format!("http://localhost:{porta}/mcp");
-    let exemplo =
-        json!({ "mcpServers": { "camfacil": { "command": comando(), "args": ["--mcp"] } } });
+    let exe = comando();
+    let exemplo = json!({ "mcpServers": { "camfacil": { "command": exe, "args": ["--mcp"] } } });
+    let aspas = if exe.contains(' ') {
+        format!("\"{exe}\"")
+    } else {
+        exe.clone()
+    };
     Ok(Json(json!({
         "ligado": lig,
         "escrita": escrita(&app),
         "url": url,
         "token": tok,
         "exemplo": serde_json::to_string_pretty(&exemplo).unwrap_or_default(),
+        "claude_code": format!("claude mcp add camfacil -- {aspas} --mcp"),
     })))
 }
 
@@ -451,8 +513,9 @@ pub async fn post_config(State(app): State<Shared>, Json(c): Json<ConfigReq>) ->
             .set(CHAVE_LIGADO, if l { "1" } else { "0" })
             .map_err(internal)?;
         if !l {
-            // Desligar também tira a permissão de escrita.
+            // Desligar também tira a permissão de escrita e o endereço HTTPS.
             app.store.set(CHAVE_ESCRITA, "0").map_err(internal)?;
+            crate::mcp_https::despublicar_tudo(&app).await;
         }
         registrar(&app, if l { "MCP ligado" } else { "MCP desligado" });
     }
@@ -580,6 +643,117 @@ mod tests {
             .iter()
             .any(|t| t["name"].as_str().unwrap().contains("acionar")));
         assert!(eh_escrita("criar_regra") && !eh_escrita("ver_alertas"));
+    }
+
+    /// Sobe o servidor de verdade num IP de loopback e conversa por HTTP,
+    /// como o proxy do Tailscale Serve/Funnel (ou o ngrok) faz.
+    #[tokio::test]
+    async fn atende_pelo_proxy_https_local() {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+        let (app, dir) = crate::api::tests::app_teste("mcp-proxy");
+        app.store.set(CHAVE_LIGADO, "1").unwrap();
+        let tok = novo_token(&app.store, &Cofre::abrir().unwrap()).unwrap();
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let base = format!("http://{}", l.local_addr().unwrap());
+        let r = crate::api::router(app.clone());
+        tokio::spawn(async move {
+            let _ = axum::serve(
+                l,
+                r.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+            )
+            .await;
+        });
+        let http = reqwest::Client::builder().no_proxy().build().unwrap();
+        let init = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"claude-ai","version":"1"}}}"#;
+        let lista = r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#;
+        // Como o proxy entrega: cabeçalhos do Claude + X-Forwarded-For.
+        let pedido = |url: String, corpo: &'static str| {
+            http.post(url)
+                .header("content-type", "application/json")
+                .header("accept", "application/json, text/event-stream")
+                .header("mcp-protocol-version", "2025-06-18")
+                .header("x-forwarded-for", "203.0.113.9")
+                .body(corpo)
+        };
+
+        // 1. Token no cabeçalho (Claude Desktop/Code, Cursor…).
+        let r = pedido(format!("{base}/mcp"), init)
+            .bearer_auth(&tok)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(r.status(), 200);
+        assert!(r.headers()["content-type"]
+            .to_str()
+            .unwrap()
+            .contains("application/json"));
+        let v: Value = r.json().await.unwrap();
+        assert_eq!(v["result"]["protocolVersion"], "2025-06-18");
+        assert_eq!(v["result"]["serverInfo"]["name"], "camfacil-ia");
+
+        // 2. Token na URL (conector do claude.ai), pelo proxy local; e com barra no fim.
+        for caminho in ["/mcp", "/mcp/"] {
+            let r = pedido(format!("{base}{caminho}?token={tok}"), lista)
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(r.status(), 200, "{caminho}");
+            let v: Value = r.json().await.unwrap();
+            assert!(v["result"]["tools"].as_array().unwrap().len() >= 8);
+        }
+
+        // 3. Notificação → 202; GET → 405 (sem SSE).
+        let r = pedido(
+            format!("{base}/mcp?token={tok}"),
+            r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#,
+        )
+        .send()
+        .await
+        .unwrap();
+        assert_eq!(r.status(), 202);
+        let r = http.get(format!("{base}/mcp")).send().await.unwrap();
+        assert_eq!(r.status(), 405);
+
+        // 4. Token na URL sem passar por proxy (HTTP puro): recusado.
+        let r = http
+            .post(format!("{base}/mcp?token={tok}"))
+            .header("content-type", "application/json")
+            .body(lista)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(r.status(), 401);
+        assert!(r.headers().contains_key("www-authenticate"));
+        // Token errado: recusado.
+        let r = pedido(format!("{base}/mcp?token=errado"), lista)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(r.status(), 401);
+
+        // 5. Servidor só com /mcp (túnel do ngrok) responde igual.
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let base2 = format!("http://{}", l.local_addr().unwrap());
+        let r = router_so_mcp(app.clone());
+        tokio::spawn(async move {
+            let _ = axum::serve(
+                l,
+                r.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+            )
+            .await;
+        });
+        let r = pedido(format!("{base2}/mcp?token={tok}"), lista)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(r.status(), 200);
+        let r = http
+            .get(format!("{base2}/api/system"))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(r.status(), 404, "o túnel do MCP não expõe a dashboard");
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

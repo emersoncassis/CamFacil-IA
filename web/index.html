@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/manutencao.css">
   <link rel="stylesheet" href="/integracoes-extra.css">
+  <link rel="stylesheet" href="/externo.css">
   <link rel="stylesheet" href="/rede.css">
   <link rel="stylesheet" href="/tela.css">
 </head>
@@ -687,6 +688,35 @@
             </details>
           </div>
           <p class="msg" id="ts-msg" role="status"></p>
+          <p class="aviso-fixo" id="ngrok-aviso" role="status" hidden><svg class="ico sm"><use href="#i-info"/></svg><span></span></p>
+          <h3 class="sub" data-i18n="ngrok.titulo"></h3>
+          <p class="hint" data-i18n="ngrok.desc"></p>
+          <p class="hint" id="ngrok-indisponivel" data-i18n="ngrok.android" hidden></p>
+          <div id="ngrok-corpo">
+            <form class="ngrok-token" id="ngrok-token-form" autocomplete="off">
+              <input name="authtoken" type="password" class="mono" autocomplete="off" spellcheck="false" data-i18n-ph="ngrok.ph_token" aria-label="Authtoken do ngrok">
+              <button class="btn sm" type="submit"><span data-i18n="ngrok.guardar"></span></button>
+              <a class="tiny" id="ngrok-link" target="_blank" rel="noopener" data-i18n="ngrok.pegar_token"></a>
+            </form>
+            <p class="tiny" id="ngrok-token-ok" hidden><span data-i18n="ngrok.token_ok"></span> <button class="btn ghost sm" type="button" id="ngrok-token-trocar"><span data-i18n="ngrok.trocar"></span></button></p>
+            <div class="actions mt">
+              <div class="seg" role="radiogroup" aria-label="Alvo do túnel">
+                <label><input type="radio" name="ngrok-alvo" value="painel" checked><span data-i18n="ngrok.alvo_painel"></span></label>
+                <label><input type="radio" name="ngrok-alvo" value="mcp"><span data-i18n="ngrok.alvo_mcp"></span></label>
+              </div>
+              <label class="som-regra"><span class="switch"><input type="checkbox" id="ngrok-auto24"><span></span></span><span class="tiny" data-i18n="ngrok.auto24"></span></label>
+            </div>
+            <div class="actions mt">
+              <button class="btn primary sm" type="button" id="ngrok-ligar"><span data-i18n="ngrok.ligar"></span></button>
+              <button class="btn perigo sm" type="button" id="ngrok-desligar" hidden><span data-i18n="ngrok.desligar"></span></button>
+            </div>
+            <dl class="rows mt" id="ngrok-dados" hidden>
+              <dt data-i18n="ngrok.endereco"></dt><dd><span class="copiavel"><code class="mono" id="ngrok-url"></code><button class="btn ghost sm" type="button" data-copiar="#ngrok-url" aria-label="Copiar"><svg class="ico sm"><use href="#i-copy"/></svg></button></span></dd>
+              <dt data-i18n="ngrok.usuario" class="ngrok-senha"></dt><dd class="mono ngrok-senha" id="ngrok-usuario"></dd>
+              <dt data-i18n="ngrok.senha" class="ngrok-senha"></dt><dd class="ngrok-senha"><span class="copiavel"><code class="mono" id="ngrok-senha"></code><button class="btn ghost sm" type="button" data-copiar="#ngrok-senha" aria-label="Copiar"><svg class="ico sm"><use href="#i-copy"/></svg></button></span></dd>
+            </dl>
+          </div>
+          <p class="msg" id="ngrok-msg" role="status"></p>
         </div>
         <div class="block" id="termos" data-sub="lgpd">
           <h2 data-i18n="lg.titulo"></h2>
@@ -911,16 +941,52 @@
           </div>
           <div id="mcp-detalhes" hidden>
             <dl class="rows mt">
-              <dt data-i18n="mcp.endereco"></dt><dd class="mono" id="mcp-url">—</dd>
               <dt data-i18n="mcp.token"></dt><dd><code class="mono" id="mcp-token">—</code></dd>
             </dl>
             <div class="actions mt">
               <button class="btn sm" id="mcp-copiar" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="mcp.copiar_token"></span></button>
               <button class="btn ghost sm" id="mcp-trocar" type="button"><span data-i18n="mcp.trocar_token"></span></button>
             </div>
+            <p class="aviso-fixo mt" id="mcph-ngrok-aviso" role="status" hidden><svg class="ico sm"><use href="#i-info"/></svg><span></span></p>
+            <h3 class="sub" data-aberta data-i18n="mcph.titulo"></h3>
+            <p class="hint" data-i18n="mcph.desc"></p>
+            <p class="state mcph-estado"><span class="dot" id="mcph-dot"></span><span id="mcph-status"></span></p>
+            <div id="mcph-pronto" hidden>
+              <dl class="rows mcph-rows">
+                <dt data-i18n="mcph.url_claude"></dt><dd><span class="copiavel"><code class="mono" id="mcph-url-token"></code><button class="btn ghost sm" type="button" data-copiar="#mcph-url-token" aria-label="Copiar"><svg class="ico sm"><use href="#i-copy"/></svg></button></span></dd>
+                <dt data-i18n="mcph.url"></dt><dd><span class="copiavel"><code class="mono" id="mcph-url"></code><button class="btn ghost sm" type="button" data-copiar="#mcph-url" aria-label="Copiar"><svg class="ico sm"><use href="#i-copy"/></svg></button></span></dd>
+                <dt data-i18n="mcph.cabecalho"></dt><dd><span class="copiavel"><code class="mono" id="mcph-cabecalho"></code><button class="btn ghost sm" type="button" data-copiar="#mcph-cabecalho" aria-label="Copiar"><svg class="ico sm"><use href="#i-copy"/></svg></button></span></dd>
+              </dl>
+              <p class="tiny" data-i18n="mcph.risco_url"></p>
+            </div>
+            <div class="mcph-opcoes" id="mcph-opcoes">
+              <button class="btn sm" type="button" id="mcph-serve"><span data-i18n="mcph.serve"></span></button>
+              <button class="btn sm" type="button" id="mcph-funnel"><span data-i18n="mcph.funnel"></span></button>
+              <button class="btn ghost sm" type="button" id="mcph-ngrok"><span data-i18n="mcph.ngrok"></span></button>
+              <button class="btn perigo sm" type="button" id="mcph-desligar" hidden><span data-i18n="mcph.desligar"></span></button>
+            </div>
+            <ul class="mcph-explica tiny">
+              <li><strong data-i18n="mcph.serve"></strong> <span data-i18n="mcph.serve_desc"></span></li>
+              <li><strong data-i18n="mcph.funnel"></strong> <span data-i18n="mcph.funnel_desc"></span></li>
+            </ul>
+            <ol class="mcph-passos tiny" id="mcph-passos" hidden></ol>
+            <details class="avancado" id="mcph-cmd-wrap" hidden>
+              <summary data-i18n="mcph.comando"></summary>
+              <code class="mono tiny" id="mcph-cmd"></code>
+            </details>
             <h3 class="sub" data-i18n="mcp.config_titulo"></h3>
             <p class="hint" data-i18n="mcp.config_dica"></p>
             <pre class="json-exemplo mono" id="mcp-exemplo"></pre>
+            <div class="actions mt">
+              <button class="btn ghost sm" type="button" data-copiar="#mcp-exemplo"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="mcp.copiar_json"></span></button>
+            </div>
+            <p class="tiny mt" data-i18n="mcp.claude_code"></p>
+            <span class="copiavel"><code class="mono tiny" id="mcp-claude-code"></code><button class="btn ghost sm" type="button" data-copiar="#mcp-claude-code" aria-label="Copiar"><svg class="ico sm"><use href="#i-copy"/></svg></button></span>
+            <h3 class="sub" data-i18n="mcp.local_titulo"></h3>
+            <dl class="rows">
+              <dt data-i18n="mcp.endereco"></dt><dd class="mono" id="mcp-url">—</dd>
+            </dl>
+            <p class="tiny mt" data-i18n="mcp.local_dica"></p>
             <p class="tiny mt" data-i18n="mcp.ferramentas"></p>
           </div>
           <p class="msg" id="mcp-msg" role="status"></p>
@@ -968,6 +1034,16 @@
     </form>
   </dialog>
 
+  <dialog id="ngrok-dlg" aria-labelledby="ngrok-dlg-titulo" aria-describedby="ngrok-dlg-texto">
+    <h2 id="ngrok-dlg-titulo" data-i18n="ngrok.dlg_titulo"></h2>
+    <p id="ngrok-dlg-texto" data-i18n="ngrok.dlg_texto"></p>
+    <div class="dlg-acoes">
+      <span class="espaco"></span>
+      <button type="button" class="btn" id="ngrok-dlg-tailscale" data-i18n="ngrok.dlg_tailscale"></button>
+      <button type="button" class="btn perigo" id="ngrok-dlg-ligar" data-i18n="ngrok.dlg_ligar"></button>
+    </div>
+  </dialog>
+
   <dialog id="confirma-dlg" aria-labelledby="confirma-texto">
     <h2 id="confirma-texto"></h2>
     <p class="hint" id="confirma-dica"></p>
@@ -989,6 +1065,7 @@
   <script src="/app.js"></script>
   <script src="/manutencao.js"></script>
   <script src="/integracoes-extra.js"></script>
+  <script src="/externo.js"></script>
   <script src="/fase6.js"></script>
   <script src="/estudio.js"></script>
   <script src="/rede.js" defer></script>

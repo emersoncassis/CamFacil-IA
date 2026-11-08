@@ -84,6 +84,8 @@ async function renderMcp(r) {
   $("#mcp-url").textContent = r.url;
   $("#mcp-token").textContent = r.token || "—";
   $("#mcp-exemplo").textContent = r.exemplo;
+  $("#mcp-claude-code").textContent = r.claude_code || "";
+  if (typeof mcpHttpsRender === "function") mcpHttpsRender(r);
 }
 
 function iniciarMcp() {
@@ -113,11 +115,13 @@ function iniciarMcp() {
 function fase6Ativar(ativo) {
   clearInterval(f6Timer); f6Timer = null;
   if (ativo) { renderBotoes(); renderMcp(); f6Timer = setInterval(renderBotoesLog, 10000); }
+  if (typeof externoAtivar === "function") externoAtivar(ativo);
 }
 
 function iniciarFase6() {
   iniciarBotoes();
   iniciarMcp();
+  if (typeof iniciarExterno === "function") iniciarExterno();
   const painel = $("#integracoes");
   new MutationObserver(() => fase6Ativar(!painel.hidden)).observe(painel, { attributes: true, attributeFilter: ["hidden"] });
   fase6Ativar(!painel.hidden);

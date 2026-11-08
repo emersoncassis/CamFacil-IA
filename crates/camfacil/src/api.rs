@@ -221,6 +221,16 @@ pub fn router(app: Shared) -> Router {
         )
         // Fase 6: MCP (desligado por padrão) e botões de portão/relé.
         .route("/mcp", post(crate::mcp::post_mcp).get(crate::mcp::get_mcp))
+        // Alguns proxies (Tailscale Serve com caminho) entregam com barra no fim.
+        .route("/mcp/", post(crate::mcp::post_mcp).get(crate::mcp::get_mcp))
+        .route(
+            "/api/mcp/https",
+            get(crate::mcp_https::get_https).post(crate::mcp_https::post_https),
+        )
+        .route(
+            "/api/ngrok",
+            get(crate::ngrok::get_ngrok).post(crate::ngrok::post_ngrok),
+        )
         .route(
             "/api/mcp",
             get(crate::mcp::get_config).post(crate::mcp::post_config),
@@ -1807,11 +1817,11 @@ async fn get_selos(State(app): State<Shared>) -> ApiResult {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use cf_core::store::Store;
 
-    fn app_teste(nome: &str) -> (Shared, std::path::PathBuf) {
+    pub(crate) fn app_teste(nome: &str) -> (Shared, std::path::PathBuf) {
         let dir = std::env::temp_dir().join(format!("cf-api-{nome}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();

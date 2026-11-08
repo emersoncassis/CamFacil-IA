@@ -54,3 +54,15 @@ Primeira opção da ADR-0005: usar o cliente Tailscale já instalado na máquina
 - **API**: `GET /api/tailscale` → `{instalado, logado, ip, nome, url, url_nome, escutando, aguardando, lan, erro, comando_instalar, sistema}`; `GET /api/tailscale/qr.svg` (reaproveita o gerador de QR do elo).
 - **UI** (Integrações → "Acessar de fora (Tailscale)"): situação, endereço `http://<ip>:<porta>` com copiar, nome MagicDNS, QR, instruções por sistema (Windows `winget install tailscale.tailscale`; Linux/Raspberry `curl -fsSL https://tailscale.com/install.sh | sh` + `sudo tailscale up`; macOS `brew install --cask tailscale`; celular: app Tailscale com a mesma conta). Explica que o vídeo não passa pela nuvem e que o celular precisa estar na mesma rede Tailscale.
 - Falta validar numa máquina real com Tailscale (aqui foi testado com um binário simulado respondendo `status --json` e `ip -4`, e o bind em um segundo IP).
+
+## Acesso de fora pelo ngrok — temporário, só para testes (status: implementado · ADR 0015)
+Fica na mesma tela (Integrações → Acesso de fora), abaixo do Tailscale, como seção que abre.
+
+- **Como funciona:** o técnico cola o authtoken do ngrok (cofre, cifrado). "Ligar o ngrok" usa o agente oficial do PATH ou baixa de `bin.equinox.io` para `camfacil-dados/bin` (HTTPS, redirecionamento só para `*.equinox.io`/`*.ngrok.com`, teto de tamanho, `ngrok version 3…` conferido, SHA-256 no evento) e roda `ngrok http 127.0.0.1:<porta> --log=stdout --log-format=json` com `NGROK_AUTHTOKEN` no ambiente. A URL vem do log ou de `http://127.0.0.1:4040/api/tunnels`.
+- **Alvos:** "Painel (com senha)" → `basic-auth` por Traffic Policy (arquivo 0600 em `camfacil-dados`, apagado ao desligar), usuário `camfacil` e senha aleatória mostrados na tela; "Só o MCP" → servidor à parte em `127.0.0.1:<porta livre>` só com `/mcp`, protegido pelo token do MCP.
+- **Avisos:** pop-up obrigatório antes de ligar (diálogo da página: "O ngrok é temporário, só para testes… Para usar por mais de um dia, use o Tailscale", botões "Entendi, ligar mesmo assim" / "Usar o Tailscale"); aviso amarelo fixo com há quanto tempo está ligado e, depois de 24 h, sugestão de desligar; chave "Desligar sozinho depois de 24 h" (`ngrok_auto24`).
+- **Log:** evento `acesso` com quem ligou (este computador ou o IP do aparelho), quando e a URL; queda e desligamento também. Fechar o programa derruba o túnel. Desligar o MCP derruba o túnel "Só o MCP".
+- **Android:** indisponível (mensagem clara; usar o app Tailscale).
+- **API:** `GET /api/ngrok` → `{disponivel, instalado, baixavel, tem_authtoken, auto24, ligado, alvo, url, desde, ha_s, usuario, senha, erro, link_authtoken}`; `POST /api/ngrok` `{authtoken?, auto24?, acao?: ligar|desligar, alvo?: painel|mcp, entendi}` (ligar exige `entendi` e o termo do técnico).
+- **Custo:** nada no binário (sem SDK, sem crate nova); o agente só existe enquanto ligado.
+- Testado com o agente real baixado (download, extração e conferência; authtoken falso → mensagem "o ngrok recusou o authtoken") e com um agente simulado (túnel, senha, só MCP, queda ao fechar). Falta validar numa conta real do ngrok.
