@@ -1205,7 +1205,10 @@ function sugRender(r) {
   const lista = $("#sug-lista");
   sugPreview = r.sugestoes || [];
   sugDesenhar();
+  const rodando = r.iniciado && !r.terminou;
   $("#sug-andamento").hidden = !r.iniciado;
+  $("#sug-cancelar").hidden = !r.iniciado;
+  $("#sug-iniciar").hidden = rodando;
   if (!r.iniciado) { lista.replaceChildren(); return; }
   $("#sug-barra").style.width = `${Math.round((r.progresso || 0) * 100)}%`;
   const pessoas = `${r.pessoas} ${r.pessoas === 1 ? t("sug.pessoa") : t("sug.pessoas")}`;
@@ -1215,31 +1218,61 @@ function sugRender(r) {
     return;
   }
   lista.replaceChildren(...sugPreview.map((sg) => {
-    const aceitar = el("button", { class: "btn primary sm", type: "button" }, t("sug.aceitar"));
-    aceitar.onclick = async () => {
-      aceitar.disabled = true;
-      try {
-        await api(`/api/cameras/${camAberta}/regras`, { nome: sg.nome, forma: sg.forma, pontos: sg.pontos, rotulo_on: "", rotulo_off: "" });
-        await carregarRegras();
-        sugPreview = sugPreview.filter((x) => x !== sg);
-        aceitar.closest("li").replaceChildren(el("span", { class: "msg ok" }, `${sg.nome} ${t("sug.criada")}`));
-        sugDesenhar();
-      } catch (e) { alert(e.message); aceitar.disabled = false; }
-    };
     const pct = Math.round(sg.confianca * 100);
+    const boa = pct >= 70;
+    const aceitar = el("button", { class: "btn sm " + (boa ? "primary" : ""), type: "button" }, t("sug.aceitar"));
+    aceitar.onclick = () => sugAceitar(sg, pct, aceitar);
     return el("li", {},
       el("div", { class: "sug-info" },
         el("strong", {}, `${sg.nome} · ${t("regra." + sg.forma)}`),
         el("p", { class: "tiny" }, sg.motivo),
-        el("span", { class: "badge" }, `${t("sug.confianca")} ${pct}%`)),
+        el("span", { class: "badge " + (boa ? "sug-boa" : "sug-fraca") }, `${t("sug.confianca")} ${pct}% · ${t(boa ? "sug.boa" : "sug.fraca")}`)),
       aceitar);
   }));
 }
 
+// Para a pesquisa no programa e limpa tudo da tela (traçado, lista, timer).
+async function sugParar() {
+  clearTimeout(sugTimer); sugTimer = null;
+  sugPreview = [];
+  sugDesenhar();
+  try { await api(`/api/cameras/${camAberta}/sugestoes`, undefined, "DELETE"); } catch (_) { /* segue */ }
+  $("#sug-andamento").hidden = true;
+  $("#sug-cancelar").hidden = true;
+  $("#sug-iniciar").hidden = false;
+  $("#sug-iniciar").disabled = false;
+}
+
+// Uma regra por pesquisa: aceitar cria a regra e encerra a observação.
+let sugCriando = false;
+async function sugAceitar(sg, pct, botao) {
+  if (sugCriando) return;
+  const fmt = (k, v) => t(k).replace(/\{(\w+)\}/g, (_, n) => v[n]);
+  const ok = await confirmar(fmt("sug.confirma", { nome: sg.nome }), t("sug.criar"),
+    pct < 70 ? fmt("sug.confirma_fraca", { pct }) : t("sug.confirma_ok"));
+  if (!ok) return;
+  sugCriando = true;
+  document.querySelectorAll("#sug-lista button").forEach((b) => { b.disabled = true; });
+  clearTimeout(sugTimer); sugTimer = null;
+  try {
+    await api(`/api/cameras/${camAberta}/regras`, { nome: sg.nome, forma: sg.forma, pontos: sg.pontos, rotulo_on: "", rotulo_off: "" });
+    await sugParar();
+    await carregarRegras();
+    $("#sug-lista").replaceChildren(el("li", {}, el("span", { class: "msg ok" }, `${sg.nome} ${t("sug.criada")}`)));
+    $("#sug-iniciar").querySelector("span").textContent = t("sug.de_novo");
+  } catch (e) {
+    document.querySelectorAll("#sug-lista button").forEach((b) => { b.disabled = false; });
+    sugAtualizar();
+    alert(e.message);
+  } finally { sugCriando = false; }
+}
+
 async function sugAtualizar() {
   if (camAberta == null) return;
+  clearTimeout(sugTimer); sugTimer = null;
   try {
     const r = await api(`/api/cameras/${camAberta}/sugestoes`);
+    if (sugCriando) return;
     sugRender(r);
     if (r.iniciado && !r.terminou) sugTimer = setTimeout(sugAtualizar, 2000);
     else { $("#sug-iniciar").disabled = false; }
@@ -1250,15 +1283,20 @@ async function sugIniciar() {
   if (camAberta == null) return;
   clearTimeout(sugTimer);
   $("#sug-iniciar").disabled = true;
+  $("#sug-iniciar").querySelector("span").textContent = t("sug.iniciar");
+  $("#sug-lista").replaceChildren();
   try { await api(`/api/cameras/${camAberta}/sugestoes`, { segundos: 60 }); sugAtualizar(); }
   catch (e) { alert(e.message); $("#sug-iniciar").disabled = false; }
 }
 
 function sugAbrirCamera() {
-  clearTimeout(sugTimer);
+  clearTimeout(sugTimer); sugTimer = null;
   sugPreview = [];
+  sugDesenhar();
   $("#sug-lista").replaceChildren();
   $("#sug-andamento").hidden = true;
+  $("#sug-cancelar").hidden = true;
+  $("#sug-iniciar").hidden = false;
   $("#sug-iniciar").disabled = false;
   sugAtualizar();
 }
@@ -1311,6 +1349,10 @@ async function main() {
   // rede.js é "defer": pode carregar depois deste arquivo.
   if (typeof iniciarRede === "function") iniciarRede(); else addEventListener("DOMContentLoaded", () => iniciarRede());
   $("#sug-iniciar").onclick = sugIniciar;
+  $("#sug-cancelar").onclick = async () => {
+    await sugParar();
+    $("#sug-lista").replaceChildren(el("li", { class: "tiny" }, t("sug.cancelada")));
+  };
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
