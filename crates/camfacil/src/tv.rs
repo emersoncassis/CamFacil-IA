@@ -87,7 +87,7 @@ pub fn link_whatsapp(numero: &str) -> Option<String> {
     (numero.len() >= 10).then(|| format!("https://wa.me/{numero}"))
 }
 
-fn caminho_logo() -> std::path::PathBuf {
+pub(crate) fn caminho_logo() -> std::path::PathBuf {
     cf_core::paths::data_dir().join(LOGO)
 }
 

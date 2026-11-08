@@ -61,6 +61,35 @@ impl Cofre {
     }
 }
 
+/// `n` bytes aleatórios do sistema (sal, nonce).
+pub fn aleatorio(n: usize) -> Vec<u8> {
+    use chacha20poly1305::aead::rand_core::RngCore;
+    let mut v = vec![0u8; n];
+    OsRng.fill_bytes(&mut v);
+    v
+}
+
+/// Cifra bytes com uma chave dada (backup protegido por senha). Saída:
+/// `nonce (12) || cifra+tag`.
+pub fn selar(chave: &[u8; 32], dados: &[u8]) -> Vec<u8> {
+    let c = ChaCha20Poly1305::new(Key::from_slice(chave));
+    let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng);
+    let mut saida = nonce.to_vec();
+    saida.extend(c.encrypt(&nonce, dados).unwrap_or_default());
+    saida
+}
+
+/// Inverso de [`selar`]; `None` se a chave estiver errada ou o arquivo mexido.
+pub fn abrir_selado(chave: &[u8; 32], selado: &[u8]) -> Option<Vec<u8>> {
+    if selado.len() < 12 + 16 {
+        return None;
+    }
+    let (nonce, ct) = selado.split_at(12);
+    ChaCha20Poly1305::new(Key::from_slice(chave))
+        .decrypt(Nonce::from_slice(nonce), ct)
+        .ok()
+}
+
 fn escrever_restrito(caminho: &Path, bytes: &[u8]) -> Result<(), String> {
     #[cfg(unix)]
     {

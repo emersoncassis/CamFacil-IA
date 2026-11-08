@@ -244,6 +244,66 @@ async function relGerar() {
 
 function relIniciar() { $("#rel-gerar").onclick = relGerar; }
 
+// ---------- Backup cifrado ----------
+function bkpSenhaNova() {
+  const s = $("#bkp-senha").value;
+  if (s.length < 8) { manMsg("#bkp-msg", t("bkp.senha_curta"), "err"); return null; }
+  if (s !== $("#bkp-senha2").value) { manMsg("#bkp-msg", t("bkp.senhas_diferentes"), "err"); return null; }
+  return s;
+}
+
+async function bkpBaixar() {
+  const senha = bkpSenhaNova(); if (!senha) return;
+  const b = $("#bkp-baixar"); b.disabled = true;
+  manMsg("#bkp-msg", t("bkp.gerando"));
+  try {
+    const r = await fetch("/api/backup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senha }) });
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.erro || r.statusText); }
+    const nome = (/filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "") || [])[1] || "camfacil-backup.cfbkp";
+    const url = URL.createObjectURL(await r.blob());
+    const a = el("a", { href: url, download: nome }); document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    manMsg("#bkp-msg", t("bkp.baixado").replace("{arquivo}", nome), "ok");
+  } catch (e) { manMsg("#bkp-msg", e.message, "err"); }
+  b.disabled = false;
+}
+
+async function bkpTelegram() {
+  const senha = bkpSenhaNova(); if (!senha) return;
+  const b = $("#bkp-telegram"); b.disabled = true;
+  manMsg("#bkp-msg", t("bkp.gerando"));
+  try { const d = await api("/api/backup/telegram", { senha }); manMsg("#bkp-msg", t("bkp.enviado").replace("{n}", d.enviados), "ok"); }
+  catch (e) { manMsg("#bkp-msg", e.message, "err"); }
+  b.disabled = false;
+}
+
+async function bkpRestaurar() {
+  const f = $("#bkp-arquivo").files[0];
+  if (!f) { manMsg("#bkp-msg", t("bkp.sem_arquivo"), "err"); return; }
+  if (!confirm(t("bkp.confirma"))) return;
+  const senha = new TextEncoder().encode($("#bkp-senha-imp").value);
+  const cab = new Uint8Array(2 + senha.length);
+  cab[0] = senha.length >> 8; cab[1] = senha.length & 255; cab.set(senha, 2);
+  const b = $("#bkp-restaurar"); b.disabled = true;
+  manMsg("#bkp-msg", t("bkp.restaurando"));
+  try {
+    const r = await fetch("/api/backup/importar", { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: new Blob([cab, f]) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.erro || r.statusText);
+    const quando = new Date(d.criado_em * 1000).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    manMsg("#bkp-msg", t("bkp.restaurado").replace("{cameras}", d.cameras).replace("{regras}", d.regras).replace("{contatos}", d.contatos).replace("{quando}", quando), "ok");
+    $("#bkp-senha-imp").value = ""; $("#bkp-arquivo").value = "";
+    tvCarregar();
+  } catch (e) { manMsg("#bkp-msg", e.message, "err"); }
+  b.disabled = false;
+}
+
+function bkpIniciar() {
+  $("#bkp-baixar").onclick = bkpBaixar;
+  $("#bkp-telegram").onclick = bkpTelegram;
+  $("#bkp-restaurar").onclick = bkpRestaurar;
+}
+
 // ---------- Entrada da tela ----------
 let manutencaoCarregada = false;
 function manutencaoAtivar(ativo) {
@@ -258,4 +318,5 @@ function iniciarManutencao() {
   tvIniciar();
   hwIniciar();
   relIniciar();
+  bkpIniciar();
 }
