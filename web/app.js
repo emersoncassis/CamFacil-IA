@@ -290,7 +290,7 @@ async function carregarFfmpeg() {
 
 function situacaoCam(e) {
   if (!e) return [false, t("estado.conectando")];
-  if (e.online) return [true, `${t("estado.online")} · ${e.fps} q/s`];
+  if (e.online) return [true, `${t("estado.online")} · ${Math.round(e.fps * 10) / 10} q/s`];
   return [false, e.erro || t("estado.conectando")];
 }
 

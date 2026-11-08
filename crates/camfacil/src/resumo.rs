@@ -57,7 +57,7 @@ pub fn montar(app: Weak<App>) -> crate::elo::Resumo {
                     "id": c.id,
                     "nome": c.nome,
                     "online": e.online,
-                    "fps": e.fps,
+                    "fps": (e.fps * 10.0).round() / 10.0,
                     "erro": e.erro,
                     "saude": e.saude,
                     "regras": app.store.regras(c.id).map(|r| r.len()).unwrap_or(0),
