@@ -32,6 +32,8 @@ O CamFácil IA é livre e gratuito, e vai continuar assim. Cada apoio volta todo
     | **A partir de R$ 1.000** · conversa | Uma hora de conversa comigo pelo Google Meet sobre o seu projeto |
     | **A partir de R$ 5.000** · desenvolvimento | Desenvolvemos juntos uma aplicação para você, com base no CamFácil IA |
 
+    Os **10 primeiros** apoiadores viram **Apoiadores Fundadores**, com selo para sempre no mural.
+
     !!! tip "Ideias e pedidos de funcionalidade passam por aqui"
         Quer uma função nova? Faça o pedido junto com o apoio, na aba **Entrar no mural**. Prefere fazer você mesmo? O código é aberto: desenvolva e abra um [pull request](https://github.com/emersoncassis/CamFacil-IA/pulls), que eu avalio quando possível. Pedidos seguem o escopo do projeto e não têm prazo garantido.
 

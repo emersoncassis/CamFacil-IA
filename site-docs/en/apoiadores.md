@@ -32,6 +32,8 @@ CamFácil IA is free and open source, and it will stay that way. Every bit of su
     | **From R$ 1,000** · conversation | A one-hour Google Meet call with me about your project |
     | **From R$ 5,000** · development | We build an application for you together, based on CamFácil IA |
 
+    The **first 10** supporters become **Founding Supporters**, with a badge on the wall forever.
+
     !!! tip "Ideas and feature requests come through here"
         Want a new feature? Send the request along with your support, in the **Join the wall** tab. Rather build it yourself? The code is open: build it and open a [pull request](https://github.com/emersoncassis/CamFacil-IA/pulls), which I'll review when I can. Requests follow the project's scope and have no guaranteed deadline.
 
