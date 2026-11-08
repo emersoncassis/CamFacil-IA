@@ -81,6 +81,9 @@ pub fn achar_ffmpeg() -> Option<PathBuf> {
 /// Instala o ffmpeg sozinho no Windows (winget). Em outros sistemas devolve
 /// o comando para o técnico rodar, porque pede senha de administrador.
 pub fn instalar_ffmpeg() -> Result<(), String> {
+    if cfg!(target_os = "android") {
+        return Err(comando_instalar().to_string());
+    }
     if !cfg!(windows) {
         return Err(format!("Rode no terminal: {}", comando_instalar()));
     }
@@ -127,6 +130,8 @@ pub fn comando_instalar() -> &'static str {
         "winget install --id Gyan.FFmpeg -e"
     } else if cfg!(target_os = "macos") {
         "brew install ffmpeg"
+    } else if cfg!(target_os = "android") {
+        "o ffmpeg vem dentro do app; reinstale o CamFácil IA pelo APK oficial"
     } else {
         "sudo apt install -y ffmpeg   (ou: sudo dnf install ffmpeg)"
     }

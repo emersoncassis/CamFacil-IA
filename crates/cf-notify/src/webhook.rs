@@ -125,7 +125,7 @@ impl Webhook {
             tx,
             interno: Mutex::new(Interno::default()),
             antirrepique: Mutex::new(Antirrepique::new(ANTIRREPIQUE)),
-            http: reqwest::Client::builder()
+            http: crate::tls::raizes_do_sistema(reqwest::Client::builder())
                 .timeout(Duration::from_secs(10))
                 .user_agent(concat!("CamFacilIA/", env!("CARGO_PKG_VERSION")))
                 .build()

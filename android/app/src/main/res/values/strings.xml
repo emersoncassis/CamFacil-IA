@@ -56,4 +56,43 @@
     <string name="alertas_ligados">Alertas ligados. Você recebe um aviso quando uma regra disparar.</string>
     <string name="alertas_desligados">Alertas desligados.</string>
     <string name="alertas_so_local">Os alertas no celular funcionam pareado com o programa local.</string>
+    <!-- Tela inicial: escolha do modo -->
+    <string name="inicio_lede">Como este aparelho vai ser usado?</string>
+    <string name="inicio_servidor">Este aparelho é o servidor (ligar câmeras aqui)</string>
+    <string name="inicio_servidor_texto">Faz tudo o que o programa do PC faz: liga as câmeras, roda as regras de linha e zona e manda o resumo ao site. Bom para TV Box ou celular velho ligado na tomada.</string>
+    <string name="inicio_remoto">Ver um servidor à distância</string>
+    <string name="inicio_remoto_texto">Abre o painel de um CamFácil IA que roda em outro lugar (PC, TV Box ou celular), pela rede da loja ou pelo Tailscale.</string>
+    <string name="inicio_servidor_desligado">O servidor deste aparelho foi desligado.</string>
+    <string name="menu_trocar_modo">Trocar modo (servidor ou à distância)</string>
+    <string name="menu_servidor">Servidor deste aparelho</string>
+
+    <!-- Servidor neste aparelho -->
+    <string name="servidor_titulo">Servidor neste aparelho</string>
+    <string name="servidor_ligando">Ligando o servidor…</string>
+    <string name="servidor_religando">Servidor parou. Ligando de novo…</string>
+    <string name="servidor_ligado_em">Ligado em %1$s</string>
+    <string name="servidor_parado">Servidor desligado.</string>
+    <string name="servidor_erro">Problema: %1$s. Tentando de novo…</string>
+    <string name="servidor_caiu">o servidor fechou sozinho</string>
+    <string name="servidor_sem_nucleo">este APK veio sem o servidor (compilado sem o núcleo Rust)</string>
+    <string name="servidor_nao_abriu">não deu para abrir o servidor (%1$s)</string>
+    <string name="servidor_abrir_painel">Abrir o painel</string>
+    <string name="servidor_ligar">Ligar o servidor</string>
+    <string name="servidor_desligar">Desligar o servidor</string>
+    <string name="servidor_notif_titulo">CamFácil IA · servidor ligado</string>
+    <string name="canal_servidor">Servidor deste aparelho</string>
+    <string name="servidor_fora_titulo">Acessar de fora</string>
+    <string name="servidor_fora_ok">Pelo Tailscale: %1$s
+
+No outro celular (com Tailscale na mesma conta), abra o CamFácil IA, escolha "Ver um servidor à distância" e digite este endereço. Ou leia o QR em Integrações → Tailscale, no painel.</string>
+    <string name="servidor_fora_ligar">Tailscale instalado, mas desligado ou sem conta. Abra o Tailscale, entre e ligue a VPN; o endereço de fora aparece aqui.</string>
+    <string name="servidor_fora_instalar">Para ver as câmeras de longe sem abrir porta no roteador, instale o Tailscale neste aparelho e entre na sua conta. O endereço de fora aparece aqui.</string>
+    <string name="servidor_rede_ok">Na rede da loja: %1$s</string>
+    <string name="servidor_rede_so_aqui">Na rede da loja: desligado (só este aparelho e o Tailscale abrem o painel).</string>
+    <string name="servidor_ajustes">Ajustes</string>
+    <string name="servidor_boot">Iniciar com o aparelho</string>
+    <string name="servidor_lan">Aceitar acesso pela rede Wi-Fi da loja</string>
+    <string name="erro_texto_servidor">O servidor deste aparelho ainda está ligando ou parou. Veja o estado em "Servidor deste aparelho".
+
+Endereço: %1$s</string>
 </resources>

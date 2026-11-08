@@ -5,7 +5,9 @@
 //! serviço systemd do usuário, já com `--lan` para abrir pelo celular.
 //! Abre sempre com `--no-browser` para não abrir o navegador a cada boot.
 
+#[cfg(not(target_os = "android"))]
 use std::path::PathBuf;
+#[cfg(not(target_os = "android"))]
 use std::process::Command;
 
 #[cfg(windows)]
@@ -13,6 +15,7 @@ const CHAVE: &str = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
 #[cfg(windows)]
 const NOME: &str = "CamFacilIA";
 
+#[cfg(not(target_os = "android"))]
 fn exe() -> Result<PathBuf, String> {
     std::env::current_exe().map_err(|e| format!("não achei o próprio programa: {e}"))
 }
@@ -44,19 +47,19 @@ pub fn definir(ligar: bool) -> Result<(), String> {
     }
 }
 
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
 fn home() -> Result<PathBuf, String> {
     std::env::var_os("HOME")
         .map(PathBuf::from)
         .ok_or_else(|| "pasta do usuário não encontrada".into())
 }
 
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
 fn com_tela() -> bool {
     std::env::var_os("DISPLAY").is_some() || std::env::var_os("WAYLAND_DISPLAY").is_some()
 }
 
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
 fn arquivos() -> Result<(PathBuf, PathBuf), String> {
     let h = home()?;
     Ok((
@@ -65,14 +68,14 @@ fn arquivos() -> Result<(PathBuf, PathBuf), String> {
     ))
 }
 
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
 pub fn ligado() -> bool {
     arquivos()
         .map(|(a, s)| a.is_file() || s.is_file())
         .unwrap_or(false)
 }
 
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
 pub fn definir(ligar: bool) -> Result<(), String> {
     let (desktop, servico) = arquivos()?;
     if !ligar {
@@ -132,4 +135,16 @@ pub fn ligado() -> bool {
 #[cfg(target_os = "macos")]
 pub fn definir(_ligar: bool) -> Result<(), String> {
     Err("no Mac ainda não; adicione em Ajustes → Itens de Início".into())
+}
+
+// No Android quem liga no boot é o app (BootReceiver), que conta a escolha
+// ao núcleo pela variável `CAMFACIL_BOOT` (ADR 0011).
+#[cfg(target_os = "android")]
+pub fn ligado() -> bool {
+    std::env::var("CAMFACIL_BOOT").is_ok_and(|v| v == "1")
+}
+
+#[cfg(target_os = "android")]
+pub fn definir(_ligar: bool) -> Result<(), String> {
+    Err("no Android, ligue \"Iniciar com o aparelho\" na tela inicial do app CamFácil IA".into())
 }
