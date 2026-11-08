@@ -239,3 +239,10 @@
 .mais-fundo li a:hover strong { color: var(--accent); }
 .mais-fundo li p { margin: 4px 0 0; }
 @media (max-width: 760px) { .mais-fundo ul { grid-template-columns: minmax(0, 1fr); } }
+
+/* Narração: parágrafo que está sendo falado e o chamado para avançar. */
+.licao-texto { transition: color .3s; }
+.licao-texto.lendo { color: var(--text); box-shadow: inset 2px 0 0 var(--accent); padding-left: var(--s3); margin-left: calc(-1 * var(--s3)); }
+#proxima.piscar { animation: cf-chama 1.1s ease-in-out infinite; }
+@keyframes cf-chama { 0%, 100% { box-shadow: 0 0 0 0 var(--accent); } 50% { box-shadow: 0 0 0 6px transparent; transform: scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { #proxima.piscar { animation: none; outline: 2px solid var(--accent); outline-offset: 3px; } }
