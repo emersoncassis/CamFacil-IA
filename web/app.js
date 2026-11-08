@@ -128,7 +128,7 @@ async function runBench() {
 // ---------- Módulos ----------
 const MODULES = [
   ["leve", [["movimento", "Movimento inteligente"], ["cerca", "Cerca e linha virtual"], ["saude", "Saúde das câmeras"], ["camera", "Alertas da câmera"]]],
-  ["medio", [["pessoas", "Pessoas e veículos"], ["contagem", "Contagem"], ["permanencia", "Permanência"], ["calor", "Mapa de calor"]]],
+  ["medio", [["pessoas", "Pessoas e veículos"]]],
   ["pesado", [[null, "Leitura de placas"], [null, "Reconhecimento facial"]]],
 ];
 const RANK = { leve: 0, medio: 1, pesado: 2 };
@@ -166,7 +166,7 @@ async function renderLevels() {
         b.onclick = () => abrirEscola(ESCOLA_LICAO[id]);
         acoes.append(b);
       }
-      if (id === "permanencia") {
+      if (id === "pessoas") {
         const n = el("input", { class: "perm-input mono", type: "number", min: "5", max: "3600", value: String(ligados.permanencia_s || 60), "aria-label": t("mod.permanencia_s") });
         n.onchange = async () => { try { await api("/api/ia/permanencia", { segundos: Number(n.value) }); } catch (e) { alert(e.message); } };
         acoes.append(el("span", { class: "perm-wrap" }, n, t("mod.permanencia_s")));

@@ -435,7 +435,14 @@ impl Rastreador {
             let intel = r.ajustes.intel;
             match r.forma {
                 Forma::Linha if r.pontos.len() >= 2 => {
-                    if !contagem || !matches!(intel, Intel::Legado | Intel::Passagem) {
+                    // Regra com inteligência própria roda sempre que o detector roda;
+                    // só a antiga (legado) depende do módulo Contagem.
+                    let vale = match intel {
+                        Intel::Passagem => true,
+                        Intel::Legado => contagem,
+                        _ => false,
+                    };
+                    if !vale {
                         continue;
                     }
                     let (a, b) = (r.pontos[0], r.pontos[1]);
@@ -494,7 +501,7 @@ impl Rastreador {
                         Intel::Calor => calor_por_regra = true,
                         Intel::Passagem | Intel::Permanencia => {}
                     }
-                    if permanencia && matches!(intel, Intel::Legado | Intel::Permanencia) {
+                    if (permanencia && intel == Intel::Legado) || intel == Intel::Permanencia {
                         let limite = if r.ajustes.parametro > 0 {
                             Duration::from_secs(r.ajustes.parametro as u64)
                         } else {
@@ -518,7 +525,7 @@ impl Rastreador {
                 _ => {}
             }
         }
-        if calor {
+        if calor || calor_por_regra {
             if calor_por_regra {
                 // Mapa de calor só do que passa nas zonas de calor, na classe pedida.
                 for r in regras.iter().filter(|r| {

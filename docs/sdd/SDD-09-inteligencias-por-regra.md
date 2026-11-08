@@ -19,15 +19,17 @@ Até a 0.8.x o módulo (contagem, permanência, calor) era **global**: ligou, va
 | Inteligência | Forma | Peso | Módulo exigido | Parâmetro | O que dispara |
 |---|---|---|---|---|---|
 | Movimento (padrão antigo) | linha ou zona | leve | nenhum (usa o movimento) | — | movimento na linha/zona, sem saber o que é |
-| Passagem | linha | leve | Contagem | — | quem cruza, com o sentido |
+| Passagem | linha | leve | Pessoas e veículos | — | quem cruza, com o sentido |
 | Presença | zona | leve | Pessoas e veículos | — | entrou / ficou livre |
 | Densidade | zona | médio | Pessoas e veículos | quantos (2–50, padrão 3) | N ou mais dentro ao mesmo tempo (uma vez ao passar do limite) |
-| Permanência | zona | médio | Permanência | segundos (5–3600, padrão 60) | parado dentro por N segundos (uma vez por objeto) |
-| Mapa de calor | zona | pesado | Mapa de calor | — | acumula por onde passa, só dentro da zona e só das classes marcadas |
+| Permanência | zona | médio | Pessoas e veículos | segundos (5–3600, padrão 60) | parado dentro por N segundos (uma vez por objeto) |
+| Mapa de calor | zona | pesado | Pessoas e veículos | — | acumula por onde passa, só dentro da zona e só das classes marcadas |
 
 "Pesado" aqui é o custo no PC: a grade fica acumulando e a tela consulta; nenhuma delas roda modelo a mais, o detector é um só (YOLO nano) e todas leem o que ele já viu.
 
 Combinações que a tela e a API recusam: densidade/permanência/presença/calor em linha; passagem em zona; classe fora do catálogo (a não ser classe de modelo de estudo, quando há um ligado); cor ou som fora da lista.
+
+**Um módulo só:** todas as inteligências de IA dependem apenas de "Pessoas e veículos" (a IA de vídeo). Contagem, permanência e mapa de calor deixam de ser interruptores à parte na tela: são tipos de regra. Os módulos antigos continuam existindo por baixo só para regras criadas antes e para os comandos do Telegram/MCP.
 
 ## Dados
 

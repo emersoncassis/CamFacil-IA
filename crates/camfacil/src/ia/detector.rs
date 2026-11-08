@@ -192,9 +192,13 @@ fn laco(ia: Arc<Ia>, video: Arc<Video>, store: Arc<Store>) {
                             &dets,
                             &regras,
                             agora,
-                            m.contagem,
+                            // Um módulo só (Pessoas e veículos) liga a IA: com ele a
+                            // contagem das linhas e o mapa de calor valem sem outro
+                            // interruptor. A permanência das regras antigas segue o
+                            // módulo próprio.
+                            m.contagem || m.pessoas,
                             m.permanencia,
-                            m.calor,
+                            m.calor || m.pessoas,
                         );
                         // "IA, sugira": aprende com as classes (carro, pessoa…).
                         if let Some(o) = canal.observacao.lock().unwrap().as_mut() {

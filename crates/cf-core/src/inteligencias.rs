@@ -21,7 +21,9 @@ pub struct Inteligencia {
     pub id: &'static str,
     pub forma: &'static str,
     pub peso: Peso,
-    /// Módulo que precisa estar ligado (id de `video::MODULOS`).
+    /// Módulo que precisa estar ligado. Todas usam o mesmo: "pessoas" (a IA de
+    /// vídeo, que enxerga pessoa e veículo). Contagem, permanência e calor são
+    /// tipos de regra, não módulos à parte.
     pub modulo: &'static str,
     /// Parâmetro numérico: (unidade, mínimo, padrão, máximo); `None` = não tem.
     pub parametro: Option<(&'static str, u32, u32, u32)>,
@@ -32,7 +34,7 @@ pub const INTELIGENCIAS: &[Inteligencia] = &[
         id: "passagem",
         forma: "linha",
         peso: Peso::Leve,
-        modulo: "contagem",
+        modulo: "pessoas",
         parametro: None,
     },
     Inteligencia {
@@ -53,14 +55,14 @@ pub const INTELIGENCIAS: &[Inteligencia] = &[
         id: "permanencia",
         forma: "zona",
         peso: Peso::Medio,
-        modulo: "permanencia",
+        modulo: "pessoas",
         parametro: Some(("segundos", 5, 60, 3600)),
     },
     Inteligencia {
         id: "calor",
         forma: "zona",
         peso: Peso::Pesado,
-        modulo: "calor",
+        modulo: "pessoas",
         parametro: None,
     },
 ];

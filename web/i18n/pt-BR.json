@@ -366,7 +366,7 @@
   "wh.exemplo_dica": "Tipos: regra (linha ou zona), permanencia, saude e teste. foto_url aponta para a foto guardada neste PC; só abre na mesma rede.",
   "mod.pesado_texto": "Precisa de câmera ou gravador com IA de borda, ou plataforma parceira",
   "mod.baixar_modelo": "Precisa baixar o modelo (≈27 MB, uma vez)",
-  "mod.permanencia_s": "segundos parado",
+  "mod.permanencia_s": "segundos parado (padrão da permanência)",
   "ia.titulo": "Modelo de IA do nível médio",
   "ia.desc": "Os módulos médios usam o ONNX Runtime (Microsoft) e o modelo YOLO11n (Ultralytics, AGPL). O programa baixa os dois uma vez, confere a assinatura (SHA-256) e guarda na pasta de dados. Depois disso funciona sem internet. Roda a 2–3 quadros por segundo no total, no stream secundário, só enquanto algum módulo médio estiver ligado.",
   "ia.situacao": "Situação",
