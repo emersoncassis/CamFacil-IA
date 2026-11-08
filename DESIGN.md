@@ -74,6 +74,10 @@ Fonte do sistema (zero download): `system-ui, Segoe UI, Roboto, Ubuntu`. Mono (`
 | Tabela | Cabeçalho 12 px em `--surface`; hover de linha em `--surface`; estado vazio centralizado |
 | Medida | Três células em linha com divisórias de 1 px; o nível liberado em verde |
 | Selo "Em breve" | Pílula com borda, texto 12 px |
+| Sub-abas | Abaixo do cabeçalho da página, texto 13 px, item ativo com traço verde de 2 px embaixo; quando não cabem na largura viram um `select` ("Assunto desta tela"). Montadas por `web/tela.js` a partir de `data-sub` nos blocos |
+| Seção que abre | `details.secao` com seta desenhada em CSS; um `h3.sub` dentro de um bloco vira seção automaticamente; seções irmãs abrem uma por vez |
+| Paginação | Setas fantasma e "1 de 3" à direita, embaixo da lista; o tamanho da página diminui até a lista caber no painel |
+| Confirmação | Diálogo da própria página (`confirmar()`), nunca `confirm()` do navegador, que o WebView do Android não mostra |
 | Balão de inteligência | Pílula preta translúcida com ponto verde e o nome da regra; em alerta fica rosa, texto preto, e pisca a 1 Hz por até 10 s. Nunca caixas ou máscaras do YOLO |
 
 ## Ícones

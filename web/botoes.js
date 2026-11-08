@@ -103,7 +103,7 @@
     grade.append(p);
     return;
   }
-  for (const b of lista) {
+  const botoes = lista.map((b) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "botao";
@@ -117,6 +117,33 @@
     s.textContent = b.nome;
     btn.append(svg, s);
     btn.onclick = () => abrir(b);
-    grade.append(btn);
+    return btn;
+  });
+  grade.append(...botoes);
+
+  // Zero rolagem: quantos botões cabem na grade; o resto vai para a próxima página.
+  let pag = 0;
+  $("#ant").setAttribute("aria-label", t("pag.anterior"));
+  $("#prox").setAttribute("aria-label", t("pag.proxima"));
+  function paginar(segunda) {
+    botoes.forEach((b) => { b.hidden = false; });
+    const cs = getComputedStyle(grade);
+    const cols = Math.max(1, cs.gridTemplateColumns.split(" ").length);
+    const gap = parseFloat(cs.rowGap) || 0;
+    const linhas = Math.max(1, Math.floor((grade.clientHeight + gap) / (120 + gap)));
+    const n = cols * linhas;
+    const paginas = Math.ceil(botoes.length / n);
+    pag = Math.max(0, Math.min(pag, paginas - 1));
+    botoes.forEach((b, i) => { b.hidden = Math.floor(i / n) !== pag; });
+    $("#pager").hidden = paginas < 2;
+    $("#pag-txt").textContent = `${pag + 1} ${t("pag.de")} ${paginas}`;
+    $("#ant").disabled = pag === 0;
+    $("#prox").disabled = pag >= paginas - 1;
+    // A barra de páginas ocupa espaço: mede de novo com ela no lugar.
+    if (!segunda && paginas > 1) paginar(true);
   }
+  $("#ant").onclick = () => { pag--; paginar(); };
+  $("#prox").onclick = () => { pag++; paginar(); };
+  addEventListener("resize", () => paginar());
+  paginar();
 })();

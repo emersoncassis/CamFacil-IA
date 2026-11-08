@@ -191,7 +191,7 @@ function redeVideo(e) {
 
 async function redeAtualizarIp(m) {
   const p = { nome: m.nome, de: m.de, para: m.para };
-  if (!confirm(tp("rede.confirma_atualizar", p))) return;
+  if (!await confirmar(tp("rede.confirma_atualizar", p))) return;
   try {
     await api(`/api/rede/cameras/${m.camera_id}/atualizar`, { para: m.para });
     redeDiagMsg(tp("rede.atualizado", p), "ok");

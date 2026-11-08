@@ -121,7 +121,8 @@ function hwRenderAtual(r) {
     ["hw.fps", Object.keys(a.fps).length ? Object.entries(a.fps).map(([id, f]) => `${(tvInfo && tvInfo.cameras.find((c) => String(c.id) === id) || { nome: `#${id}` }).nome}: ${f.toFixed(1)}`).join(" · ") : "—", false],
     ["hw.amostras", `${r.amostras} (${t("hw.a_cada")} ${r.intervalo_s} s)`, false],
   ];
-  dl.replaceChildren(...linhas.flatMap(([k, v, alerta]) => [el("dt", {}, t(k)), el("dd", { class: alerta ? "alerta" : "" }, v)]));
+  // Cada medida numa célula (rótulo em cima, valor embaixo): cabe em duas colunas no celular.
+  dl.replaceChildren(...linhas.map(([k, v, alerta]) => el("div", { class: k === "hw.fps" ? "par largo" : "par" }, el("dt", {}, t(k)), el("dd", { class: alerta ? "alerta" : "" }, v))));
 }
 
 /// Gráfico de linhas em SVG, sem biblioteca. CPU e RAM em %, temperatura em °C (mesma escala 0–100).
@@ -220,7 +221,7 @@ async function relCarregar() {
       };
       const apagar = el("button", { class: "btn ghost sm", type: "button" }, t("rel.apagar"));
       apagar.onclick = async () => {
-        if (!confirm(t("rel.apagar_confirma"))) return;
+        if (!await confirmar(t("rel.apagar_confirma"))) return;
         try { await api(url, undefined, "DELETE"); relCarregar(); } catch (e) { manMsg("#rel-msg", e.message, "err"); }
       };
       return el("li", {},
@@ -281,7 +282,7 @@ async function bkpTelegram() {
 async function bkpRestaurar() {
   const f = $("#bkp-arquivo").files[0];
   if (!f) { manMsg("#bkp-msg", t("bkp.sem_arquivo"), "err"); return; }
-  if (!confirm(t("bkp.confirma"))) return;
+  if (!await confirmar(t("bkp.confirma"))) return;
   const senha = new TextEncoder().encode($("#bkp-senha-imp").value);
   const cab = new Uint8Array(2 + senha.length);
   cab[0] = senha.length >> 8; cab[1] = senha.length & 255; cab.set(senha, 2);

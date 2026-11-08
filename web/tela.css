@@ -1,0 +1,205 @@
+/* Tela única (regra 9: zero rolagem). Só variáveis de tokens.css.
+ * A página nunca rola: cabeçalho + sub-abas + painel ocupam 100dvh.
+ * Um assunto por vez; o resto vira sub-aba, seção que abre ou página da lista. */
+
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+.shell { height: 100vh; height: 100dvh; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+.rail { position: static; height: auto; min-height: 0; }
+.nav-curto { display: none; }
+
+main { min-height: 0; overflow: hidden; padding: var(--s5) var(--s6) var(--s3); }
+.page { flex: 1; min-height: 0; display: flex; flex-direction: column; max-width: 1120px; }
+.pagehead { flex: none; align-items: center; padding-bottom: var(--s3); border-bottom: 0; }
+.pagehead .btn { flex: none; }
+.lede { margin-top: var(--s1); }
+
+/* ---------- Sub-abas ---------- */
+.subnav { flex: none; position: relative; border-bottom: 1px solid var(--line); }
+.subtabs { display: flex; gap: var(--s1); overflow: hidden; }
+.subtabs button {
+  flex: none; display: inline-flex; align-items: center;
+  height: 36px; padding: 0 var(--s3); margin-bottom: -1px;
+  font: inherit; font-size: var(--fs-sm); color: var(--text-3); white-space: nowrap;
+  background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer;
+  transition: color .12s, border-color .12s;
+}
+.subtabs button:hover { color: var(--text); }
+.subtabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.subtabs button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; border-radius: var(--r-sm); }
+.subsel { display: none; }
+.subnav.compacto .subtabs { display: none; }
+.subnav.compacto { border-bottom: 0; }
+.subnav.compacto .subsel { display: block; width: 100%; height: 38px; font-weight: 500; }
+
+/* ---------- Painel: só o assunto escolhido ---------- */
+.painel { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden auto; overscroll-behavior: contain; }
+.painel > .fora { display: none !important; }
+.painel h2.repete { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.block-head:has(> h2.repete:first-child) { justify-content: flex-end; }
+.painel > .block { flex: none; padding: var(--s4) 0 var(--s3); border-bottom: 0; }
+.painel > .block:not(.fora):not([hidden]) ~ .block:not(.fora):not([hidden]) { border-top: 1px solid var(--line); }
+.page.sem-subs .painel > .block:first-child { border-top: 1px solid var(--line); }
+.painel .hint { margin-top: var(--s2); }
+.painel .msg:empty { min-height: 0; margin: 0; }
+
+/* Passo 2 de "Ligar câmera" toma o lugar do passo 1. */
+.page:has(#ligar-passo2:not([hidden])) #ligar-passo1 { display: none; }
+
+/* Rodapé de uma linha */
+.foot { flex: none; padding-top: var(--s2); margin-top: 0; max-width: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Seções que abrem (acordeão) ---------- */
+.secao { border-top: 1px solid var(--line); margin-top: var(--s3); }
+.secao + .secao { margin-top: 0; }
+.secao > summary {
+  display: flex; align-items: center; gap: var(--s2); min-height: 38px;
+  list-style: none; cursor: pointer; font-size: var(--fs-sm); font-weight: 500; color: var(--text-2);
+}
+.secao > summary::-webkit-details-marker { display: none; }
+.secao > summary::before { content: ""; flex: none; width: 6px; height: 6px; margin: 0 var(--s1); border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: rotate(-45deg); transition: transform .15s; }
+.secao[open] > summary::before { transform: rotate(45deg); }
+.secao > summary:hover { color: var(--text); }
+.secao > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-sm); }
+.secao[open] { padding-bottom: var(--s3); }
+.secao > .hint:first-of-type { margin-top: 0; }
+.secao > .seg { margin-bottom: var(--s2); }
+
+/* ---------- Paginação ---------- */
+.pg-fora { display: none !important; }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: var(--s2); margin-top: var(--s2); }
+.pager .btn:disabled { opacity: .35; cursor: default; }
+
+/* ---------- Suas câmeras ---------- */
+.list.cams li { flex-wrap: wrap; }
+.cam-info { flex: 1 1 220px; min-width: 0; }
+.cam-info strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cam-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s3); margin-top: 2px; }
+.cam-acoes { flex: none; }
+.btn.perigo { background: none; color: var(--c-danger); border-color: var(--c-danger); }
+.btn.perigo:hover { background: var(--surface-2); }
+
+/* ---------- Ao vivo: vídeo se ajusta ao espaço que sobra ---------- */
+.painel > .aovivo:not(.fora) { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-bottom: 0; }
+.aovivo > .block-head { flex: none; margin-bottom: var(--s2); }
+.aovivo-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--s2); container-type: inline-size; }
+/* Em coluna, o vídeo não passa da altura 16:9 da largura: o resto vai para as regras. */
+.viewer-wrap { flex: 0 1 calc(100cqw * 9 / 16); min-height: 140px; container-type: size; }
+.viewer-wrap .viewer { width: min(100cqw, 100cqh * 16 / 9); max-width: none; height: auto; margin: 0 auto; }
+.aovivo-lado { flex: 1 1 auto; min-height: 0; overflow: hidden auto; overscroll-behavior: contain; }
+.aovivo-lado .note { margin: 0; }
+.aovivo-lado .note:empty { display: none; }
+.aovivo-lado .sugerir { margin: 0; padding: var(--s3); }
+.aovivo-lado .regra-form { margin: var(--s2) 0; }
+@media (min-width: 1100px) {
+  .aovivo-corpo { flex-direction: row; }
+  .viewer-wrap { flex: 1 1 0; }
+  .aovivo-lado { flex: none; width: 340px; }
+  .aovivo-lado .secao:first-of-type { margin-top: 0; }
+  .aovivo-lado .regra-form { grid-template-columns: minmax(0, 1fr); }
+  .aovivo-lado .regra-form .span-2 { grid-column: auto; }
+}
+
+/* Diagrama da rede ocupa o painel */
+.painel > .bloco-cheio:not(.fora) { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.bloco-cheio .rede-diagrama { flex: 1; min-height: 120px; overflow: auto; }
+
+/* ---------- Diálogos ---------- */
+dialog { max-height: calc(100dvh - 32px); overflow: auto; }
+.dlg-form form { display: flex; flex-direction: column; }
+.campos { display: grid; gap: var(--s3); }
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: var(--fs-sm); color: var(--text-2); }
+.campo input, .campo select { width: 100%; min-width: 0; }
+.dlg-form .tiny { margin: var(--s3) 0 0; }
+.dlg-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: var(--s4); }
+.dlg-acoes .espaco { flex: 1; }
+#confirma-dlg h2 { font-size: var(--fs-lg); }
+#confirma-dlg .hint { margin: 0; }
+
+/* Toque: alvos maiores */
+@media (pointer: coarse) {
+  .btn { height: 40px; }
+  .btn.sm { height: 36px; padding: 0 var(--s3); }
+  input, select { height: 40px; }
+  .switch { width: 36px; height: 22px; }
+  .switch span::after { width: 16px; height: 16px; }
+  .switch input:checked + span::after { transform: translateX(14px); }
+}
+
+/* ---------- Telas baixas (notebook 768 px, TV 720 px) ---------- */
+@media (max-height: 820px) {
+  .painel .hint:not(.aberta) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
+  .rows dt, .rows dd { padding: 6px 0; }
+  main { padding-top: var(--s4); }
+  .pagehead h1 { font-size: var(--fs-lg); }
+  .lede { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
+  .lede.aberta { display: block; }
+}
+
+/* ---------- Celular: barra de abas embaixo, um assunto por vez ---------- */
+@media (max-width: 760px) {
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .rail {
+    grid-row: 2; position: static; z-index: 2;
+    flex-direction: row; flex-wrap: nowrap; gap: 0;
+    padding: 0 0 env(safe-area-inset-bottom);
+    border-right: 0; border-bottom: 0; border-top: 1px solid var(--line);
+  }
+  .rail .brand { display: none; }
+  .rail nav { order: 0; width: 100%; overflow: visible; }
+  .nav { flex-direction: row; gap: 0; }
+  .nav li { flex: 1 1 0; min-width: 0; }
+  .nav button {
+    flex-direction: column; justify-content: center; gap: 3px;
+    height: 54px; padding: 0 2px; border-radius: 0;
+    font-size: var(--fs-xs); line-height: 1.1; text-align: center; white-space: nowrap;
+  }
+  .nav button .ico { width: 20px; height: 20px; }
+  .nav button[aria-selected="true"] { background: none; }
+  .nav-longo { display: none; }
+  .nav-curto { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .rail-foot { position: fixed; top: var(--s2); right: var(--s2); margin: 0; padding: 0; border: 0; }
+
+  main { grid-row: 1; padding: var(--s3) var(--s4) var(--s2); }
+  .pagehead { flex-direction: row; align-items: flex-start; gap: var(--s3); padding-bottom: var(--s2); }
+  .pagehead > div { min-width: 0; }
+  .pagehead h1 { font-size: var(--fs-lg); }
+  .pagehead .btn span { white-space: nowrap; }
+  .lede { font-size: var(--fs-sm); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
+  .lede.aberta { display: block; }
+  .foot { display: none; }
+  .painel > .block { padding-top: var(--s3); }
+  .painel .hint:not(.aberta) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
+  .rows:not(.hw-atual) { grid-template-columns: minmax(96px, 38%) 1fr; font-size: var(--fs-sm); }
+  .rows dt, .rows dd { padding: 6px 0; }
+  .list li { padding: var(--s2) var(--s3); }
+  .list.cams .tag.ok { display: none; }
+  .table th { padding: 7px var(--s3); }
+  .table td { padding: 8px var(--s3); }
+  .table td.mono { font-size: var(--fs-xs); overflow-wrap: anywhere; }
+  .block h2 { margin-bottom: var(--s2); }
+  #rtsp-form { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); }
+  #rtsp-form .span-2 { grid-column: span 2; }
+  #rtsp-form .m-2 { grid-column: span 2; }
+  #rtsp-form .m-4 { grid-column: 1 / -1; }
+  .form { gap: var(--s2) var(--s3); }
+  .form label { gap: 4px; }
+  .cam-acoes { width: 100%; }
+  .cam-acoes .btn { flex: 1; }
+  .opcao { gap: var(--s3); }
+  .dlg-acoes .btn { flex: 1; }
+  .dlg-acoes .espaco { display: none; }
+}
+@media (max-width: 760px) and (max-height: 700px) {
+  .lede:not(.aberta) { -webkit-line-clamp: 1; line-clamp: 1; }
+  .painel > .block { padding-top: var(--s2); }
+  .painel .mt { margin-top: var(--s2); }
+  .block-head { margin-bottom: var(--s2); }
+  .table .empty td { padding: var(--s3); }
+  .painel textarea { height: 3.4em; }
+  .secao > summary { min-height: 34px; }
+  .hw-atual .par { padding: 4px 0; }
+  .painel .aviso-fixo > span:not(.aberta) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
+  .painel .note > span:not(.aberta) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; line-clamp: 1; overflow: hidden; cursor: pointer; }
+}

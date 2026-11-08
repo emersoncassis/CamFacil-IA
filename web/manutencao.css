@@ -30,6 +30,12 @@
 .hw-legenda-item i.ram { background: var(--c-500); }
 .hw-legenda-item i.temp { background: var(--c-warn); }
 .hw-legenda-item i.lim { height: 0; border-top: 1px dashed var(--c-danger); }
+.hw-atual { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0 var(--s4); }
+.hw-atual .par { min-width: 0; padding: 6px 0; border-top: 1px solid var(--line); }
+.hw-atual .par.largo { grid-column: 1 / -1; }
+.hw-atual .par dt, .hw-atual .par dd { padding: 0; border: 0; line-height: 1.35; }
+.hw-atual dt { font-size: var(--fs-xs); }
+.hw-atual dd { font-variant-numeric: tabular-nums; }
 .hw-atual dd.alerta { color: var(--c-danger); }
 
 /* Relatório */
