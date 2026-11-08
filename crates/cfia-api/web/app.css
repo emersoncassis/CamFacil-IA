@@ -367,3 +367,12 @@ a.btn { text-decoration: none; }
 .manifesto p, .manifesto li { font-size: var(--fs-md); line-height: 1.7; color: var(--text-2); }
 .manifesto strong { color: var(--text); }
 .manifesto .assina { margin-top: var(--s6); color: var(--text); }
+
+/* As ferramentas */
+.ferr-grade { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: var(--s4); }
+.ferr { padding: var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.ferr h3 { margin: 0 0 var(--s2); font-size: var(--fs-md); }
+.faixa .ferr p { margin: 0; font-size: var(--fs-sm); }
+.faixa .ferr .ferr-tag { margin-bottom: var(--s2); font-size: var(--fs-xs); color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+.ferr-dev { border-style: dashed; }
+.faixa .ferr-dev .ferr-tag { color: var(--accent); }

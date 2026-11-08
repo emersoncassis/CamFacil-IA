@@ -164,6 +164,21 @@ O CamFácil IA testa a sua máquina e libera só o que ela aguenta.
 | <img src="docs/assets/icons/nivel-medio.svg" width="12" alt=""/> **Médio** | Pessoas e veículos · Contagem · Permanência · Mapa de calor | PC de 4 núcleos, mini PC |
 | <img src="docs/assets/icons/nivel-pesado.svg" width="12" alt=""/> **Pesado** | Leitura de placas · Reconhecimento facial | Máquinas mais fortes |
 
+## <img src="docs/assets/icons/caixa.svg" width="22" alt=""/> As ferramentas
+
+Tudo aberto, livre e gratuito (AGPL-3.0). Cada peça faz uma coisa:
+
+| Ferramenta | Onde roda | O que faz |
+|---|---|---|
+| **CamFácil IA** (o programa) | PC, mini PC, Raspberry, TV Box | Servidor local: liga as câmeras, roda a IA, manda alertas, dashboard no navegador |
+| **Agente-Cam-Elo-IA** (o elo) | Dentro do programa | Pareia com o painel por QR e manda só o resumo (câmeras, máquina, alertas) |
+| **Painel de monitoramento** | [cfia.ysafe.com.br](https://cfia.ysafe.com.br) ou o seu servidor | Todos os seus clientes, câmeras no ar, alertas e "ver ao vivo" pelo Tailscale |
+| **App Android** | Celular e TV Box | Vira o servidor das câmeras ou vê um cliente à distância |
+| **Formação de IA para CFTV** | No navegador | Curso curto com narração, exercícios e selo |
+| **Modo estúdio** *(em desenvolvimento)* | Navegador + Google Colab | Criar, treinar e compartilhar inteligências novas, só para estudo |
+
+Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também é do técnico.
+
 ## <img src="docs/assets/icons/caixa.svg" width="22" alt=""/> O que vem na caixa
 
 | | | |
@@ -175,11 +190,11 @@ O CamFácil IA testa a sua máquina e libera só o que ela aguenta.
 | <img src="docs/assets/icons/mensagem.svg" width="20" alt=""/> | **Telegram e WhatsApp** | Alertas e comandos com QR code |
 | | ↳ WhatsApp usa uma [Evolution API](https://github.com/EvolutionAPI/evolution-api) que você sobe no mesmo servidor Docker do painel: `docker run -d -p 8080:8080 -e AUTHENTICATION_API_KEY=troque atendai/evolution-api:v2.2.3` e aponte a URL na dashboard (chip dedicado, nunca o seu número) | SDD-04 |
 | <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Modo TV** | Tela de quiosque para o cliente, com a sua logo |
-| <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Ao vivo, alertas e botões para portão e relé, via Tailscale |
+| <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Servidor no próprio celular ou TV Box, ou visualizador à distância via Tailscale, com alertas |
 | <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com a sua marca para fechar a venda |
 | <img src="docs/assets/icons/robo.svg" width="20" alt=""/> | **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
-| <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** | Descreva uma inteligência nova e aprenda como ela é montada (só estudo) |
-| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Agente-Cam-Elo-IA** | Ponte leve entre o navegador e as câmeras da rede local |
+| <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** *(em desenvolvimento)* | Descreva uma inteligência nova, rotule, treine no Colab e compartilhe com outros técnicos (só estudo) |
+| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Agente-Cam-Elo-IA** | O elo entre o programa do cliente e o seu painel: pareia por QR e manda só o resumo (o vídeo nunca passa pela nuvem) |
 
 ## <img src="docs/assets/icons/chave.svg" width="22" alt=""/> Para você, técnico
 
@@ -193,13 +208,29 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 
 ## <img src="docs/assets/icons/mapa.svg" width="22" alt=""/> Roadmap
 
-- [ ] **Fase 1** — Núcleo: binário, dashboard, benchmark, ONVIF, gerador RTSP
-- [ ] **Fase 2** — Cerca virtual com balões e aula guiada
-- [ ] **Fase 3** — Telegram, WhatsApp e comandos
-- [ ] **Fase 4** — Diagnóstico de rede e diagrama unifilar
-- [ ] **Fase 5** — Modo TV, monitor de hardware, relatório e backup
+Versão atual: **0.4.1** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
+
+- [x] **Fase 1** — Núcleo: binário, dashboard, benchmark, ONVIF, gerador RTSP
+- [x] **Fase 2** — Cerca virtual com balões e aula guiada · Formação de IA para CFTV no site, com narração e selo
+- [x] **Fase 3** — Telegram (alertas e comandos), WhatsApp via Evolution API, webhook, termos e LGPD, arquivo de alertas
+- [x] **Fase 4** — Inventário da rede, câmera que trocou de IP (corrige pelo MAC) e diagrama unifilar em SVG
+- [x] **Fase 5** — Modo TV, monitor de hardware, relatório em PDF, backup cifrado e teste de estresse
 - [ ] **Fase 6** — App Android, web app, Agente-Cam-Elo-IA e MCP
-- [ ] **Fase 7** — Modo estúdio
+  - [x] Agente-Cam-Elo-IA e painel web (clientes, câmeras, alertas, ver ao vivo pelo Tailscale)
+  - [x] App Android: servidor no próprio aparelho ou visualizador à distância
+  - [ ] MCP (configurar conversando com uma IA, desligado por padrão)
+  - [ ] Botões de portão e relé no app, com PIN, confirmação e log
+- [ ] **Fase 7** — Modo estúdio · [prévia](https://cfia.ysafe.com.br/estudio) (mockup, ainda não funciona)
+
+### Em desenvolvimento / próximos passos
+- MCP desligado por padrão (fase 6)
+- Portão e relé no app com confirmação e log (fase 6)
+- Modo estúdio: conversa → coleta → rotulagem → notebook do Colab → importar → compartilhar receitas entre técnicos (fase 7)
+- Rede: conflito de IP, senha de fábrica, quedas por hora e banda por câmera
+- Telegram: `/backup` e backup agendado; foto do alerta com a linha/zona desenhada
+- Textos do relatório em PDF no arquivo de tradução
+- Android: IA de nível médio (YOLO) no aparelho, câmera do próprio celular como fonte, chave de assinatura fixa do APK
+- Testes em campo: rede real, Windows, TV Box com controle remoto
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Contribua
 
