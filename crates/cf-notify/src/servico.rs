@@ -47,6 +47,11 @@ pub trait Anfitriao: Send + Sync {
     fn foto(&self, camera_id: i64) -> Option<Vec<u8>>;
     /// Liga/desliga um módulo pelo nome falado; devolve a frase de resposta.
     fn modulo(&self, nome: &str, ligado: bool) -> Result<String, String>;
+    /// Backup cifrado com a senha dada: (nome do arquivo, bytes). Pode
+    /// demorar (PBKDF2): o serviço chama fora do laço do runtime.
+    fn backup(&self, _senha: &str) -> Result<(String, Vec<u8>), String> {
+        Err("backup indisponível".into())
+    }
 }
 
 /// Antirrepique por chave.
@@ -427,8 +432,70 @@ impl Telegram {
         }
     }
 
+    /// `/backup <senha>`: apaga a mensagem com a senha (se o Telegram deixar;
+    /// senão avisa o risco), gera o `.cfbkp` e manda só para quem pediu.
+    async fn backup(&self, bot: &Bot, chat_id: i64, message_id: i64, senha: &str) {
+        let senha = senha.trim().to_string();
+        if senha.is_empty() {
+            let _ = bot
+                .send_message(
+                    chat_id,
+                    "Use: /backup <senha>\nA senha (8 caracteres ou mais) protege o arquivo; sem ela ele não abre. Eu apago a sua mensagem com a senha logo em seguida.",
+                )
+                .await;
+            return;
+        }
+        let apagou = message_id > 0 && bot.delete_message(chat_id, message_id).await.is_ok();
+        let aviso = if apagou {
+            "Apaguei a sua mensagem com a senha."
+        } else {
+            "Atenção: não consegui apagar a sua mensagem com a senha. Apague-a você mesmo: quem ler este chat e tiver o arquivo abre o backup (com tokens e senhas das câmeras)."
+        };
+        let _ = self.store.registrar_evento(
+            0,
+            None,
+            "comando",
+            &format!("/backup via Telegram ({chat_id})"),
+            agora_unix(),
+        );
+        if senha.chars().count() < SENHA_MIN_BACKUP {
+            let _ = bot
+                .send_message(
+                    chat_id,
+                    &format!(
+                        "{aviso}\nUse uma senha com pelo menos {SENHA_MIN_BACKUP} caracteres."
+                    ),
+                )
+                .await;
+            return;
+        }
+        let anfitriao = self.anfitriao.clone();
+        let r = tokio::task::spawn_blocking(move || anfitriao.backup(&senha))
+            .await
+            .unwrap_or_else(|_| Err("falha ao gerar o backup".into()));
+        match r {
+            Ok((nome, bytes)) => {
+                let legenda = format!(
+                    "Backup cifrado da configuração do CamFácil IA. Guarde a senha: sem ela o arquivo não abre.\n{aviso}"
+                );
+                if let Err(e) = bot.send_document(chat_id, &nome, &bytes, &legenda).await {
+                    let _ = bot.send_message(chat_id, &format!("{aviso}\n{e}")).await;
+                }
+            }
+            Err(e) => {
+                let _ = bot
+                    .send_message(
+                        chat_id,
+                        &format!("{aviso}\nNão deu para gerar o backup: {e}"),
+                    )
+                    .await;
+            }
+        }
+    }
+
     async fn atender(&self, bot: &Bot, u: Atualizacao) {
         let Some(m) = u.message else { return };
+        let message_id = m.message_id;
         let chat = m.chat;
         let texto = m.text.unwrap_or_default();
         let _ = self
@@ -468,6 +535,10 @@ impl Telegram {
                     r.unwrap_or_else(|e| e)
                 }
             }
+            "/backup" => {
+                self.backup(bot, chat.id, message_id, &arg).await;
+                return;
+            }
             "/foto" => {
                 let cams = self.anfitriao.cameras();
                 match escolher_camera(&cams, &arg) {
@@ -493,7 +564,10 @@ impl Telegram {
     }
 }
 
-const AJUDA: &str = "Comandos:\n/status — câmeras, saúde e módulos\n/foto <nome ou nº> — foto da câmera agora\n/resumo — alertas de hoje\n/liga <módulo> · /desliga <módulo>\n/ajuda — esta lista";
+const AJUDA: &str = "Comandos:\n/status — câmeras, saúde e módulos\n/foto <nome ou nº> — foto da câmera agora\n/resumo — alertas de hoje\n/liga <módulo> · /desliga <módulo>\n/backup <senha> — backup cifrado da configuração (a mensagem com a senha é apagada)\n/ajuda — esta lista";
+
+/// Senha mínima do backup (a mesma da dashboard).
+const SENHA_MIN_BACKUP: usize = 8;
 
 /// Separa `/comando@bot argumento` em (`/comando`, `argumento`).
 pub fn separar(texto: &str) -> (String, String) {
