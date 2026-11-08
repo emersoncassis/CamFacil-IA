@@ -149,6 +149,60 @@ pub fn redact(url: &str) -> String {
     }
 }
 
+/// Usuário e senha (opcional) ainda codificados, como vêm no endereço.
+type Credenciais<'a> = (&'a str, Option<&'a str>);
+
+/// Separa `esquema://`, as credenciais e o resto do endereço.
+fn partes(url: &str) -> Option<(&str, Option<Credenciais<'_>>, &str)> {
+    let s = url.find("://")? + 3;
+    let resto = &url[s..];
+    // O `@` das credenciais vem antes da primeira barra do caminho.
+    let fim_host = resto.find('/').unwrap_or(resto.len());
+    match resto[..fim_host].rfind('@') {
+        Some(at) => {
+            let creds = &resto[..at];
+            let cred = match creds.split_once(':') {
+                Some((u, p)) => (u, Some(p)),
+                None => (creds, None),
+            };
+            Some((&url[..s], Some(cred), &resto[at + 1..]))
+        }
+        None => Some((&url[..s], None, resto)),
+    }
+}
+
+/// Troca (ou põe) a senha do endereço. Mantém o usuário; sem usuário, usa `admin`.
+pub fn trocar_senha(url: &str, senha: &str) -> String {
+    match partes(url) {
+        Some((esq, cred, resto)) => {
+            let usuario = cred
+                .map(|(u, _)| u)
+                .filter(|u| !u.is_empty())
+                .unwrap_or("admin");
+            format!("{esq}{usuario}:{}@{resto}", encode(senha))
+        }
+        None => url.to_string(),
+    }
+}
+
+/// Endereço novo vindo da tela de edição: a senha nunca sai do programa, então
+/// a tela manda `***` (de [`redact`]) ou nada. Nesses casos a senha antiga fica.
+pub fn manter_senha(nova: &str, antiga: &str) -> String {
+    let senha_antiga = match partes(antiga) {
+        Some((_, Some((u, Some(p))), _)) => Some((u, p)),
+        _ => None,
+    };
+    let Some((u_antigo, p_antigo)) = senha_antiga else {
+        return nova.to_string();
+    };
+    match partes(nova) {
+        Some((esq, Some((u, Some("***"))), resto)) => format!("{esq}{u}:{p_antigo}@{resto}"),
+        Some((esq, Some((u, None)), resto)) => format!("{esq}{u}:{p_antigo}@{resto}"),
+        Some((esq, None, resto)) => format!("{esq}{u_antigo}:{p_antigo}@{resto}"),
+        _ => nova.to_string(),
+    }
+}
+
 /// Percent-encoding dos caracteres reservados em usuário e senha.
 fn encode(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
@@ -248,6 +302,40 @@ fn parse_response(text: &str) -> (Option<u16>, Option<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn senha_mantida_na_edicao() {
+        let antiga = "rtsp://admin:s3%40nh4@192.168.1.10:554/cam/realmonitor?channel=1";
+        let tela = redact(antiga);
+        assert!(!tela.contains("s3%40nh4"));
+        // Mudou só o IP: a senha antiga continua.
+        let nova = tela.replace("192.168.1.10", "192.168.1.20");
+        assert_eq!(
+            manter_senha(&nova, antiga),
+            "rtsp://admin:s3%40nh4@192.168.1.20:554/cam/realmonitor?channel=1"
+        );
+        // Sem credenciais na tela: reaproveita usuário e senha.
+        assert_eq!(
+            manter_senha("rtsp://10.0.0.5:554/x", antiga),
+            "rtsp://admin:s3%40nh4@10.0.0.5:554/x"
+        );
+        // Senha nova escrita na própria URL vale.
+        assert_eq!(
+            manter_senha("rtsp://op:nova@10.0.0.5/x", antiga),
+            "rtsp://op:nova@10.0.0.5/x"
+        );
+        // Câmera sem senha antes: nada a manter.
+        assert_eq!(manter_senha("rtsp://h/x", "rtsp://h/y"), "rtsp://h/x");
+    }
+
+    #[test]
+    fn troca_senha_codificada() {
+        assert_eq!(
+            trocar_senha("rtsp://op:velha@h:554/a@b", "n@va:1"),
+            "rtsp://op:n%40va%3A1@h:554/a@b"
+        );
+        assert_eq!(trocar_senha("rtsp://h/x", "p"), "rtsp://admin:p@h/x");
+    }
 
     fn req(fab: &str, canal: u32, stream: Stream) -> BuildRequest {
         BuildRequest {
