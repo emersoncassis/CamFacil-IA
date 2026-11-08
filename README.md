@@ -22,6 +22,9 @@
 <p>
   <a href="https://cfia.ysafe.com.br"><img src="https://img.shields.io/badge/COMECE%20PELO%20SITE-cfia.ysafe.com.br-06CB3F?style=for-the-badge&labelColor=000000" alt="Comece pelo site: cfia.ysafe.com.br" height="44"/></a>
 </p>
+<p>
+  <a href="https://emersoncassis.github.io/CamFacil-IA/"><img src="https://img.shields.io/badge/manifesto%20e%20docs-PT%20%C2%B7%20EN%20%C2%B7%20ES-06CB3F?style=flat-square&labelColor=000000" alt="Manifesto e documentação em português, inglês e espanhol"/></a>
+</p>
 
 </div>
 
@@ -203,6 +206,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 
 ## <img src="docs/assets/icons/codigo.svg" width="22" alt=""/> Para quem programa
 
+- Documentação em português, inglês e espanhol, com o manifesto narrado: **[emersoncassis.github.io/CamFacil-IA](https://emersoncassis.github.io/CamFacil-IA/)** (fonte em `site-docs/`, gerado com MkDocs)
 - Produto: [`docs/PRD.md`](docs/PRD.md) · Arquitetura: [`docs/sdd/`](docs/sdd) · Decisões: [`docs/adr/`](docs/adr) · Visual: [`DESIGN.md`](DESIGN.md)
 - Desenvolvido com [Claude Code](https://claude.com/claude-code): veja [`CLAUDE.md`](CLAUDE.md), os agentes em `.claude/agents/` e as skills em `.claude/skills/`.
 - Quer criar um módulo de IA? Comece por [`CONTRIBUTING.md`](CONTRIBUTING.md).

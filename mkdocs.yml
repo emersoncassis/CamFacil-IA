@@ -1,0 +1,118 @@
+site_name: CamFácil IA
+site_description: IA de vídeo para quem instala câmeras. Livre, gratuita e de código aberto.
+site_author: Emerson de Carvalho Assis
+site_url: https://emersoncassis.github.io/CamFacil-IA/
+repo_url: https://github.com/emersoncassis/CamFacil-IA
+repo_name: emersoncassis/CamFacil-IA
+edit_uri: edit/main/site-docs/
+docs_dir: site-docs
+copyright: Software livre (AGPL-3.0) · Projeto independente, sem vínculo com fabricantes.
+
+theme:
+  name: material
+  custom_dir: overrides
+  language: pt-BR
+  logo: assets/img/logo.svg
+  favicon: assets/img/logo.svg
+  font: false
+  palette:
+    scheme: slate
+    primary: custom
+    accent: custom
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+
+extra_css:
+  - assets/css/camfacil.css
+extra_javascript:
+  - assets/js/manifesto.js
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/emersoncassis/CamFacil-IA
+    - icon: fontawesome/solid/globe
+      link: https://cfia.ysafe.com.br
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: pt
+          name: Português
+          default: true
+          build: true
+          site_description: IA de vídeo para quem instala câmeras. Livre, gratuita e de código aberto.
+        - locale: en
+          name: English
+          build: true
+          site_description: Video AI for people who install cameras. Free and open source.
+          copyright: Free software (AGPL-3.0) · Independent project, not affiliated with any manufacturer.
+          nav_translations:
+            Início: Home
+            Instalação: Installation
+            Primeiros passos: Getting started
+            Formação de IA para CFTV: AI training for CCTV
+            Painel no seu servidor: Your own dashboard
+            Como funciona: How it works
+            Privacidade e LGPD: Privacy and LGPD
+            Contribuir: Contributing
+        - locale: es
+          name: Español
+          build: true
+          site_description: IA de video para quien instala cámaras. Libre, gratuita y de código abierto.
+          copyright: Software libre (AGPL-3.0) · Proyecto independiente, sin vínculo con fabricantes.
+          nav_translations:
+            Início: Inicio
+            Instalação: Instalación
+            Primeiros passos: Primeros pasos
+            Formação de IA para CFTV: Formación de IA para CCTV
+            Painel no seu servidor: Panel en tu servidor
+            Como funciona: Cómo funciona
+            Privacidade e LGPD: Privacidad y LGPD
+            Contribuir: Contribuir
+
+nav:
+  - Início: index.md
+  - Instalação: instalacao.md
+  - Primeiros passos: uso.md
+  - Formação de IA para CFTV: formacao.md
+  - Painel no seu servidor: painel.md
+  - Como funciona: arquitetura.md
+  - Privacidade e LGPD: privacidade.md
+  - Contribuir: contribuindo.md
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg

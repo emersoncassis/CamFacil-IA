@@ -13,3 +13,7 @@ Thumbs.db
 client_secret*.json
 *.pem
 .env.*
+
+# Site de documentação (mkdocs)
+/site/
+/_site/
