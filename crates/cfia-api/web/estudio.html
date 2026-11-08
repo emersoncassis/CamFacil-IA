@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#000000">
   <title>Modo estúdio · CamFácil IA</title>
-  <meta name="description" content="Prévia do modo estúdio do CamFácil IA: descreva uma inteligência nova, colete fotos, rotule, treine no Google Colab e compartilhe com outros técnicos. Em desenvolvimento.">
-  <meta property="og:title" content="Modo estúdio do CamFácil IA (em desenvolvimento)">
-  <meta property="og:description" content="Técnico criando e compartilhando a própria IA de vídeo: descrever, coletar, rotular, treinar no Colab e compartilhar. Livre e aberto.">
+  <meta name="description" content="Modo estúdio do CamFácil IA, versão básica: descreva uma inteligência nova, colete fotos, rotule no navegador, treine no Google Colab, importe no programa e compartilhe a receita. Só para estudo.">
+  <meta property="og:title" content="Modo estúdio do CamFácil IA (versão básica, só estudo)">
+  <meta property="og:description" content="Técnico criando e compartilhando a própria IA de vídeo: descrever, coletar, rotular, treinar no Colab, importar e compartilhar. Livre e aberto.">
   <meta property="og:image" content="https://cfia.ysafe.com.br/img/manifesto-og.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -18,80 +18,241 @@
 <body class="estudio-body tela doc-tela">
   <header class="doc-topo">
     <a class="brand" href="/"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></a>
-    <span class="badge est-badge"><span class="so-largo">Modo estúdio · </span>em desenvolvimento</span>
+    <span class="badge est-badge"><span class="so-largo">Modo estúdio · </span>versão básica, só estudo</span>
   </header>
 
-  <main class="est" data-abas="(max-width: 999px), (max-height: 620px)" data-aba-inicial="0">
-    <section class="est-intro" data-aba="Sobre">
-      <div class="est-intro-texto">
-        <p class="kicker">Prévia</p>
-        <h1>Crie a sua própria IA de vídeo. E compartilhe.</h1>
-        <p class="lede">O modo estúdio vai deixar o técnico descrever uma inteligência nova, ensinar com fotos do mundo real, treinar de graça no Google Colab e compartilhar o que aprendeu com outros técnicos. Esta tela é um esboço: <strong>ainda não funciona</strong>.</p>
-      </div>
-      <div class="est-intro-lado">
-        <ol class="est-passos" aria-label="Etapas">
-          <li class="feito"><span>1</span>Descrever</li>
-          <li class="feito"><span>2</span>Coletar</li>
-          <li class="atual"><span>3</span>Rotular</li>
-          <li><span>4</span>Treinar no Colab</li>
-          <li><span>5</span>Testar</li>
-          <li><span>6</span>Compartilhar</li>
-        </ol>
-        <p class="tiny est-aviso">Só para estudo e aprendizagem. Modelos do estúdio não devem ser usados em produção. Reconhecimento facial e biometria ficam bloqueados.</p>
-        <details class="acord">
-          <summary><span>O que já existe por baixo desta tela</span><svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></summary>
-          <p class="tiny">O formato da receita (validado no programa e no site), o gerador do notebook do Colab, a importação do modelo de estudo no programa local (guardado e desligado) e a API para compartilhar receitas. A interface vem nas próximas versões.</p>
-        </details>
-      </div>
-    </section>
+  <main class="est" id="estudio">
+    <nav class="est-trilha" aria-label="Passos do estúdio">
+      <ol class="est-passos" role="tablist">
+        <li><button type="button" role="tab" data-ir="descrever"><span class="num">1</span><span class="rot">Descrever</span></button></li>
+        <li><button type="button" role="tab" data-ir="coletar"><span class="num">2</span><span class="rot">Coletar</span></button></li>
+        <li><button type="button" role="tab" data-ir="rotular"><span class="num">3</span><span class="rot">Rotular</span></button></li>
+        <li><button type="button" role="tab" data-ir="treinar"><span class="num">4</span><span class="rot">Treinar</span></button></li>
+        <li><button type="button" role="tab" data-ir="importar"><span class="num">5</span><span class="rot">Importar</span></button></li>
+        <li><button type="button" role="tab" data-ir="compartilhar"><span class="num">6</span><span class="rot">Compartilhar</span></button></li>
+      </ol>
+      <p class="est-aviso-curto" aria-hidden="true">Só estudo: não use em produção. Sem biometria.</p>
+      <p class="est-aviso">Só para estudo e aprendizagem. Modelos do estúdio não devem ser usados em produção: para uso real, câmeras e gravadores com IA de borda ou plataformas corporativas. Reconhecimento facial e biometria ficam bloqueados.</p>
+      <p class="est-receita-atual tiny" id="receita-atual" hidden></p>
+    </nav>
 
-    <section class="est-painel est-conversa" aria-label="Conversa" data-aba="Conversa">
-      <h2>Conversa</h2>
-      <div class="bolha eu">Quero contar caixas de banana que entram no estoque pela porta dos fundos.</div>
-      <div class="bolha ia">Entendi. Vou montar assim:<br><strong>Objeto:</strong> caixa de banana<br><strong>Regra:</strong> linha de passagem na porta, contando quem entra<br><strong>Fotos:</strong> 150 da câmera do estoque, em horários diferentes<br>Já pré-marquei as caixas. Confira as fotos ao lado.</div>
-      <div class="est-entrada"><input disabled placeholder="Descreva o que a IA deve aprender…" aria-label="Descreva o que a IA deve aprender"><button class="btn primary" disabled>Enviar</button></div>
-    </section>
-
-    <section class="est-painel est-rotulo" aria-label="Rotular" data-aba="Rotular">
-      <div class="est-cab"><h2>Rotular · foto 37 de 150</h2><span class="tiny">pré-marcado pela IA, confira</span></div>
-      <div class="est-foto-caixa">
-        <div class="est-foto">
-          <img src="/img/loja.webp" alt="Foto de exemplo do estoque" width="960" height="540">
-          <i class="caixa c1"><b>caixa de banana</b></i>
-          <i class="caixa c2 duvida"><b>conferir</b></i>
-          <i class="caixa c3"><b>caixa de banana</b></i>
-        </div>
-      </div>
-      <div class="est-acoes">
-        <button class="btn" disabled>Errado, apagar</button>
-        <button class="btn" disabled>Desenhar outra</button>
-        <button class="btn primary" disabled>Certo, próxima</button>
-      </div>
-      <div class="est-colab">
-        <div><strong>Treinar no Google Colab</strong><p class="tiny">O estúdio gera o notebook pronto. Treina com GPU gratuita e salva no seu Google Drive. As fotos do cliente vão direto para o seu Drive, nunca para o nosso servidor.</p></div>
-        <button class="btn" disabled>Gerar notebook</button>
-      </div>
-    </section>
-
-    <section class="est-painel est-comunidade" aria-label="Compartilhado por técnicos" data-aba="Técnicos">
-      <h2>Compartilhado por técnicos</h2>
-      <ul>
-        <li><strong>Contar pallets</strong><span class="tiny">doca de carga · 220 fotos · estudo</span></li>
-        <li><strong>Empilhadeira na faixa de pedestre</strong><span class="tiny">galpão · 180 fotos · estudo</span></li>
-        <li><strong>Carrinho de supermercado na rua</strong><span class="tiny">estacionamento · 140 fotos · estudo</span></li>
-        <li><strong>Moto na calçada da loja</strong><span class="tiny">fachada · 160 fotos · estudo</span></li>
-      </ul>
-      <p class="tiny">Cada técnico compartilha a receita e o modelo de estudo, sem as fotos dos clientes. Outro técnico baixa, testa e melhora.</p>
-      <div class="est-fim">
-          <p><strong>Quer ajudar a construir?</strong> O modo estúdio é aberto como todo o resto (AGPL-3.0). Ideias, testes e código são bem-vindos.</p>
-          <div class="actions">
-            <a class="btn primary sm" href="https://github.com/emersoncassis/CamFacil-IA">Ver no GitHub</a>
-            <a class="btn sm" href="/aprender">Fazer a formação</a>
+    <!-- 1. Descrever -->
+    <section class="est-passo" id="descrever" role="tabpanel" aria-labelledby="t-descrever">
+      <header class="est-cab">
+        <h1 id="t-descrever">Descreva a inteligência</h1>
+        <p>O que a câmera deve encontrar, onde e o que fazer quando encontrar. Vira uma receita conferida pelo mesmo núcleo do programa.</p>
+      </header>
+      <form class="est-form" id="form-receita" autocomplete="off" novalidate>
+        <label class="c-nome">Nome
+          <input name="nome" maxlength="80" placeholder="Contar caixas" required>
+        </label>
+        <label class="c-local">Onde
+          <input name="local" maxlength="80" placeholder="ex.: doca de carga">
+        </label>
+        <div class="c-classes">
+          <span class="rotulo" id="rot-classes">O que detectar <span class="tiny so-largo">(uma classe por objeto, até 20)</span></span>
+          <div class="chips" id="chips" aria-labelledby="rot-classes"></div>
+          <div class="linha-add">
+            <input name="nova_classe" maxlength="40" placeholder="caixa de banana" aria-label="Nome do objeto">
+            <button class="btn sm" type="button" id="add-classe">Adicionar</button>
           </div>
         </div>
+        <fieldset class="c-regra">
+          <legend class="rotulo">Regra</legend>
+          <div class="seg" role="radiogroup" aria-label="Regra">
+            <label><input type="radio" name="regra" value="nenhuma" checked><span>Só detectar</span></label>
+            <label><input type="radio" name="regra" value="linha"><span>Linha</span></label>
+            <label><input type="radio" name="regra" value="zona"><span>Zona</span></label>
+            <label><input type="radio" name="regra" value="contagem"><span>Contagem</span></label>
+          </div>
+          <div class="regra-extra">
+            <p class="tiny" data-regra="nenhuma">Mostra no balão o que a IA está vendo. Bom para o primeiro estudo.</p>
+            <label data-regra="linha contagem" hidden>Sentido
+              <select name="sentido"><option value="entrada">Entrada</option><option value="saida">Saída</option><option value="ambos">Os dois</option></select>
+            </label>
+            <label data-regra="contagem" hidden>Somar por
+              <select name="janela"><option value="dia">Dia</option><option value="turno">Turno</option><option value="hora">Hora</option></select>
+            </label>
+            <label data-regra="zona" hidden>Avisar se ficar mais de (s)
+              <input name="permanencia" type="number" min="0" max="86400" placeholder="opcional">
+            </label>
+            <p class="tiny dica-posicao" data-regra="linha contagem zona" hidden>A posição exata da linha ou da zona você desenha no programa, em cima da câmera.</p>
+          </div>
+        </fieldset>
+        <div class="c-acoes">
+          <button class="btn primary" type="submit" id="validar">Conferir receita</button>
+          <details class="acord est-mais">
+            <summary><span>Outros jeitos</span><svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></summary>
+            <div class="est-mais-corpo">
+              <button class="btn sm" type="button" disabled aria-describedby="ia-em-breve">Conversar com a IA</button>
+              <p class="tiny" id="ia-em-breve">Em breve: você descreve em voz ou texto e a IA monta a receita. Precisa da sua chave de API, guardada cifrada; por isso ainda não está ligado.</p>
+              <label class="btn sm arquivo">Abrir receita .json<input type="file" id="abrir-receita" accept=".json,application/json"></label>
+              <button class="btn ghost sm" type="button" id="exemplo">Usar o exemplo das caixas</button>
+            </div>
+          </details>
+        </div>
+        <div class="c-resultado" id="resultado" role="status" aria-live="polite"></div>
+      </form>
     </section>
+
+    <!-- 2. Coletar -->
+    <section class="est-passo" id="coletar" role="tabpanel" aria-labelledby="t-coletar" hidden>
+      <header class="est-cab">
+        <h1 id="t-coletar">Colete de 100 a 300 fotos</h1>
+        <p>A IA aprende com exemplos do lugar de verdade. Fotos parecidas demais ensinam pouco.</p>
+      </header>
+      <div class="est-duas">
+        <ol class="est-lista">
+          <li><strong>Peça a autorização do cliente</strong> e aceite o termo do técnico no programa (Integrações → LGPD).</li>
+          <li>No CamFácil IA, abra <strong>Módulos → Modo estúdio → Coletar fotos</strong>.</li>
+          <li>Escolha a câmera, use o id da receita <code class="mono" data-id-receita>sua-receita</code>, um intervalo (30 s é um bom começo) e quantas fotos.</li>
+          <li>Deixe rodando em <strong>horários diferentes</strong>: manhã, tarde, luz acesa, chuva, movimento.</li>
+        </ol>
+        <div class="est-nota">
+          <p><strong>Onde ficam as fotos</strong></p>
+          <p class="mono tiny">pasta de dados/estudio/<span data-id-receita>sua-receita</span>/fotos</p>
+          <p class="tiny">Nada sai da máquina. No passo seguinte você abre essa pasta no navegador, e as fotos continuam só com você.</p>
+          <details class="acord">
+            <summary><span>Sem o programa por perto?</span><svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></summary>
+            <p class="tiny">Fotos do celular ou exportadas do gravador também servem. Junte numa pasta, de preferência do mesmo ângulo da câmera que vai usar.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Rotular -->
+    <section class="est-passo est-rotular" id="rotular" role="tabpanel" aria-labelledby="t-rotular" hidden>
+      <header class="est-cab est-cab-linha">
+        <h1 id="t-rotular">Rotule as fotos</h1>
+        <p class="tiny">Tudo acontece neste navegador: as fotos nunca vão ao servidor.</p>
+      </header>
+      <div class="rot-barra">
+        <div class="actions">
+          <button class="btn sm" type="button" id="abrir-pasta">Abrir pasta</button>
+          <label class="btn sm arquivo">Escolher fotos<input type="file" id="fotos" accept="image/jpeg,image/png,image/webp,image/bmp" multiple></label>
+          <input type="file" id="fotos-pasta" webkitdirectory hidden>
+        </div>
+        <div class="rot-classes" id="rot-classes-barra" role="radiogroup" aria-label="Classe da caixa"></div>
+      </div>
+      <div class="rot-palco" id="palco">
+        <canvas id="tela" aria-label="Foto para rotular. Arraste para desenhar uma caixa." tabindex="0"></canvas>
+        <div class="rot-vazio" id="rot-vazio">
+          <p><strong>Abra a pasta das fotos</strong></p>
+          <p class="tiny">Arraste sobre o objeto para marcar uma caixa. Clique numa caixa para escolher; Delete apaga. Setas trocam de foto, números trocam de classe.</p>
+        </div>
+      </div>
+      <div class="rot-rodape">
+        <div class="rot-nav">
+          <button class="btn ghost sm" type="button" id="foto-ant" aria-label="Foto anterior"><svg class="ico sm" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
+          <span class="mono tiny" id="foto-pos">0 de 0</span>
+          <button class="btn ghost sm" type="button" id="foto-prox" aria-label="Próxima foto"><svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+          <span class="tiny rot-info" id="foto-info"></span>
+        </div>
+        <div class="actions">
+          <button class="btn ghost sm" type="button" id="apagar-caixa" disabled>Apagar caixa</button>
+          <button class="btn ghost sm" type="button" id="sem-objeto" aria-pressed="false">Nada nesta foto</button>
+          <button class="btn primary sm" type="button" id="exportar" disabled>Exportar .zip</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Treinar -->
+    <section class="est-passo" id="treinar" role="tabpanel" aria-labelledby="t-treinar" hidden>
+      <header class="est-cab">
+        <h1 id="t-treinar">Treine de graça no Google Colab</h1>
+        <p>O notebook já vem pronto com a sua receita. Treina com GPU gratuita e guarda tudo no <strong>seu</strong> Google Drive.</p>
+      </header>
+      <div class="est-duas">
+        <ol class="est-lista">
+          <li>Baixe o notebook e abra o <strong>Google Colab</strong>: <em>Arquivo → Fazer upload de notebook</em>.</li>
+          <li>Ative a GPU: <em>Ambiente de execução → Alterar o tipo → GPU T4</em>.</li>
+          <li>Rode as células na ordem. Quando pedir, envie o <strong>.zip</strong> exportado no passo Rotular.</li>
+          <li>Se a sessão cair, rode de novo: o treino continua de onde parou. No fim, a pasta <code class="mono">exportado/</code> do Drive tem o modelo.</li>
+        </ol>
+        <div class="est-nota">
+          <p class="tiny" id="treinar-situacao">Confira a receita no passo 1 antes de baixar.</p>
+          <div class="actions">
+            <button class="btn primary" type="button" id="baixar-notebook">Baixar notebook</button>
+            <a class="btn" href="https://colab.research.google.com/" target="_blank" rel="noopener">Abrir Google Colab</a>
+          </div>
+          <p class="msg" id="treinar-msg" role="status"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Importar -->
+    <section class="est-passo" id="importar" role="tabpanel" aria-labelledby="t-importar" hidden>
+      <header class="est-cab">
+        <h1 id="t-importar">Importe no programa e teste</h1>
+        <p>O modelo roda na máquina do cliente, sem nuvem, marcado como modelo de estudo.</p>
+      </header>
+      <div class="est-duas">
+        <ol class="est-lista">
+          <li>Do Drive, baixe a pasta <code class="mono">exportado/</code>: <span class="mono tiny">receita.json</span>, <span class="mono tiny">manifesto.json</span> e o <span class="mono tiny">.onnx</span>.</li>
+          <li>No CamFácil IA, abra <strong>Módulos → Modo estúdio → Modelos de estudo</strong>, escolha os três arquivos e importe. O programa confere o SHA-256.</li>
+          <li>Ligue o modelo (um por vez). O detector troca o modelo padrão pelo seu.</li>
+          <li>Em <strong>Câmeras</strong>, desenhe a linha ou a zona; nos <strong>Níveis</strong>, ligue Contagem ou Zona. O balão da regra mostra o nome da sua classe.</li>
+        </ol>
+        <div class="est-nota">
+          <p><strong>O cliente não vê caixas</strong></p>
+          <p class="tiny">Na tela do cliente aparece só o balão com o nome da regra. As caixas ficam aqui, na ferramenta do técnico.</p>
+          <p><strong>Ficou ruim?</strong></p>
+          <p class="tiny">Volte ao Rotular, junte fotos dos erros (horário, ângulo, objeto parecido) e treine de novo. É assim que a IA aprende.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Compartilhar -->
+    <section class="est-passo est-compartilhar" id="compartilhar" role="tabpanel" aria-labelledby="t-compartilhar" hidden>
+      <header class="est-cab est-cab-linha">
+        <h1 id="t-compartilhar">Compartilhe o que aprendeu</h1>
+        <div class="seg seg-sub" role="tablist" aria-label="Compartilhar">
+          <button type="button" role="tab" data-sub="publicar" aria-selected="true">Publicar</button>
+          <button type="button" role="tab" data-sub="galeria" aria-selected="false">Receitas de técnicos</button>
+        </div>
+      </header>
+      <div class="comp-grade">
+        <div class="comp-publicar" data-subpainel="publicar">
+          <p class="tiny">Vai só a receita e as métricas. Nunca fotos, rótulos nem o modelo.</p>
+          <div id="publicar-sair" hidden>
+            <p>Entre com o Google para publicar com o seu apelido.</p>
+            <a class="btn" id="entrar" href="/api/auth/google?voltar=/estudio%23compartilhar">Entrar com Google</a>
+          </div>
+          <form class="est-form est-form-pub" id="form-publicar" autocomplete="off" hidden>
+            <label>Apelido público (opcional, nunca e-mail)
+              <input name="autor" maxlength="40" placeholder="Zé da Câmera">
+            </label>
+            <label class="arquivo-campo">Receita final do Colab, com métricas (opcional)
+              <input type="file" name="final" accept=".json,application/json">
+            </label>
+            <label class="check"><input type="checkbox" name="publica" checked> Aparecer na lista de receitas de técnicos</label>
+            <div class="actions">
+              <button class="btn primary" type="submit">Publicar receita</button>
+            </div>
+          </form>
+          <p class="msg" id="publicar-msg" role="status"></p>
+        </div>
+        <div class="comp-galeria" data-subpainel="galeria">
+          <div class="gal-busca">
+            <input type="search" id="busca" placeholder="Buscar por nome ou objeto" aria-label="Buscar receitas">
+          </div>
+          <ul class="gal-lista" id="galeria" aria-live="polite"></ul>
+          <div class="gal-pag">
+            <button class="btn ghost sm" type="button" id="gal-ant" aria-label="Página anterior"><svg class="ico sm" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
+            <span class="mono tiny" id="gal-pos"></span>
+            <button class="btn ghost sm" type="button" id="gal-prox" aria-label="Próxima página"><svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="est-nav" aria-label="Avançar e voltar">
+      <button class="btn" type="button" id="ant"><svg class="ico sm" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg><span>Voltar</span></button>
+      <span class="tiny mono" id="pos">1 de 6</span>
+      <button class="btn primary" type="button" id="prox"><span>Avançar</span><svg class="ico sm" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+    </nav>
   </main>
-  <footer class="foot doc-foot">Software livre (AGPL-3.0). <a href="/manifesto">Manifesto</a> · <a href="/">Página inicial</a></footer>
-  <script src="/doc.js" defer></script>
+  <footer class="foot doc-foot">Software livre (AGPL-3.0). <a href="/manifesto">Manifesto</a> · <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="/">Página inicial</a></footer>
+  <script src="/estudio.js" defer></script>
 </body>
 </html>

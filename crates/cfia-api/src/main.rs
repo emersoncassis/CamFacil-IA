@@ -148,6 +148,7 @@ pub fn router(state: AppState) -> Router {
             get(estudio::baixar),
         )
         .route("/api/estudio/notebook", post(estudio::notebook))
+        .route("/api/estudio/validar", post(estudio::validar))
         .route("/esquemas/receita-v1.schema.json", get(estudio::esquema))
         .route(
             "/api/dispositivos",

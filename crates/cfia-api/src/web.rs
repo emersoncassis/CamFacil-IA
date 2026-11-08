@@ -189,6 +189,11 @@ const ARQUIVOS: &[Arquivo] = &[
     arq!("/estudio", "text/html; charset=utf-8", "web/estudio.html"),
     arq!("/doc.js", "text/javascript; charset=utf-8", "web/doc.js"),
     arq!("/estudio.css", "text/css; charset=utf-8", "web/estudio.css"),
+    arq!(
+        "/estudio.js",
+        "text/javascript; charset=utf-8",
+        "web/estudio.js"
+    ),
     // Instaladores de um comando (curl | sh, irm | iex).
     arq!(
         "/instalar.sh",
