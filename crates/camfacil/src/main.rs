@@ -11,6 +11,7 @@ mod hardware;
 mod ia;
 mod notificacoes;
 mod painel;
+mod relatorio;
 mod resumo;
 mod tailscale;
 mod tv;
