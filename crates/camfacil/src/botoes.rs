@@ -693,6 +693,9 @@ mod tests {
     #[tokio::test]
     async fn dispara_no_rele_simulado() {
         use std::io::{Read, Write};
+        // O cliente HTTP precisa do provedor de criptografia; não depende de
+        // outro teste ter instalado antes.
+        let _ = rustls::crypto::ring::default_provider().install_default();
         let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let porta = l.local_addr().unwrap().port();
         let servidor = std::thread::spawn(move || {
