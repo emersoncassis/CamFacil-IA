@@ -1066,5 +1066,15 @@
   "vivo.nao_instalado": "não instalado",
   "vivo.ouvindo": "ouvindo",
   "vivo.mcp_leitura": "só leitura",
-  "vivo.mcp_escrita": "pode alterar"
+  "vivo.mcp_escrita": "pode alterar",
+  "sub.manutencao.dados": "Dados",
+  "dados.titulo": "Dados do programa",
+  "dados.desc": "Tudo o que o CamFácil IA grava fica numa pasta só, ao lado do programa: câmeras, regras, histórico, fotos, logins (cifrados) e chaves. Nada em pasta escondida nem no registro do Windows. Apagar a pasta, ou usar o botão abaixo, zera o programa.",
+  "dados.pasta": "Pasta",
+  "dados.tamanho": "Tamanho",
+  "dados.antiga": "Pasta antiga (versões até 0.7)",
+  "dados.apagar": "Apagar todos os dados",
+  "dados.confirma": "Apagar TODOS os dados do CamFácil IA?",
+  "dados.confirma_dica": "Câmeras, regras, histórico de passagens, fotos, logins salvos, integrações e a pasta antiga. Não dá para desfazer. Faça um backup antes, se quiser guardar. O programa fecha; ao abrir de novo, começa do zero.",
+  "dados.apagado": "Apagado. O programa fechou; abra de novo para começar do zero."
 }

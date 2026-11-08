@@ -526,6 +526,20 @@
           </div>
           <p class="msg" id="bkp-msg" role="status"></p>
         </div>
+
+        <div class="block" id="dados-bloco" data-sub="dados">
+          <div class="block-head"><h2 data-i18n="dados.titulo"></h2></div>
+          <p class="hint" data-i18n="dados.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="dados.pasta"></dt><dd class="mono tiny" id="dados-pasta">…</dd>
+            <dt data-i18n="dados.tamanho"></dt><dd id="dados-mb">…</dd>
+            <dt data-i18n="dados.antiga" id="dados-antiga-rot" hidden></dt><dd id="dados-antiga" hidden></dd>
+          </dl>
+          <div class="actions mt">
+            <button class="btn perigo" type="button" id="dados-apagar"><span data-i18n="dados.apagar"></span></button>
+          </div>
+          <p class="msg" id="dados-msg" role="status"></p>
+        </div>
       </section>
 
       <!-- Rede -->
