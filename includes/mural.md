@@ -5,6 +5,6 @@
 
 | Apoiador | | |
 |---|---|---|
-| **Marconi** · Mar Câmeras | Fundador | Criou o [Contagem Inteligente](https://contagem.marcameras.com.br/) |
+| **Marcone** · Mar Câmeras | Fundador | Criou o [Contagem Inteligente](https://contagem.marcameras.com.br/) |
 | **Papo Segurança** | Fundador | Divulga os técnicos formados |
 | **Emerson de Carvalho Assis** | Criador | Investiu do próprio bolso para o projeto existir |
