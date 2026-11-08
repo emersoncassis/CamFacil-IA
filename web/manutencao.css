@@ -42,3 +42,11 @@
 .man-campo textarea::placeholder { color: var(--text-3); }
 .man-campo textarea:focus-visible { outline: 0; border-color: var(--focus); box-shadow: 0 0 0 3px var(--c-green-dim); }
 #rel-lista .actions { flex-wrap: wrap; justify-content: flex-end; }
+
+/* Teste de estresse */
+.est-max { flex-direction: row; align-items: center; gap: var(--s2); }
+.est-max select { width: auto; }
+.est-veredito { margin: var(--s3) 0 0; max-width: 68ch; color: var(--text); font-size: var(--fs-md); }
+.est-ok::before { background: var(--accent); }
+.est-falha { color: var(--c-danger); white-space: normal; }
+.est-falha::before { background: var(--c-danger); }

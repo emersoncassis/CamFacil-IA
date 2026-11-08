@@ -330,6 +330,9 @@ pub struct Canal {
     pub medio: Mutex<Medio>,
     parar: AtomicBool,
     filho: Mutex<Option<Child>>,
+    /// Canal do teste de estresse: analisa igual, mas não grava evento, não
+    /// avisa ninguém e não aparece na TV, no painel nem no detector.
+    pub ensaio: bool,
 }
 
 impl Canal {
@@ -658,6 +661,7 @@ fn verificar_selo_cerca(store: &Store) {
 pub struct Video {
     store: Arc<Store>,
     canais: Mutex<HashMap<i64, Arc<Canal>>>,
+    ensaios: Mutex<Vec<Arc<Canal>>>,
 }
 
 impl Video {
@@ -665,6 +669,7 @@ impl Video {
         Arc::new(Self {
             store,
             canais: Mutex::new(HashMap::new()),
+            ensaios: Mutex::new(Vec::new()),
         })
     }
 
@@ -702,28 +707,55 @@ impl Video {
 
     pub fn iniciar(self: &Arc<Self>, id: i64, fonte: &str, url: &str) {
         self.parar(id);
-        let (tx, _) = broadcast::channel(4);
-        let canal = Arc::new(Canal {
-            id,
-            observacao: Mutex::new(None),
-            ultimo: Mutex::new(None),
-            tx,
-            regras: RwLock::new(Vec::new()),
-            interno: Mutex::new(Interno::default()),
-            medio: Mutex::new(Medio::default()),
-            parar: AtomicBool::new(false),
-            filho: Mutex::new(None),
-        });
+        let canal = novo_canal(id, false);
         if let Ok(r) = self.store.regras(id) {
             canal.definir_regras(&r);
         }
         self.canais.lock().unwrap().insert(id, canal.clone());
+        self.disparar(canal, fonte, url);
+    }
+
+    fn disparar(&self, canal: Arc<Canal>, fonte: &str, url: &str) {
         let store = self.store.clone();
         let (fonte, url) = (fonte.to_string(), url.to_string());
         let _ = std::thread::Builder::new()
-            .name(format!("camera-{id}"))
+            .name(format!("camera-{}", canal.id))
             .spawn(move || laco(canal, store, fonte, url));
     }
+
+    /// Teste de estresse: mais uma câmera de demonstração com as regras dadas,
+    /// fora da lista normal. Devolve o canal para medir os quadros/s.
+    pub fn iniciar_ensaio(&self, regras: Vec<Regra>) -> Arc<Canal> {
+        let mut lista = self.ensaios.lock().unwrap();
+        let canal = novo_canal(-1 - lista.len() as i64, true);
+        *canal.regras.write().unwrap() = regras;
+        lista.push(canal.clone());
+        drop(lista);
+        self.disparar(canal.clone(), "demo", "");
+        canal
+    }
+
+    pub fn parar_ensaios(&self) {
+        for c in self.ensaios.lock().unwrap().drain(..) {
+            c.encerrar();
+        }
+    }
+}
+
+fn novo_canal(id: i64, ensaio: bool) -> Arc<Canal> {
+    let (tx, _) = broadcast::channel(4);
+    Arc::new(Canal {
+        id,
+        observacao: Mutex::new(None),
+        ultimo: Mutex::new(None),
+        tx,
+        regras: RwLock::new(Vec::new()),
+        interno: Mutex::new(Interno::default()),
+        medio: Mutex::new(Medio::default()),
+        parar: AtomicBool::new(false),
+        filho: Mutex::new(None),
+        ensaio,
+    })
 }
 
 /// Mantém o ffmpeg rodando, com espera crescente entre tentativas.
@@ -804,7 +836,7 @@ fn esperar_sem_sinal(canal: &Canal, store: &Store, total: Duration) {
 
 /// Alimenta o monitor de saúde; grava o evento `saude` só na mudança confirmada.
 fn observar_saude(canal: &Canal, store: &Store, s: Situacao) {
-    if !modulos(store).saude {
+    if canal.ensaio || !modulos(store).saude {
         return;
     }
     let mudanca = canal
@@ -927,7 +959,7 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
     // Com o detector cuidando de zonas (pessoas) ou linhas (contagem), o
     // analisador por movimento deixa essas regras para ele (sem contar duas vezes).
     let detector_ativo = canal.medio.lock().unwrap().quando.is_some();
-    let regras: Vec<Regra> = if m.cerca {
+    let regras: Vec<Regra> = if m.cerca || canal.ensaio {
         canal
             .regras
             .read()
@@ -954,7 +986,10 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
     if n.is_multiple_of(5) {
         observar_saude(canal, store, saude::classificar(&q));
     }
-    let eventos = an.processar(&q, &regras, m.movimento);
+    let eventos = an.processar(&q, &regras, m.movimento || canal.ensaio);
+    if canal.ensaio {
+        return;
+    }
     if let Some(o) = canal.observacao.lock().unwrap().as_mut() {
         if o.inicio.elapsed() < o.duracao {
             o.obs.alimentar(&an.centros());
