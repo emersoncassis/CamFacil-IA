@@ -1,4 +1,4 @@
-//! WhatsApp pela **Evolution API** (gateway HTTP; ADR-0009).
+//! WhatsApp pela **Evolution API** (gateway HTTP; ADR-0010).
 //!
 //! Nada de biblioteca não oficial dentro do binário: a Evolution API roda como
 //! contêiner Docker em outro servidor (ou no mesmo PC do painel) e o CamFácil

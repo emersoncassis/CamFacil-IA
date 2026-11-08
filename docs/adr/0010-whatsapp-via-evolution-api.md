@@ -1,4 +1,4 @@
-# ADR-0009 — WhatsApp pela Evolution API (gateway HTTP), não por biblioteca embutida
+# ADR-0010 — WhatsApp pela Evolution API (gateway HTTP), não por biblioteca embutida
 
 Status: aceito · 2026-11-07 · substitui a ADR-0004
 
