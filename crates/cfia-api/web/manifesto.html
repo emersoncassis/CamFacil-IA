@@ -22,9 +22,18 @@
   <link rel="stylesheet" href="/app.css">
 </head>
 <body class="tela doc-tela">
+  <svg class="sprite" aria-hidden="true" width="0" height="0">
+    <defs>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    </defs>
+  </svg>
   <header class="doc-topo">
     <a class="brand" href="/"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></a>
-    <a class="btn sm" href="/">Página inicial</a>
+    <div class="actions">
+      <button class="btn sm primary" type="button" id="ouvir-manifesto"><svg class="ico sm"><use href="#i-play"/></svg><span>Ouvir o manifesto</span></button>
+      <a class="btn sm" href="/">Página inicial</a>
+    </div>
   </header>
   <main class="doc manifesto">
     <div class="paginas" data-paginas>
@@ -62,5 +71,6 @@
   </main>
   <footer class="foot doc-foot">Software livre (AGPL-3.0). <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="/">Página inicial</a></footer>
   <script src="/doc.js" defer></script>
+  <script src="/manifesto.js" defer></script>
 </body>
 </html>

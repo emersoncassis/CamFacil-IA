@@ -172,6 +172,31 @@ const ARQUIVOS: &[Arquivo] = &[
     ),
     arq!("/termos", "text/html; charset=utf-8", "web/termos.html"),
     arq!(
+        "/audio/manifesto-01.ogg",
+        "audio/ogg",
+        "web/audio/manifesto-01.ogg"
+    ),
+    arq!(
+        "/audio/manifesto-02.ogg",
+        "audio/ogg",
+        "web/audio/manifesto-02.ogg"
+    ),
+    arq!(
+        "/audio/manifesto-03.ogg",
+        "audio/ogg",
+        "web/audio/manifesto-03.ogg"
+    ),
+    arq!(
+        "/audio/manifesto-04.ogg",
+        "audio/ogg",
+        "web/audio/manifesto-04.ogg"
+    ),
+    arq!(
+        "/manifesto.js",
+        "text/javascript; charset=utf-8",
+        "web/manifesto.js"
+    ),
+    arq!(
         "/manifesto",
         "text/html; charset=utf-8",
         "web/manifesto.html"

@@ -65,6 +65,8 @@
       const h = p.querySelector("h1, h2"); if (h) h.tabIndex = -1;
       lista.append(el("li", {}, el("button", { type: "button", onclick: () => ir(folhaDe(i), true) }, titulo(p, i))));
     });
+    // Narração (ex.: manifesto) pede para mostrar a seção que está falando.
+    caixa.addEventListener("doc-ir", (ev) => ir(folhaDe(ev.detail)));
     ant.onclick = () => ir(atual - 1, true);
     prox.onclick = () => ir(atual + 1, true);
     addEventListener("keydown", (ev) => {
