@@ -99,9 +99,109 @@ function tvIniciar() {
   $("#tv-logo-remover").onclick = async () => { try { await api("/api/tv/logo", undefined, "DELETE"); tvInfo.logo = false; tvLogoRender(); } catch (e) { manMsg("#tv-msg", e.message, "err"); } };
 }
 
+// ---------- Máquina (monitor de hardware) ----------
+let hwTimer = null;
+let hwHoras = 24;
+
+function hwFmtUptime(s) {
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  return d ? `${d} ${t("tempo.d")} ${h} ${t("tempo.h")}` : h ? `${h} ${t("tempo.h")} ${m} ${t("tempo.min")}` : `${m} ${t("tempo.min")}`;
+}
+
+function hwRenderAtual(r) {
+  const a = r.atual;
+  const dl = $("#hw-atual");
+  if (!a) { dl.replaceChildren(el("dt", {}, t("hw.situacao")), el("dd", {}, t("hw.aguardando"))); return; }
+  const linhas = [
+    ["hw.cpu", `${a.cpu.toFixed(0)} %`, a.cpu > r.limites.cpu],
+    ["hw.ram", `${a.ram_pct.toFixed(0) } % · ${a.ram_mb} ${t("hw.de")} ${a.ram_total_mb} MB`, a.ram_pct > r.limites.ram],
+    ["hw.temp", a.temperatura == null ? t("hw.sem_sensor") : `${a.temperatura.toFixed(0)} °C`, a.temperatura != null && a.temperatura > r.limites.temperatura],
+    ["hw.disco", a.disco_livre_mb == null ? "—" : a.disco_livre_mb >= 10240 ? `${(a.disco_livre_mb / 1024).toFixed(1)} GB ${t("hw.livres")}` : `${a.disco_livre_mb} MB ${t("hw.livres")}`, a.disco_livre_mb != null && a.disco_livre_mb < r.limites.disco_mb],
+    ["hw.uptime", hwFmtUptime(a.uptime_s), false],
+    ["hw.fps", Object.keys(a.fps).length ? Object.entries(a.fps).map(([id, f]) => `${(tvInfo && tvInfo.cameras.find((c) => String(c.id) === id) || { nome: `#${id}` }).nome}: ${f.toFixed(1)}`).join(" · ") : "—", false],
+    ["hw.amostras", `${r.amostras} (${t("hw.a_cada")} ${r.intervalo_s} s)`, false],
+  ];
+  dl.replaceChildren(...linhas.flatMap(([k, v, alerta]) => [el("dt", {}, t(k)), el("dd", { class: alerta ? "alerta" : "" }, v)]));
+}
+
+/// Gráfico de linhas em SVG, sem biblioteca. CPU e RAM em %, temperatura em °C (mesma escala 0–100).
+function hwRenderGrafico(amostras, horas, limites) {
+  const W = 960, H = 260, L = 36, R = 12, T0 = 12, B = 28;
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const mk = (tag, attrs, txt) => { const e = document.createElementNS(ns, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (txt != null) e.textContent = txt; return e; };
+  const agora = Math.floor(Date.now() / 1000), ini = agora - horas * 3600;
+  const x = (q) => L + ((q - ini) / (agora - ini)) * (W - L - R);
+  const y = (v) => T0 + (1 - Math.min(100, Math.max(0, v)) / 100) * (H - T0 - B);
+  for (const v of [0, 25, 50, 75, 100]) {
+    svg.append(mk("line", { class: "grade", x1: L, x2: W - R, y1: y(v), y2: y(v) }));
+    svg.append(mk("text", { class: "eixo", x: L - 6, y: y(v) + 4, "text-anchor": "end" }, String(v)));
+  }
+  const passos = horas <= 24 ? 6 : 7;
+  for (let i = 0; i <= passos; i++) {
+    const q = ini + (i / passos) * (agora - ini);
+    const d = new Date(q * 1000);
+    const rot = horas <= 24 ? d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    svg.append(mk("text", { class: "eixo", x: x(q), y: H - 8, "text-anchor": i === 0 ? "start" : i === passos ? "end" : "middle" }, rot));
+  }
+  svg.append(mk("line", { class: "limite", x1: L, x2: W - R, y1: y(limites.cpu), y2: y(limites.cpu) }));
+  if (!amostras.length) {
+    svg.append(mk("text", { class: "vazio", x: W / 2, y: H / 2, "text-anchor": "middle" }, t("hw.sem_dados")));
+  } else {
+    const serie = (cls, f) => {
+      let d = "", aberto = false, anterior = null;
+      for (const a of amostras) {
+        const v = f(a);
+        if (v == null) { aberto = false; continue; }
+        // Buraco maior que 3 intervalos (máquina desligada): levanta a caneta.
+        if (anterior != null && a.quando - anterior > (a.agregada ? 3 * 3600 : 3 * 60) * 1.5) aberto = false;
+        d += `${aberto ? "L" : "M"}${x(a.quando).toFixed(1)} ${y(v).toFixed(1)} `;
+        aberto = true; anterior = a.quando;
+      }
+      if (d) svg.append(mk("path", { class: "serie " + cls, d }));
+    };
+    serie("ram", (a) => a.ram_pct);
+    serie("temp", (a) => a.temperatura);
+    serie("cpu", (a) => a.cpu);
+  }
+  const box = $("#hw-grafico");
+  box.setAttribute("aria-label", t("hw.grafico_alt"));
+  box.replaceChildren(svg);
+  $("#hw-legenda").replaceChildren(
+    ...[["cpu", "hw.cpu"], ["ram", "hw.ram"], ["temp", "hw.temp"]].map(([c, k]) => el("span", { class: "hw-legenda-item" }, el("i", { class: c }), t(k))),
+    el("span", { class: "hw-legenda-item" }, el("i", { class: "lim" }), `${t("hw.limite_cpu")} ${limites.cpu} %`));
+}
+
+async function hwCarregar() {
+  if ($("#manutencao").hidden) return;
+  try {
+    const r = await api("/api/hardware");
+    hwRenderAtual(r);
+    const log = await api(`/api/hardware/log?horas=${hwHoras}`);
+    hwRenderGrafico(log.amostras, log.horas, r.limites);
+    const agora = Math.floor(Date.now() / 1000);
+    $("#hw-eventos").replaceChildren(...(r.eventos.length
+      ? r.eventos.map((e) => el("li", {}, el("div", {}, el("p", {}, e.texto)),
+        el("span", { class: "tiny" }, `${new Date(e.quando * 1000).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} · ${tempoRelativo(agora - e.quando)} ${t("tempo.atras")}`)))
+      : [el("li", {}, el("p", {}, t("hw.sem_alertas")))]));
+    manMsg("#hw-msg", "");
+  } catch (e) { manMsg("#hw-msg", e.message, "err"); }
+}
+
+function hwAtivar(ativo) {
+  clearInterval(hwTimer); hwTimer = null;
+  if (ativo) { hwCarregar(); hwTimer = setInterval(hwCarregar, 30000); }
+}
+
+function hwIniciar() {
+  document.querySelectorAll("#hw-periodo input").forEach((i) => { i.onchange = () => { hwHoras = Number(i.value); hwCarregar(); }; });
+}
+
 // ---------- Entrada da tela ----------
 let manutencaoCarregada = false;
 function manutencaoAtivar(ativo) {
+  hwAtivar(ativo);
   if (!ativo) return;
   tvCarregar();
   manutencaoCarregada = true;
@@ -109,4 +209,5 @@ function manutencaoAtivar(ativo) {
 
 function iniciarManutencao() {
   tvIniciar();
+  hwIniciar();
 }

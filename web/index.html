@@ -305,6 +305,23 @@
           </div>
         </header>
 
+        <div class="block" id="hw-bloco">
+          <div class="block-head">
+            <h2 data-i18n="hw.titulo"></h2>
+            <div class="seg" role="radiogroup" id="hw-periodo">
+              <label><input type="radio" name="hw-periodo" value="24" checked><span data-i18n="hw.24h"></span></label>
+              <label><input type="radio" name="hw-periodo" value="168"><span data-i18n="hw.7d"></span></label>
+            </div>
+          </div>
+          <p class="hint" data-i18n="hw.desc"></p>
+          <dl class="rows mt hw-atual" id="hw-atual"></dl>
+          <div class="hw-grafico mt" id="hw-grafico" role="img" aria-label=""></div>
+          <p class="tiny" id="hw-legenda"></p>
+          <h3 class="sub" data-i18n="hw.alertas"></h3>
+          <ul class="list eventos" id="hw-eventos"></ul>
+          <p class="msg" id="hw-msg" role="status"></p>
+        </div>
+
         <div class="block" id="tv-bloco">
           <div class="block-head">
             <h2 data-i18n="tv.titulo"></h2>

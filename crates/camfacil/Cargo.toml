@@ -12,6 +12,8 @@ cf-core = { path = "../cf-core" }
 cf-notify = { path = "../cf-notify" }
 miniz_oxide = { version = "0.8", default-features = false, features = ["with-alloc"] }
 ort = { version = "2.0.0-rc.15", default-features = false, features = ["load-dynamic"] }
+# Mesma versão e feature do cf-core (já compilado): log de hardware em banco próprio.
+rusqlite = { version = "0.41.1", features = ["bundled"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider"] }
 sha2 = "0.11.1"
 futures-util = { version = "0.3.34", default-features = false, features = ["sink", "std"] }
@@ -19,7 +21,9 @@ qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
 rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
-sysinfo = { version = "0.40.1", default-features = false, features = ["system"] }
+# `disk`: só para medir o espaço livre da pasta de dados (monitor de hardware);
+# o crate já estava no binário, a feature acrescenta poucos KB.
+sysinfo = { version = "0.40.1", default-features = false, features = ["system", "disk"] }
 tokio = { version = "1.54.1", default-features = false, features = ["rt", "net", "macros", "time", "signal", "sync", "process"] }
 tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["connect", "rustls-tls-webpki-roots", "rustls-tls-native-roots"] }
 zune-core = "0.5"

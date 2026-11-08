@@ -7,6 +7,7 @@ mod api;
 mod assets;
 mod autoinicio;
 mod elo;
+mod hardware;
 mod ia;
 mod notificacoes;
 mod painel;
@@ -130,6 +131,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => eprintln!("Telegram desligado: {e}"),
     }
     app.elo.definir_resumo(resumo::montar(Arc::downgrade(&app)));
+    // Monitor de hardware com log (SDD-05): uma amostra por minuto.
+    hardware::iniciar(Arc::downgrade(&app));
     let rede = lan
         .then(|| cf_core::conectar::ip_local().map(|ip| format!("http://{ip}:{}", chosen.port)))
         .flatten();

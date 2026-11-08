@@ -157,6 +157,12 @@ fn desenhar(d: &Dados) -> String {
             &format!("  {CINZA}CamFácil IA{FIM} {} MB de memória", m / 1_048_576),
         );
     }
+    if let Some(t) = crate::hardware::monitor()
+        .and_then(|m| m.atual())
+        .and_then(|a| a.temperatura)
+    {
+        linha(&mut s, &format!("  {CINZA}Temperatura{FIM} {t:.0} °C"));
+    }
 
     // Câmeras
     let cams = d.app.store.cameras().unwrap_or_default();

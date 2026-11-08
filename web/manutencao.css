@@ -12,3 +12,22 @@
 #tv-cameras li { cursor: default; }
 #tv-cameras .ordem { display: inline-flex; gap: 2px; }
 #tv-cameras .tiny { margin-left: var(--s2); }
+
+/* Máquina: gráfico em SVG puro */
+.hw-grafico { width: 100%; max-width: 960px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+.hw-grafico svg { display: block; width: 100%; height: auto; }
+.hw-grafico .grade { stroke: var(--line); stroke-width: 1; }
+.hw-grafico .eixo { fill: var(--text-3); font: var(--fs-xs) var(--font-mono); }
+.hw-grafico .serie { fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.hw-grafico .serie.cpu { stroke: var(--c-100); }
+.hw-grafico .serie.ram { stroke: var(--c-500); }
+.hw-grafico .serie.temp { stroke: var(--c-warn); }
+.hw-grafico .limite { stroke: var(--c-danger); stroke-dasharray: 3 4; stroke-width: 1; }
+.hw-grafico .vazio { fill: var(--text-3); font: var(--fs-sm) var(--font); }
+.hw-legenda-item { display: inline-flex; align-items: center; gap: var(--s1); margin-right: var(--s4); }
+.hw-legenda-item i { display: inline-block; width: 14px; height: 2px; }
+.hw-legenda-item i.cpu { background: var(--c-100); }
+.hw-legenda-item i.ram { background: var(--c-500); }
+.hw-legenda-item i.temp { background: var(--c-warn); }
+.hw-legenda-item i.lim { height: 0; border-top: 1px dashed var(--c-danger); }
+.hw-atual dd.alerta { color: var(--c-danger); }

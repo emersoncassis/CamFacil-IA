@@ -85,6 +85,8 @@ pub fn router(app: Shared) -> Router {
         )
         .route("/api/tv/logo.png", get(crate::tv::get_logo))
         .route("/api/tv/whatsapp.svg", get(crate::tv::get_whatsapp_qr))
+        .route("/api/hardware", get(crate::hardware::get_atual))
+        .route("/api/hardware/log", get(crate::hardware::get_log))
         .fallback(static_file)
         .with_state(app)
 }
