@@ -1,5 +1,5 @@
 {
-  "_leia": "Mural de apoiadores. Só entra quem autorizou. 'fundador: true' conta nas vagas de Apoiadores Fundadores (os 10 primeiros).",
+  "_leia": "Mural de apoiadores. Só entra quem autorizou. Depois de mudar, rode scripts/gerar-mural-svg.py (letreiro do README). 'fundador: true' conta nas vagas de Apoiadores Fundadores (os 10 primeiros).",
   "fundadores_total": 10,
   "apoiadores": [
     {

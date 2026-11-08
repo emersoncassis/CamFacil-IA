@@ -26,6 +26,10 @@ Un comando y el programa se abre solo en el navegador. Funciona en PC vieja, min
     curl -fsSL https://cfia.ysafe.com.br/instalar.sh | sh
     ```
 
+=== "Android"
+
+    Para celular y TV box: descarga la [app Android (APK)](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk), ábrela en el equipo y permite instalar de fuentes desconocidas cuando lo pida. Se vuelve el servidor de las cámaras o mira a un cliente a distancia con Tailscale.
+
 === "Sin comando"
 
     Descarga directo de la [última versión](https://github.com/emersoncassis/CamFacil-IA/releases/latest) y haz doble clic:
@@ -33,6 +37,7 @@ Un comando y el programa se abre solo en el navegador. Funciona en PC vieja, min
     - [Windows](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-windows-x86_64.exe)
     - [Linux](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-linux-x86_64)
     - [Raspberry Pi / ARM 64](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-linux-arm64)
+    - [Android (APK)](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk)
 
 === "Desde el código"
 
