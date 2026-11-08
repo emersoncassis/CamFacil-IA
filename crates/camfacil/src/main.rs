@@ -12,6 +12,7 @@ mod ia;
 mod integracoes;
 mod notificacoes;
 mod painel;
+mod rede;
 mod resumo;
 mod tailscale;
 mod termos;
@@ -174,6 +175,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
     }));
     app.elo.definir_resumo(resumo::montar(Arc::downgrade(&app)));
+    // Rede (SDD-05): foto da rede, diagnóstico e diagrama, sob demanda.
+    rede::iniciar(app.clone());
     let rede = lan
         .then(|| cf_core::conectar::ip_local().map(|ip| format!("http://{ip}:{}", chosen.port)))
         .flatten();
