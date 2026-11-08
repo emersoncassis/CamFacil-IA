@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Câmeras ao vivo</title>
+<style>
+  /* Mesmos valores de web/tokens.css: base preta, verde só em detalhes. */
+  :root {
+    --bg: #000; --surface: #0a0a0a; --surface-2: #111; --line: #232323; --line-strong: #2e2e2e;
+    --text: #ededed; --text-2: #b4b4b4; --text-3: #8a8a8a; --accent: #06cb3f; --warn: #e0b341;
+    --font: system-ui, Roboto, sans-serif; --mono: ui-monospace, monospace;
+    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --r: 6px; --r-pill: 999px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 var(--font); }
+  header { display: flex; gap: var(--s2); align-items: center; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .seg { display: flex; border: 1px solid var(--line-strong); border-radius: var(--r); overflow: hidden; }
+  .seg button { background: var(--surface); color: var(--text-2); border: 0; padding: var(--s2) var(--s3); font: inherit; }
+  .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+  #rede { margin-left: auto; color: var(--text-3); font: 12px var(--mono); }
+  #rede .ponto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: var(--s1); }
+  #rede.fraca .ponto { background: var(--warn); }
+  main { display: grid; gap: var(--s3); padding: var(--s4); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+  figure img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: var(--bg); }
+  figcaption { display: flex; justify-content: space-between; padding: var(--s2) var(--s3); color: var(--text-2); }
+  .modo { font-size: 12px; color: var(--text-3); }
+  .vazio { color: var(--text-3); padding: var(--s4); }
+</style>
+</head>
+<body>
+<header>
+  <div class="seg" role="group" aria-label="Modo do vídeo">
+    <button data-modo="auto" aria-pressed="true">Automático</button>
+    <button data-modo="vivo" aria-pressed="false">Ao vivo</button>
+    <button data-modo="foto" aria-pressed="false">Só foto</button>
+  </div>
+  <span id="rede"><span class="ponto"></span><span id="rede-t">medindo…</span></span>
+</header>
+<main id="grade"><p class="vazio">Carregando câmeras…</p></main>
+<script>
+"use strict";
+const BASE = CF.base();
+let seq = 0; const espera = {};
+window.CF_resposta = (id, txt) => { const f = espera[id]; delete espera[id]; if (f) f(JSON.parse(txt)); };
+const pedir = (caminho) => new Promise((ok) => { const id = ++seq; espera[id] = ok; CF.pedir(id, caminho); });
+
+let cameras = [], escolha = "auto", fraca = false, ruins = 0, boas = 0, timerFoto = 0, timerRede = 0, ativo = true;
+// Conexão fraca: 2 medições ruins seguidas → foto; volta ao vivo só após 3 boas (estável).
+const LIMITE_MS = 1500, BOM_MS = 800;
+
+function modoEfetivo() { return escolha === "auto" ? (fraca ? "foto" : "vivo") : escolha; }
+
+function desenhar() {
+  const g = document.getElementById("grade");
+  if (!cameras.length) { g.innerHTML = '<p class="vazio">Nenhuma câmera ativa no programa.</p>'; return; }
+  g.replaceChildren(...cameras.map((c) => {
+    const f = document.createElement("figure");
+    const img = document.createElement("img"); img.alt = c.nome; img.dataset.id = c.id;
+    const cap = document.createElement("figcaption");
+    const n = document.createElement("span"); n.textContent = c.nome;
+    const m = document.createElement("span"); m.className = "modo";
+    cap.append(n, m); f.append(img, cap); return f;
+  }));
+  aplicar();
+}
+
+function aplicar() {
+  const modo = ativo ? modoEfetivo() : "parado";
+  document.querySelectorAll("figure").forEach((f) => {
+    const img = f.querySelector("img"), id = img.dataset.id;
+    f.querySelector(".modo").textContent = modo === "vivo" ? "ao vivo" : modo === "foto" ? "foto a cada 3 s" : "";
+    if (modo === "vivo") { if (!img.src.includes("/mjpeg")) img.src = `${BASE}/api/cameras/${id}/mjpeg`; }
+    else if (modo === "foto") img.src = `${BASE}/api/cameras/${id}/foto.jpg?t=${Date.now()}`;
+    else img.removeAttribute("src");
+  });
+  clearInterval(timerFoto);
+  if (modo === "foto") timerFoto = setInterval(() => {
+    document.querySelectorAll("figure img").forEach((img) => { img.src = `${BASE}/api/cameras/${img.dataset.id}/foto.jpg?t=${Date.now()}`; });
+  }, 3000);
+}
+
+async function medir() {
+  if (!cameras.length || !ativo) return;
+  const r = await pedir(`/api/cameras/${cameras[0].id}/foto.jpg`);
+  const kbs = r.ok && r.ms > 0 ? Math.round(r.bytes / r.ms) : 0; // bytes/ms ≈ KB/s
+  const ruim = !r.ok || r.ms > LIMITE_MS;
+  if (ruim) { ruins++; boas = 0; } else { boas += r.ms < BOM_MS ? 1 : 0; ruins = 0; }
+  const antes = fraca;
+  if (ruins >= 2) fraca = true;
+  if (boas >= 3) fraca = false;
+  const t = document.getElementById("rede"), tt = document.getElementById("rede-t");
+  t.classList.toggle("fraca", fraca || ruim);
+  tt.textContent = r.ok ? `${r.ms} ms · ${kbs} KB/s${fraca ? " · conexão fraca" : ""}` : "sem resposta";
+  if (antes !== fraca && escolha === "auto") aplicar();
+}
+
+document.querySelectorAll("[data-modo]").forEach((b) => b.onclick = () => {
+  escolha = b.dataset.modo;
+  document.querySelectorAll("[data-modo]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  aplicar();
+});
+
+window.pausar = () => { ativo = false; aplicar(); clearInterval(timerRede); };
+window.retomar = () => { if (ativo) return; ativo = true; aplicar(); timerRede = setInterval(medir, 5000); };
+
+(async () => {
+  const r = await pedir("/api/cameras");
+  try { cameras = (JSON.parse(r.corpo || "{}").cameras || []).filter((c) => c.ativa !== false); } catch (_) { cameras = []; }
+  if (!r.ok) { document.getElementById("grade").innerHTML = '<p class="vazio">Não consegui falar com o programa. Confira a rede.</p>'; return; }
+  desenhar(); medir(); timerRede = setInterval(medir, 5000);
+})();
+</script>
+</body>
+</html>
