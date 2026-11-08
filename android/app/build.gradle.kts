@@ -33,6 +33,8 @@ android {
         versionCode = maxOf(codigoVersao, 1)
         versionName = versaoCargo
         resourceConfigurations += listOf("pt-rBR", "pt")
+        // Celulares e TV Boxes ARM. x86 (emulador) não entra: deixaria o APK maior.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     signingConfigs {
@@ -69,6 +71,8 @@ android {
         jniLibs {
             useLegacyPackaging = true
             keepDebugSymbols += "**/*.so"
+            // Só a biblioteca C do ONNX Runtime interessa; a ponte Java fica fora.
+            excludes += "**/libonnxruntime4j_jni.so"
         }
     }
     dependenciesInfo {
@@ -80,4 +84,7 @@ android {
 dependencies {
     // Leitor de QR (só o núcleo, ~550 KB antes do R8; sem câmera embutida).
     implementation("com.google.zxing:core:3.5.3")
+    // ONNX Runtime oficial da Microsoft para Android: traz libonnxruntime.so,
+    // que o núcleo Rust carrega para o nível médio (YOLO). Ver ADR 0014.
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.20.0")
 }

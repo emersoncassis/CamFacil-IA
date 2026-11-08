@@ -26,6 +26,10 @@ pub fn router(app: Shared) -> Router {
         .route("/api/procurar", get(get_procurar))
         .route("/api/autoinicio", get(get_autoinicio).post(post_autoinicio))
         .route("/api/conectar", post(post_conectar))
+        .route(
+            "/api/login-cameras",
+            get(get_login).post(post_login).delete(delete_login),
+        )
         .route("/api/disclaimer", get(get_disclaimer).post(post_disclaimer))
         .route("/api/video/ffmpeg", get(get_ffmpeg).post(post_ffmpeg))
         .route("/api/video/webcams", get(get_webcams))
@@ -352,6 +356,9 @@ struct PedidoConectar {
     fabricante: Option<String>,
     #[serde(default)]
     nome: Option<String>,
+    /// Usar o login salvo (o mesmo das outras câmeras) em vez de usuário/senha.
+    #[serde(default)]
+    usar_salvo: bool,
 }
 
 fn porta_rtsp() -> u16 {
@@ -360,15 +367,19 @@ fn porta_rtsp() -> u16 {
 
 /// Um clique: confere a senha, acha o caminho do vídeo e já adiciona a câmera.
 async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>) -> ApiResult {
-    let c = conectar::conectar(
-        &p.ip,
-        p.porta,
-        p.usuario.trim(),
-        &p.senha,
-        p.fabricante.as_deref(),
-    )
-    .await
-    .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    let (usuario, senha) = if p.usar_salvo {
+        login_salvo(&app).ok_or_else(|| {
+            bad(
+                StatusCode::CONFLICT,
+                "não há login salvo; digite usuário e senha",
+            )
+        })?
+    } else {
+        (p.usuario.trim().to_string(), p.senha.clone())
+    };
+    let c = conectar::conectar(&p.ip, p.porta, &usuario, &senha, p.fabricante.as_deref())
+        .await
+        .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
     let nome: String = p
         .nome
         .filter(|n| !n.trim().is_empty())
@@ -478,6 +489,54 @@ async fn post_elo_desparear(State(app): State<Shared>) -> ApiResult {
         .desparear()
         .map(|_| Json(json!({"ok": true})))
         .map_err(|m| bad(StatusCode::CONFLICT, m))
+}
+
+// ---------- Login padrão das câmeras (o mesmo para todas) ----------
+// Guardado cifrado (cofre do cf-notify), nunca devolvido à tela: a tela só
+// sabe se existe e qual é o usuário.
+
+const LOGIN_CHAVE: &str = "login_cameras";
+
+fn login_salvo(app: &Shared) -> Option<(String, String)> {
+    let guardado = app.store.get(LOGIN_CHAVE).ok().flatten()?;
+    if guardado.is_empty() {
+        return None;
+    }
+    let claro = cf_notify::cofre::Cofre::abrir().ok()?.decifrar(&guardado)?;
+    let v: Value = serde_json::from_str(&claro).ok()?;
+    Some((
+        v.get("u")?.as_str()?.to_string(),
+        v.get("s")?.as_str()?.to_string(),
+    ))
+}
+
+async fn get_login(State(app): State<Shared>) -> Json<Value> {
+    let l = login_salvo(&app);
+    Json(json!({ "salvo": l.is_some(), "usuario": l.map(|x| x.0) }))
+}
+
+#[derive(Deserialize)]
+struct PedidoLogin {
+    usuario: String,
+    senha: String,
+}
+
+async fn post_login(State(app): State<Shared>, Json(p): Json<PedidoLogin>) -> ApiResult {
+    let usuario = p.usuario.trim();
+    if usuario.is_empty() {
+        return Err(bad(StatusCode::BAD_REQUEST, "informe o usuário"));
+    }
+    let cofre = cf_notify::cofre::Cofre::abrir().map_err(internal)?;
+    let claro = json!({ "u": usuario, "s": p.senha }).to_string();
+    app.store
+        .set(LOGIN_CHAVE, &cofre.cifrar(&claro))
+        .map_err(internal)?;
+    Ok(Json(json!({ "ok": true, "usuario": usuario })))
+}
+
+async fn delete_login(State(app): State<Shared>) -> ApiResult {
+    app.store.set(LOGIN_CHAVE, "").map_err(internal)?;
+    Ok(Json(json!({ "ok": true })))
 }
 
 // ---------- Acesso de fora pelo Tailscale (ADR-0005) ----------
@@ -1051,7 +1110,7 @@ fn estado_ia(app: &Shared) -> Value {
     let a = app.ia.andamento();
     json!({
         "pronto": app.ia.pronto(),
-        "suportado": crate::ia::pacote_ort().is_some(),
+        "suportado": app.ia.suportado(),
         "plataforma": format!("{} {}", std::env::consts::OS, std::env::consts::ARCH),
         "onnxruntime": { "instalado": app.ia.lib_ort().is_some(), "versao": crate::ia::ORT_VERSAO },
         "modelo": { "instalado": app.ia.modelo().is_some(), "nome": crate::ia::MODELO_NOME },
@@ -1068,7 +1127,7 @@ async fn get_ia(State(app): State<Shared>) -> Json<Value> {
 
 /// Começa o download (runtime + modelo) em segundo plano.
 async fn post_ia_baixar(State(app): State<Shared>) -> ApiResult {
-    if crate::ia::pacote_ort().is_none() {
+    if !app.ia.suportado() {
         return Err(bad(
             StatusCode::UNPROCESSABLE_ENTITY,
             "não há ONNX Runtime oficial para este sistema",

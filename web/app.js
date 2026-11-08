@@ -982,6 +982,19 @@ async function ligarProcurar(autoescolher = true) {
   b.disabled = false;
 }
 
+// Login padrão das câmeras: guardado cifrado no programa, a tela só sabe o usuário.
+let loginSalvo = null; let usarLoginSalvo = false; let ultimoLogin = null;
+async function carregarLogin() {
+  try { const r = await api("/api/login-cameras"); loginSalvo = r.salvo ? r.usuario : null; } catch (_) { loginSalvo = null; }
+  usarLoginSalvo = !!loginSalvo;
+  mostrarLogin();
+}
+function mostrarLogin() {
+  $("#ligar-salvo").hidden = !usarLoginSalvo;
+  $("#ligar-salvo-usuario").textContent = loginSalvo || "";
+  document.querySelectorAll("#ligar-form [data-login]").forEach((l) => { l.hidden = usarLoginSalvo; });
+}
+
 function ligarEscolher(ip, fabricante) {
   ligarAlvo = { ip: ip.trim(), fabricante: fabricante || null };
   $("#ligar-ip").textContent = ligarAlvo.ip;
@@ -989,7 +1002,8 @@ function ligarEscolher(ip, fabricante) {
   $("#ligar-ok").hidden = true;
   $("#ligar-form").hidden = false;
   $("#ligar-msg").textContent = "";
-  $("#ligar-senha").focus();
+  mostrarLogin();
+  if (usarLoginSalvo) $("#ligar-conectar").focus(); else $("#ligar-senha").focus();
 }
 
 async function ligarConectar(ev) {
@@ -999,10 +1013,14 @@ async function ligarConectar(ev) {
   b.disabled = true; m.className = "msg"; m.textContent = t("ligar.conectando");
   $("#ligar-ok").hidden = true;
   try {
+    const login = usarLoginSalvo ? null : { usuario: f.usuario.value.trim(), senha: f.senha.value };
     const r = await api("/api/conectar", {
-      ip: ligarAlvo.ip, fabricante: ligarAlvo.fabricante,
-      usuario: f.usuario.value.trim(), senha: f.senha.value, nome: f.nome.value.trim() || null,
+      ip: ligarAlvo.ip, fabricante: ligarAlvo.fabricante, usar_salvo: usarLoginSalvo,
+      usuario: login ? login.usuario : "", senha: login ? login.senha : "", nome: f.nome.value.trim() || null,
     });
+    // Login digitado e que funcionou: pergunta se vale para as outras câmeras.
+    ultimoLogin = login;
+    $("#ligar-perguntar").hidden = !login;
     f.senha.value = ""; f.nome.value = "";
     m.textContent = "";
     $("#ligar-ok-texto").textContent = `${r.nome} ${t("ligar.ligada")}`;
@@ -1026,6 +1044,24 @@ function iniciarLigar() {
   $("#discover").onclick = () => { ligarResetar(); ligarProcurar(); };
   $("#ligar-ffmpeg-btn").onclick = ligarInstalarFfmpeg;
   $("#ligar-form").onsubmit = ligarConectar;
+  carregarLogin();
+  $("#ligar-outro-login").onclick = () => { usarLoginSalvo = false; mostrarLogin(); $("#ligar-senha").focus(); };
+  $("#ligar-esquecer").onclick = async () => {
+    try { await api("/api/login-cameras", undefined, "DELETE"); } catch (_) { /* segue */ }
+    loginSalvo = null; usarLoginSalvo = false; mostrarLogin();
+    $("#ligar-msg").className = "msg"; $("#ligar-msg").textContent = t("login.esquecido");
+  };
+  $("#ligar-salvar-sim").onclick = async () => {
+    if (!ultimoLogin) return;
+    try {
+      await api("/api/login-cameras", ultimoLogin);
+      loginSalvo = ultimoLogin.usuario; usarLoginSalvo = true; ultimoLogin = null;
+      $("#ligar-perguntar").hidden = true;
+      $("#ligar-ok-texto").textContent += ` ${t("login.salvo_ok")}`;
+      mostrarLogin();
+    } catch (e) { $("#ligar-ok-texto").textContent = e.message; }
+  };
+  $("#ligar-salvar-nao").onclick = () => { ultimoLogin = null; $("#ligar-perguntar").hidden = true; };
   $("#ligar-manual").onsubmit = (ev) => { ev.preventDefault(); ligarEscolher(ev.target.ip.value, null); };
   $("#ligar-outra").onclick = ligarResetar;
   $("#ligar-voltar").onclick = ligarResetar;

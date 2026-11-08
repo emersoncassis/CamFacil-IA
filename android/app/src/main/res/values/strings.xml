@@ -82,15 +82,21 @@
     <string name="servidor_desligar">Desligar o servidor</string>
     <string name="servidor_notif_titulo">CamFácil IA · servidor ligado</string>
     <string name="canal_servidor">Servidor deste aparelho</string>
-    <string name="servidor_fora_titulo">Acessar de fora</string>
+    <string name="servidor_fora_titulo">De longe (Tailscale)</string>
     <string name="servidor_fora_ok">Pelo Tailscale: %1$s
 
 No outro celular (com Tailscale na mesma conta), abra o CamFácil IA, escolha "Ver um servidor à distância" e digite este endereço. Ou leia o QR em Integrações → Tailscale, no painel.</string>
     <string name="servidor_fora_ligar">Tailscale instalado, mas desligado ou sem conta. Abra o Tailscale, entre e ligue a VPN; o endereço de fora aparece aqui.</string>
     <string name="servidor_fora_instalar">Para ver as câmeras de longe sem abrir porta no roteador, instale o Tailscale neste aparelho e entre na sua conta. O endereço de fora aparece aqui.</string>
     <string name="servidor_rede_ok">Na rede da loja: %1$s</string>
-    <string name="servidor_rede_so_aqui">Na rede da loja: desligado (só este aparelho e o Tailscale abrem o painel).</string>
+    <string name="servidor_rede_so_aqui">Hoje só este aparelho e o Tailscale abrem o painel. Libere para abrir de outro celular ou computador do mesmo Wi-Fi.</string>
+    <string name="ok">OK</string>
     <string name="servidor_ajustes">Ajustes</string>
+    <string name="servidor_rede_titulo">Na rede da loja</string>
+    <string name="servidor_rede_dica">Abra esse endereço (ou leia o QR) em qualquer celular ou computador ligado no mesmo Wi-Fi.</string>
+    <string name="servidor_rede_desligada">Acesso pela rede desligado</string>
+    <string name="servidor_rede_sem_wifi">Sem Wi-Fi ou cabo de rede</string>
+    <string name="servidor_rede_liberar">Liberar acesso pela rede da loja</string>
     <string name="servidor_boot">Iniciar com o aparelho</string>
     <string name="servidor_lan">Aceitar acesso pela rede Wi-Fi da loja</string>
     <string name="erro_texto_servidor">O servidor deste aparelho ainda está ligando ou parou. Veja o estado em "Servidor deste aparelho".

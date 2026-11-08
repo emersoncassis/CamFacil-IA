@@ -105,6 +105,7 @@ class ServidorService : Service() {
             put("CAMFACIL_BOOT", if (Config.iniciarNoBoot(this@ServidorService)) "1" else "0")
             put("SSL_CERT_DIR", "/system/etc/security/cacerts")
             File(libs, "libffmpeg.so").takeIf { it.isFile }?.let { put("CAMFACIL_FFMPEG", it.absolutePath) }
+            File(libs, "libonnxruntime.so").takeIf { it.isFile }?.let { put("CAMFACIL_ORT_LIB", it.absolutePath) }
         }
         val p = try {
             pb.start()
