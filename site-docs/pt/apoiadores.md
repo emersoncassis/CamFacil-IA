@@ -37,9 +37,9 @@ O CamFácil IA é livre e gratuito, e vai continuar assim. Cada apoio volta todo
 
 === "Entrar no mural"
 
-    Fez o Pix? Preencha, clique em enviar e **anexe o comprovante** na mensagem.
+    Fez o Pix? Preencha, anexe o comprovante e envie. Chega direto para mim.
 
-    <form class="apoio-form" data-titulo="Apoio ao CamFácil IA" data-assunto="Apoio ao CamFácil IA" data-anexo="(comprovante em anexo)">
+    <form class="apoio-form" data-msg-enviando="Enviando…" data-msg-ok="Recebido! Muito obrigado pelo apoio. Seu nome entra no mural depois que eu conferir." data-msg-erro="Não foi possível enviar agora. Tente de novo em instantes." data-msg-grande="O comprovante passou de 6 MB. Mande um print menor." data-titulo="Apoio ao CamFácil IA" data-assunto="Apoio ao CamFácil IA" data-anexo="(comprovante em anexo)">
       <div class="apoio-grade">
         <label>Nome para o mural<input data-campo="Nome" name="nome" required maxlength="60"></label>
         <label>Instagram ou LinkedIn (opcional)<input data-campo="Link" name="link" maxlength="120"></label>
@@ -54,11 +54,13 @@ O CamFácil IA é livre e gratuito, e vai continuar assim. Cada apoio volta todo
         </label>
         <label class="largo">Recado<textarea data-campo="Recado" name="recado" rows="1" maxlength="400"></textarea></label>
         <label class="largo">O que você quer? Uma funcionalidade, o assunto da conversa ou a aplicação (opcional)<textarea data-campo="O que quer" name="pedido" rows="1" maxlength="600"></textarea></label>
+        <label class="largo">Comprovante (foto ou PDF)<input type="file" name="comprovante" accept="image/*,application/pdf"></label>
+        <input class="apoio-isca" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
       </div>
-      <label class="apoio-ok"><input type="checkbox" data-campo="Publicar no mural" data-sim="sim, autorizo" data-nao="não" checked> Autorizo publicar meu nome, link e recado no mural</label>
+      <label class="apoio-ok"><input type="checkbox" name="publicar" data-campo="Publicar no mural" data-sim="sim, autorizo" data-nao="não" checked> Autorizo publicar meu nome, link e recado no mural</label>
       <div class="apoio-botoes">
-        <button class="md-button md-button--primary" type="button" data-canal="email">Enviar por e-mail</button>
-        <button class="md-button" type="button" data-canal="whatsapp">Enviar pelo WhatsApp</button>
+        <button class="md-button md-button--primary" type="submit" data-enviar>Enviar</button>
+        <span class="apoio-aviso" role="status" aria-live="polite"></span>
       </div>
     </form>
 

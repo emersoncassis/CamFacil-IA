@@ -37,9 +37,9 @@ CamFácil IA is free and open source, and it will stay that way. Every bit of su
 
 === "Join the wall"
 
-    Donated? Fill this in, click send and **attach the receipt** to the message.
+    Donated? Fill this in, attach the receipt and send. It comes straight to me.
 
-    <form class="apoio-form" data-titulo="Support for CamFácil IA" data-assunto="Support for CamFácil IA" data-anexo="(receipt attached)">
+    <form class="apoio-form" data-msg-enviando="Sending…" data-msg-ok="Received! Thank you so much. Your name goes on the wall once I've checked it." data-msg-erro="Couldn't send right now. Please try again in a moment." data-msg-grande="The receipt is over 6 MB. Please send a smaller screenshot." data-titulo="Support for CamFácil IA" data-assunto="Support for CamFácil IA" data-anexo="(receipt attached)">
       <div class="apoio-grade">
         <label>Name for the wall<input data-campo="Name" name="nome" required maxlength="60"></label>
         <label>Instagram or LinkedIn (optional)<input data-campo="Link" name="link" maxlength="120"></label>
@@ -54,11 +54,13 @@ CamFácil IA is free and open source, and it will stay that way. Every bit of su
         </label>
         <label class="largo">Message<textarea data-campo="Message" name="recado" rows="1" maxlength="400"></textarea></label>
         <label class="largo">What do you want? A feature, the call topic or the application (optional)<textarea data-campo="What I want" name="pedido" rows="1" maxlength="600"></textarea></label>
+        <label class="largo">Receipt (photo or PDF)<input type="file" name="comprovante" accept="image/*,application/pdf"></label>
+        <input class="apoio-isca" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
       </div>
-      <label class="apoio-ok"><input type="checkbox" data-campo="Publish on the wall" data-sim="yes, I agree" data-nao="no" checked> I agree to have my name, link and message published on the wall</label>
+      <label class="apoio-ok"><input type="checkbox" name="publicar" data-campo="Publish on the wall" data-sim="yes, I agree" data-nao="no" checked> I agree to have my name, link and message published on the wall</label>
       <div class="apoio-botoes">
-        <button class="md-button md-button--primary" type="button" data-canal="email">Send by email</button>
-        <button class="md-button" type="button" data-canal="whatsapp">Send on WhatsApp</button>
+        <button class="md-button md-button--primary" type="submit" data-enviar>Send</button>
+        <span class="apoio-aviso" role="status" aria-live="polite"></span>
       </div>
     </form>
 

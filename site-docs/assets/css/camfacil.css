@@ -211,3 +211,11 @@ code, kbd, pre { font-family: var(--md-code-font-family); }
 .md-typeset .md-button--primary { color: var(--c-black); background: var(--c-100); border-color: var(--c-100); }
 .md-typeset .md-button--primary:is(:hover, :focus) { color: var(--c-black); background: #fff; border-color: #fff; }
 .apoio-form [hidden], .md-typeset [hidden] { display: none !important; }
+.apoio-isca { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.apoio-form input[type="file"] { padding: 0.3rem; color: var(--c-300); }
+.apoio-form input[type="file"]::file-selector-button { font: inherit; color: var(--c-100); background: var(--c-850); border: 1px solid var(--c-line-strong); border-radius: 4px; padding: 0.2rem 0.6rem; margin-right: 0.6rem; cursor: pointer; }
+.apoio-botoes { align-items: center; }
+.apoio-aviso { font-size: 0.66rem; color: var(--c-300); }
+.apoio-aviso.ok { color: var(--c-green); }
+.apoio-aviso.erro { color: #f06a55; }
+.md-typeset .apoio-botoes .md-button[disabled] { opacity: 0.6; cursor: wait; }
