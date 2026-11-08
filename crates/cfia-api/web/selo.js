@@ -79,9 +79,14 @@
         el("p", { class: "kicker" }, "Selo verificado"),
         el("h2", {}, s.nome),
         el("p", { class: "hint" }, `Concluiu a Formação de IA para CFTV em ${dataBr(s.criado_em)}${s.instagram ? ` · @${s.instagram}` : ""}.`),
-        el("p", { class: "tiny" }, "Para o Instagram: baixe a imagem e poste nos stories. Se você autorizou e informou o seu Instagram, o selo será repostado pelo Emerson e pelo Papo Segurança, marcando você."),
         el("div", { class: "selo-acoes" }, baixar, whats, linkedin, partilhar, copiar),
-        el("p", { class: "tiny" }, el("a", { href: url }, url))));
+        el("p", { class: "tiny selo-url" }, el("a", { href: url }, url)),
+        (() => {
+          // Instrução do Instagram numa seção que abre: o cartão cabe na tela.
+          const d = el("details", { class: "acord" }, el("summary", {}, el("span", {}, "Como postar no Instagram")),
+            el("p", { class: "tiny" }, "Para o Instagram: baixe a imagem e poste nos stories. Se você autorizou e informou o seu Instagram, o selo será repostado pelo Emerson e pelo Papo Segurança, marcando você."));
+          return d;
+        })()));
   }
 
   async function paginaSelo() {
@@ -92,10 +97,10 @@
       if (!r.ok) throw new Error("Esse selo não existe ou o link está incompleto.");
       const { selo } = await r.json();
       document.title = `${selo.nome} · Selo Formação de IA para CFTV · CamFácil IA`;
-      main.replaceChildren(cartaoSelo(selo),
+      main.replaceChildren(el("div", { class: "palco" }, cartaoSelo(selo)),
         el("section", { class: "selo-chamada" },
-          el("h3", {}, "Quer o seu também?"),
-          el("p", { class: "hint" }, "Seis lições, cinco minutos, no navegador. Você desenha a linha e a zona e a IA diz se acertou."),
+          el("div", {}, el("h3", {}, "Quer o seu também?"),
+            el("p", { class: "hint" }, "Seis lições, cinco minutos, no navegador. Você desenha a linha e a zona e a IA diz se acertou.")),
           el("a", { class: "btn primary", href: "/aprender" }, "Começar o curso")));
     } catch (e) {
       main.replaceChildren(el("p", { class: "msg err" }, e.message), el("a", { class: "btn", href: "/aprender" }, "Ir para o curso"));
