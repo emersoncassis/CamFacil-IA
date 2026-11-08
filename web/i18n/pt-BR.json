@@ -357,5 +357,27 @@
     "Setas (ou ← → do controle) trocam a página quando há mais de 9 câmeras; o mosaico também gira sozinho a cada 30 s."
   ],
   "tv.f11": "Pressione F11 (ou Enter) para tela cheia",
-  "tv.sem_cameras": "Nenhuma câmera no mosaico. Configure em Manutenção → Modo TV."
+  "tv.sem_cameras": "Nenhuma câmera no mosaico. Configure em Manutenção → Modo TV.",
+  "hw.titulo": "Máquina",
+  "hw.desc": "Uma medição por minuto, guardada por 30 dias (por hora depois de 2 dias). Serve para provar ao cliente o que pesou e quando: argumento para uma máquina melhor ou câmeras com IA de borda. Alertas vão para o Telegram (no máximo um por hora de cada tipo).",
+  "hw.24h": "24 h",
+  "hw.7d": "7 dias",
+  "hw.situacao": "Situação",
+  "hw.aguardando": "Primeira medição em até 1 minuto…",
+  "hw.cpu": "Processador",
+  "hw.ram": "Memória",
+  "hw.temp": "Temperatura",
+  "hw.disco": "Disco (pasta de dados)",
+  "hw.uptime": "Ligada há",
+  "hw.fps": "Quadros/s por câmera",
+  "hw.amostras": "Medições guardadas",
+  "hw.de": "de",
+  "hw.livres": "livres",
+  "hw.a_cada": "a cada",
+  "hw.sem_sensor": "sem sensor acessível neste sistema",
+  "hw.alertas": "Alertas da máquina",
+  "hw.sem_alertas": "Nenhum alerta até agora. CPU acima de 85 % por 10 min, memória acima de 90 %, disco com menos de 1 GB ou temperatura acima de 80 °C aparecem aqui.",
+  "hw.sem_dados": "Ainda não há medições neste período.",
+  "hw.grafico_alt": "Gráfico de processador, memória e temperatura ao longo do tempo",
+  "hw.limite_cpu": "limite CPU"
 }

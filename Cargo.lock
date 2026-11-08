@@ -209,6 +209,7 @@ dependencies = [
  "ort",
  "qrcode",
  "reqwest",
+ "rusqlite",
  "rustls",
  "serde",
  "serde_json",
