@@ -12,7 +12,7 @@ Ele não é o fim do caminho. É a ponte. O técnico aprende, valida no cliente 
 
 Nosso objetivo é dar **liberdade** ao técnico: entender a tecnologia, confiar no que vende e crescer com ela.
 
-Se o projeto te ajudou, [apoie com um café](https://buymeacoffee.com/emersoncarvalho). É o que mantém tudo livre e aberto.
+Se o projeto te ajudou, [apoie pelo Pix ou cartão](https://emersoncassis.github.io/CamFacil-IA/apoiadores/). É o que mantém tudo livre e aberto.
 
 — Emerson de Carvalho Assis
 #sangueverde

@@ -8,7 +8,7 @@ CamFácil IA is free and open source, and it will stay that way. Behind it there
 
 If it helped you learn, sell or save time, buy me a coffee. Every bit of support keeps the project alive and open for the next installer.
 
-[:fontawesome-solid-mug-hot: Support on Buy Me a Coffee](https://buymeacoffee.com/emersoncarvalho){ .md-button .md-button--primary target="_blank" rel="noopener" }
+[:fontawesome-solid-mug-hot: Support with Pix or card](apoiadores.md){ .md-button .md-button--primary }
 
 ## For developers
 

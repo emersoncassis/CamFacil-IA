@@ -177,3 +177,37 @@ code, kbd, pre { font-family: var(--md-code-font-family); }
 .md-typeset .manifesto__acoes .md-button--cafe .twemoji,
 .md-typeset .md-button .twemoji { color: var(--c-green); }
 .md-typeset .md-button--primary .twemoji { color: var(--c-black); }
+
+/* ---------- Apoiadores: Pix e formulário ---------- */
+.pix { display: flex; gap: 1.4rem; align-items: center; flex-wrap: wrap; }
+.pix__qr { width: 11rem; height: 11rem; border-radius: 8px; background: #fff; padding: 0.3rem; flex: none; }
+.pix__dados { flex: 1; min-width: 14rem; }
+.md-typeset .pix__rotulo { margin: 0; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-500); }
+.md-typeset .pix__chave { margin: 0.15rem 0 0; font-family: var(--md-code-font-family); font-size: 1.15rem; color: var(--c-100); letter-spacing: 0.02em; }
+.md-typeset .pix__nome { margin: 0 0 0.7rem; color: var(--c-300); }
+.pix__acoes, .apoio-botoes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.md-typeset .pix__acoes .md-button, .md-typeset .apoio-botoes .md-button { margin: 0; font-size: 0.68rem; padding: 0.45em 1em; border-radius: 6px; cursor: pointer; }
+.md-typeset .pix__nota { margin: 0.7rem 0 0; font-size: 0.64rem; color: var(--c-500); }
+
+.apoio-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 0.8rem; }
+.apoio-grade .largo { grid-column: 1 / -1; }
+.apoio-form label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.64rem; color: var(--c-300); }
+.apoio-form input, .apoio-form select, .apoio-form textarea {
+  font: inherit; font-size: 0.72rem; color: var(--c-100); background: var(--c-800);
+  border: 1px solid var(--c-line-strong); border-radius: 6px; padding: 0.4rem 0.55rem; resize: none;
+}
+.apoio-form input:focus, .apoio-form select:focus, .apoio-form textarea:focus { outline: 2px solid var(--c-green); outline-offset: 0; border-color: transparent; }
+.apoio-form .apoio-ok { flex-direction: row; align-items: center; gap: 0.45rem; margin: 0.6rem 0; }
+.apoio-form .apoio-ok input { accent-color: var(--c-green); }
+@media (max-width: 600px) {
+  .apoio-grade { grid-template-columns: 1fr; }
+  .pix { justify-content: center; text-align: center; }
+  .pix__acoes { justify-content: center; }
+}
+
+/* Botões em todo o site: branco sobre preto como ação principal, contorno fino no resto */
+.md-typeset .md-button { color: var(--c-100); border: 1px solid var(--c-line-strong); background: transparent; border-radius: 6px; font-weight: 500; }
+.md-typeset .md-button:is(:hover, :focus) { color: var(--c-100); background: var(--c-850); border-color: var(--c-green); }
+.md-typeset .md-button--primary { color: var(--c-black); background: var(--c-100); border-color: var(--c-100); }
+.md-typeset .md-button--primary:is(:hover, :focus) { color: var(--c-black); background: #fff; border-color: #fff; }
+.apoio-form [hidden], .md-typeset [hidden] { display: none !important; }

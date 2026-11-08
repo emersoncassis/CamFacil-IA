@@ -30,7 +30,7 @@ hide:
     <a class="md-button md-button--primary" href="instalacao/">Install with one command</a>
     <a class="md-button" href="formacao/">Learn AI from scratch</a>
     <a class="md-button" href="https://github.com/emersoncassis/CamFacil-IA">Code on GitHub</a>
-    <a class="md-button md-button--cafe" href="https://buymeacoffee.com/emersoncarvalho" target="_blank" rel="noopener"><svg class="cafe-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5h9v4.5A3.5 3.5 0 0 1 7.5 13h-2A3.5 3.5 0 0 1 2 9.5zM11 6h1.2a1.8 1.8 0 0 1 0 3.6H11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 1.5v2M8 1.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Buy me a coffee</a>
+    <a class="md-button md-button--cafe" href="apoiadores/"><svg class="cafe-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5h9v4.5A3.5 3.5 0 0 1 7.5 13h-2A3.5 3.5 0 0 1 2 9.5zM11 6h1.2a1.8 1.8 0 0 1 0 3.6H11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 1.5v2M8 1.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Buy me a coffee</a>
   </div>
 </div>
 
