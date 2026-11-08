@@ -26,6 +26,7 @@ pub struct App {
     pub tailscale: tailscale::Estado,
     pub telegram: std::sync::OnceLock<Arc<cf_notify::Telegram>>,
     pub whatsapp: std::sync::OnceLock<Arc<cf_notify::WhatsApp>>,
+    pub webhook: std::sync::OnceLock<Arc<cf_notify::Webhook>>,
     pub ia: Arc<ia::Ia>,
 }
 
@@ -114,6 +115,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         tailscale: tailscale::Estado::default(),
         telegram: std::sync::OnceLock::new(),
         whatsapp: std::sync::OnceLock::new(),
+        webhook: std::sync::OnceLock::new(),
         ia: Arc::new(ia::Ia::new(&dir)),
     });
     // Nível médio: a thread do detector dorme até haver módulo médio ligado e
@@ -135,7 +137,16 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(w) = &wa {
         let _ = app.whatsapp.set(w.clone());
     }
+    let wh = cf_notify::Webhook::iniciar(app.store.clone())
+        .map_err(|e| eprintln!("Webhook desligado: {e}"))
+        .ok();
+    if let Some(w) = &wh {
+        let _ = app.webhook.set(w.clone());
+    }
     video::definir_notificador(Arc::new(move |a: cf_notify::Alerta| {
+        if let Some(w) = &wh {
+            w.notificar(&a, None);
+        }
         if let Some(w) = &wa {
             w.notificar(a.clone());
         }
