@@ -99,6 +99,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
     std::fs::create_dir_all(&dir)?;
     let store = Arc::new(Store::open(&dir.join("camfacil.db"))?);
+    api::tirar_ip_dos_nomes(&store);
 
     // Só na própria máquina, por padrão. Expor na rede é opção explícita.
     let lan = args.iter().any(|a| a == "--lan");
