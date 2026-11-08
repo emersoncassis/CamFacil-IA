@@ -73,3 +73,56 @@ button { font: inherit; color: inherit; }
   .vv-topo { grid-column: 1 / -1; }
   .vv-status { height: auto; border-top: 0; border-left: 1px solid var(--line); }
 }
+
+/* Stream da visualização: pílula no canto do quadro (extra × principal). */
+.vv-tile:has(.stream-pill) .vv-rot { max-width: calc(100% - 96px); }
+.stream-pill { position: absolute; top: 5px; right: 6px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--c-black); color: var(--text-2); font-size: var(--fs-xs); cursor: pointer; }
+.stream-pill:hover { color: var(--text); border-color: var(--c-500); }
+.stream-pill:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.stream-ponto { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.stream-pill[aria-pressed="true"] { color: var(--c-warn); border-color: var(--c-warn); }
+.stream-pill[aria-pressed="true"] .stream-ponto { background: var(--c-warn); }
+.stream-pill[aria-disabled="true"] { color: var(--text-3); cursor: help; }
+.stream-pill[aria-disabled="true"] .stream-ponto { background: var(--text-3); }
+.stream-dica { position: absolute; top: 34px; right: 6px; z-index: 2; max-width: calc(100% - 12px); margin: 0; padding: var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--c-black); color: var(--text-2); font-size: var(--fs-xs); cursor: default; }
+@media (pointer: coarse) { .stream-pill { height: 30px; } .stream-dica { top: 40px; } }
+
+.vv-dlg { max-width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: var(--s4); border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); color: var(--text); }
+.vv-dlg::backdrop { background: rgba(0, 0, 0, .7); }
+.vv-dlg h2 { margin: 0 0 var(--s2); font-size: var(--fs-lg); }
+.vv-dlg p { margin: 0; color: var(--text-2); font-size: var(--fs-sm); line-height: 1.45; }
+.vv-dlg-acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--s2); margin-top: var(--s4); }
+.vv-btn { height: 32px; padding: 0 var(--s3); border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--primary-bg); color: var(--primary-fg); cursor: pointer; font-weight: 600; }
+.vv-btn.aviso { background: var(--bg); color: var(--c-warn); border-color: var(--c-warn); font-weight: 400; }
+.vv-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Balões das regras sobre a imagem real (mesmo balão da tela Câmeras). */
+.vv-camada { position: absolute; pointer-events: none; z-index: 1; }
+.vv-camada svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vv-baloes { position: absolute; inset: 0; }
+.vv-baloes .cf-bubble { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis; display: block; }
+.vv-baloes .cf-bubble::before { display: inline-block; margin-right: var(--s2); vertical-align: middle; }
+.vv-forma { fill: rgba(255, 255, 255, 0.06); stroke: var(--c-300); stroke-width: 2; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+.vv-forma.linha { fill: none; }
+/* Quadros pequenos: balão menor. */
+.vv-mosaico[data-n="4"] .cf-bubble,
+.vv-mosaico[data-n="3"] .vv-tile:not(:first-child) .cf-bubble { font-size: var(--fs-xs); padding: 2px var(--s2); }
+@media (max-width: 600px) {
+  .vv-mosaico:not([data-n="1"]) .cf-bubble { font-size: var(--fs-xs); padding: 2px var(--s2); }
+}
+
+/* Som do alerta: "Ligar som" até o primeiro toque, e o mudo. */
+.vv-som-ligar, .vv-mudo { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 var(--s2); background: none; border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--text-2); font-size: var(--fs-xs); cursor: pointer; flex: none; }
+.vv-som-ligar { margin-left: auto; color: var(--accent); border-color: var(--accent); }
+.vv-som-ligar[hidden] { display: none; }
+.vv-som-ligar:not([hidden]) + .vv-mudo + .vv-layouts { margin-left: 0; }
+.vv-som-ligar svg, .vv-mudo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+.vv-som-ligar:focus-visible, .vv-mudo:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.vv-mudo .som-off { display: none; }
+.vv-mudo[aria-pressed="true"] { color: var(--c-warn); border-color: var(--c-warn); }
+.vv-mudo[aria-pressed="true"] .som-on { display: none; }
+.vv-mudo[aria-pressed="true"] .som-off { display: inline; }
+.vv-som-ligar[hidden] + .vv-mudo { margin-left: auto; }
+.vv-som-ligar[hidden] + .vv-mudo + .vv-layouts { margin-left: 0; }
+@media (max-width: 480px) { .vv-som-txt { display: none; } }
+.vv-mosaico[data-n="4"] .cf-bubble { max-width: 48%; }

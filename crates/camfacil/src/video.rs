@@ -734,6 +734,8 @@ impl Video {
     }
 
     pub fn parar(&self, id: i64) {
+        // O leitor do principal (só para ver) vai junto: o endereço pode mudar.
+        crate::visor::fechar(id);
         if let Some(c) = self.canais.lock().unwrap().remove(&id) {
             c.encerrar();
         }
@@ -971,7 +973,7 @@ fn ler_quadros(canal: &Canal, store: &Store, saida: &mut impl Read, an: &mut Ana
     }
 }
 
-fn proximo_jpeg(b: &[u8]) -> Option<(usize, usize)> {
+pub(crate) fn proximo_jpeg(b: &[u8]) -> Option<(usize, usize)> {
     let ini = b.windows(2).position(|w| w == [0xFF, 0xD8])?;
     let fim = b[ini + 2..].windows(2).position(|w| w == [0xFF, 0xD9])? + ini + 4;
     Some((ini, fim))

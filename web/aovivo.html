@@ -12,6 +12,8 @@
 <body>
   <header class="vv-topo">
     <a class="vv-marca" href="/" data-i18n-title="vivo.painel"><img src="/icon.svg" width="20" height="20" alt=""><strong data-i18n="vivo.titulo"></strong></a>
+    <button type="button" class="vv-som-ligar" id="som-ligar" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3v10l-4-3H3z"/><path d="M13 7.5a3.5 3.5 0 0 1 0 5M15 5a7 7 0 0 1 0 10"/></svg><span class="vv-som-txt" data-i18n="vivo.som_ligar"></span></button>
+    <button type="button" class="vv-mudo" id="som-mudo" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3v10l-4-3H3z"/><path class="som-on" d="M13 7.5a3.5 3.5 0 0 1 0 5"/><path class="som-off" d="M13 8l4 4M17 8l-4 4"/></svg></button>
     <div class="vv-layouts" role="radiogroup" data-i18n-aria="vivo.layout">
       <button type="button" data-n="1" aria-label="1"><svg viewBox="0 0 20 20"><rect x="2" y="3" width="16" height="14" rx="1.5"/></svg></button>
       <button type="button" data-n="2" aria-label="2"><svg viewBox="0 0 20 20"><rect x="2" y="3" width="7.5" height="14" rx="1.5"/><rect x="10.5" y="3" width="7.5" height="14" rx="1.5"/></svg></button>
@@ -36,6 +38,14 @@
       <article class="vv-c" data-c="serv"><h2 data-i18n="vivo.c.serv"></h2><div id="c-serv"></div></article>
     </div>
   </section>
+  <dialog class="vv-dlg" id="stream-dlg" aria-labelledby="stream-dlg-t" aria-describedby="stream-dlg-d">
+    <h2 id="stream-dlg-t" data-i18n="stream.pergunta"></h2>
+    <p id="stream-dlg-d" data-i18n="stream.aviso"></p>
+    <div class="vv-dlg-acoes">
+      <button type="button" class="vv-btn" id="stream-nao" data-i18n="stream.ficar_extra"></button>
+      <button type="button" class="vv-btn aviso" id="stream-sim" data-i18n="stream.usar_principal"></button>
+    </div>
+  </dialog>
   <script src="/aovivo.js"></script>
 </body>
 </html>

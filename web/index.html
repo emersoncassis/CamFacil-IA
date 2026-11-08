@@ -240,6 +240,8 @@
             <svg id="desenho" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
             <div id="baloes"></div>
             <div class="viewer-off" id="viewer-off" hidden></div>
+            <button type="button" class="stream-pill" id="video-stream" aria-pressed="false" aria-describedby="video-stream-dica" hidden><span class="stream-ponto" aria-hidden="true"></span><span id="video-stream-txt"></span></button>
+            <p class="stream-dica" id="video-stream-dica" role="status" hidden></p>
           </div>
           </div>
           <div class="aovivo-lado">
@@ -946,7 +948,10 @@
         <label class="campo" id="cam-url-campo"><span id="cam-url-rotulo"></span><input name="url" class="mono" autocapitalize="off" spellcheck="false" inputmode="url"></label>
         <label class="campo" id="cam-senha-campo"><span data-i18n="cam.senha"></span><input name="senha" type="password" autocomplete="new-password" data-i18n-ph="camed.senha_ph"></label>
         <label class="som-regra"><span class="switch"><input type="checkbox" name="ativa"><span></span></span><span data-i18n="camed.ativa"></span></label>
-        <label class="campo" id="cam-canal-campo" hidden><span data-i18n="gravador.canal"></span><input name="canal" type="number" min="1" max="64" inputmode="numeric" class="mono"></label>
+        <div class="campo" id="cam-canal-campo" hidden>
+          <label class="campo"><span data-i18n="gravador.canal"></span><input name="canal" type="number" min="1" max="64" inputmode="numeric" class="mono" aria-describedby="cam-canal-sug-txt"></label>
+          <p class="canal-sug" id="cam-canal-sug" role="status" hidden><span id="cam-canal-sug-txt"></span><button type="button" class="btn ghost sm" id="cam-canal-sug-usar" data-i18n="camed.usar_nome"></button></p>
+        </div>
         <label class="autoip" id="cam-autoip-campo"><span class="switch"><input type="checkbox" name="auto_ip" role="switch" aria-describedby="cam-autoip-ajuda"><span></span></span><span class="autoip-txt"><span data-i18n="autoip.rotulo"></span><span class="tiny" id="cam-autoip-ajuda"></span></span></label>
       </div>
       <p class="tiny" id="cam-dlg-dica" data-i18n="camed.dica"></p>
