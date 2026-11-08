@@ -59,6 +59,11 @@ pub const ASSETS: &[Asset] = &[
     asset!("/botoes.js", "text/javascript; charset=utf-8", "botoes.js"),
     asset!("/botoes.css", "text/css; charset=utf-8", "botoes.css"),
     asset!("/fase6.js", "text/javascript; charset=utf-8", "fase6.js"),
+    asset!(
+        "/estudio.js",
+        "text/javascript; charset=utf-8",
+        "estudio.js"
+    ),
     // Tela única (zero rolagem): sub-abas, acordeões e paginação.
     asset!("/tela.css", "text/css; charset=utf-8", "tela.css"),
     asset!("/tela.js", "text/javascript; charset=utf-8", "tela.js"),
