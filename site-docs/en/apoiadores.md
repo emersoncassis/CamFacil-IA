@@ -29,7 +29,7 @@ CamFácil IA is free and open source, and it will stay that way. Every bit of su
     |---|---|
     | **Free donation** · any amount | Your name and message on the wall, if you want |
     | **Up to R$ 500** · feature request | Your improvement idea is read and considered by me |
-    | **From R$ 1,000** · conversation | One hour video call with me about your project |
+    | **From R$ 1,000** · conversation | A one-hour Google Meet call with me about your project |
     | **From R$ 5,000** · development | We build an application for you together, based on CamFácil IA |
 
     !!! tip "Ideas and feature requests come through here"
@@ -53,7 +53,7 @@ CamFácil IA is free and open source, and it will stay that way. Every bit of su
           </select>
         </label>
         <label class="largo">Message<textarea data-campo="Message" name="recado" rows="1" maxlength="400"></textarea></label>
-        <label class="largo">What would you like to see built? (optional)<textarea data-campo="Request" name="pedido" rows="1" maxlength="600"></textarea></label>
+        <label class="largo">What do you want? A feature, the call topic or the application (optional)<textarea data-campo="What I want" name="pedido" rows="1" maxlength="600"></textarea></label>
       </div>
       <label class="apoio-ok"><input type="checkbox" data-campo="Publish on the wall" data-sim="yes, I agree" data-nao="no" checked> I agree to have my name, link and message published on the wall</label>
       <div class="apoio-botoes">

@@ -770,7 +770,7 @@ function maisFundo() {
     el("h3", {}, "Quer ir mais fundo?"),
     el("p", { class: "hint" }, "O que você viu aqui é o nível básico. Para entender a inteligência de vídeo de verdade, equipamentos mais complexos e de alta qualidade, siga por aqui:"),
     el("ul", {},
-      item("ITEC Intelbras", "A escola da Intelbras, com cursos online gratuitos de CFTV, redes e análise de vídeo. Foi onde eu dei aula.", "https://www.intelbras.com/pt-br/"),
+      item("Intelbras ITEC", "Os cursos da Intelbras, online e gratuitos, de CFTV, redes e análise de vídeo. Foi onde eu dei aula.", "https://cursos.intelbras.com.br/"),
       item("Academia Dahua", "Treinamentos e certificações da Dahua: câmeras com IA de borda, gravadores e plataformas.", "https://www.dahuasecurity.com/br"),
       item("Academia Hikvision", "Cursos online e certificações da Hikvision, do básico ao avançado em IA de vídeo.", "https://www.hikvision.com/pt/support/academy/"),
       item("Papo Segurança", "Se você tem uma empresa, vai precisar de ajuda para levar isso para o negócio: visão, processo e evolução. O Papo Segurança ajuda nisso.", "https://paposeguranca.com.br/")));
