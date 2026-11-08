@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Modo estúdio · CamFácil IA</title>
+  <meta name="description" content="Prévia do modo estúdio do CamFácil IA: descreva uma inteligência nova, colete fotos, rotule, treine no Google Colab e compartilhe com outros técnicos. Em desenvolvimento.">
+  <meta property="og:title" content="Modo estúdio do CamFácil IA (em desenvolvimento)">
+  <meta property="og:description" content="Técnico criando e compartilhando a própria IA de vídeo: descrever, coletar, rotular, treinar no Colab e compartilhar. Livre e aberto.">
+  <meta property="og:image" content="https://cfia.ysafe.com.br/img/manifesto-og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/tokens.css">
+  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/estudio.css">
+</head>
+<body class="estudio-body">
+  <header class="topo">
+    <a class="brand" href="/"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></a>
+    <nav class="topo-nav"><span class="badge est-badge">Modo estúdio · em desenvolvimento</span></nav>
+  </header>
+
+  <main class="est">
+    <section class="est-intro">
+      <p class="kicker">Prévia</p>
+      <h1>Crie a sua própria IA de vídeo. E compartilhe.</h1>
+      <p class="lede">O modo estúdio vai deixar o técnico descrever uma inteligência nova, ensinar com fotos do mundo real, treinar de graça no Google Colab e compartilhar o que aprendeu com outros técnicos. Esta tela é um esboço: <strong>ainda não funciona</strong>.</p>
+      <p class="tiny est-aviso">Só para estudo e aprendizagem. Modelos do estúdio não devem ser usados em produção. Reconhecimento facial e biometria ficam bloqueados.</p>
+    </section>
+
+    <ol class="est-passos" aria-label="Etapas">
+      <li class="feito"><span>1</span>Descrever</li>
+      <li class="feito"><span>2</span>Coletar</li>
+      <li class="atual"><span>3</span>Rotular</li>
+      <li><span>4</span>Treinar no Colab</li>
+      <li><span>5</span>Testar</li>
+      <li><span>6</span>Compartilhar</li>
+    </ol>
+
+    <div class="est-grade">
+      <section class="est-painel est-conversa" aria-label="Conversa">
+        <h2>Conversa</h2>
+        <div class="bolha eu">Quero contar caixas de banana que entram no estoque pela porta dos fundos.</div>
+        <div class="bolha ia">Entendi. Vou montar assim:<br><strong>Objeto:</strong> caixa de banana<br><strong>Regra:</strong> linha de passagem na porta, contando quem entra<br><strong>Fotos:</strong> 150 da câmera do estoque, em horários diferentes<br>Já pré-marquei as caixas. Confira as fotos ao lado.</div>
+        <div class="est-entrada"><input disabled placeholder="Descreva o que a IA deve aprender…"><button class="btn primary" disabled>Enviar</button></div>
+      </section>
+
+      <section class="est-painel est-rotulo" aria-label="Rotular">
+        <div class="est-cab"><h2>Rotular · foto 37 de 150</h2><span class="tiny">pré-marcado pela IA, confira</span></div>
+        <div class="est-foto">
+          <img src="/img/loja.webp" alt="Foto de exemplo do estoque" width="960" height="540">
+          <i class="caixa c1"><b>caixa de banana</b></i>
+          <i class="caixa c2 duvida"><b>conferir</b></i>
+          <i class="caixa c3"><b>caixa de banana</b></i>
+        </div>
+        <div class="est-acoes">
+          <button class="btn" disabled>Errado, apagar</button>
+          <button class="btn" disabled>Desenhar outra</button>
+          <button class="btn primary" disabled>Certo, próxima</button>
+        </div>
+        <div class="est-colab">
+          <div><strong>Treinar no Google Colab</strong><p class="tiny">O estúdio gera o notebook pronto. Treina com GPU gratuita e salva no seu Google Drive. As fotos do cliente vão direto para o seu Drive, nunca para o nosso servidor.</p></div>
+          <button class="btn" disabled>Gerar notebook</button>
+        </div>
+      </section>
+
+      <section class="est-painel est-comunidade" aria-label="Compartilhado por técnicos">
+        <h2>Compartilhado por técnicos</h2>
+        <ul>
+          <li><strong>Contar pallets</strong><span class="tiny">doca de carga · 220 fotos · estudo</span></li>
+          <li><strong>Empilhadeira na faixa de pedestre</strong><span class="tiny">galpão · 180 fotos · estudo</span></li>
+          <li><strong>Carrinho de supermercado na rua</strong><span class="tiny">estacionamento · 140 fotos · estudo</span></li>
+          <li><strong>Moto na calçada da loja</strong><span class="tiny">fachada · 160 fotos · estudo</span></li>
+        </ul>
+        <p class="tiny">Cada técnico compartilha a receita e o modelo de estudo, sem as fotos dos clientes. Outro técnico baixa, testa e melhora.</p>
+      </section>
+    </div>
+
+    <section class="est-fim">
+      <h2>Quer ajudar a construir?</h2>
+      <p>O modo estúdio é aberto como todo o resto (AGPL-3.0). Ideias, testes e código são bem-vindos.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/emersoncassis/CamFacil-IA">Ver no GitHub</a>
+        <a class="btn" href="/aprender">Fazer a formação enquanto isso</a>
+      </div>
+    </section>
+  </main>
+  <footer class="foot site-foot">Software livre (AGPL-3.0). <a href="/manifesto">Manifesto</a> · <a href="/">Página inicial</a></footer>
+</body>
+</html>

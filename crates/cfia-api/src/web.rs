@@ -181,6 +181,8 @@ const ARQUIVOS: &[Arquivo] = &[
         "image/png",
         "web/img/manifesto-og.png"
     ),
+    arq!("/estudio", "text/html; charset=utf-8", "web/estudio.html"),
+    arq!("/estudio.css", "text/css; charset=utf-8", "web/estudio.css"),
     // Instaladores de um comando (curl | sh, irm | iex).
     arq!(
         "/instalar.sh",
