@@ -546,7 +546,12 @@ pub struct TelegramBackup {
 
 /// Chaves de configuração que são desta máquina e não viajam no backup.
 pub fn chave_local(k: &str) -> bool {
-    k == "port" || k.starts_with("elo_") || k.starts_with("bench_") || k == "estresse_resultado"
+    k == "port"
+        || k.starts_with("elo_")
+        || k.starts_with("bench_")
+        || k == "estresse_resultado"
+        // MCP liga por máquina: restaurar um backup não abre a porta para a IA.
+        || k.starts_with("mcp_")
 }
 
 impl Store {

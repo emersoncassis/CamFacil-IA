@@ -1079,6 +1079,7 @@ async function main() {
   iniciarLigar();
   iniciarAutoinicio();
   iniciarIntegracoesExtra();
+  iniciarFase6();
   iniciarRede();
   $("#sug-iniciar").onclick = sugIniciar;
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));

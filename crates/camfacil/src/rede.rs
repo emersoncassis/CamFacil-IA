@@ -450,24 +450,8 @@ pub async fn get_resumo(State(app): State<Shared>) -> ApiResult {
 
 // ---------------- API: diagrama unifilar ----------------
 
-/// Textos da dashboard (`web/i18n/pt-BR.json`, embutido), lidos uma vez.
-fn traducoes() -> &'static std::collections::HashMap<String, String> {
-    static T: OnceLock<std::collections::HashMap<String, String>> = OnceLock::new();
-    T.get_or_init(|| {
-        crate::assets::find("/i18n/pt-BR.json")
-            .and_then(|a| serde_json::from_slice::<serde_json::Map<String, Value>>(a.body).ok())
-            .map(|m| {
-                // Só as chaves de texto (há listas, como `isencao.itens`).
-                m.into_iter()
-                    .filter_map(|(k, v)| v.as_str().map(|s| (k, s.to_string())))
-                    .collect()
-            })
-            .unwrap_or_default()
-    })
-}
-
 fn traduzir(k: &str) -> String {
-    traducoes().get(k).cloned().unwrap_or_else(|| k.to_string())
+    crate::i18n::t(k)
 }
 
 #[derive(Deserialize)]
