@@ -24,3 +24,18 @@ fn traducoes() -> &'static HashMap<String, String> {
 pub fn t(k: &str) -> String {
     traducoes().get(k).cloned().unwrap_or_else(|| k.to_string())
 }
+
+/// Texto com `{nome}` trocados pelos valores.
+pub fn tf(k: &str, params: &[(&str, &str)]) -> String {
+    let mut s = t(k);
+    for (n, v) in params {
+        s = s.replace(&format!("{{{n}}}"), v);
+    }
+    s
+}
+
+/// A chave existe no arquivo de tradução?
+#[cfg(test)]
+pub fn existe(k: &str) -> bool {
+    traducoes().contains_key(k)
+}
