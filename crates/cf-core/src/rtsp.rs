@@ -101,6 +101,98 @@ impl std::fmt::Display for BuildError {
     }
 }
 
+fn caminho(p: Pattern, canal: u32, stream: Stream) -> String {
+    match p {
+        Pattern::Realmonitor => {
+            let sub = match stream {
+                Stream::Principal => 0,
+                Stream::Secundario => 1,
+                Stream::Extra => 2,
+            };
+            format!("/cam/realmonitor?channel={canal}&subtype={sub}")
+        }
+        Pattern::StreamingChannels => {
+            let s = match stream {
+                Stream::Principal => 1,
+                Stream::Secundario => 2,
+                Stream::Extra => 3,
+            };
+            format!("/Streaming/Channels/{}", canal * 100 + s)
+        }
+    }
+}
+
+/// Caminho do vídeo de um canal (DVR/NVR) para o fabricante dado.
+pub fn caminho_canal(fabricante: &str, canal: u32, stream: Stream) -> Option<String> {
+    if canal == 0 {
+        return None;
+    }
+    vendor(fabricante).map(|v| caminho(v.pattern, canal, stream))
+}
+
+/// Fabricante (`intelbras` ou `hikvision`) cujo padrão de caminho a URL usa.
+pub fn fabricante_do_caminho(url: &str) -> Option<&'static str> {
+    if url.contains("/cam/realmonitor") {
+        Some("intelbras")
+    } else if url.contains("/Streaming/Channels/") || url.contains("/Streaming/channels/") {
+        Some("hikvision")
+    } else {
+        None
+    }
+}
+
+/// Canal e stream que a URL pede (só para os padrões conhecidos).
+pub fn canal_da_url(url: &str) -> Option<(u32, Stream)> {
+    if url.contains("/cam/realmonitor") {
+        let q = url.split_once('?')?.1;
+        let mut canal = None;
+        let mut sub = 0;
+        for par in q.split('&') {
+            match par.split_once('=') {
+                Some(("channel", v)) => canal = v.parse().ok(),
+                Some(("subtype", v)) => sub = v.parse().unwrap_or(0),
+                _ => {}
+            }
+        }
+        let stream = match sub {
+            1 => Stream::Secundario,
+            2 => Stream::Extra,
+            _ => Stream::Principal,
+        };
+        return Some((canal?, stream));
+    }
+    let i = url
+        .find("/Streaming/Channels/")
+        .or_else(|| url.find("/Streaming/channels/"))?;
+    let n: u32 = url[i + 20..]
+        .split(|c: char| !c.is_ascii_digit())
+        .next()?
+        .parse()
+        .ok()?;
+    let stream = match n % 100 {
+        2 => Stream::Secundario,
+        3 => Stream::Extra,
+        _ => Stream::Principal,
+    };
+    (n >= 100).then_some((n / 100, stream))
+}
+
+/// Troca o canal (e o stream) de uma URL de gravador, mantendo esquema,
+/// usuário, senha, host e porta. `None` se o caminho não é de um padrão
+/// conhecido.
+pub fn url_do_canal(url: &str, canal: u32, stream: Stream) -> Option<String> {
+    let fab = fabricante_do_caminho(url)?;
+    let novo = caminho_canal(fab, canal, stream)?;
+    let (esquema, resto) = url.split_once("://")?;
+    // O host vem depois do último '@' (a senha pode ter '/' sem codificar).
+    let ini = resto.rfind('@').map(|i| i + 1).unwrap_or(0);
+    let fim = resto[ini..]
+        .find('/')
+        .map(|i| i + ini)
+        .unwrap_or(resto.len());
+    Some(format!("{esquema}://{}{novo}", &resto[..fim]))
+}
+
 /// Monta o endereço RTSP. Usuário e senha são codificados para URL.
 pub fn build(req: &BuildRequest) -> Result<String, BuildError> {
     let v = vendor(&req.fabricante).ok_or(BuildError::FabricanteDesconhecido)?;
@@ -116,24 +208,7 @@ pub fn build(req: &BuildRequest) -> Result<String, BuildError> {
     } else {
         format!("{}:{}@", encode(&req.usuario), encode(&req.senha))
     };
-    let path = match v.pattern {
-        Pattern::Realmonitor => {
-            let sub = match req.stream {
-                Stream::Principal => 0,
-                Stream::Secundario => 1,
-                Stream::Extra => 2,
-            };
-            format!("/cam/realmonitor?channel={}&subtype={}", req.canal, sub)
-        }
-        Pattern::StreamingChannels => {
-            let s = match req.stream {
-                Stream::Principal => 1,
-                Stream::Secundario => 2,
-                Stream::Extra => 3,
-            };
-            format!("/Streaming/Channels/{}", req.canal * 100 + s)
-        }
-    };
+    let path = caminho(v.pattern, req.canal, req.stream);
     Ok(format!("rtsp://{auth}{host}:{}{path}", req.porta))
 }
 
@@ -417,5 +492,47 @@ mod tests {
         assert_eq!(s, Some(401));
         assert_eq!(srv.as_deref(), Some("Rtsp Server/3.0"));
         assert_eq!(parse_response("HTTP/1.1 200 OK\r\n").0, None);
+    }
+
+    #[test]
+    fn url_por_canal_por_fabricante() {
+        use Stream::*;
+        assert_eq!(
+            caminho_canal("intelbras", 5, Secundario).as_deref(),
+            Some("/cam/realmonitor?channel=5&subtype=1")
+        );
+        assert_eq!(
+            caminho_canal("dahua", 12, Principal).as_deref(),
+            Some("/cam/realmonitor?channel=12&subtype=0")
+        );
+        assert_eq!(
+            caminho_canal("hikvision", 3, Secundario).as_deref(),
+            Some("/Streaming/Channels/302")
+        );
+        assert_eq!(
+            caminho_canal("hikvision", 16, Principal).as_deref(),
+            Some("/Streaming/Channels/1601")
+        );
+        assert_eq!(caminho_canal("hikvision", 0, Principal), None);
+        assert_eq!(caminho_canal("acme", 1, Principal), None);
+
+        let base = "rtsp://admin:s%2Fnh@a@192.168.1.50:554/cam/realmonitor?channel=1&subtype=1";
+        assert_eq!(
+            url_do_canal(base, 7, Principal).as_deref(),
+            Some("rtsp://admin:s%2Fnh@a@192.168.1.50:554/cam/realmonitor?channel=7&subtype=0")
+        );
+        let hik = "rtsp://admin:x/y@10.0.0.9:8554/Streaming/Channels/102";
+        assert_eq!(
+            url_do_canal(hik, 4, Secundario).as_deref(),
+            Some("rtsp://admin:x/y@10.0.0.9:8554/Streaming/Channels/402")
+        );
+        assert_eq!(url_do_canal("rtsp://10.0.0.9/live", 2, Principal), None);
+        assert_eq!(canal_da_url(base), Some((1, Secundario)));
+        assert_eq!(canal_da_url(hik), Some((1, Secundario)));
+        assert_eq!(
+            canal_da_url("rtsp://h/Streaming/Channels/1201"),
+            Some((12, Principal))
+        );
+        assert_eq!(canal_da_url("rtsp://h/live"), None);
     }
 }

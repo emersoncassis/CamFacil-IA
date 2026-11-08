@@ -207,6 +207,9 @@ pub async fn tentar<A: Ambiente>(
     }
     amb.reiniciar_video(cam.id, &nova);
     if amb.imagem_voltou(cam.id, ESPERA_IMAGEM).await {
+        if !cam.gravador.is_empty() {
+            let _ = store.definir_gravador_canal(cam.id, &m.para, cam.canal);
+        }
         // (d) Voltou: evento, registro e aviso curto.
         let _ = store.registrar_evento(
             cam.id,
@@ -236,6 +239,54 @@ pub async fn tentar<A: Ambiente>(
         m.de
     );
     falhar(reg("falhou", motivo.clone()), Some(alerta(&motivo)))
+}
+
+/// Leva uma correção já conferida (imagem voltou) para outra câmera do
+/// mesmo gravador (mesmo MAC, mesmo IP antigo): DVR/NVR muda de IP de uma
+/// vez, então todos os canais mudam juntos. `false` se não se aplica.
+pub fn aplicar_irmao<A: Ambiente>(amb: &A, store: &Store, m: &MudancaIp, agora: i64) -> bool {
+    let Some(cam) = store.camera(m.camera_id).ok().flatten() else {
+        return false;
+    };
+    let host = rede::host_da_url(&cam.url).map(|(h, _)| h);
+    if cam.fonte != "rtsp" || !cam.auto_ip || cam.mac != m.mac || host.as_deref() != Some(&m.de) {
+        return false;
+    }
+    let Some(nova) = rede::trocar_host(&cam.url, &m.para) else {
+        return false;
+    };
+    if store.atualizar_url_camera(cam.id, &nova).is_err() {
+        return false;
+    }
+    if !cam.gravador.is_empty() {
+        let _ = store.definir_gravador_canal(cam.id, &m.para, cam.canal);
+    }
+    if cam.ativa {
+        amb.reiniciar_video(cam.id, &nova);
+    }
+    let _ = store.registrar_evento(
+        cam.id,
+        None,
+        "rede",
+        &format!(
+            "IP corrigido sozinho junto com o gravador: {} → {}",
+            m.de, m.para
+        ),
+        agora,
+    );
+    gravar_log(
+        store,
+        &RegistroAuto {
+            quando: agora,
+            camera_id: cam.id,
+            nome: cam.nome.clone(),
+            de: m.de.clone(),
+            para: m.para.clone(),
+            resultado: "corrigido".into(),
+            motivo: String::new(),
+        },
+    );
+    true
 }
 
 #[cfg(test)]
@@ -486,5 +537,60 @@ mod tests {
         assert_eq!(s.camera(id).unwrap().unwrap().url, URL);
         assert!(amb.reinicios.lock().unwrap().is_empty());
         assert!(eventos(&s)[0].contains("conflito de IP"));
+    }
+
+    #[tokio::test]
+    async fn gravador_corrige_todos_os_canais_juntos() {
+        let s = Store::memory().unwrap();
+        let mut ids = Vec::new();
+        for canal in 1..=3u32 {
+            let url = format!(
+                "rtsp://admin:x@192.168.1.108:554/cam/realmonitor?channel={canal}&subtype=1"
+            );
+            let id = s
+                .criar_camera(&format!("NVR · Canal {canal}"), "rtsp", &url)
+                .unwrap();
+            s.definir_mac_camera(id, MAC).unwrap();
+            s.definir_auto_ip(id, true).unwrap();
+            s.definir_gravador_canal(id, "192.168.1.108", canal)
+                .unwrap();
+            ids.push(id);
+        }
+        let amb = RedeFalsa {
+            portas: vec![("192.168.1.120".into(), 554)],
+            ..rede_ok()
+        };
+        let m = |id| MudancaIp {
+            camera_id: id,
+            nome: String::new(),
+            de: "192.168.1.108".into(),
+            para: "192.168.1.120".into(),
+            mac: MAC.into(),
+            quando: 1000,
+        };
+        assert!(matches!(
+            tentar(&amb, &s, &m(ids[0]), false, 1000).await,
+            Desfecho::Corrigida(_)
+        ));
+        assert!(aplicar_irmao(&amb, &s, &m(ids[1]), 1000));
+        assert!(aplicar_irmao(&amb, &s, &m(ids[2]), 1000));
+        for (i, id) in ids.iter().enumerate() {
+            let c = s.camera(*id).unwrap().unwrap();
+            assert_eq!(
+                c.url,
+                format!(
+                    "rtsp://admin:x@192.168.1.120:554/cam/realmonitor?channel={}&subtype=1",
+                    i + 1
+                )
+            );
+            assert_eq!(c.gravador, "192.168.1.120");
+        }
+        // Câmera de outro aparelho (MAC diferente) não vai junto.
+        let outra = s
+            .criar_camera("Outra", "rtsp", "rtsp://a:b@192.168.1.108:554/x")
+            .unwrap();
+        s.definir_mac_camera(outra, "3C:EF:8C:00:00:09").unwrap();
+        s.definir_auto_ip(outra, true).unwrap();
+        assert!(!aplicar_irmao(&amb, &s, &m(outra), 1000));
     }
 }

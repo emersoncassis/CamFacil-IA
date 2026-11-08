@@ -61,7 +61,7 @@ fn message_id() -> String {
 }
 
 /// Conteúdo de todas as tags cujo nome local é `local` (ignora o prefixo).
-fn tag_values<'a>(xml: &'a str, local: &str) -> Vec<&'a str> {
+pub(crate) fn tag_values<'a>(xml: &'a str, local: &str) -> Vec<&'a str> {
     let mut out = Vec::new();
     let mut rest = xml;
     while let Some(lt) = rest.find('<') {

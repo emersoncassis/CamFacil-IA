@@ -374,6 +374,8 @@ function camFonteMudou() {
   $("#cam-senha-campo").hidden = f !== "rtsp";
   // Autocorreção de IP só existe para RTSP (demo, webcam e arquivo não têm rede).
   $("#cam-autoip-campo").hidden = f !== "rtsp";
+  // Canal só para câmera que veio de gravador.
+  $("#cam-canal-campo").hidden = f !== "rtsp" || !(camEditando && camEditando.canal);
   $("#cam-url-rotulo").textContent = t("camed.url_" + (f === "demo" ? "rtsp" : f));
   $("#cam-form").url.placeholder = f === "rtsp" ? "rtsp://admin:***@192.168.1.108:554/…" : "";
 }
@@ -388,6 +390,7 @@ function editarCamera(id) {
   f.url.value = c.url_sem_senha || "";
   f.senha.value = "";
   f.ativa.checked = c.ativa !== false;
+  f.canal.value = c.canal || "";
   // Sem MAC aprendido a autocorreção não tem como reconhecer a câmera: trava.
   f.auto_ip.checked = !!c.auto_ip;
   f.auto_ip.disabled = !c.mac_conhecido;
@@ -407,6 +410,10 @@ async function salvarCamera(ev) {
   const corpo = { nome: f.nome.value.trim(), fonte: f.fonte.value, ativa: f.ativa.checked };
   if (corpo.fonte !== "demo" && (f.url.value.trim() !== (c.url_sem_senha || "") || corpo.fonte !== c.fonte)) corpo.url = f.url.value.trim();
   if (corpo.fonte === "rtsp" && f.senha.value) corpo.senha = f.senha.value;
+  if (corpo.fonte === "rtsp" && c.canal && Number(f.canal.value) && Number(f.canal.value) !== c.canal) {
+    corpo.canal = Number(f.canal.value);
+    delete corpo.url; // o servidor troca o canal no endereço
+  }
   if (corpo.fonte === "rtsp" && !f.auto_ip.disabled && f.auto_ip.checked !== !!c.auto_ip) corpo.auto_ip = f.auto_ip.checked;
   if (!corpo.nome) { m.className = "msg err"; m.textContent = t("cam.nome_ph"); f.nome.focus(); return; }
   b.disabled = true; m.className = "msg"; m.textContent = t("camed.salvando");
@@ -977,14 +984,14 @@ async function ligarProcurar(autoescolher = true) {
           el("div", {}, el("strong", { class: "mono" }, c.ip), el("p", {}, desc)),
           c.ja_adicionada ? el("span", { class: "badge" }, t("ligar.ja")) : el("span", { class: "btn sm" }, t("ligar.escolher")));
         if (!c.ja_adicionada) {
-          const ir = () => ligarEscolher(c.ip, c.fabricante, c.mac);
+          const ir = () => ligarEscolher(c.ip, c.fabricante, c.mac, c.modelo);
           li.onclick = ir;
           li.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ir(); } };
         }
         return li;
       }));
       const livres = cameras.filter((c) => !c.ja_adicionada);
-      if (autoescolher && livres.length === 1) ligarEscolher(livres[0].ip, livres[0].fabricante, livres[0].mac);
+      if (autoescolher && livres.length === 1) ligarEscolher(livres[0].ip, livres[0].fabricante, livres[0].mac, livres[0].modelo);
     }
   } catch (e) { st.textContent = e.message; }
   b.disabled = false;
@@ -1003,8 +1010,9 @@ function mostrarLogin() {
   document.querySelectorAll("#ligar-form [data-login]").forEach((l) => { l.hidden = usarLoginSalvo; });
 }
 
-function ligarEscolher(ip, fabricante, mac) {
-  ligarAlvo = { ip: ip.trim(), fabricante: fabricante || null, mac: mac || null };
+function ligarEscolher(ip, fabricante, mac, modelo) {
+  ligarAlvo = { ip: ip.trim(), fabricante: fabricante || null, mac: mac || null, modelo: modelo || null };
+  $("#ligar-gravador").hidden = true;
   $("#ligar-ip").textContent = ligarAlvo.ip;
   $("#ligar-passo2").hidden = false;
   $("#ligar-ok").hidden = true;
@@ -1025,8 +1033,16 @@ async function ligarConectar(ev) {
     const r = await api("/api/conectar", {
       ip: ligarAlvo.ip, fabricante: ligarAlvo.fabricante, usar_salvo: usarLoginSalvo,
       usuario: login ? login.usuario : "", senha: login ? login.senha : "", nome: f.nome.value.trim() || null,
-      auto_ip: f.auto_ip.checked, mac: ligarAlvo.mac,
+      auto_ip: f.auto_ip.checked, mac: ligarAlvo.mac, modelo: ligarAlvo.modelo,
     });
+    if (r.tipo === "gravador") {
+      // DVR/NVR: o técnico escolhe os canais antes de criar as câmeras.
+      m.textContent = "";
+      f.senha.value = "";
+      gravadorMostrar(r, f.auto_ip.checked, login);
+      b.disabled = false;
+      return;
+    }
     // Login digitado e que funcionou: pergunta se vale para as outras câmeras.
     ultimoLogin = login;
     $("#ligar-perguntar").hidden = !login;
@@ -1042,7 +1058,86 @@ async function ligarConectar(ev) {
   b.disabled = false;
 }
 
+// ---------- Gravador (DVR/NVR): escolher os canais ----------
+let gravadorAtual = null;
+
+function gravadorConta() {
+  const n = gravadorAtual ? gravadorAtual.escolhidos.size : 0;
+  $("#ligar-gravador-conta").textContent = t("gravador.conta").replace("{n}", n);
+  $("#ligar-gravador-add").disabled = !n;
+  $("#ligar-gravador-dica").textContent = t("gravador.dica").replace("{nome}", $("#ligar-gravador-nome").value.trim() || "…");
+}
+
+function gravadorMostrar(r, autoIp, login) {
+  // Começa só com o canal 1: cada canal é um vídeo a mais no PC.
+  gravadorAtual = { token: r.token, autoIp, login, escolhidos: new Set([1]) };
+  $("#ligar-form").hidden = true;
+  $("#ligar-ok").hidden = true;
+  $("#ligar-gravador").hidden = false;
+  $("#ligar-gravador-msg").textContent = "";
+  $("#ligar-gravador-titulo").textContent = t("gravador.titulo").replace("{n}", r.canais.length);
+  $("#ligar-gravador-nome").value = r.nome || "";
+  $("#ligar-gravador-stream").value = "secundario";
+  const lista = $("#ligar-gravador-canais");
+  delete lista.dataset.pag;
+  // Grade: colunas que cabem × poucas linhas; o tela.js pagina e encolhe se faltar altura.
+  const cols = Math.max(1, Math.floor((lista.clientWidth || 300) / 158));
+  const linhas = innerHeight < 700 ? 2 : innerHeight < 900 ? 3 : 4;
+  lista.dataset.porPagina = String(cols * linhas);
+  lista.cfN = 0;
+  lista.replaceChildren(...r.canais.map((c) => {
+    const estado = t(c.responde ? "gravador.responde" : "gravador.nao_responde");
+    const rotulo = [t("gravador.canal_n").replace("{n}", c.canal), c.nome, estado].filter(Boolean).join(", ");
+    const chk = el("input", { type: "checkbox", value: String(c.canal), "aria-label": rotulo });
+    chk.checked = gravadorAtual.escolhidos.has(c.canal);
+    chk.onchange = () => { if (chk.checked) gravadorAtual.escolhidos.add(c.canal); else gravadorAtual.escolhidos.delete(c.canal); gravadorConta(); };
+    return el("li", {}, el("label", { class: "canal", title: estado },
+      chk,
+      el("span", { class: "dot " + (c.responde ? "on" : "off"), "aria-hidden": "true" }),
+      el("span", { class: "canal-txt" }, el("strong", {}, t("gravador.canal_n").replace("{n}", c.canal)),
+        el("span", { class: "tiny" }, c.nome || estado))));
+  }));
+  gravadorConta();
+}
+
+function gravadorMarcarTodos(sim) {
+  if (!gravadorAtual) return;
+  $("#ligar-gravador-canais").querySelectorAll("input[type=checkbox]").forEach((c) => {
+    c.checked = sim;
+    if (sim) gravadorAtual.escolhidos.add(Number(c.value)); else gravadorAtual.escolhidos.delete(Number(c.value));
+  });
+  gravadorConta();
+}
+
+async function gravadorAdicionar() {
+  if (!gravadorAtual) return;
+  const m = $("#ligar-gravador-msg"); const b = $("#ligar-gravador-add");
+  if (!gravadorAtual.escolhidos.size) { m.className = "msg err"; m.textContent = t("gravador.escolha"); return; }
+  b.disabled = true; m.className = "msg"; m.textContent = t("gravador.adicionando");
+  try {
+    const canais = [...gravadorAtual.escolhidos].sort((a, c) => a - c).map((canal) => ({ canal }));
+    const r = await api("/api/gravador/adicionar", {
+      token: gravadorAtual.token, nome: $("#ligar-gravador-nome").value.trim(), canais,
+      stream: $("#ligar-gravador-stream").value, auto_ip: gravadorAtual.autoIp,
+    });
+    ultimoLogin = gravadorAtual.login;
+    $("#ligar-perguntar").hidden = !ultimoLogin;
+    $("#ligar-form").auto_ip.checked = false; $("#ligar-form").nome.value = "";
+    m.textContent = "";
+    $("#ligar-gravador").hidden = true;
+    $("#ligar-ok-texto").textContent = t("gravador.ligadas").replace("{n}", r.cameras.length) + (r.auto_ip && !r.mac_conhecido ? ` ${t("autoip.ligar_depois")}` : "");
+    $("#ligar-ok").hidden = false;
+    gravadorAtual = null;
+    await carregarCameras();
+    if (r.cameras.length) abrirCamera(r.cameras[0].id);
+    ligarProcurar(false);
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+  b.disabled = false;
+}
+
 function ligarResetar() {
+  $("#ligar-gravador").hidden = true;
+  gravadorAtual = null;
   $("#ligar-passo2").hidden = true;
   $("#ligar-ok").hidden = true;
   $("#ligar-form").hidden = false;
@@ -1075,6 +1170,11 @@ function iniciarLigar() {
   $("#ligar-manual").onsubmit = (ev) => { ev.preventDefault(); ligarEscolher(ev.target.ip.value, null); };
   $("#ligar-outra").onclick = ligarResetar;
   $("#ligar-voltar").onclick = ligarResetar;
+  $("#ligar-gravador-todos").onclick = () => gravadorMarcarTodos(true);
+  $("#ligar-gravador-nenhum").onclick = () => gravadorMarcarTodos(false);
+  $("#ligar-gravador-add").onclick = gravadorAdicionar;
+  $("#ligar-gravador-nome").oninput = gravadorConta;
+  $("#ligar-gravador-voltar").onclick = () => { gravadorAtual = null; $("#ligar-gravador").hidden = true; $("#ligar-form").hidden = false; };
   $("#ligar-aula").onclick = () => abrirEscola("linha");
   $("#ligar-demo").onclick = () => adicionarCamera(t("cam.demo_nome"), "demo");
 }

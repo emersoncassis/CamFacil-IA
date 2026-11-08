@@ -272,6 +272,30 @@ button.link:hover { color: var(--text); }
 .autoip-tag { white-space: nowrap; }
 .note.info { color: var(--text-2); margin: 0 0 var(--s3); }
 .note.info .ico { color: var(--accent); }
+/* Gravador (DVR/NVR): canais em grade compacta, paginada pelo tela.js. */
+.gravador { display: flex; flex-direction: column; gap: var(--s3); max-width: 720px; }
+.gravador-titulo { margin: 0; font-size: var(--fs-md); color: var(--text); font-weight: 600; }
+.gravador-opcoes { gap: var(--s2) var(--s3); }
+.gravador-barra { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.list.gravador-canais { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s2); border: 0; }
+.list.gravador-canais > li { padding: 0; border: 0; background: none; display: block; }
+.list.gravador-canais > li.pg-fora { display: none; }
+.canal { display: flex; align-items: center; gap: var(--s2); min-height: 40px; padding: var(--s1) var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--field); cursor: pointer; }
+.canal:has(input:checked) { border-color: var(--accent); }
+.canal:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.canal input { flex: none; margin: 0; accent-color: var(--accent); }
+.canal-txt { display: flex; flex-direction: column; min-width: 0; font-size: var(--fs-sm); }
+.canal-txt .tiny { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gravador > .tiny { margin: 0; }
+.gravador-opcoes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gravador-opcoes .span-2 { grid-column: span 1; }
+/* Escolhendo canais: o passo "usuário e senha" já foi; some para dar espaço. */
+#ligar-passo2:has(#ligar-gravador:not([hidden])) > .passo { display: none; }
+@media (max-height: 700px) {
+  .gravador { gap: var(--s2); }
+  .gravador-titulo { font-size: var(--fs-sm); }
+  #ligar-gravador-dica { display: none; }
+}
 .rede-auto-log li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s1) var(--s3); }
 /* Piscada da imagem quando um alerta dispara */
 .viewer.alerta { animation: cf-tela-alerta 1.2s ease-out; }

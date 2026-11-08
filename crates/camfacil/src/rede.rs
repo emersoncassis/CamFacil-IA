@@ -288,9 +288,12 @@ impl Rede {
             return;
         }
         let conflitos = ips_em_conflito(app);
-        let cams = cameras_rede(app);
+        let todas = app.store.cameras().unwrap_or_default();
         let amb = AmbienteReal { app };
         let mut manuais = Vec::new();
+        // Gravador (DVR/NVR): os canais têm o mesmo MAC e mudam juntos. O
+        // primeiro passa por todas as conferências; os outros seguem ele.
+        let mut feitos: Vec<(String, String, String, bool)> = Vec::new();
         for m in novas {
             // Já pendente (ex.: falhou antes): não tenta de novo a cada 5 min.
             let ja = self
@@ -301,20 +304,45 @@ impl Rede {
                 manuais.push(m);
                 continue;
             }
-            // Dois MACs no IP novo, ou o IP já é de outra câmera cadastrada.
+            if let Some(f) = feitos
+                .iter()
+                .find(|f| f.0 == m.mac && f.1 == m.de && f.2 == m.para)
+            {
+                if f.3 && crate::autoip::aplicar_irmao(&amb, &app.store, &m, agora()) {
+                    self.tirar_pendente(m.camera_id);
+                } else {
+                    manuais.push(m);
+                }
+                continue;
+            }
+            // Dois MACs no IP novo, ou o IP já é de outro aparelho cadastrado.
             let conflito = conflitos.contains(&m.para)
-                || cams.iter().any(|c| c.id != m.camera_id && c.host == m.para);
+                || todas.iter().any(|c| {
+                    c.id != m.camera_id
+                        && c.mac != m.mac
+                        && rede::host_da_url(&c.url).is_some_and(|(h, _)| h == m.para)
+                });
             match crate::autoip::tentar(&amb, &app.store, &m, conflito, agora()).await {
                 crate::autoip::Desfecho::Corrigida(_) => {
-                    self.mudancas
-                        .lock()
-                        .unwrap_or_else(|p| p.into_inner())
-                        .retain(|p| p.camera_id != m.camera_id);
+                    feitos.push((m.mac.clone(), m.de.clone(), m.para.clone(), true));
+                    self.tirar_pendente(m.camera_id);
                 }
-                crate::autoip::Desfecho::Manual(_) => manuais.push(m),
+                crate::autoip::Desfecho::Manual(tentou) => {
+                    if tentou.is_some() {
+                        feitos.push((m.mac.clone(), m.de.clone(), m.para.clone(), false));
+                    }
+                    manuais.push(m);
+                }
             }
         }
         self.registrar_mudancas(app, manuais);
+    }
+
+    fn tirar_pendente(&self, camera_id: i64) {
+        self.mudancas
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .retain(|p| p.camera_id != camera_id);
     }
 
     /// Guarda as mudanças novas e gera um evento `rede` por câmera/IP novo.
@@ -655,22 +683,45 @@ pub async fn post_atualizar(
         .ok_or_else(|| erro(StatusCode::BAD_REQUEST, "endereço RTSP inválido"))?;
     let nova = rede::trocar_host(&cam.url, para)
         .ok_or_else(|| erro(StatusCode::BAD_REQUEST, "endereço RTSP inválido"))?;
-    app.store.atualizar_url_camera(id, &nova).map_err(interno)?;
-    app.video.parar(id);
-    app.video.iniciar(id, "rtsp", &nova);
-    let _ = app.store.registrar_evento(
-        id,
-        None,
-        "rede",
-        &format!("endereço atualizado: {de} → {para}"),
-        agora(),
-    );
-    r.mudancas
-        .lock()
-        .unwrap_or_else(|p| p.into_inner())
-        .retain(|m| m.camera_id != id);
+    // Gravador (DVR/NVR): todos os canais dele (mesmo IP antigo e mesmo MAC
+    // ou mesmo gravador) mudam juntos.
+    let mesmo_aparelho = |c: &cf_core::store::Camera| {
+        c.id == id
+            || (c.fonte == "rtsp"
+                && rede::host_da_url(&c.url).is_some_and(|(h, _)| h == de)
+                && ((cam.mac_conhecido() && c.mac == cam.mac)
+                    || (!cam.gravador.is_empty() && c.gravador == cam.gravador)))
+    };
+    let grupo: Vec<cf_core::store::Camera> = app
+        .store
+        .cameras()
+        .map_err(interno)?
+        .into_iter()
+        .filter(mesmo_aparelho)
+        .collect();
+    for c in &grupo {
+        let Some(u) = rede::trocar_host(&c.url, para) else {
+            continue;
+        };
+        app.store.atualizar_url_camera(c.id, &u).map_err(interno)?;
+        if !c.gravador.is_empty() {
+            let _ = app.store.definir_gravador_canal(c.id, para, c.canal);
+        }
+        if c.ativa {
+            app.video.iniciar(c.id, "rtsp", &u);
+        }
+        let _ = app.store.registrar_evento(
+            c.id,
+            None,
+            "rede",
+            &format!("endereço atualizado: {de} → {para}"),
+            agora(),
+        );
+        r.tirar_pendente(c.id);
+    }
     Ok(Json(json!({
         "atualizada": true,
+        "cameras": grupo.len(),
         "url_sem_senha": cf_core::rtsp::redact(&nova),
     })))
 }
