@@ -50,13 +50,29 @@ Cruza o diagnóstico com a inteligência e as classes da regra:
 - "Para este ponto, o stream extra basta" ou "troque para o principal";
 - quando a nota é ruim, diz **o que ajustar** (iluminação, ângulo, exposição, posição da linha), nunca só reprova.
 
-### C. Teste ao vivo da regra (30 s)
+### C. Teste ao vivo da regra (30 s) e relatório para o cliente
 
-Roda a regra escolhida por 30 s e mostra: quantas detecções, confiança média, quantas trilhas perdidas, ms por quadro. Reaproveita o avaliador do SDD-09 (`avaliacao.rs`). Sai um relatório de uma tela para mostrar ao cliente.
+Roda a regra escolhida por 30 s e mostra: quantas detecções, confiança média, quantas trilhas perdidas, ms por quadro. Reaproveita o avaliador do SDD-09 (`avaliacao.rs`).
+
+**O relatório é exportável** (decisão do Emerson). Serve para o instalador mostrar ao cliente que a câmera não está num bom lugar ou mal instalada e que precisaria ser reposicionada ou reinstalada. Como isso costuma gerar custo e o cliente resiste, o relatório é redigido como **aviso técnico**, não como acusação:
+
+- cabeçalho: cliente/local (campo livre), câmera, data e hora, versão do programa;
+- foto do quadro analisado, sem caixas do YOLO (regra 4: o cliente vê só o balão com o nome da regra);
+- semáforo por item (claridade, foco, ruído, tamanho do objeto) com a frase em português simples;
+- resultado do teste de 30 s em números simples (quantas passagens a regra viu, confiança média);
+- **recomendação em uma frase** ("reposicionar a câmera mais baixa", "melhorar a iluminação do ponto", "trocar para stream principal");
+- rodapé: "Aviso técnico gerado automaticamente. Não substitui laudo de instalação."
+- formatos: imagem (PNG) e página para impressão/PDF, gerados no próprio programa, sem dependência nova pesada (a conferir na Fase 2).
 
 ### D. Ajustes por câmera
 
 - **Stream de análise**: extra ou principal, com o aviso de custo já usado no ao vivo. O modelo reduz para 640×640; o principal só ajuda de verdade com objeto pequeno ou distante.
+- **Stream por regra** (decisão do Emerson): cada regra declara o que precisa — *automático* (padrão), *extra* ou *principal*. Uma câmera decodifica **um** stream de análise por vez (decodificar dois dobraria o custo), então vale a regra mais exigente entre as regras ligadas:
+  1. se alguma regra ligada pede *principal*, a câmera analisa no principal e o programa **avisa** quais regras causaram isso e quanto pesa;
+  2. se a regra pede *principal* e a câmera está no extra, o programa **solicita a mudança** (botão "Trocar para o principal") ou, se o técnico recusar, **deixa o aviso** na regra ("pode perder carro distante");
+  3. desligar a regra exigente (SDD-09) devolve a câmera ao stream leve;
+  4. no *automático*, o veredito B sugere o stream pelo tamanho do objeto medido naquela regra.
+  Nunca troca sozinho sem avisar: a mudança sempre aparece para o técnico.
 - **Taxa de análise** (quadros por segundo analisados).
 - **Confiança mínima** e **tamanho mínimo/máximo** da caixa (corta falso positivo).
 - **Agenda** (dias e horários em que as regras valem).
@@ -100,23 +116,30 @@ Medir com `scripts/budget.sh` antes de fechar cada fase.
 
 ## Fases
 
-1. **Fase 1**: A (claridade, estouro, foco, ruído, obstrução) + stream por câmera (D).
-2. **Fase 2**: tamanho do objeto em pixels + veredito B + teste C.
+1. **Fase 1**: A (claridade, estouro, foco, ruído, obstrução) + stream por câmera e por regra com aviso (D).
+2. **Fase 2**: tamanho do objeto em pixels + veredito B + teste C + relatório exportável (aviso técnico).
 3. **Fase 3**: confiança, tamanho mínimo, agenda e cooldown por câmera; saúde E.
 4. **Fase 4**: itens de F, um por vez, cada um com ADR e medição de custo.
 
 ## Critérios de aceite da Fase 1
 
 - Imagem escura, desfocada e estourada de teste recebem o diagnóstico certo (testes com quadros sintéticos).
-- Escolher o stream por câmera muda o que o detector lê, sem reiniciar o programa.
+- Escolher o stream por câmera muda o que o detector lê, sem reiniciar o programa; regra que pede *principal* numa câmera no extra gera o aviso ou o pedido de troca.
 - Núcleo ocioso dentro do orçamento com o módulo ligado.
 - Nenhuma tela rola, de 360×640 a 1920×1080.
 
 ## Perguntas em aberto
 
-1. Escolha do stream: por câmera (recomendado) ou também por regra?
-2. Calibração dos limites de nota: quais câmeras e cenas reais servem de referência?
-3. O relatório do teste C deve poder ser exportado (imagem ou PDF) para o cliente?
+Decididas pelo Emerson em 08/11/2026:
+
+- Stream: **também por regra**, com a câmera seguindo a regra mais exigente, aviso ou pedido de troca, nunca troca silenciosa (seção D).
+- Relatório do teste C: **exportável** para o cliente, como aviso técnico (seção C).
+
+Ainda abertas:
+
+1. **Câmeras de referência para calibrar as notas:** sem resposta ainda. Proposta: a primeira versão sai com limites conservadores e marcados como "a calibrar"; o teste de campo coleta, **só com autorização do técnico e guardado localmente**, os números (não as imagens) de cada análise (altura em pixels, nitidez, brilho, se a detecção acertou) para ajustar os limites depois.
+2. O relatório deve levar o nome da empresa do instalador (logo)? Texto livre no rodapé?
+3. Como tratar duas regras na mesma câmera com pedidos opostos (uma pede extra, outra pede principal)? Proposta: vale o principal, com o aviso de custo (já descrito).
 
 ## Observações — fontes consultadas
 
