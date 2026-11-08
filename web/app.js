@@ -1199,7 +1199,8 @@ async function main() {
   iniciarIntegracoesExtra();
   iniciarFase6();
   iniciarEstudioLocal();
-  iniciarRede();
+  // rede.js é "defer": pode carregar depois deste arquivo.
+  if (typeof iniciarRede === "function") iniciarRede(); else addEventListener("DOMContentLoaded", () => iniciarRede());
   $("#sug-iniciar").onclick = sugIniciar;
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));
