@@ -219,7 +219,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 
 ## <img src="docs/assets/icons/mapa.svg" width="22" alt=""/> Roadmap
 
-Versão atual: **0.8.0** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
+Versão atual: **0.8.1** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
 
 - [x] **Fase 1** — Núcleo: binário, dashboard, benchmark, ONVIF, gerador RTSP
 - [x] **Fase 2** — Cerca virtual com balões e aula guiada · Formação de IA para CFTV no site, com narração e selo
@@ -243,6 +243,10 @@ Versão atual: **0.8.0** ([releases](https://github.com/emersoncassis/CamFacil-I
 - [ ] **Aplicação futura** — **VMS sob medida** · [desenho no estúdio](https://cfia.ysafe.com.br/estudio#vms) (só desenho, ainda não faz nada)
   - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
   - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
+
+### Novidades da 0.8.1
+- **MCP por HTTPS** (o Claude exige): pelo **Tailscale Serve** (só sua rede Tailscale) ou **Tailscale Funnel** (internet, para os conectores do claude.ai, com confirmação forte e token). Para Claude Desktop e Claude Code na mesma máquina, configuração por stdio pronta para colar (ADR 0015).
+- **ngrok temporário** no Acesso de fora e no MCP: o programa baixa o agente oficial e sobe o túnel; aviso obrigatório de que é só para testes, pode cair e não é seguro (para mais de um dia, Tailscale); painel protegido por senha aleatória; opção de desligar sozinho após 24 h.
 
 ### Novidades da 0.8.0
 - **Ao vivo completo**: balões das regras sobre cada câmera (alinhados à imagem, piscam no alerta), som do alerta (com "Ligar som" e mudo) e escolha de stream **extra** (padrão) ou **principal** por câmera, com aviso de que o principal é da gravação e pesa mais.
