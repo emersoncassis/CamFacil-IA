@@ -1,0 +1,6 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <!-- Balão (o mesmo do aviso na tela), nunca a caixa da IA. -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M5,4h14a2,2 0,0 1,2 2v8a2,2 0,0 1,-2 2h-7l-4,4v-4H5a2,2 0,0 1,-2 -2V6a2,2 0,0 1,2 -2z" />
+</vector>

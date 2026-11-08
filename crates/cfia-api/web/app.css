@@ -232,6 +232,10 @@ a.btn { text-decoration: none; }
 
 .baixar { padding: var(--s5); margin-bottom: var(--s6); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .baixar h2, .faixa h2 { margin: 0 0 var(--s4); font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
+.apk-card { display: flex; gap: var(--s4); margin-top: var(--s5); padding-top: var(--s5); border-top: 1px solid var(--line); }
+.apk-card > .ico { flex: none; color: var(--accent); margin-top: 2px; }
+.apk-card h3 { margin: 0 0 var(--s1); font-size: var(--fs-md); font-weight: 600; }
+.apk-card p { margin: 0 0 var(--s3); color: var(--text-3); max-width: 68ch; }
 [data-baixar] .seg { flex-wrap: wrap; margin-bottom: var(--s4); }
 [data-baixar] .seg span { display: inline-flex; align-items: center; gap: 6px; }
 .btn.grande { height: 44px; padding: 0 var(--s5); font-size: var(--fs-lg); }
