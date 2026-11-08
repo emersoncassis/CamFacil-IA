@@ -176,6 +176,29 @@ pub fn router(app: Shared) -> Router {
             "/api/rede/cameras/{id}/atualizar",
             post(crate::rede::post_atualizar),
         )
+        // Fase 6: MCP (desligado por padrão) e botões de portão/relé.
+        .route("/mcp", post(crate::mcp::post_mcp).get(crate::mcp::get_mcp))
+        .route(
+            "/api/mcp",
+            get(crate::mcp::get_config).post(crate::mcp::post_config),
+        )
+        .route("/api/mcp/token", post(crate::mcp::post_token))
+        .route("/botoes", get(crate::botoes::pagina))
+        .route(
+            "/api/botoes",
+            get(crate::botoes::get_botoes).post(crate::botoes::post_botao),
+        )
+        .route("/api/botoes/pin", post(crate::botoes::post_pin))
+        .route("/api/botoes/log", get(crate::botoes::get_log))
+        .route("/api/botoes/{id}", delete(crate::botoes::delete_botao))
+        .route(
+            "/api/botoes/{id}/preparar",
+            post(crate::botoes::post_preparar),
+        )
+        .route(
+            "/api/botoes/{id}/acionar",
+            post(crate::botoes::post_acionar),
+        )
         .fallback(static_file)
         .with_state(app)
 }
@@ -702,41 +725,53 @@ async fn get_regras(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult
 }
 
 #[derive(Deserialize)]
-struct NovaRegra {
-    nome: String,
-    forma: String,
-    pontos: Vec<cf_core::visao::Ponto>,
+pub(crate) struct NovaRegra {
+    pub nome: String,
+    pub forma: String,
+    pub pontos: Vec<cf_core::visao::Ponto>,
     #[serde(default)]
-    rotulo_on: String,
+    pub rotulo_on: String,
     #[serde(default)]
-    rotulo_off: String,
+    pub rotulo_off: String,
 }
 
-async fn post_regra(
-    State(app): State<Shared>,
-    Path(cam): Path<i64>,
-    Json(r): Json<NovaRegra>,
-) -> ApiResult {
-    if app.store.camera(cam).map_err(internal)?.is_none() {
-        return Err(bad(StatusCode::NOT_FOUND, "câmera não encontrada"));
+/// Valida e grava uma regra (usado pela dashboard e pelo MCP).
+pub(crate) fn criar_regra(
+    app: &crate::App,
+    cam: i64,
+    r: &NovaRegra,
+) -> Result<i64, (StatusCode, String)> {
+    let erro = |s: StatusCode, m: &str| (s, m.to_string());
+    if app
+        .store
+        .camera(cam)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .is_none()
+    {
+        return Err(erro(StatusCode::NOT_FOUND, "câmera não encontrada"));
     }
     let nome: String = r.nome.trim().chars().take(40).collect();
     let min = match r.forma.as_str() {
         "zona" => 3,
         "linha" => 2,
-        _ => return Err(bad(StatusCode::BAD_REQUEST, "forma deve ser zona ou linha")),
+        _ => {
+            return Err(erro(
+                StatusCode::BAD_REQUEST,
+                "forma deve ser zona ou linha",
+            ))
+        }
     };
     if nome.is_empty() {
-        return Err(bad(StatusCode::BAD_REQUEST, "dê um nome para a regra"));
+        return Err(erro(StatusCode::BAD_REQUEST, "dê um nome para a regra"));
     }
     if r.pontos.len() < min || r.pontos.len() > 24 {
-        return Err(bad(StatusCode::BAD_REQUEST, "desenho incompleto"));
+        return Err(erro(StatusCode::BAD_REQUEST, "desenho incompleto"));
     }
     if r.pontos
         .iter()
         .any(|p| !(0.0..=1.0).contains(&p.x) || !(0.0..=1.0).contains(&p.y))
     {
-        return Err(bad(StatusCode::BAD_REQUEST, "pontos fora da imagem"));
+        return Err(erro(StatusCode::BAD_REQUEST, "pontos fora da imagem"));
     }
     let pontos = if r.forma == "linha" {
         &r.pontos[..2]
@@ -754,8 +789,17 @@ async fn post_regra(
             &rot(&r.rotulo_on),
             &rot(&r.rotulo_off),
         )
-        .map_err(internal)?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     app.video.recarregar_regras(cam);
+    Ok(id)
+}
+
+async fn post_regra(
+    State(app): State<Shared>,
+    Path(cam): Path<i64>,
+    Json(r): Json<NovaRegra>,
+) -> ApiResult {
+    let id = criar_regra(&app, cam, &r).map_err(|(s, m)| bad(s, m))?;
     Ok(Json(json!({ "id": id })))
 }
 

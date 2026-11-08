@@ -8,11 +8,14 @@ mod arquivo;
 mod assets;
 mod autoinicio;
 mod backup;
+mod botoes;
 mod elo;
 mod estresse;
 mod hardware;
+mod i18n;
 mod ia;
 mod integracoes;
+mod mcp;
 mod notificacoes;
 mod painel;
 mod rede;
@@ -62,6 +65,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     if args.iter().any(|a| a == "--version" || a == "-V") {
         println!("camfacil {}", cf_core::VERSION);
         return Ok(());
+    }
+    if args.iter().any(|a| a == "--mcp") {
+        // Ponte MCP por stdio para o programa já aberto (ADR 0012).
+        return mcp::ponte_stdio().await;
     }
     if args.iter().any(|a| a == "--autoiniciar") {
         match autoinicio::definir(true) {
@@ -191,11 +198,14 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let router = api::router(app.clone());
     // Acesso de fora: escuta também no IP Tailscale quando ele existir (ADR-0005).
     tailscale::vigiar(app, router.clone(), chosen.port, lan);
-    let r = axum::serve(listener, router)
-        .with_graceful_shutdown(async {
-            let _ = tokio::signal::ctrl_c().await;
-        })
-        .await;
+    let r = axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .with_graceful_shutdown(async {
+        let _ = tokio::signal::ctrl_c().await;
+    })
+    .await;
     painel::encerrar();
     r?;
     Ok(())
