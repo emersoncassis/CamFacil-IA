@@ -59,11 +59,22 @@
 
   // ---------------------------------------------------------------- navegação
   const botoesPasso = $$(".est-passos [data-ir]");
+  // casa: os dois blocos; treino: os seis passos; vms: o desenho do futuro.
+  function modo(m) {
+    const est = $("#estudio");
+    est.classList.toggle("em-casa", m === "casa");
+    est.classList.toggle("em-vms", m === "vms");
+    $("#casa").hidden = m !== "casa";
+    $("#vms").hidden = m !== "vms";
+    $(".est-trilha").hidden = m !== "treino";
+    $(".est-nav").hidden = m !== "treino";
+    if (m !== "treino") PASSOS.forEach((p) => { $("#" + p).hidden = true; });
+  }
   function ir(n, focar) {
     S.passo = Math.max(0, Math.min(PASSOS.length - 1, n));
     const id = PASSOS[S.passo];
     PASSOS.forEach((p) => { $("#" + p).hidden = p !== id; });
-    $("#vms").hidden = true; $(".est-nav").hidden = false; $("#abrir-vms").removeAttribute("aria-current");
+    modo("treino");
     botoesPasso.forEach((b, i) => {
       b.setAttribute("aria-selected", String(i === S.passo));
       b.tabIndex = i === S.passo ? 0 : -1;
@@ -72,7 +83,7 @@
     $("#pos").textContent = `${S.passo + 1} de ${PASSOS.length}`;
     $("#ant").disabled = S.passo === 0;
     $("#prox").disabled = S.passo === PASSOS.length - 1;
-    history.replaceState(null, "", S.passo ? `#${id}` : location.pathname);
+    history.replaceState(null, "", `#${id}`);
     guardarRascunho();
     if (id === "rotular") { montarClassesRotulo(); requestAnimationFrame(desenhar); }
     if (id === "treinar") atualizarTreinar();
@@ -630,18 +641,14 @@
   desenharChips();
   mostrarRegra();
   atualizarReceitaAtual();
-  // Aplicação futura (só desenho): VMS sob medida.
-  const abrirVms = () => {
-    PASSOS.forEach((p) => { $("#" + p).hidden = true; });
-    botoesPasso.forEach((b) => b.setAttribute("aria-selected", "false"));
-    $("#vms").hidden = false; $(".est-nav").hidden = true;
-    $("#abrir-vms").setAttribute("aria-current", "page");
-    $("#t-vms").focus();
-  };
+  // Entrada: dois blocos fechados (Treine sua IA, VMS sob medida).
   $("#t-vms").tabIndex = -1;
-  $("#abrir-vms").onclick = abrirVms;
-  $("#fechar-vms").onclick = () => ir(S.passo, true);
-  if (location.hash === "#vms") setTimeout(abrirVms, 0);
+  $("#t-casa").tabIndex = -1;
+  $("#abrir-treino").onclick = () => ir(S.passo, true);
+  $("#abrir-vms").onclick = () => { modo("vms"); history.replaceState(null, "", "#vms"); $("#t-vms").focus(); };
+  $$("[data-casa]").forEach((b) => { b.onclick = () => { modo("casa"); history.replaceState(null, "", location.pathname); $("#t-casa").focus(); }; });
   const pedido = PASSOS.indexOf(location.hash.slice(1));
-  ir(pedido >= 0 ? pedido : inicial);
+  if (pedido >= 0) ir(pedido);
+  else if (location.hash === "#vms") $("#abrir-vms").onclick();
+  else { S.passo = inicial; modo("casa"); }
 })();
