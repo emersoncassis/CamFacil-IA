@@ -258,6 +258,15 @@ impl Store {
         Ok(c.last_insert_rowid())
     }
 
+    /// Grava nome, fonte, endereço e se está ativa. `false` se a câmera não existe.
+    pub fn atualizar_camera(&self, cam: &Camera) -> Result<bool> {
+        let c = self.lock();
+        Ok(c.execute(
+            "UPDATE cameras SET nome = ?2, fonte = ?3, url = ?4, ativa = ?5 WHERE id = ?1",
+            params![cam.id, cam.nome, cam.fonte, cam.url, cam.ativa as i64],
+        )? > 0)
+    }
+
     pub fn remover_camera(&self, id: i64) -> Result<bool> {
         let c = self.lock();
         c.execute("DELETE FROM regras WHERE camera_id = ?1", params![id])?;

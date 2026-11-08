@@ -30,7 +30,10 @@ pub fn router(app: Shared) -> Router {
         .route("/api/video/ffmpeg", get(get_ffmpeg).post(post_ffmpeg))
         .route("/api/video/webcams", get(get_webcams))
         .route("/api/cameras", get(get_cameras).post(post_camera))
-        .route("/api/cameras/{id}", delete(delete_camera))
+        .route(
+            "/api/cameras/{id}",
+            patch(patch_camera).delete(delete_camera),
+        )
         .route("/api/cameras/{id}/mjpeg", get(get_mjpeg))
         .route("/api/cameras/{id}/foto.jpg", get(get_foto))
         .route(
@@ -575,6 +578,7 @@ async fn get_cameras(State(app): State<Shared>) -> ApiResult {
                 "nome": c.nome,
                 "fonte": c.fonte,
                 "url_sem_senha": rtsp::redact(&c.url),
+                "ativa": c.ativa,
                 "estado": estado,
             })
         })
@@ -595,28 +599,108 @@ async fn post_camera(State(app): State<Shared>, Json(n): Json<NovaCamera>) -> Ap
     if nome.is_empty() {
         return Err(bad(StatusCode::BAD_REQUEST, "dê um nome para a câmera"));
     }
-    match n.fonte.as_str() {
-        "rtsp" if !n.url.starts_with("rtsp://") => {
-            return Err(bad(
-                StatusCode::BAD_REQUEST,
-                "endereço RTSP inválido; use o gerador",
-            ))
-        }
-        "arquivo" if n.url.trim().is_empty() => {
-            return Err(bad(
-                StatusCode::BAD_REQUEST,
-                "informe o caminho do arquivo de vídeo",
-            ))
-        }
-        "rtsp" | "arquivo" | "demo" | "webcam" => {}
-        _ => return Err(bad(StatusCode::BAD_REQUEST, "fonte desconhecida")),
-    }
+    validar_fonte(&n.fonte, &n.url).map_err(|m| bad(StatusCode::BAD_REQUEST, m))?;
     let id = app
         .store
         .criar_camera(&nome, &n.fonte, n.url.trim())
         .map_err(internal)?;
     app.video.iniciar(id, &n.fonte, n.url.trim());
     Ok(Json(json!({ "id": id })))
+}
+
+/// Confere se a fonte existe e se o endereço combina com ela.
+fn validar_fonte(fonte: &str, url: &str) -> Result<(), &'static str> {
+    match fonte {
+        "rtsp" if !url.trim().starts_with("rtsp://") => {
+            Err("endereço RTSP inválido; use o gerador")
+        }
+        "arquivo" if url.trim().is_empty() => Err("informe o caminho do arquivo de vídeo"),
+        "rtsp" | "arquivo" | "demo" | "webcam" => Ok(()),
+        _ => Err("fonte desconhecida"),
+    }
+}
+
+/// Edição de câmera. Só os campos enviados mudam. A senha nunca volta para a
+/// tela: `senha` troca a senha do endereço RTSP só quando vem preenchida.
+#[derive(Deserialize, Default)]
+struct EdicaoCamera {
+    #[serde(default)]
+    nome: Option<String>,
+    #[serde(default)]
+    fonte: Option<String>,
+    #[serde(default)]
+    url: Option<String>,
+    #[serde(default)]
+    senha: Option<String>,
+    #[serde(default)]
+    ativa: Option<bool>,
+}
+
+fn aplicar_edicao(
+    atual: &cf_core::store::Camera,
+    e: &EdicaoCamera,
+) -> Result<cf_core::store::Camera, &'static str> {
+    let mut c = atual.clone();
+    if let Some(n) = &e.nome {
+        c.nome = n.trim().chars().take(60).collect();
+        if c.nome.is_empty() {
+            return Err("dê um nome para a câmera");
+        }
+    }
+    if let Some(f) = &e.fonte {
+        c.fonte = f.trim().to_string();
+    }
+    if let Some(u) = &e.url {
+        let u = u.trim();
+        c.url = if c.fonte == "rtsp" && atual.fonte == "rtsp" {
+            rtsp::manter_senha(u, &atual.url)
+        } else {
+            u.to_string()
+        };
+    }
+    if c.fonte == "demo" {
+        c.url.clear();
+    }
+    validar_fonte(&c.fonte, &c.url)?;
+    if let Some(s) = e.senha.as_deref().filter(|s| !s.is_empty()) {
+        if c.fonte != "rtsp" {
+            return Err("senha só vale para câmera RTSP");
+        }
+        c.url = rtsp::trocar_senha(&c.url, s);
+    }
+    if let Some(a) = e.ativa {
+        c.ativa = a;
+    }
+    Ok(c)
+}
+
+async fn patch_camera(
+    State(app): State<Shared>,
+    Path(id): Path<i64>,
+    Json(e): Json<EdicaoCamera>,
+) -> ApiResult {
+    let atual = app
+        .store
+        .camera(id)
+        .map_err(internal)?
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    let nova = aplicar_edicao(&atual, &e).map_err(|m| bad(StatusCode::BAD_REQUEST, m))?;
+    if !app.store.atualizar_camera(&nova).map_err(internal)? {
+        return Err(bad(StatusCode::NOT_FOUND, "câmera não encontrada"));
+    }
+    // Reinicia o vídeo com o endereço novo (ou desliga, se ficou inativa).
+    if nova.ativa {
+        app.video.iniciar(id, &nova.fonte, &nova.url);
+    } else {
+        app.video.parar(id);
+    }
+    Ok(Json(json!({
+        "id": nova.id,
+        "nome": nova.nome,
+        "fonte": nova.fonte,
+        "url_sem_senha": rtsp::redact(&nova.url),
+        "ativa": nova.ativa,
+    })))
 }
 
 async fn delete_camera(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
@@ -1170,4 +1254,159 @@ async fn get_selos(State(app): State<Shared>) -> ApiResult {
         .map(|(m, t)| json!({ "modulo": m, "ganho_em": t }))
         .collect();
     Ok(Json(json!({ "selos": v })))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cf_core::store::Store;
+
+    fn app_teste(nome: &str) -> (Shared, std::path::PathBuf) {
+        let dir = std::env::temp_dir().join(format!("cf-api-{nome}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let store = Arc::new(Store::open(&dir.join("t.db")).unwrap());
+        let app = Arc::new(crate::App {
+            elo: crate::elo::Elo::carregar(store.clone()),
+            video: crate::video::Video::new(store.clone()),
+            store,
+            tailscale: crate::tailscale::Estado::default(),
+            telegram: std::sync::OnceLock::new(),
+            whatsapp: std::sync::OnceLock::new(),
+            webhook: std::sync::OnceLock::new(),
+            arquivo: std::sync::OnceLock::new(),
+            ia: Arc::new(crate::ia::Ia::new(&dir)),
+            estudio: crate::estudio::Estudio::new(&dir),
+        });
+        (app, dir)
+    }
+
+    fn edicao(v: Value) -> Json<EdicaoCamera> {
+        Json(serde_json::from_value(v).unwrap())
+    }
+
+    #[tokio::test]
+    async fn edita_camera_sem_vazar_senha() {
+        let (app, dir) = app_teste("editar");
+        let url = "rtsp://admin:segredo@192.168.1.10:554/live";
+        let id = app.store.criar_camera("Porta", "rtsp", url).unwrap();
+
+        // Muda nome e IP pela URL mascarada que a tela mostra: a senha fica.
+        let Json(r) = patch_camera(
+            State(app.clone()),
+            Path(id),
+            edicao(json!({ "nome": " Portão ", "url": "rtsp://admin:***@192.168.1.20:554/live" })),
+        )
+        .await
+        .unwrap();
+        assert_eq!(r["nome"], "Portão");
+        assert!(!r.to_string().contains("segredo"));
+        let c = app.store.camera(id).unwrap().unwrap();
+        assert_eq!(c.url, "rtsp://admin:segredo@192.168.1.20:554/live");
+        assert!(app.video.canal(id).is_some(), "vídeo reiniciado");
+
+        // Senha em branco não troca; preenchida troca.
+        let _ = patch_camera(State(app.clone()), Path(id), edicao(json!({ "senha": "" })))
+            .await
+            .unwrap();
+        assert!(app
+            .store
+            .camera(id)
+            .unwrap()
+            .unwrap()
+            .url
+            .contains("segredo"));
+        let _ = patch_camera(
+            State(app.clone()),
+            Path(id),
+            edicao(json!({ "senha": "n0va" })),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            app.store.camera(id).unwrap().unwrap().url,
+            "rtsp://admin:n0va@192.168.1.20:554/live"
+        );
+
+        // A lista também nunca devolve a senha.
+        let Json(l) = get_cameras(State(app.clone())).await.unwrap();
+        assert!(!l.to_string().contains("n0va"));
+        assert_eq!(l["cameras"][0]["ativa"], true);
+
+        // Desativar para o vídeo; reativar religa.
+        let _ = patch_camera(
+            State(app.clone()),
+            Path(id),
+            edicao(json!({ "ativa": false })),
+        )
+        .await
+        .unwrap();
+        assert!(!app.store.camera(id).unwrap().unwrap().ativa);
+        assert!(app.video.canal(id).is_none());
+        let _ = patch_camera(
+            State(app.clone()),
+            Path(id),
+            edicao(json!({ "ativa": true })),
+        )
+        .await
+        .unwrap();
+        assert!(app.video.canal(id).is_some());
+        app.video.parar(id);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn edicao_invalida_e_remocao() {
+        let (app, dir) = app_teste("invalida");
+        let id = app.store.criar_camera("Demo", "demo", "").unwrap();
+        let erro = |r: ApiResult| r.err().map(|(s, _)| s);
+        let r = patch_camera(
+            State(app.clone()),
+            Path(id),
+            edicao(json!({ "nome": "  " })),
+        )
+        .await;
+        assert_eq!(erro(r), Some(StatusCode::BAD_REQUEST));
+        let r = patch_camera(
+            State(app.clone()),
+            Path(id),
+            edicao(json!({ "fonte": "rtsp", "url": "http://x" })),
+        )
+        .await;
+        assert_eq!(erro(r), Some(StatusCode::BAD_REQUEST));
+        let r = patch_camera(
+            State(app.clone()),
+            Path(id),
+            edicao(json!({ "senha": "x" })),
+        )
+        .await;
+        assert_eq!(erro(r), Some(StatusCode::BAD_REQUEST));
+        let r = patch_camera(
+            State(app.clone()),
+            Path(999),
+            edicao(json!({ "nome": "x" })),
+        )
+        .await;
+        assert_eq!(erro(r), Some(StatusCode::NOT_FOUND));
+
+        // Troca a fonte de demo para RTSP com senha.
+        let _ = patch_camera(
+            State(app.clone()),
+            Path(id),
+            edicao(json!({ "fonte": "rtsp", "url": "rtsp://10.0.0.9/s", "senha": "p@ss" })),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            app.store.camera(id).unwrap().unwrap().url,
+            "rtsp://admin:p%40ss@10.0.0.9/s"
+        );
+
+        // Remover funciona e some da lista.
+        let _ = delete_camera(State(app.clone()), Path(id)).await.unwrap();
+        assert!(app.store.camera(id).unwrap().is_none());
+        let r = delete_camera(State(app.clone()), Path(id)).await;
+        assert_eq!(erro(r), Some(StatusCode::NOT_FOUND));
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }
