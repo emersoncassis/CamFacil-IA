@@ -115,6 +115,8 @@ pub struct EstadoDetector {
     pub inferencias: u64,
     pub ultimo_ms: u64,
     pub erro: Option<String>,
+    /// Nome do modelo de estudo em uso (None = modelo padrão do COCO).
+    pub estudo: Option<String>,
 }
 
 pub struct Ia {
@@ -123,6 +125,8 @@ pub struct Ia {
     baixando: AtomicBool,
     cancelar: AtomicBool,
     pub detector: Mutex<EstadoDetector>,
+    /// Modelo de estudo ligado pelo técnico (SDD-07): o detector usa no lugar do padrão.
+    pub estudo: Mutex<Option<std::sync::Arc<crate::estudio::ModeloEstudo>>>,
 }
 
 impl Ia {
@@ -138,6 +142,7 @@ impl Ia {
             baixando: AtomicBool::new(false),
             cancelar: AtomicBool::new(false),
             detector: Mutex::new(EstadoDetector::default()),
+            estudo: Mutex::new(None),
         }
     }
 

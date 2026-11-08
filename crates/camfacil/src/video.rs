@@ -302,6 +302,28 @@ pub struct Medio {
     pub rastreador: Rastreador,
     pub deteccoes: Vec<Deteccao>,
     pub quando: Option<Instant>,
+    /// Nomes das classes do modelo de estudo que gerou `deteccoes` (None = COCO).
+    pub estudo: Option<Arc<Vec<String>>>,
+}
+
+/// Nome da classe para o balão: COCO em pt-BR ou o nome da receita de estudo.
+pub fn nome_objeto(classe: usize, estudo: Option<&Vec<String>>) -> String {
+    if classe >= deteccao::CLASSE_ESTUDO {
+        return estudo
+            .and_then(|n| n.get(classe - deteccao::CLASSE_ESTUDO))
+            .cloned()
+            .unwrap_or_else(|| "objeto".into());
+    }
+    deteccao::nome_classe(classe).unwrap_or("objeto").into()
+}
+
+/// "2 pessoas" (COCO) ou "2 × caixa de banana" (estudo: o nome vem da receita).
+fn rotulo_contagem(classe: usize, n: usize, estudo: Option<&Vec<String>>) -> String {
+    if classe >= deteccao::CLASSE_ESTUDO {
+        format!("{n} × {}", nome_objeto(classe, estudo))
+    } else {
+        deteccao::plural(classe, n)
+    }
 }
 
 #[derive(Default)]
@@ -378,7 +400,7 @@ impl Canal {
             (
                 deteccao::contar(&m.deteccoes)
                     .into_iter()
-                    .map(|(c, n)| (deteccao::plural(c, n), n))
+                    .map(|(c, n)| (rotulo_contagem(c, n, m.estudo.as_deref()), n))
                     .collect(),
                 m.quando.map(|q| q.elapsed().as_millis() as u64),
             )
@@ -415,6 +437,7 @@ impl Canal {
         let hora = cf_notify::servico::hora_local(store);
         let cam = nome_camera(store, self.id);
         let foto = self.ultimo.lock().unwrap().clone();
+        let estudo = self.medio.lock().unwrap().estudo.clone();
         let mut avisos: Vec<(String, String)> = Vec::new();
         let mut selo = false;
         {
@@ -428,7 +451,11 @@ impl Canal {
                     } => {
                         i.alertas.insert(*regra, Instant::now());
                         *i.contagens.entry(*regra).or_default() += 1;
-                        let que = deteccao::nome_classe(*classe).unwrap_or("objeto");
+                        let que = nome_objeto(*classe, estudo.as_deref());
+                        if *classe >= deteccao::CLASSE_ESTUDO {
+                            // Balão da regra com o nome da classe do modelo de estudo.
+                            i.avisos.insert(*regra, que.clone());
+                        }
                         let det =
                             format!("{} ({que})", if *sentido > 0 { "entrada" } else { "saída" });
                         let _ =
@@ -439,11 +466,19 @@ impl Canal {
                         ));
                         selo = true;
                     }
-                    EventoMedio::ZonaOcupada { regra, quantas } => {
+                    EventoMedio::ZonaOcupada {
+                        regra,
+                        quantas,
+                        classe,
+                    } => {
                         i.ocupadas.insert(*regra, true);
                         i.alertas.insert(*regra, Instant::now());
                         *i.contagens.entry(*regra).or_default() += 1;
-                        let det = deteccao::plural(0, *quantas);
+                        let det = rotulo_contagem(*classe, *quantas, estudo.as_deref());
+                        if *classe >= deteccao::CLASSE_ESTUDO {
+                            i.avisos
+                                .insert(*regra, nome_objeto(*classe, estudo.as_deref()));
+                        }
                         let _ =
                             store.registrar_evento(self.id, Some(*regra), "zona_ocupada", &det, t);
                         avisos.push((

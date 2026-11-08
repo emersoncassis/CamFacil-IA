@@ -27,6 +27,7 @@ O modo estúdio quer que o técnico monte a própria inteligência (objetos, reg
 ## Consequências
 
 - O técnico tem um caminho completo de estudo: receita → notebook → ONNX + manifesto → importar no programa local → publicar a receita com as métricas.
+- *Atualização (fase 7, versão básica):* o modelo de estudo já roda, ligado à mão e um por vez; as classes entram como `CLASSE_ESTUDO + i` para não colidir com o COCO (ver SDD-07, "Como o modelo de estudo roda"). O texto abaixo registra a situação original.
 - **O modelo importado ainda não roda:** o detector local só conhece as classes do COCO (`cf_core::deteccao::CLASSES`). O modelo fica guardado, conferido e marcado "modelo de estudo", desligado. Executar classes arbitrárias é a próxima etapa (pós-processamento com `nc` variável e balão com o nome da receita).
 - Mudanças incompatíveis no formato sobem `versao` e ganham nova ADR; leitores antigos recusam com mensagem clara.
 - A lista de termos bloqueados é heurística e pode ser contornada por quem quer burlar; ela evita o uso ingênuo e documenta a regra. A responsabilidade continua coberta pelo termo do técnico (`docs/legal/`), exigido também para importar modelo de estudo.

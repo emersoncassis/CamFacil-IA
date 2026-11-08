@@ -331,6 +331,41 @@
           <p class="msg" id="ia-msg" role="status"></p>
           <p class="tiny" data-i18n="ia.pendrive"></p>
         </div>
+        <div class="block" id="estudio-bloco" data-sub="estudio">
+          <div class="block-head">
+            <h2 data-i18n="es.titulo"></h2>
+            <a class="btn sm" href="https://cfia.ysafe.com.br/estudio" target="_blank" rel="noopener"><span data-i18n="es.abrir_site"></span></a>
+          </div>
+          <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="es.aviso"></span></p>
+          <h3 class="sub" data-i18n="es.coleta_titulo"></h3>
+          <p class="hint" data-i18n="es.coleta_desc"></p>
+          <form class="form-grid" id="es-coleta-form" autocomplete="off">
+            <label class="tiny"><span data-i18n="es.camera"></span><select name="camera" required></select></label>
+            <label class="tiny"><span data-i18n="es.receita"></span><input name="receita" required pattern="[a-z0-9][a-z0-9\-]{2,59}" maxlength="60" data-i18n-ph="es.ph_receita"></label>
+            <label class="tiny"><span data-i18n="es.intervalo"></span><input name="intervalo" type="number" min="2" max="3600" value="30" required></label>
+            <label class="tiny"><span data-i18n="es.total"></span><input name="total" type="number" min="1" max="500" value="150" required></label>
+            <button class="btn sm" type="submit" id="es-coletar"><span data-i18n="es.coletar"></span></button>
+            <button class="btn ghost sm" type="button" id="es-parar" hidden><span data-i18n="es.parar"></span></button>
+            <button class="btn ghost sm" type="button" id="es-apagar-fotos" hidden><span data-i18n="es.apagar_fotos"></span></button>
+          </form>
+          <p class="tiny" id="es-coleta-estado" role="status"></p>
+          <p class="msg" id="es-coleta-msg" role="status"></p>
+          <h3 class="sub" data-i18n="es.modelos_titulo"></h3>
+          <p class="hint" data-i18n="es.modelos_desc"></p>
+          <form class="form-grid" id="es-importar-form" autocomplete="off">
+            <label class="tiny"><span data-i18n="es.arq_receita"></span><input name="receita" type="file" accept=".json,application/json" required></label>
+            <label class="tiny"><span data-i18n="es.arq_manifesto"></span><input name="manifesto" type="file" accept=".json,application/json"></label>
+            <label class="tiny"><span data-i18n="es.arq_onnx"></span><input name="onnx" type="file" accept=".onnx" required></label>
+            <button class="btn sm" type="submit"><span data-i18n="es.importar"></span></button>
+          </form>
+          <div class="table-wrap mt">
+            <table class="table">
+              <thead><tr><th data-i18n="es.col_modelo"></th><th data-i18n="es.col_classes"></th><th class="right" data-i18n="es.col_ligado"></th></tr></thead>
+              <tbody id="es-modelos"></tbody>
+            </table>
+          </div>
+          <p class="msg" id="es-msg" role="status"></p>
+        </div>
       </section>
 
       <!-- Manutenção -->
@@ -901,6 +936,7 @@
   <script src="/manutencao.js"></script>
   <script src="/integracoes-extra.js"></script>
   <script src="/fase6.js"></script>
+  <script src="/estudio.js"></script>
   <script src="/rede.js" defer></script>
   <script src="/tela.js"></script>
 </body>
