@@ -150,7 +150,8 @@ function animar(duracaoMs, passo) {
 }
 
 // ---------- Narração de acerto e erro ----------
-function falar(id) { if (typeof tocar === "function" && temNarracao) tocar(id); }
+// A fala do exercício responde ao que a pessoa acabou de fazer: corta a anterior.
+function falar(id) { if (typeof tocar === "function" && temNarracao) tocar(id, true); }
 
 // ---------- Exercício: linha ----------
 function exercicioLinha(raiz, concluir) {
@@ -482,19 +483,74 @@ function feita(id) { return !!(progresso().feitas || {})[id]; }
 function marcar(id) { const p = progresso(); p.feitas = p.feitas || {}; p.feitas[id] = true; salvar(p); desenharTrilha(); }
 
 // ---------- Narração ----------
+// Regra: a fala mais nova vale. Mudou de lição ou a pessoa agiu no exercício,
+// a fala anterior para. Só o "avance" espera o acerto terminar.
 const voz = new Audio();
-let vozBotao = null; let vozPendente = null;
+let vozPendente = null; let vozAtual = null;
 function vozFalando(on) { $("#ouvir-caixa").classList.toggle("falando", on); $("#ouvir use").setAttribute("href", on ? "#i-pause" : "#i-play"); }
 voz.onplaying = () => vozFalando(true);
-voz.onended = () => { vozFalando(false); if (vozPendente) { const p = vozPendente; vozPendente = null; tocar(p, true); } };
+voz.onended = () => {
+  vozFalando(false);
+  const fim = vozAtual;
+  if (vozPendente) { const p = vozPendente; vozPendente = null; tocar(p, true); }
+  fimDaFala(fim);
+};
 voz.onpause = () => vozFalando(false);
-voz.onerror = () => vozFalando(false);
+voz.onerror = () => { vozFalando(false); if (vozPendente) { const p = vozPendente; vozPendente = null; tocar(p, true); } };
+voz.ontimeupdate = () => acompanharFala();
 function tocar(id, forcar = false) {
   if (!id) return;
-  if (!voz.paused && !voz.ended && !forcar) { vozPendente = id; return; } // nunca corta a fala
+  if (!voz.paused && !voz.ended && !forcar) { vozPendente = id; return; }
+  if (forcar) vozPendente = null;
+  vozAtual = id;
   voz.src = `/audio/${id}.ogg`;
   voz.play().catch(() => vozFalando(false));
 }
+function pararVoz() { vozPendente = null; vozAtual = null; voz.pause(); voz.removeAttribute("src"); voz.load(); }
+
+// ---------- Rolagem junto com a fala ----------
+// A página desce acompanhando o parágrafo que está sendo falado e para no
+// exercício. Se a pessoa rolar por conta própria, a rolagem automática solta.
+let rolarSozinho = true; let paragrafoAtual = -1; let alvoExercicio = null;
+const soltarRolagem = () => { rolarSozinho = false; };
+for (const ev of ["wheel", "touchmove", "keydown"]) addEventListener(ev, soltarRolagem, { passive: true });
+const movimentoReduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function rolarAte(alvo, bloco = "center") {
+  if (!alvo || !rolarSozinho) return;
+  alvo.scrollIntoView({ behavior: movimentoReduzido ? "auto" : "smooth", block: bloco });
+}
+function acompanharFala() {
+  const l = LICOES[atual];
+  if (!l || vozAtual !== l.audio || !voz.duration || !isFinite(voz.duration)) return;
+  const ps = [...document.querySelectorAll("#licao-corpo > .licao-texto")];
+  if (!ps.length) return;
+  const tam = ps.map((p) => p.textContent.length);
+  const total = tam.reduce((a, b) => a + b, 0);
+  const k = (voz.currentTime / voz.duration) * total;
+  let soma = 0; let i = 0;
+  for (; i < ps.length - 1; i++) { soma += tam[i]; if (k < soma) break; }
+  if (i === paragrafoAtual) return;
+  paragrafoAtual = i;
+  ps.forEach((p, j) => p.classList.toggle("lendo", j === i));
+  rolarAte(ps[i]);
+}
+function fimDaFala(id) {
+  const l = LICOES[atual];
+  if (!l || id !== l.audio) return;
+  document.querySelectorAll("#licao-corpo > .licao-texto.lendo").forEach((p) => p.classList.remove("lendo"));
+  if (l.exercicio && !feita(l.id)) { rolarAte(alvoExercicio, "start"); return; } // para no exercício e espera
+  if (!l.final) chamarProxima();
+}
+// Pede para avançar: o botão pisca, a tela desce até ele e a voz avisa.
+function chamarProxima() {
+  const prox = $("#proxima");
+  if (prox.hidden || prox.disabled) return;
+  prox.classList.add("piscar");
+  rolarSozinho = true;
+  rolarAte(prox);
+  if (temNarracao) tocar("escola-avance");
+}
+
 async function narracaoDisponivel() {
   try { return (await fetch("/audio/escola-01.ogg", { method: "HEAD" })).ok; } catch (_) { return false; }
 }
@@ -520,6 +576,9 @@ function desenharTrilha() {
 function ir(i) {
   atual = Math.max(0, Math.min(LICOES.length - 1, i));
   const l = LICOES[atual];
+  pararVoz(); // mudou de lição: a fala anterior para na hora
+  rolarSozinho = true; paragrafoAtual = -1; alvoExercicio = null;
+  $("#proxima").classList.remove("piscar");
   const p = progresso(); p.atual = atual; salvar(p);
   history.replaceState(null, "", `/aprender#${l.id}`);
   const n = LICOES.filter((x) => !x.abertura).length;
@@ -529,9 +588,9 @@ function ir(i) {
   corpo.replaceChildren(...l.texto.map((t) => el("p", { class: "licao-texto" }, t)));
   for (const nome of [].concat(l.anim || [])) { const a = el("div", { class: "aula-anim" }); a.innerHTML = ANIM[nome](); corpo.append(a); }
   const prox = $("#proxima"); const trava = $("#licao-trava");
-  const liberar = () => { prox.disabled = false; trava.textContent = ""; marcar(l.id); };
+  const liberar = () => { prox.disabled = false; trava.textContent = ""; marcar(l.id); chamarProxima(); };
   if (l.exercicio) {
-    const ex = el("div"); corpo.append(ex);
+    const ex = el("div"); corpo.append(ex); alvoExercicio = ex;
     l.exercicio(ex, liberar);
     if (feita(l.id)) { prox.disabled = false; trava.textContent = "Já feita. Pode refazer ou seguir."; }
     else { prox.disabled = true; trava.textContent = "Faça o exercício para liberar a próxima."; }
@@ -547,7 +606,8 @@ function ir(i) {
   $("#proxima").hidden = !!l.final;
   $("#proxima span").textContent = l.abertura ? "Começar a lição 1" : "Próxima lição";
   $("#ouvir-caixa").hidden = !temNarracao || !l.audio;
-  if (temNarracao && l.audio) tocar(l.audio);
+  if (temNarracao && l.audio) tocar(l.audio, true);
+  else if (!l.exercicio && !l.final) setTimeout(chamarProxima, 1500);
   desenharTrilha();
   window.scrollTo({ top: 0, behavior: "instant" });
 }
@@ -627,7 +687,7 @@ async function montarSelo(area) {
 
 async function main() {
   temNarracao = await narracaoDisponivel();
-  $("#ouvir").onclick = () => { const l = LICOES[atual]; if (!voz.paused && !voz.ended) voz.pause(); else tocar(l.audio, true); };
+  $("#ouvir").onclick = () => { const l = LICOES[atual]; if (!voz.paused && !voz.ended) voz.pause(); else { rolarSozinho = true; paragrafoAtual = -1; tocar(l.audio, true); } };
   $("#voltar").onclick = () => ir(atual - 1);
   $("#proxima").onclick = () => ir(atual + 1);
   const hash = location.hash.replace("#", "");
