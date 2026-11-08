@@ -367,6 +367,32 @@ async function carregarCameras() {
 
 // ---------- Editar e remover câmera ----------
 let camEditando = null;
+let camNomeTocado = false;   // o técnico mexeu no nome neste diálogo?
+let camNomesCanais = null;   // promessa: nomes reais dos canais do gravador
+let camCanalEspera = null;
+
+/// Trocou o canal no Editar câmera: sugere o nome que o gravador dá ao canal.
+function camCanalMudou() {
+  clearTimeout(camCanalEspera);
+  camCanalEspera = setTimeout(async () => {
+    const c = camEditando; const f = $("#cam-form");
+    const n = Number(f.canal.value);
+    if (!c || !c.canal || !n || n === c.canal) { $("#cam-canal-sug").hidden = true; return; }
+    if (!camNomesCanais) camNomesCanais = api(`/api/cameras/${c.id}/nomes-canais`).then((r) => r.nomes || {}).catch(() => ({}));
+    const nomes = await camNomesCanais;
+    if (camEditando !== c || Number(f.canal.value) !== n) return;
+    // Sem nome no gravador: mantém o padrão "<gravador> · Canal N".
+    const base = (c.nome.match(/^(.*) · Canal \d+$/) || [])[1];
+    const sug = nomes[String(n)] || (base ? `${base} · ${t("gravador.canal_n").replace("{n}", n)}` : "");
+    if (!sug) { $("#cam-canal-sug").hidden = true; return; }
+    if (!camNomeTocado) f.nome.value = sug;
+    $("#cam-canal-sug-txt").textContent = t(nomes[String(n)] ? "camed.nome_gravador" : "camed.nome_padrao").replace("{nome}", sug);
+    $("#cam-canal-sug-txt").title = $("#cam-canal-sug-txt").textContent;
+    $("#cam-canal-sug-usar").hidden = f.nome.value === sug;
+    $("#cam-canal-sug-usar").onclick = () => { f.nome.value = sug; $("#cam-canal-sug-usar").hidden = true; };
+    $("#cam-canal-sug").hidden = false;
+  }, 250);
+}
 
 function camFonteMudou() {
   const f = $("#cam-form").fonte.value;
@@ -391,6 +417,9 @@ function editarCamera(id) {
   f.senha.value = "";
   f.ativa.checked = c.ativa !== false;
   f.canal.value = c.canal || "";
+  camNomeTocado = false;
+  camNomesCanais = null;
+  $("#cam-canal-sug").hidden = true;
   // Sem MAC aprendido a autocorreção não tem como reconhecer a câmera: trava.
   f.auto_ip.checked = !!c.auto_ip;
   f.auto_ip.disabled = !c.mac_conhecido;
@@ -425,7 +454,8 @@ async function salvarCamera(ev) {
     if (camAberta === c.id) {
       if (r.ativa) {
         $("#aovivo-nome").textContent = r.nome;
-        $("#video").src = `/api/cameras/${c.id}/mjpeg?t=${Date.now()}`;
+        streamMostrar(cams.find((x) => x.id === c.id));
+        $("#video").src = urlAoVivo(c.id);
       } else fecharCamera();
     }
   } catch (e) { m.className = "msg err"; m.textContent = e.message; }
@@ -452,6 +482,46 @@ async function adicionarCamera(nome, fonte, url = "") {
   } catch (e) { alert(e.message); }
 }
 
+// ---------- Stream da visualização (extra × principal) ----------
+// Só muda o que se vê: a IA continua no stream extra (leveza).
+function streamEscolhido(id) {
+  try { return (JSON.parse(localStorage.getItem("cf-stream") || "{}")[id]) === "principal" ? "principal" : "extra"; } catch (_) { return "extra"; }
+}
+function guardarStream(id, s) {
+  try { const m = JSON.parse(localStorage.getItem("cf-stream") || "{}"); if (s === "principal") m[id] = s; else delete m[id]; localStorage.setItem("cf-stream", JSON.stringify(m)); } catch (_) { /* opcional */ }
+}
+/// Vale pedir o principal? (só com padrão de caminho conhecido)
+function streamPrincipalAtivo(c) { return !!c && c.stream_principal === true && streamEscolhido(c.id) === "principal"; }
+function urlAoVivo(id) {
+  const c = cams.find((x) => x.id === id);
+  return `/api/cameras/${id}/mjpeg?${streamPrincipalAtivo(c) ? "stream=principal&" : ""}t=${Date.now()}`;
+}
+
+function streamMostrar(c) {
+  const b = $("#video-stream"); const dica = $("#video-stream-dica");
+  dica.hidden = true;
+  // Não se aplica: demo/webcam/arquivo, ou a câmera já está no principal.
+  if (!c || c.stream_principal == null) { b.hidden = true; return; }
+  b.hidden = false;
+  const principal = streamPrincipalAtivo(c);
+  const travado = c.stream_principal === false;
+  const atual = t(principal ? "stream.principal" : "stream.extra");
+  $("#video-stream-txt").textContent = atual;
+  b.setAttribute("aria-pressed", String(principal));
+  b.setAttribute("aria-disabled", String(travado));
+  b.setAttribute("aria-label", travado ? `${t("stream.rotulo")}: ${atual}. ${t("stream.sem_padrao")}`
+    : t("stream.botao").replace("{atual}", atual).replace("{outro}", t(principal ? "stream.extra" : "stream.principal")));
+  b.title = travado ? t("stream.sem_padrao") : t("stream.ia_extra");
+  b.onclick = async (ev) => {
+    ev.stopPropagation();
+    if (travado) { dica.textContent = t("stream.sem_padrao"); dica.hidden = !dica.hidden; return; }
+    if (!principal && !(await confirmar(t("stream.pergunta"), t("stream.usar_principal"), t("stream.aviso")))) return;
+    guardarStream(c.id, principal ? "extra" : "principal");
+    streamMostrar(c);
+    $("#video").src = urlAoVivo(c.id);
+  };
+}
+
 function fecharCamera() {
   camAberta = null;
   $("#aovivo").hidden = true;
@@ -469,7 +539,8 @@ async function abrirCamera(id) {
   somS.checked = somLigado(`saude:${id}`);
   somS.onchange = () => { definirSom(`saude:${id}`, somS.checked); if (somS.checked) tocarAlerta(); };
   $("#aovivo-som-saude").title = t("saude.som_dica");
-  $("#video").src = `/api/cameras/${id}/mjpeg?t=${Date.now()}`;
+  streamMostrar(c);
+  $("#video").src = urlAoVivo(id);
   $("#aovivo-objetos").hidden = true;
   try { modulosInfo = await api("/api/modulos"); } catch (_) { /* segue */ }
   calorConfigurar();
@@ -758,6 +829,8 @@ function iniciarCameras() {
   $("#regra-form").onsubmit = salvarRegra;
   $("#regra-cancelar").onclick = () => definirModo("ver");
   $("#cam-form").onsubmit = salvarCamera;
+  $("#cam-form").nome.addEventListener("input", () => { camNomeTocado = true; });
+  $("#cam-form").canal.addEventListener("input", camCanalMudou);
   $("#cam-form").fonte.onchange = camFonteMudou;
   $("#cam-dlg-cancelar").onclick = () => $("#cam-dlg").close();
   $("#cam-dlg-remover").onclick = async () => {
@@ -1066,6 +1139,7 @@ function gravadorConta() {
   $("#ligar-gravador-conta").textContent = t("gravador.conta").replace("{n}", n);
   $("#ligar-gravador-add").disabled = !n;
   $("#ligar-gravador-dica").textContent = t("gravador.dica").replace("{nome}", $("#ligar-gravador-nome").value.trim() || "…");
+  gravadorPlaceholders();
 }
 
 function gravadorMostrar(r, autoIp, login) {
@@ -1081,23 +1155,36 @@ function gravadorMostrar(r, autoIp, login) {
   const lista = $("#ligar-gravador-canais");
   delete lista.dataset.pag;
   // Grade: colunas que cabem × poucas linhas; o tela.js pagina e encolhe se faltar altura.
-  const cols = Math.max(1, Math.floor((lista.clientWidth || 300) / 158));
+  const cols = Math.max(1, Math.floor((lista.clientWidth || 300) / 178));
   const linhas = innerHeight < 700 ? 2 : innerHeight < 900 ? 3 : 4;
   lista.dataset.porPagina = String(cols * linhas);
   lista.cfN = 0;
   lista.replaceChildren(...r.canais.map((c) => {
     const estado = t(c.responde ? "gravador.responde" : "gravador.nao_responde");
-    const rotulo = [t("gravador.canal_n").replace("{n}", c.canal), c.nome, estado].filter(Boolean).join(", ");
-    const chk = el("input", { type: "checkbox", value: String(c.canal), "aria-label": rotulo });
+    const canalN = t("gravador.canal_n").replace("{n}", c.canal);
+    const chk = el("input", { type: "checkbox", value: String(c.canal), "aria-label": `${canalN}, ${estado}` });
     chk.checked = gravadorAtual.escolhidos.has(c.canal);
-    chk.onchange = () => { if (chk.checked) gravadorAtual.escolhidos.add(c.canal); else gravadorAtual.escolhidos.delete(c.canal); gravadorConta(); };
-    return el("li", {}, el("label", { class: "canal", title: estado },
-      chk,
-      el("span", { class: "dot " + (c.responde ? "on" : "off"), "aria-hidden": "true" }),
-      el("span", { class: "canal-txt" }, el("strong", {}, t("gravador.canal_n").replace("{n}", c.canal)),
-        el("span", { class: "tiny" }, c.nome || estado))));
+    const marcar = (sim) => { chk.checked = sim; if (sim) gravadorAtual.escolhidos.add(c.canal); else gravadorAtual.escolhidos.delete(c.canal); gravadorConta(); };
+    chk.onchange = () => marcar(chk.checked);
+    // Nome real do canal (título no vídeo do gravador), editável. Vazio = "<gravador> · Canal N".
+    const nome = el("input", { class: "canal-nome", maxlength: "60", value: c.nome || "", "data-canal": String(c.canal),
+      "aria-label": t("gravador.nome_canal_rotulo").replace("{n}", c.canal), autocomplete: "off", spellcheck: "false" });
+    nome.oninput = () => { if (nome.value.trim() && !chk.checked) marcar(true); };
+    return el("li", {}, el("div", { class: "canal", title: estado },
+      el("label", { class: "canal-esc" },
+        chk,
+        el("span", { class: "dot " + (c.responde ? "on" : "off"), "aria-hidden": "true" }),
+        el("strong", {}, canalN),
+        el("span", { class: "tiny" }, estado)),
+      nome));
   }));
   gravadorConta();
+}
+
+/// Placeholder de cada nome de canal acompanha o nome do gravador.
+function gravadorPlaceholders() {
+  const base = $("#ligar-gravador-nome").value.trim() || "…";
+  $("#ligar-gravador-canais").querySelectorAll(".canal-nome").forEach((i) => { i.placeholder = `${base} · ${t("gravador.canal_n").replace("{n}", i.dataset.canal)}`; });
 }
 
 function gravadorMarcarTodos(sim) {
@@ -1115,7 +1202,8 @@ async function gravadorAdicionar() {
   if (!gravadorAtual.escolhidos.size) { m.className = "msg err"; m.textContent = t("gravador.escolha"); return; }
   b.disabled = true; m.className = "msg"; m.textContent = t("gravador.adicionando");
   try {
-    const canais = [...gravadorAtual.escolhidos].sort((a, c) => a - c).map((canal) => ({ canal }));
+    const nomeDe = (canal) => { const i = $("#ligar-gravador-canais").querySelector(`.canal-nome[data-canal="${canal}"]`); return i ? i.value.trim() : ""; };
+    const canais = [...gravadorAtual.escolhidos].sort((a, c) => a - c).map((canal) => ({ canal, nome: nomeDe(canal) || null }));
     const r = await api("/api/gravador/adicionar", {
       token: gravadorAtual.token, nome: $("#ligar-gravador-nome").value.trim(), canais,
       stream: $("#ligar-gravador-stream").value, auto_ip: gravadorAtual.autoIp,

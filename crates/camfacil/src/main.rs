@@ -27,6 +27,7 @@ mod tailscale;
 mod termos;
 mod tv;
 mod video;
+mod visor;
 
 use cf_core::{paths, ports, store::Store};
 use std::net::{IpAddr, Ipv4Addr};

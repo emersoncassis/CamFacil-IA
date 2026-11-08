@@ -246,6 +246,51 @@ fn partes(url: &str) -> Option<(&str, Option<Credenciais<'_>>, &str)> {
     }
 }
 
+/// Desfaz o `%XX` das credenciais (`%40` → `@`).
+fn decodificar(s: &str) -> String {
+    let b = s.as_bytes();
+    let mut out = Vec::with_capacity(b.len());
+    let mut i = 0;
+    while i < b.len() {
+        if b[i] == b'%' && i + 2 < b.len() {
+            if let Some(x) = s
+                .get(i + 1..i + 3)
+                .and_then(|h| u8::from_str_radix(h, 16).ok())
+            {
+                out.push(x);
+                i += 3;
+                continue;
+            }
+        }
+        out.push(b[i]);
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+/// Usuário e senha do endereço, decodificados (vazios se não houver).
+pub fn credenciais(url: &str) -> (String, String) {
+    let Some((_, resto)) = url.split_once("://") else {
+        return (String::new(), String::new());
+    };
+    // Como em `url_do_canal`: o host vem depois do último '@' (a senha pode
+    // ter '/' sem codificar).
+    let Some(at) = resto.rfind('@') else {
+        return (String::new(), String::new());
+    };
+    match resto[..at].split_once(':') {
+        Some((u, p)) => (decodificar(u), decodificar(p)),
+        None => (decodificar(&resto[..at]), String::new()),
+    }
+}
+
+/// Endereço do stream principal da mesma câmera/canal. `None` se o caminho
+/// não segue um padrão conhecido (RTSP digitado à mão).
+pub fn url_principal(url: &str) -> Option<String> {
+    let (canal, _) = canal_da_url(url)?;
+    url_do_canal(url, canal, Stream::Principal)
+}
+
 /// Troca (ou põe) a senha do endereço. Mantém o usuário; sem usuário, usa `admin`.
 pub fn trocar_senha(url: &str, senha: &str) -> String {
     match partes(url) {
@@ -534,5 +579,28 @@ mod tests {
             Some((12, Principal))
         );
         assert_eq!(canal_da_url("rtsp://h/live"), None);
+    }
+
+    #[test]
+    fn principal_e_credenciais() {
+        let b = "rtsp://admin:s%2Fnh%40a@192.168.1.50:554/cam/realmonitor?channel=3&subtype=1";
+        assert_eq!(
+            url_principal(b).as_deref(),
+            Some("rtsp://admin:s%2Fnh%40a@192.168.1.50:554/cam/realmonitor?channel=3&subtype=0")
+        );
+        assert_eq!(
+            url_principal("rtsp://a:b@h:554/Streaming/Channels/502").as_deref(),
+            Some("rtsp://a:b@h:554/Streaming/Channels/501")
+        );
+        assert_eq!(url_principal("rtsp://a:b@h/live/ch1"), None);
+        assert_eq!(credenciais(b), ("admin".into(), "s/nh@a".into()));
+        assert_eq!(
+            credenciais("rtsp://admin:x/y@10.0.0.9/Streaming/Channels/102"),
+            ("admin".into(), "x/y".into())
+        );
+        assert_eq!(
+            credenciais("rtsp://10.0.0.9/x"),
+            (String::new(), String::new())
+        );
     }
 }

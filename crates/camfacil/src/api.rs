@@ -41,6 +41,7 @@ pub fn router(app: Shared) -> Router {
         )
         .route("/api/cameras/{id}/mjpeg", get(get_mjpeg))
         .route("/api/cameras/{id}/foto.jpg", get(get_foto))
+        .route("/api/cameras/{id}/nomes-canais", get(get_nomes_canais))
         .route(
             "/api/cameras/{id}/sugestoes",
             get(get_sugestoes)
@@ -480,6 +481,38 @@ async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>)
     })))
 }
 
+/// `GET /api/cameras/{id}/nomes-canais`: nome real de cada canal do gravador
+/// de onde a câmera veio (para sugerir o nome ao trocar de canal). Teto de
+/// ≈3 s; se o gravador não responder, a lista vem vazia.
+async fn get_nomes_canais(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    let c = app
+        .store
+        .camera(id)
+        .map_err(internal)?
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    let fab = rtsp::fabricante_do_caminho(&c.url);
+    let host = cf_core::rede::host_da_url(&c.url).map(|(h, _)| h);
+    let nomes = match (c.fonte.as_str(), fab, host) {
+        ("rtsp", Some(fab), Some(host)) if c.canal > 0 => {
+            let (u, s) = rtsp::credenciais(&c.url);
+            let (http, onvif) = tokio::join!(
+                tokio::time::timeout(
+                    cf_core::nomes_canais::LIMITE,
+                    cf_core::nomes_canais::buscar_http(&host, 80, &u, &s, fab),
+                ),
+                tokio::time::timeout(
+                    cf_core::nomes_canais::LIMITE,
+                    cf_core::gravador::canais_onvif(&host, 80, &u, &s),
+                ),
+            );
+            let onvif = cf_core::nomes_canais::de_onvif(&onvif.ok().flatten().unwrap_or_default());
+            cf_core::nomes_canais::juntar(&[&http.unwrap_or_default(), &onvif])
+        }
+        _ => Default::default(),
+    };
+    Ok(Json(json!({ "nomes": nomes })))
+}
+
 // ---------- Gravador (DVR/NVR): escolher os canais ----------
 
 /// Gravador já conferido esperando o técnico escolher os canais. A senha
@@ -904,6 +937,7 @@ async fn get_cameras(State(app): State<Shared>) -> ApiResult {
                 "mac_conhecido": c.mac_conhecido(),
                 "gravador": (!c.gravador.is_empty()).then_some(&c.gravador),
                 "canal": (c.canal > 0).then_some(c.canal),
+                "stream_principal": principal_disponivel(&c.fonte, &c.url),
             })
         })
         .collect();
@@ -1144,12 +1178,56 @@ async fn get_sugestoes(State(app): State<Shared>, Path(id): Path<i64>) -> ApiRes
     })))
 }
 
-async fn get_foto(State(app): State<Shared>, Path(id): Path<i64>) -> Response {
-    match app
-        .video
-        .canal(id)
-        .and_then(|c| c.ultimo.lock().unwrap().clone())
-    {
+/// Stream principal para ver ao vivo: `None` = não se aplica (não é RTSP ou
+/// a câmera já está no principal); `Some(false)` = RTSP sem padrão
+/// conhecido (não dá para derivar o principal); `Some(true)` = disponível.
+fn principal_disponivel(fonte: &str, url: &str) -> Option<bool> {
+    if fonte != "rtsp" {
+        return None;
+    }
+    match rtsp::canal_da_url(url) {
+        Some((_, rtsp::Stream::Principal)) => None,
+        Some(_) => Some(rtsp::url_principal(url).is_some()),
+        None => Some(false),
+    }
+}
+
+/// `?stream=principal` nas rotas de imagem ao vivo.
+#[derive(Deserialize, Default)]
+struct QueryStream {
+    #[serde(default)]
+    stream: String,
+}
+
+/// Leitor do principal pedido pela tela. `Ok(None)`: usar o leitor da IA
+/// (pediu o extra, ou a câmera já está no principal).
+fn visor_pedido(
+    app: &crate::App,
+    id: i64,
+    q: &QueryStream,
+) -> Result<Option<Arc<crate::visor::Visor>>, (StatusCode, &'static str)> {
+    if q.stream != "principal" {
+        return Ok(None);
+    }
+    let cam = app
+        .store
+        .camera(id)
+        .ok()
+        .flatten()
+        .filter(|c| c.ativa && app.video.canal(id).is_some())
+        .ok_or((StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    match principal_disponivel(&cam.fonte, &cam.url) {
+        None => Ok(None),
+        Some(true) => Ok(rtsp::url_principal(&cam.url).map(|u| crate::visor::abrir(id, &u))),
+        Some(false) => Err((
+            StatusCode::BAD_REQUEST,
+            "este endereço RTSP não segue um padrão conhecido; só dá para ver o stream extra",
+        )),
+    }
+}
+
+fn resposta_jpeg(j: Option<Arc<Vec<u8>>>) -> Response {
+    match j {
         Some(j) => (
             [
                 (header::CONTENT_TYPE, "image/jpeg"),
@@ -1162,13 +1240,56 @@ async fn get_foto(State(app): State<Shared>, Path(id): Path<i64>) -> Response {
     }
 }
 
-/// Transmissão ao vivo em MJPEG (funciona direto num <img>).
-async fn get_mjpeg(State(app): State<Shared>, Path(id): Path<i64>) -> Response {
-    let Some(canal) = app.video.canal(id) else {
-        return (StatusCode::NOT_FOUND, "câmera não encontrada").into_response();
+async fn get_foto(
+    State(app): State<Shared>,
+    Path(id): Path<i64>,
+    axum::extract::Query(q): axum::extract::Query<QueryStream>,
+) -> Response {
+    match visor_pedido(&app, id, &q) {
+        Err(r) => r.into_response(),
+        Ok(Some(v)) => {
+            v.tocar();
+            let ja = v.ultimo.lock().unwrap().clone();
+            if ja.is_some() {
+                return resposta_jpeg(ja);
+            }
+            // Leitor recém-aberto: espera o primeiro quadro um pouco.
+            let mut rx = v.tx.subscribe();
+            let j = tokio::time::timeout(Duration::from_secs(6), rx.recv())
+                .await
+                .ok()
+                .and_then(Result::ok);
+            resposta_jpeg(j)
+        }
+        Ok(None) => resposta_jpeg(
+            app.video
+                .canal(id)
+                .and_then(|c| c.ultimo.lock().unwrap().clone()),
+        ),
+    }
+}
+
+/// Transmissão ao vivo em MJPEG (funciona direto num <img>). Com
+/// `?stream=principal`, abre o leitor do principal sob demanda.
+async fn get_mjpeg(
+    State(app): State<Shared>,
+    Path(id): Path<i64>,
+    axum::extract::Query(q): axum::extract::Query<QueryStream>,
+) -> Response {
+    let (rx, primeiro) = match visor_pedido(&app, id, &q) {
+        Err(r) => return r.into_response(),
+        Ok(Some(v)) => {
+            let ultimo = v.ultimo.lock().unwrap().clone();
+            (v.tx.subscribe(), ultimo)
+        }
+        Ok(None) => {
+            let Some(canal) = app.video.canal(id) else {
+                return (StatusCode::NOT_FOUND, "câmera não encontrada").into_response();
+            };
+            let ultimo = canal.ultimo.lock().unwrap().clone();
+            (canal.tx.subscribe(), ultimo)
+        }
     };
-    let rx = canal.tx.subscribe();
-    let primeiro = canal.ultimo.lock().unwrap().clone();
     let corpo = futures_util::stream::unfold((rx, primeiro), |(mut rx, primeiro)| async move {
         let jpeg = match primeiro {
             Some(j) => j,
@@ -1666,6 +1787,45 @@ mod tests {
             coleta: Arc::default(),
         });
         (app, dir)
+    }
+
+    #[test]
+    fn principal_para_ver() {
+        let d = "rtsp://a:b@h:554/cam/realmonitor?channel=2&subtype=1";
+        assert_eq!(principal_disponivel("rtsp", d), Some(true));
+        assert_eq!(
+            principal_disponivel("rtsp", "rtsp://a:b@h/Streaming/Channels/101"),
+            None,
+            "já está no principal"
+        );
+        assert_eq!(
+            principal_disponivel("rtsp", "rtsp://a:b@h/live/ch0"),
+            Some(false)
+        );
+        assert_eq!(principal_disponivel("demo", ""), None);
+        assert_eq!(nome_canal("NVR Loja", 3, None), "NVR Loja · Canal 3");
+        assert_eq!(nome_canal("NVR Loja", 3, Some(" PORTÃO ")), "PORTÃO");
+    }
+
+    #[tokio::test]
+    async fn stream_principal_em_rtsp_manual_e_recusado() {
+        let (app, dir) = app_teste("principal");
+        let id = app
+            .store
+            .criar_camera("Manual", "rtsp", "rtsp://a:b@127.0.0.1:9/live/ch0")
+            .unwrap();
+        app.video
+            .iniciar(id, "rtsp", "rtsp://a:b@127.0.0.1:9/live/ch0");
+        let q = QueryStream {
+            stream: "principal".into(),
+        };
+        let r = visor_pedido(&app, id, &q).err().expect("recusa");
+        assert_eq!(r.0, StatusCode::BAD_REQUEST);
+        assert!(visor_pedido(&app, id, &QueryStream::default())
+            .unwrap()
+            .is_none());
+        app.video.parar(id);
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     fn edicao(v: Value) -> Json<EdicaoCamera> {

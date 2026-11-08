@@ -114,6 +114,9 @@ dialog { max-height: calc(100dvh - 32px); overflow: auto; }
 .dlg-form .tiny { margin: var(--s3) 0 0; }
 .dlg-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: var(--s4); }
 .dlg-acoes .espaco { flex: 1; }
+.canal-sug { display: flex; align-items: center; gap: var(--s2); margin: 0; min-width: 0; font-size: var(--fs-xs); color: var(--text-2); }
+.canal-sug span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.canal-sug .btn { flex: none; }
 #confirma-dlg h2 { font-size: var(--fs-lg); }
 #confirma-dlg .hint { margin: 0; }
 /* Editar câmera em tela baixa (celular 640 px): nome e tipo lado a lado,
@@ -125,6 +128,10 @@ dialog { max-height: calc(100dvh - 32px); overflow: auto; }
   #cam-dlg .campos > :not(:nth-child(-n+2)) { grid-column: 1 / -1; }
   #cam-dlg-dica { display: none; }
   #cam-dlg .dlg-acoes { margin-top: var(--s3); }
+  /* Câmera de gravador: "ligada" e o canal dividem a linha. */
+  #cam-dlg .campos > label.som-regra:has(~ #cam-canal-campo:not([hidden])),
+  #cam-dlg .campos > #cam-canal-campo:not([hidden]) { grid-column: auto; }
+  #cam-dlg .campos > label.som-regra:has(~ #cam-canal-campo:not([hidden])) { align-self: center; }
 }
 
 /* Toque: alvos maiores */
@@ -223,3 +230,4 @@ dialog { max-height: calc(100dvh - 32px); overflow: auto; }
   .pagehead .actions .btn { padding-inline: 10px; text-decoration: none; }
   .pagehead .actions .btn > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
+.canal-sug .btn, .canal-sug .btn.sm { height: 28px; padding: 0 var(--s2); }
