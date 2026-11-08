@@ -305,7 +305,12 @@ pub async fn get_foto(State(app): State<Shared>) -> ApiResult {
         }
         None => (false, 0, None),
     };
-    let fotos = app.store.fotos_rede(2).map_err(interno)?;
+    let fotos = app
+        .store
+        .fotos_rede(rede::FOTOS_CONFLITO as i64)
+        .map_err(interno)?;
+    let so_fotos: Vec<Foto> = fotos.iter().map(|(_, f)| f.clone()).collect();
+    let conflitos = rede::conflitos_ip(&so_fotos);
     let ultima: Option<&Foto> = fotos.first().map(|(_, f)| f);
     let anterior: Option<&Foto> = fotos.get(1).map(|(_, f)| f);
     let mudancas: Vec<Mudanca> = match (anterior, ultima) {
@@ -321,6 +326,7 @@ pub async fn get_foto(State(app): State<Shared>) -> ApiResult {
         "ultima": ultima,
         "anterior_quando": anterior.map(|a| a.quando),
         "mudancas": mudancas,
+        "conflitos": conflitos,
         "historico": historico,
     })))
 }

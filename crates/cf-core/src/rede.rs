@@ -179,6 +179,10 @@ pub struct Dispositivo {
     pub eu: bool,
     /// Rota padrão (roteador).
     pub gateway: bool,
+    /// Outros MACs que responderam por este IP na mesma varredura (ARP x
+    /// ONVIF): sinal de conflito de IP.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub outros_macs: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -326,6 +330,84 @@ pub fn comparar(anterior: &Foto, atual: &Foto) -> Vec<Mudanca> {
                 mac: None,
                 fabricante: d.fabricante.clone(),
                 camera_nome: d.camera_nome.clone(),
+            });
+        }
+    }
+    out
+}
+
+// ---------------- Conflito de IP ----------------
+
+/// Mesmo IP respondido por MACs diferentes.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct ConflitoIp {
+    pub ip: String,
+    /// MACs vistos nesse IP (o atual primeiro).
+    pub macs: Vec<String>,
+    pub fabricantes: Vec<String>,
+    pub camera_nome: Option<String>,
+    /// `mesma_varredura` (ARP e ONVIF discordam agora) ou `entre_varreduras`
+    /// (o IP alterna de dono entre fotos da rede).
+    pub motivo: &'static str,
+}
+
+/// Fotos a considerar entre varreduras (a mais nova primeiro).
+pub const FOTOS_CONFLITO: usize = 6;
+
+/// Procura conflitos de IP. `fotos[0]` é a mais nova. Troca simples de dono
+/// (A sai, B pega o IP e A não volta) **não** conta: é DHCP e já aparece em
+/// "mudanças". Conta quando o IP alterna (A → B → A, ou três MACs) e o MAC
+/// antigo não está noutro IP na foto atual, ou quando na mesma varredura o
+/// ARP e o ONVIF ouviram MACs diferentes.
+pub fn conflitos_ip(fotos: &[Foto]) -> Vec<ConflitoIp> {
+    let Some(atual) = fotos.first() else {
+        return Vec::new();
+    };
+    let fab = |m: &str| fabricante_por_mac(m).unwrap_or("?").to_string();
+    let mut out: Vec<ConflitoIp> = Vec::new();
+    for d in &atual.dispositivos {
+        let Some(mac) = d.mac.clone() else { continue };
+        if !d.outros_macs.is_empty() {
+            let mut macs = vec![mac.clone()];
+            macs.extend(d.outros_macs.iter().cloned());
+            out.push(ConflitoIp {
+                ip: d.ip.clone(),
+                fabricantes: macs.iter().map(|m| fab(m)).collect(),
+                macs,
+                camera_nome: d.camera_nome.clone(),
+                motivo: "mesma_varredura",
+            });
+            continue;
+        }
+        // Sequência de donos deste IP, do mais velho ao mais novo.
+        let seq: Vec<&str> = fotos
+            .iter()
+            .take(FOTOS_CONFLITO)
+            .rev()
+            .filter_map(|f| f.dispositivos.iter().find(|x| x.ip == d.ip))
+            .filter_map(|x| x.mac.as_deref())
+            .collect();
+        let trocas = seq.windows(2).filter(|w| w[0] != w[1]).count();
+        let mut macs: Vec<String> = vec![mac.clone()];
+        for m in seq.iter().rev() {
+            if !macs.iter().any(|x| x == m) {
+                macs.push(m.to_string());
+            }
+        }
+        // MAC antigo que hoje está noutro IP = troca de endereço, não conflito.
+        let mudou_de_ip = macs[1..].iter().any(|m| {
+            atual
+                .dispositivos
+                .iter()
+                .any(|x| x.ip != d.ip && x.mac.as_deref() == Some(m))
+        });
+        if macs.len() >= 2 && trocas >= 2 && !mudou_de_ip {
+            out.push(ConflitoIp {
+                ip: d.ip.clone(),
+                fabricantes: macs.iter().map(|m| fab(m)).collect(),
+                macs,
+                camera_nome: d.camera_nome.clone(),
+                motivo: "entre_varreduras",
             });
         }
     }
@@ -625,10 +707,14 @@ pub fn montar_foto(
         .map(|ip| {
             let ip_s = ip.to_string();
             let dev = onvif.iter().find(|d| d.ip == ip_s);
-            let mac = arp
-                .get(&ip_s)
-                .cloned()
-                .or_else(|| dev.and_then(|d| d.mac.clone()));
+            let mac_onvif = dev.and_then(|d| d.mac.as_deref().and_then(normalizar_mac));
+            let mac = arp.get(&ip_s).cloned().or_else(|| mac_onvif.clone());
+            // O ARP guarda um MAC por IP; se o ONVIF ouviu outro, há dois
+            // aparelhos com o mesmo IP.
+            let outros_macs: Vec<String> = mac_onvif
+                .filter(|m| mac.as_deref().is_some_and(|a| a != m))
+                .into_iter()
+                .collect();
             let fabricante = dev.and_then(|d| d.fabricante.clone()).or_else(|| {
                 mac.as_deref()
                     .and_then(fabricante_por_mac)
@@ -665,6 +751,7 @@ pub fn montar_foto(
                 camera_nome: cam.map(|c| c.nome.clone()),
                 eu,
                 gateway: gw,
+                outros_macs,
             }
         })
         .collect();
@@ -1001,6 +1088,7 @@ mod tests {
             camera_nome: None,
             eu: false,
             gateway: false,
+            outros_macs: vec![],
         }
     }
 
@@ -1120,6 +1208,65 @@ mod tests {
             .any(|x| matches!(x, Mudanca::Sumiu { ip, mac: None, .. } if ip == "192.168.1.7")));
         assert_eq!(m.len(), 5);
         assert!(comparar(&a, &a).is_empty());
+    }
+
+    #[test]
+    fn conflito_de_ip() {
+        let a = "AA:AA:AA:00:00:01";
+        let b = "BB:BB:BB:00:00:02";
+        // A → B → A no mesmo IP: conflito.
+        let fotos = vec![
+            foto(vec![disp("192.168.1.10", Some(a))]),
+            foto(vec![disp("192.168.1.10", Some(b))]),
+            foto(vec![disp("192.168.1.10", Some(a))]),
+        ];
+        let c = conflitos_ip(&fotos);
+        assert_eq!(c.len(), 1);
+        assert_eq!(c[0].ip, "192.168.1.10");
+        assert_eq!(c[0].macs, vec![a.to_string(), b.to_string()]);
+        assert_eq!(c[0].motivo, "entre_varreduras");
+        // Só uma troca (DHCP deu o IP a outro): não é conflito.
+        assert!(conflitos_ip(&fotos[..2]).is_empty());
+        // B continua na rede noutro IP: troca de endereço, não conflito.
+        let fotos2 = vec![
+            foto(vec![
+                disp("192.168.1.10", Some(a)),
+                disp("192.168.1.11", Some(b)),
+            ]),
+            foto(vec![disp("192.168.1.10", Some(b))]),
+            foto(vec![disp("192.168.1.10", Some(a))]),
+        ];
+        assert!(conflitos_ip(&fotos2).is_empty());
+        // Mesma varredura: ARP e ONVIF discordam.
+        let mut d = disp("192.168.1.20", Some(a));
+        d.outros_macs = vec![b.into()];
+        let c = conflitos_ip(&[foto(vec![d])]);
+        assert_eq!(c[0].motivo, "mesma_varredura");
+        assert_eq!(c[0].macs.len(), 2);
+        assert!(conflitos_ip(&[]).is_empty());
+    }
+
+    #[test]
+    fn monta_foto_marca_mac_divergente() {
+        let meu: Ipv4Addr = "192.168.1.2".parse().unwrap();
+        let mut arp = BTreeMap::new();
+        arp.insert("192.168.1.30".to_string(), "AA:AA:AA:00:00:01".to_string());
+        let dev = crate::onvif::Device {
+            ip: "192.168.1.30".into(),
+            fabricante: None,
+            modelo: None,
+            nome: None,
+            enderecos: vec![],
+            mac: Some("BB-BB-BB-00-00-02".into()),
+        };
+        let f = montar_foto(Some(meu), None, &BTreeMap::new(), &[dev], &arp, &[], 1);
+        let d = f
+            .dispositivos
+            .iter()
+            .find(|d| d.ip == "192.168.1.30")
+            .unwrap();
+        assert_eq!(d.mac.as_deref(), Some("AA:AA:AA:00:00:01"));
+        assert_eq!(d.outros_macs, vec!["BB:BB:BB:00:00:02".to_string()]);
     }
 
     #[test]

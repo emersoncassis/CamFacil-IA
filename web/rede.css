@@ -31,3 +31,6 @@
 .rede-diagrama { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
 .rede-diagrama svg { display: block; max-width: none; height: auto; }
 .rede-diagrama .hint { margin: 0; padding: var(--s4); }
+
+/* Conflito de IP: marca na linha do inventário (texto e borda de aviso). */
+.rede-marca.conflito { color: var(--c-warn); border-color: var(--c-warn); }
