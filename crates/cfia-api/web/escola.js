@@ -561,7 +561,8 @@ function telaFinal() {
     el("div", { class: "final-acoes" },
       el("a", { class: "btn primary grande", href: "/#baixar" }, (() => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#i-down" })); return s; })(), el("span", {}, "Baixar o programa e operar")),
       el("a", { class: "btn", href: "/#site-t" }, "Acompanhar clientes de longe (opcional)")),
-    el("p", { class: "tiny" }, "Lembre: aqui é aprendizagem e validação. No cliente, a solução definitiva é a câmera ou o gravador com IA de borda, ou uma plataforma parceira. O CamFácil IA é a ponte."));
+    el("p", { class: "tiny" }, "Lembre: aqui é aprendizagem e validação. No cliente, a solução definitiva é a câmera ou o gravador com IA de borda, ou uma plataforma parceira. O CamFácil IA é a ponte."),
+    maisFundo());
   if (!tudo) {
     area.append(el("div", { class: "selo" }, (() => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#i-selo" })); return s; })(),
       el("div", {}, el("strong", {}, "Selo ainda não liberado"), el("p", { class: "tiny" }, "Volte e faça os exercícios das lições que faltam."))));
@@ -569,6 +570,21 @@ function telaFinal() {
   }
   montarSelo(area);
   return caixa;
+}
+
+// Para quem quer ir além do básico: fabricantes e quem ajuda a empresa a evoluir.
+function maisFundo() {
+  const item = (nome, desc, href) => el("li", {},
+    href ? el("a", { href, target: "_blank", rel: "noopener" }, el("strong", {}, nome)) : el("strong", {}, nome),
+    el("p", { class: "tiny" }, desc));
+  return el("section", { class: "mais-fundo" },
+    el("h3", {}, "Quer ir mais fundo?"),
+    el("p", { class: "hint" }, "O que você viu aqui é o nível básico. Para entender a inteligência de vídeo de verdade, equipamentos mais complexos e de alta qualidade, siga por aqui:"),
+    el("ul", {},
+      item("ITEC Intelbras", "A escola da Intelbras, com cursos online gratuitos de CFTV, redes e análise de vídeo. Foi onde eu dei aula.", "https://www.intelbras.com/pt-br/"),
+      item("Academia Dahua", "Treinamentos e certificações da Dahua: câmeras com IA de borda, gravadores e plataformas.", "https://www.dahuasecurity.com/br"),
+      item("Academia Hikvision", "Cursos online e certificações da Hikvision, do básico ao avançado em IA de vídeo.", "https://www.hikvision.com/pt/support/academy/"),
+      item("Papo Segurança", "Se você tem uma empresa, vai precisar de ajuda para levar isso para o negócio: visão, processo e evolução. O Papo Segurança ajuda nisso.", "https://paposeguranca.com.br/")));
 }
 
 async function montarSelo(area) {

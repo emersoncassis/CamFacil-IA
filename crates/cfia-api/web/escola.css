@@ -231,3 +231,11 @@
 .selo-chamada h3 { margin: 0 0 var(--s2); }
 @media (max-width: 760px) { .selo-cartao { grid-template-columns: minmax(0, 1fr); } .selo-arte { max-width: 220px; } }
 .cena .aviso.ok { fill: var(--accent); }
+.mais-fundo { margin-top: var(--s6); padding-top: var(--s5); border-top: 1px solid var(--line); }
+.mais-fundo h3 { margin: 0 0 var(--s2); font-size: var(--fs-lg); }
+.mais-fundo ul { list-style: none; margin: var(--s4) 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
+.mais-fundo li { padding: var(--s3) var(--s4); border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.mais-fundo li a { color: var(--text); text-decoration: none; }
+.mais-fundo li a:hover strong { color: var(--accent); }
+.mais-fundo li p { margin: 4px 0 0; }
+@media (max-width: 760px) { .mais-fundo ul { grid-template-columns: minmax(0, 1fr); } }

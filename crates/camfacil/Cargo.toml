@@ -8,8 +8,8 @@ authors.workspace = true
 
 [dependencies]
 axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio", "json", "query"] }
-cf-core = { version = "0.1.0", path = "../cf-core" }
-cf-notify = { version = "0.1.0", path = "../cf-notify" }
+cf-core = { path = "../cf-core" }
+cf-notify = { path = "../cf-notify" }
 miniz_oxide = { version = "0.8", default-features = false, features = ["with-alloc"] }
 ort = { version = "2.0.0-rc.15", default-features = false, features = ["load-dynamic"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider"] }

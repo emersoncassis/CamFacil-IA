@@ -1,6 +1,7 @@
 /target
 **/*.rs.bk
 *.onnx
+!modelos/yolo11n.onnx
 /data/
 *.sqlite
 *.db
