@@ -149,9 +149,13 @@ impl Observador {
             nome: "Passagem".into(),
             pontos: vec![p0, p1],
             motivo: format!(
-                "{} pessoas passaram, a maioria {}. A linha fica atravessando esse caminho, longe das bordas, para contar quem passa.",
+                "{} pessoas passaram, {}.",
                 self.trilhas.len(),
-                if horizontal { "de um lado para o outro" } else { "indo e vindo (para perto e para longe)" }
+                if horizontal {
+                    "de lado"
+                } else {
+                    "indo e vindo"
+                }
             ),
             confianca: (foco * (self.trilhas.len() as f32 / 10.0).min(1.0)).clamp(0.0, 1.0),
         })
@@ -208,9 +212,7 @@ impl Observador {
                 Ponto { x: bx, y: by },
                 Ponto { x: ax, y: by },
             ],
-            motivo: format!(
-                "Pessoas ficaram paradas aqui por cerca de {segundos} s no total (balcão, caixa ou porta de espera). A zona avisa quando tem alguém nesse ponto."
-            ),
+            motivo: format!("Pessoas paradas aqui por {segundos} s no total."),
             confianca: (soma as f32 / 300.0).clamp(0.2, 1.0),
         })
     }

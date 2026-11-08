@@ -1230,7 +1230,7 @@ function sugRender(r) {
       el("div", { class: "sug-info" },
         el("strong", {}, `${sg.nome} · ${t("regra." + sg.forma)}`),
         el("p", { class: "tiny" }, sg.motivo),
-        el("span", { class: "badge " + (boa ? "sug-boa" : "sug-fraca") }, `${t("sug.confianca")} ${pct}% · ${t(boa ? "sug.boa" : "sug.fraca")}`)),
+        el("span", { class: "badge " + (boa ? "sug-boa" : "sug-fraca") }, `${pct}% · ${t(boa ? "sug.boa" : "sug.fraca")}`)),
       aceitar);
   }));
 }

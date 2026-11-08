@@ -305,7 +305,8 @@ button.link:hover { color: var(--text); }
 @media (prefers-reduced-motion: reduce) { .viewer.alerta { animation: none; } }
 /* ---------- IA, sugira para mim ---------- */
 .sugerir { margin-top: var(--s4); padding: var(--s4); max-width: 960px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
-.sugerir-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s4); }
+.sugerir-topo { display: flex; flex-direction: column; align-items: stretch; gap: var(--s3); }
+.sug-acoes { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .sugerir-topo .hint { margin: var(--s1) 0 0; }
 .sug-andamento { margin-top: var(--s3); }
 .sug-barra { height: 4px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
@@ -346,4 +347,4 @@ button.link:hover { color: var(--text); }
 .badge.sug-boa { color: var(--accent); border-color: var(--accent); }
 .badge.sug-fraca { color: var(--c-warn); border-color: var(--c-warn); }
 .sug-regra { color: var(--text-3); margin: var(--s1) 0 0; }
-.sugerir-topo #sug-cancelar { flex: none; }
+.sug-info .badge { display: inline-block; white-space: nowrap; }
