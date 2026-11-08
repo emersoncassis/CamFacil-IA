@@ -23,8 +23,6 @@ use std::time::Duration;
 
 /// Intervalo da vigília.
 const VIGILIA: Duration = Duration::from_secs(5 * 60);
-/// Chave em `settings`: MAC aprendido por câmera (`{"7":"58:10:8C:…"}`).
-const CHAVE_MACS: &str = "rede.macs";
 
 struct EstadoFoto {
     rodando: bool,
@@ -102,45 +100,44 @@ pub fn cameras_rede(app: &App) -> Vec<CameraRede> {
 
 // ---------------- MACs aprendidos ----------------
 
+/// MAC aprendido por câmera (coluna `cameras.mac`; vazio fica de fora).
 fn macs_conhecidos(app: &App) -> BTreeMap<i64, String> {
     app.store
-        .get(CHAVE_MACS)
-        .ok()
-        .flatten()
-        .and_then(|s| serde_json::from_str::<BTreeMap<String, String>>(&s).ok())
-        .map(|m| {
-            m.into_iter()
-                .filter_map(|(k, v)| k.parse().ok().map(|k| (k, v)))
-                .collect()
-        })
+        .cameras()
         .unwrap_or_default()
+        .into_iter()
+        .filter(|c| c.mac_conhecido())
+        .map(|c| (c.id, c.mac))
+        .collect()
 }
 
 fn salvar_macs(app: &App, macs: &BTreeMap<i64, String>) {
-    let m: BTreeMap<String, String> = macs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect();
-    let _ = app
-        .store
-        .set(CHAVE_MACS, &serde_json::to_string(&m).unwrap_or_default());
+    for (id, mac) in macs {
+        let _ = app.store.definir_mac_camera(*id, mac);
+    }
 }
 
 /// Aprende o MAC das câmeras cadastradas a partir de uma foto.
 fn aprender_da_foto(app: &App, foto: &Foto) {
-    let mut macs = macs_conhecidos(app);
-    let mut mudou = false;
-    for d in &foto.dispositivos {
-        if let (Some(id), Some(mac)) = (d.camera_id, &d.mac) {
-            if macs.get(&id) != Some(mac) {
-                macs.insert(id, mac.clone());
-                mudou = true;
-            }
-        }
-    }
-    if mudou {
-        salvar_macs(app, &macs);
-    }
+    let macs = macs_conhecidos(app);
+    let novos: BTreeMap<i64, String> = foto
+        .dispositivos
+        .iter()
+        .filter_map(|d| Some((d.camera_id?, d.mac.clone()?)))
+        .filter(|(id, mac)| macs.get(id) != Some(mac))
+        .collect();
+    salvar_macs(app, &novos);
+}
+
+/// Aprende o MAC de uma câmera recém-ligada pela tabela ARP (a conexão RTSP
+/// que acabou de dar certo deixa o IP dela na ARP).
+pub async fn aprender_mac_agora(app: &App, id: i64, host: &str) -> Option<String> {
+    let arp = tokio::task::spawn_blocking(rede::arp_table)
+        .await
+        .unwrap_or_default();
+    let mac = arp.get(host)?.clone();
+    let _ = app.store.definir_mac_camera(id, &mac);
+    Some(mac)
 }
 
 // ---------------- Vigília: câmera mudou de IP? ----------------
@@ -160,8 +157,10 @@ pub fn detectar_mudancas(
         let mac_no_ip = arp.get(&cam.host);
         match macs.get(&cam.id) {
             None => {
-                // Ainda não sabemos o MAC: aprende se a câmera responde no IP dela.
-                if let (Some(m), true) = (mac_no_ip, respondem_554.contains(&cam.host)) {
+                // Ainda não sabemos o MAC: aprende se a câmera responde no IP
+                // dela (a vigília só varre a 554; noutra porta basta a ARP).
+                let responde = cam.porta != 554 || respondem_554.contains(&cam.host);
+                if let (Some(m), true) = (mac_no_ip, responde) {
                     aprendidos.insert(cam.id, m.clone());
                 }
             }
@@ -198,14 +197,11 @@ async fn vigiar(r: Arc<Rede>) {
                 let arp = tokio::task::spawn_blocking(rede::arp_table)
                     .await
                     .unwrap_or_default();
-                let mut macs = macs_conhecidos(&app);
+                let macs = macs_conhecidos(&app);
                 let (novas, aprendidos) =
                     detectar_mudancas(&cams, &macs, &arp, &respondem, agora());
-                if !aprendidos.is_empty() {
-                    macs.extend(aprendidos);
-                    salvar_macs(&app, &macs);
-                }
-                r.registrar_mudancas(&app, novas);
+                salvar_macs(&app, &aprendidos);
+                r.tratar_mudancas(&app, novas).await;
             }
         } else {
             return;
@@ -214,7 +210,113 @@ async fn vigiar(r: Arc<Rede>) {
     }
 }
 
+// ---------------- Autocorreção (o que é do programa de verdade) ----------------
+
+/// Rede, vídeo e avisos de verdade para a autocorreção.
+struct AmbienteReal<'a> {
+    app: &'a App,
+}
+
+impl crate::autoip::Ambiente for AmbienteReal<'_> {
+    async fn porta_abre(&self, ip: &str, porta: u16) -> bool {
+        let Ok(ip) = ip.parse::<std::net::IpAddr>() else {
+            return false;
+        };
+        for _ in 0..2 {
+            if rede::sondar(ip, porta, Duration::from_millis(1500))
+                .await
+                .is_some()
+            {
+                return true;
+            }
+        }
+        false
+    }
+
+    async fn mac_no_ip(&self, ip: &str) -> Option<String> {
+        let ip = ip.to_string();
+        tokio::task::spawn_blocking(move || rede::arp_table().get(&ip).cloned())
+            .await
+            .ok()
+            .flatten()
+    }
+
+    fn reiniciar_video(&self, id: i64, url: &str) {
+        self.app.video.iniciar(id, "rtsp", url);
+    }
+
+    async fn imagem_voltou(&self, id: i64, limite: Duration) -> bool {
+        let fim = std::time::Instant::now() + limite;
+        while std::time::Instant::now() < fim {
+            tokio::time::sleep(Duration::from_millis(500)).await;
+            if let Some(c) = self.app.video.canal(id) {
+                let tem_quadro = c.ultimo.lock().map(|u| u.is_some()).unwrap_or(false);
+                if tem_quadro && c.estado().online {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    fn notificar(&self, chave: String, texto: String) {
+        crate::video::notificar(chave, texto, None);
+    }
+}
+
+/// IPs em que a autocorreção não mexe sozinha: conflito visto nas últimas
+/// fotos da rede.
+fn ips_em_conflito(app: &App) -> Vec<String> {
+    let fotos: Vec<Foto> = app
+        .store
+        .fotos_rede(rede::FOTOS_CONFLITO as i64)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|(_, f)| f)
+        .collect();
+    rede::conflitos_ip(&fotos)
+        .into_iter()
+        .map(|c| c.ip)
+        .collect()
+}
+
 impl Rede {
+    /// Para cada mudança: com autocorreção ligada, tenta corrigir sozinho;
+    /// o resto (e o que falhou) vira aviso com o botão de confirmar.
+    async fn tratar_mudancas(&self, app: &App, novas: Vec<MudancaIp>) {
+        if novas.is_empty() {
+            return;
+        }
+        let conflitos = ips_em_conflito(app);
+        let cams = cameras_rede(app);
+        let amb = AmbienteReal { app };
+        let mut manuais = Vec::new();
+        for m in novas {
+            // Já pendente (ex.: falhou antes): não tenta de novo a cada 5 min.
+            let ja = self
+                .mudancas_pendentes()
+                .iter()
+                .any(|p| p.camera_id == m.camera_id && p.para == m.para);
+            if ja {
+                manuais.push(m);
+                continue;
+            }
+            // Dois MACs no IP novo, ou o IP já é de outra câmera cadastrada.
+            let conflito = conflitos.contains(&m.para)
+                || cams.iter().any(|c| c.id != m.camera_id && c.host == m.para);
+            match crate::autoip::tentar(&amb, &app.store, &m, conflito, agora()).await {
+                crate::autoip::Desfecho::Corrigida(_) => {
+                    self.mudancas
+                        .lock()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .retain(|p| p.camera_id != m.camera_id);
+                }
+                crate::autoip::Desfecho::Manual(_) => manuais.push(m),
+            }
+        }
+        self.registrar_mudancas(app, manuais);
+    }
+
     /// Guarda as mudanças novas e gera um evento `rede` por câmera/IP novo.
     fn registrar_mudancas(&self, app: &App, novas: Vec<MudancaIp>) {
         let mut pend = self.mudancas.lock().unwrap_or_else(|p| p.into_inner());
@@ -386,7 +488,7 @@ pub async fn post_diagnostico(State(app): State<Shared>) -> ApiResult {
             } else if !pendentes.iter().any(|p| p.camera_id == cam.id) {
                 // O diagnóstico achou o MAC em outro IP: registra como a vigília faria.
                 if let (Some(mac), Some(novo)) = (&d.mac, &d.novo_ip) {
-                    r.registrar_mudancas(
+                    r.tratar_mudancas(
                         &app,
                         vec![MudancaIp {
                             camera_id: cam.id,
@@ -396,7 +498,8 @@ pub async fn post_diagnostico(State(app): State<Shared>) -> ApiResult {
                             mac: mac.clone(),
                             quando: agora(),
                         }],
-                    );
+                    )
+                    .await;
                 }
             }
             lista.push(d);
@@ -424,6 +527,12 @@ pub async fn get_diagnostico(State(app): State<Shared>) -> ApiResult {
         "resultado": resultado,
         "mudancas": r.mudancas_pendentes(),
         "meu_ip": cf_core::conectar::ip_local().map(|i| i.to_string()),
+        // Autocorreção de IP: estado por câmera RTSP e registro das correções.
+        "autocorrecao": app.store.cameras().unwrap_or_default().iter()
+            .filter(|c| c.fonte == "rtsp")
+            .map(|c| json!({ "camera_id": c.id, "auto_ip": c.auto_ip, "mac_conhecido": c.mac_conhecido() }))
+            .collect::<Vec<_>>(),
+        "auto_log": crate::autoip::ler_log(&app.store).into_iter().take(20).collect::<Vec<_>>(),
     })))
 }
 
@@ -451,6 +560,8 @@ pub async fn get_resumo(State(app): State<Shared>) -> ApiResult {
         "diagnosticadas": total,
         "mudancas": r.mudancas_pendentes().len(),
         "ultima_foto": ultima_foto,
+        // Correções automáticas (e desligamentos por oscilação) das últimas 24 h.
+        "auto_avisos": crate::autoip::avisos_recentes(&crate::autoip::ler_log(&app.store), agora()),
     })))
 }
 

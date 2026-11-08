@@ -375,6 +375,12 @@ struct PedidoConectar {
     /// Usar o login salvo (o mesmo das outras câmeras) em vez de usuário/senha.
     #[serde(default)]
     usar_salvo: bool,
+    /// Corrigir o IP sozinho se a câmera mudar de endereço (padrão desligado).
+    #[serde(default)]
+    auto_ip: bool,
+    /// MAC visto na busca (ONVIF), quando houver.
+    #[serde(default)]
+    mac: Option<String>,
 }
 
 fn porta_rtsp() -> u16 {
@@ -408,12 +414,29 @@ async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>)
         .store
         .criar_camera(&nome, "rtsp", &c.url)
         .map_err(internal)?;
+    if p.auto_ip {
+        app.store.definir_auto_ip(id, true).map_err(internal)?;
+    }
     app.video.iniciar(id, "rtsp", &c.url);
+    // Aprende o MAC já: a conexão que acabou de dar certo deixa o IP na ARP.
+    let host = cf_core::rede::host_da_url(&c.url).map(|(h, _)| h);
+    let mut mac = match &host {
+        Some(h) => crate::rede::aprender_mac_agora(&app, id, h).await,
+        None => None,
+    };
+    if mac.is_none() {
+        if let Some(m) = p.mac.as_deref().and_then(cf_core::rede::normalizar_mac) {
+            let _ = app.store.definir_mac_camera(id, &m);
+            mac = Some(m);
+        }
+    }
     Ok(Json(json!({
         "id": id,
         "nome": nome,
         "fabricante": c.fabricante,
         "endereco": c.url_sem_senha,
+        "auto_ip": p.auto_ip,
+        "mac_conhecido": mac.is_some(),
     })))
 }
 
@@ -655,6 +678,8 @@ async fn get_cameras(State(app): State<Shared>) -> ApiResult {
                 "url_sem_senha": rtsp::redact(&c.url),
                 "ativa": c.ativa,
                 "estado": estado,
+                "auto_ip": c.auto_ip,
+                "mac_conhecido": c.mac_conhecido(),
             })
         })
         .collect();
@@ -667,6 +692,9 @@ struct NovaCamera {
     fonte: String,
     #[serde(default)]
     url: String,
+    /// Autocorreção de IP (só vale para RTSP).
+    #[serde(default)]
+    auto_ip: bool,
 }
 
 async fn post_camera(State(app): State<Shared>, Json(n): Json<NovaCamera>) -> ApiResult {
@@ -679,6 +707,9 @@ async fn post_camera(State(app): State<Shared>, Json(n): Json<NovaCamera>) -> Ap
         .store
         .criar_camera(&nome, &n.fonte, n.url.trim())
         .map_err(internal)?;
+    if n.auto_ip && n.fonte == "rtsp" {
+        app.store.definir_auto_ip(id, true).map_err(internal)?;
+    }
     app.video.iniciar(id, &n.fonte, n.url.trim());
     Ok(Json(json!({ "id": id })))
 }
@@ -709,6 +740,9 @@ struct EdicaoCamera {
     senha: Option<String>,
     #[serde(default)]
     ativa: Option<bool>,
+    /// Autocorreção de IP pelo MAC (só RTSP).
+    #[serde(default)]
+    auto_ip: Option<bool>,
 }
 
 fn aplicar_edicao(
@@ -746,6 +780,15 @@ fn aplicar_edicao(
     if let Some(a) = e.ativa {
         c.ativa = a;
     }
+    if let Some(a) = e.auto_ip {
+        if a && c.fonte != "rtsp" {
+            return Err("correção de IP só vale para câmera RTSP");
+        }
+        c.auto_ip = a;
+    }
+    if c.fonte != "rtsp" {
+        c.auto_ip = false;
+    }
     Ok(c)
 }
 
@@ -763,6 +806,13 @@ async fn patch_camera(
     if !app.store.atualizar_camera(&nova).map_err(internal)? {
         return Err(bad(StatusCode::NOT_FOUND, "câmera não encontrada"));
     }
+    // Endereço apontado para outro aparelho à mão: o MAC aprendido não vale
+    // mais (senão a vigília "corrigiria" de volta para o aparelho antigo).
+    let host = |u: &str| cf_core::rede::host_da_url(u).map(|(h, _)| h);
+    if nova.fonte != "rtsp" || host(&nova.url) != host(&atual.url) {
+        let _ = app.store.definir_mac_camera(id, "");
+    }
+    let nova = app.store.camera(id).map_err(internal)?.unwrap_or(nova);
     // Reinicia o vídeo com o endereço novo (ou desliga, se ficou inativa).
     if nova.ativa {
         app.video.iniciar(id, &nova.fonte, &nova.url);
@@ -775,6 +825,8 @@ async fn patch_camera(
         "fonte": nova.fonte,
         "url_sem_senha": rtsp::redact(&nova.url),
         "ativa": nova.ativa,
+        "auto_ip": nova.auto_ip,
+        "mac_conhecido": nova.mac_conhecido(),
     })))
 }
 

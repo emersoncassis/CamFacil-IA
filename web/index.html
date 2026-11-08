@@ -92,6 +92,7 @@
           <p class="hint" data-i18n="saude.desc"></p>
           <p class="note warn mt" id="saude-desligado" hidden><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="saude.desligado"></span></p>
           <p class="note warn mt" id="rede-resumo" hidden><svg class="ico sm"><use href="#i-info"/></svg><span></span></p>
+          <p class="note info mt" id="rede-auto-aviso" role="status" hidden><svg class="ico sm"><use href="#i-info"/></svg><span></span></p>
           <div class="table-wrap mt">
             <table class="table">
               <thead><tr><th data-i18n="saude.col_camera"></th><th data-i18n="saude.col_situacao"></th><th data-i18n="saude.col_desde"></th><th data-i18n="saude.col_ultimo"></th></tr></thead>
@@ -157,6 +158,7 @@
             <label data-login><span data-i18n="cam.usuario"></span><input name="usuario" value="admin" autocapitalize="off"></label>
             <label data-login><span data-i18n="cam.senha"></span><input name="senha" type="password" id="ligar-senha"></label>
             <label class="span-2"><span data-i18n="ligar.nome"></span><input name="nome" maxlength="60" data-i18n-ph="cam.nome_ph"></label>
+            <label class="span-4 autoip" id="ligar-autoip"><span class="switch"><input type="checkbox" name="auto_ip" role="switch" aria-describedby="ligar-autoip-ajuda"><span></span></span><span class="autoip-txt"><span data-i18n="autoip.rotulo"></span><span class="tiny" id="ligar-autoip-ajuda" data-i18n="autoip.ajuda"></span></span></label>
             <div class="actions span-4">
               <button class="btn primary" type="submit" id="ligar-conectar"><span data-i18n="ligar.conectar"></span></button>
               <button class="btn ghost" type="button" id="ligar-voltar"><span data-i18n="ligar.voltar"></span></button>
@@ -540,11 +542,13 @@
           <ul class="list mt" id="rede-ip-mudou" hidden></ul>
           <div class="table-wrap mt">
             <table class="table rede-tabela">
-              <thead><tr><th data-i18n="rede.col_camera"></th><th data-i18n="rede.col_endereco"></th><th data-i18n="rede.col_alcance"></th><th data-i18n="rede.col_video"></th><th data-i18n="rede.col_dicas"></th></tr></thead>
+              <thead><tr><th data-i18n="rede.col_camera"></th><th data-i18n="rede.col_endereco"></th><th data-i18n="rede.col_alcance"></th><th data-i18n="rede.col_video"></th><th data-i18n="autoip.col"></th><th data-i18n="rede.col_dicas"></th></tr></thead>
               <tbody id="rede-diag"></tbody>
             </table>
           </div>
           <p class="msg" id="rede-diag-msg" role="status"></p>
+          <h3 class="sub" data-i18n="autoip.log"></h3>
+          <ul class="list rede-auto-log" id="rede-auto-log"></ul>
         </div>
 
         <div class="block bloco-cheio" data-sub="diagrama">
@@ -902,6 +906,7 @@
         <label class="campo" id="cam-url-campo"><span id="cam-url-rotulo"></span><input name="url" class="mono" autocapitalize="off" spellcheck="false" inputmode="url"></label>
         <label class="campo" id="cam-senha-campo"><span data-i18n="cam.senha"></span><input name="senha" type="password" autocomplete="new-password" data-i18n-ph="camed.senha_ph"></label>
         <label class="som-regra"><span class="switch"><input type="checkbox" name="ativa"><span></span></span><span data-i18n="camed.ativa"></span></label>
+        <label class="autoip" id="cam-autoip-campo"><span class="switch"><input type="checkbox" name="auto_ip" role="switch" aria-describedby="cam-autoip-ajuda"><span></span></span><span class="autoip-txt"><span data-i18n="autoip.rotulo"></span><span class="tiny" id="cam-autoip-ajuda"></span></span></label>
       </div>
       <p class="tiny" id="cam-dlg-dica" data-i18n="camed.dica"></p>
       <p class="msg" id="cam-dlg-msg" role="status"></p>

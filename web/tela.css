@@ -116,6 +116,16 @@ dialog { max-height: calc(100dvh - 32px); overflow: auto; }
 .dlg-acoes .espaco { flex: 1; }
 #confirma-dlg h2 { font-size: var(--fs-lg); }
 #confirma-dlg .hint { margin: 0; }
+/* Editar câmera em tela baixa (celular 640 px): nome e tipo lado a lado,
+   respiros menores e a dica geral some (o campo de senha já diz o mesmo). */
+@media (max-height: 700px) {
+  #cam-dlg { padding: var(--s4); }
+  #cam-dlg h2 { margin-bottom: var(--s2); }
+  #cam-dlg .campos { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s2); }
+  #cam-dlg .campos > :not(:nth-child(-n+2)) { grid-column: 1 / -1; }
+  #cam-dlg-dica { display: none; }
+  #cam-dlg .dlg-acoes { margin-top: var(--s3); }
+}
 
 /* Toque: alvos maiores */
 @media (pointer: coarse) {

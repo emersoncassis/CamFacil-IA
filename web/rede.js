@@ -25,6 +25,8 @@ function redeTipo(d) {
   return s;
 }
 
+let redeAutoCams = new Map(); // camera_id -> { auto_ip, mac_conhecido }
+
 function redeRenderInventario(foto, conflitos) {
   const emConflito = new Set((conflitos || []).map((c) => c.ip));
   const corpo = $("#rede-inventario");
@@ -44,7 +46,8 @@ function redeRenderInventario(foto, conflitos) {
     el("td", {}, d.fabricante || "—", d.modelo ? el("span", { class: "tiny" }, " · " + d.modelo) : null),
     el("td", { class: "mono" }, d.mac || "—"),
     el("td", { class: "mono" }, d.portas.length ? d.portas.join(" ") : "—"),
-    el("td", {}, d.camera_nome ? d.camera_nome : el("span", { class: "tiny" }, "—")))));
+    el("td", {}, d.camera_nome ? d.camera_nome : el("span", { class: "tiny" }, "—"),
+      d.camera_id != null && redeAutoCams.has(d.camera_id) ? el("div", {}, el("span", { class: "tiny" }, t("autoip.col") + ": "), redeAutoTag(redeAutoCams.get(d.camera_id))) : null))));
 }
 
 /// Conflito de IP: dois aparelhos respondendo pelo mesmo endereço.
@@ -129,6 +132,10 @@ async function redeRenderDiagrama(foto) {
 async function redeRender() {
   let r;
   try { r = await api("/api/rede/foto"); } catch (_) { return; }
+  try {
+    const { cameras } = await api("/api/cameras");
+    redeAutoCams = new Map(cameras.filter((c) => c.fonte === "rtsp").map((c) => [c.id, c]));
+  } catch (_) { /* segue sem o indicador */ }
   const btn = $("#rede-foto");
   busy(btn, r.rodando, "rede.fotografando");
   const bloco = $("#rede-prog-bloco");
@@ -214,6 +221,26 @@ function redeRenderIpMudou(mudancas) {
   }));
 }
 
+/// Estado da autocorreção de IP de uma câmera, para a coluna do diagnóstico.
+function redeAutoTag(a) {
+  if (!a) return el("span", { class: "tiny" }, "—");
+  if (!a.mac_conhecido) return el("span", { class: "tag off autoip-tag", title: t("autoip.aguardando") }, t("autoip.sem_mac"));
+  return el("span", { class: "tag autoip-tag " + (a.auto_ip ? "ok" : "off") }, t(a.auto_ip ? "autoip.ligada" : "autoip.desligada"));
+}
+
+/// Registro das correções automáticas (data, IP antigo, novo e resultado).
+function redeRenderAutoLog(log) {
+  const lista = $("#rede-auto-log");
+  if (!lista) return;
+  log = (log || []).slice(0, 5);
+  if (!log.length) { lista.replaceChildren(el("li", {}, el("p", { class: "tiny" }, t("autoip.log_vazio")))); return; }
+  lista.replaceChildren(...log.map((r) => el("li", { title: r.motivo || "" },
+    el("span", { class: "mono" }, tp("autoip.linha", r)),
+    el("span", { class: "actions" },
+      el("span", { class: "tag " + (r.resultado === "corrigido" ? "ok" : "warn") }, t("autoip.res." + r.resultado)),
+      el("span", { class: "tiny" }, redeData(r.quando))))));
+}
+
 async function redeDiagRender() {
   let r;
   try { r = await api("/api/rede/diagnostico"); } catch (_) { return; }
@@ -223,7 +250,9 @@ async function redeDiagRender() {
   $("#rede-diag-btn").disabled = r.rodando || !r.cameras_rtsp;
   redeRenderIpMudou(r.mudancas);
   const corpo = $("#rede-diag");
-  const vazio = (k) => corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "5" }, t(k))));
+  const vazio = (k) => corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "6" }, t(k))));
+  const auto = new Map((r.autocorrecao || []).map((a) => [a.camera_id, a]));
+  redeRenderAutoLog(r.auto_log);
   if (!r.cameras_rtsp) vazio("rede.diag_sem_cameras");
   else if (!r.resultado.length) vazio(r.rodando ? "rede.diagnosticando" : "rede.diag_nunca");
   else {
@@ -232,6 +261,7 @@ async function redeDiagRender() {
       el("td", { class: "mono" }, `${d.host}:${d.porta}`, d.mac ? el("div", { class: "tiny" }, d.mac) : null),
       el("td", {}, redeAlcance(d)),
       el("td", {}, redeVideo(estado[String(d.camera_id)])),
+      el("td", {}, redeAutoTag(auto.get(d.camera_id))),
       el("td", {}, el("ul", { class: "rede-dicas" }, ...d.dicas.map((x) => el("li", { class: x.codigo }, tp("rede.dica." + x.codigo, x.params))))))));
   }
   if (r.quando && !$("#rede-diag-msg").classList.contains("ok")) redeDiagMsg(tp("rede.diag_quando", { data: redeData(r.quando) }));
@@ -253,6 +283,12 @@ async function redeResumoInicio() {
     const r = await api("/api/rede/resumo");
     nota.hidden = !r.mudancas;
     nota.querySelector("span").textContent = tp("rede.resumo_mudou", { n: r.mudancas });
+    // Aviso informativo (não é erro): a última correção automática das 24 h.
+    const info = $("#rede-auto-aviso");
+    const a = (r.auto_avisos || [])[0];
+    info.hidden = !a;
+    info.className = "note mt " + (a && a.resultado === "oscilou" ? "warn" : "info");
+    if (a) info.querySelector("span").textContent = tp(a.resultado === "oscilou" ? "autoip.aviso_oscilou" : "autoip.aviso_corrigido", a);
   } catch (_) { nota.hidden = true; }
 }
 
