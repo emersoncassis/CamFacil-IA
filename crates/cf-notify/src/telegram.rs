@@ -183,6 +183,40 @@ impl Bot {
     }
 }
 
+impl Bot {
+    /// Arquivo (PDF, backup) com legenda, até 50 MB pela Bot API.
+    pub async fn send_document(
+        &self,
+        chat_id: i64,
+        nome: &str,
+        bytes: &[u8],
+        legenda: &str,
+    ) -> Result<(), String> {
+        let limite = "----CamFacilIA7f3a9d";
+        let corpo = multipart(
+            limite,
+            &[
+                ("chat_id", chat_id.to_string().as_bytes(), None),
+                ("caption", legenda.as_bytes(), None),
+                ("document", bytes, Some((nome, "application/octet-stream"))),
+            ],
+        );
+        let r = self
+            .http
+            .post(self.url("sendDocument"))
+            .header(
+                "Content-Type",
+                format!("multipart/form-data; boundary={limite}"),
+            )
+            .body(corpo)
+            .send()
+            .await
+            .map_err(traduzir)?;
+        let _: Value = ler(r).await?;
+        Ok(())
+    }
+}
+
 async fn ler<T: for<'de> Deserialize<'de>>(r: reqwest::Response) -> Result<T, String> {
     let status = r.status();
     let texto = r.text().await.map_err(traduzir)?;

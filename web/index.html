@@ -361,6 +361,25 @@
             <ol class="passos" id="tv-passos"></ol>
           </details>
         </div>
+
+        <div class="block" id="rel-bloco">
+          <div class="block-head">
+            <h2 data-i18n="rel.titulo"></h2>
+          </div>
+          <p class="hint" data-i18n="rel.desc"></p>
+          <div class="man-grid mt">
+            <label class="man-campo"><span data-i18n="rel.cliente"></span><input id="rel-cliente" type="text" maxlength="80" autocomplete="off" data-i18n-ph="rel.cliente_ph"></label>
+            <label class="man-campo"><span data-i18n="rel.tecnico"></span><input id="rel-tecnico" type="text" maxlength="80" autocomplete="off" data-i18n-ph="rel.tecnico_ph"></label>
+          </div>
+          <label class="man-campo mt man-largo"><span data-i18n="rel.observacoes"></span><textarea id="rel-obs" rows="3" maxlength="2000" data-i18n-ph="rel.observacoes_ph"></textarea></label>
+          <div class="actions mt">
+            <button class="btn primary" type="button" id="rel-gerar"><span data-i18n="rel.gerar"></span></button>
+          </div>
+          <p class="msg" id="rel-msg" role="status"></p>
+          <h3 class="sub" data-i18n="rel.gerados"></h3>
+          <ul class="list mt" id="rel-lista"></ul>
+          <p class="tiny" id="rel-pasta"></p>
+        </div>
       </section>
 
       <!-- Integrações -->

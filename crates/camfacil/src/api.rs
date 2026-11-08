@@ -87,6 +87,18 @@ pub fn router(app: Shared) -> Router {
         .route("/api/tv/whatsapp.svg", get(crate::tv::get_whatsapp_qr))
         .route("/api/hardware", get(crate::hardware::get_atual))
         .route("/api/hardware/log", get(crate::hardware::get_log))
+        .route(
+            "/api/relatorio",
+            get(crate::relatorio::get_lista).post(crate::relatorio::post_gerar),
+        )
+        .route(
+            "/api/relatorio/{arquivo}",
+            get(crate::relatorio::get_baixar).delete(crate::relatorio::delete_relatorio),
+        )
+        .route(
+            "/api/relatorio/{arquivo}/telegram",
+            post(crate::relatorio::post_telegram),
+        )
         .fallback(static_file)
         .with_state(app)
 }

@@ -198,16 +198,64 @@ function hwIniciar() {
   document.querySelectorAll("#hw-periodo input").forEach((i) => { i.onchange = () => { hwHoras = Number(i.value); hwCarregar(); }; });
 }
 
+// ---------- Relatório em PDF ----------
+function relTamanho(b) { return b >= 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`; }
+
+async function relCarregar() {
+  try {
+    const r = await api("/api/relatorio");
+    if (!$("#rel-cliente").value) $("#rel-cliente").value = r.cliente || "";
+    if (!$("#rel-tecnico").value) $("#rel-tecnico").value = r.tecnico || "";
+    $("#rel-pasta").textContent = `${t("rel.pasta")} ${r.pasta}`;
+    const lista = $("#rel-lista");
+    if (!r.relatorios.length) { lista.replaceChildren(el("li", {}, el("p", {}, t("rel.nenhum")))); return; }
+    lista.replaceChildren(...r.relatorios.map((x) => {
+      const url = `/api/relatorio/${encodeURIComponent(x.arquivo)}`;
+      const tg = el("button", { class: "btn ghost sm", type: "button" }, t("rel.telegram"));
+      tg.onclick = async () => {
+        tg.disabled = true;
+        try { const d = await api(`${url}/telegram`, {}); manMsg("#rel-msg", t("rel.enviado").replace("{n}", d.enviados), "ok"); }
+        catch (e) { manMsg("#rel-msg", e.message, "err"); }
+        tg.disabled = false;
+      };
+      const apagar = el("button", { class: "btn ghost sm", type: "button" }, t("rel.apagar"));
+      apagar.onclick = async () => {
+        if (!confirm(t("rel.apagar_confirma"))) return;
+        try { await api(url, undefined, "DELETE"); relCarregar(); } catch (e) { manMsg("#rel-msg", e.message, "err"); }
+      };
+      return el("li", {},
+        el("div", {}, el("p", {}, el("strong", {}, x.arquivo)),
+          el("span", { class: "tiny" }, `${new Date(x.quando * 1000).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} · ${relTamanho(x.bytes)}`)),
+        el("span", { class: "actions" }, el("a", { class: "btn sm", href: url, download: x.arquivo }, t("rel.baixar")), tg, apagar));
+    }));
+  } catch (e) { manMsg("#rel-msg", e.message, "err"); }
+}
+
+async function relGerar() {
+  const b = $("#rel-gerar"); b.disabled = true;
+  manMsg("#rel-msg", t("rel.gerando"));
+  try {
+    const r = await api("/api/relatorio", { cliente: $("#rel-cliente").value, tecnico: $("#rel-tecnico").value, observacoes: $("#rel-obs").value });
+    manMsg("#rel-msg", `${t("rel.gerado")} · ${r.arquivo} · ${relTamanho(r.bytes)}`, "ok");
+    relCarregar();
+  } catch (e) { manMsg("#rel-msg", e.message, "err"); }
+  b.disabled = false;
+}
+
+function relIniciar() { $("#rel-gerar").onclick = relGerar; }
+
 // ---------- Entrada da tela ----------
 let manutencaoCarregada = false;
 function manutencaoAtivar(ativo) {
   hwAtivar(ativo);
   if (!ativo) return;
   tvCarregar();
+  relCarregar();
   manutencaoCarregada = true;
 }
 
 function iniciarManutencao() {
   tvIniciar();
   hwIniciar();
+  relIniciar();
 }

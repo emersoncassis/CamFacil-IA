@@ -262,6 +262,29 @@ impl Telegram {
         Ok(chats.len())
     }
 
+    /// Manda um arquivo (relatório PDF, backup) a todos os autorizados, na
+    /// hora, sem passar pela fila. Devolve quantos receberam.
+    pub async fn enviar_arquivo(
+        &self,
+        nome: &str,
+        bytes: Vec<u8>,
+        legenda: &str,
+    ) -> Result<usize, String> {
+        let bot = self.bot().ok_or("nenhum token do Telegram salvo")?;
+        let chats = self
+            .store
+            .telegram_autorizados()
+            .map_err(|e| e.to_string())?;
+        if chats.is_empty() {
+            return Err("nenhum contato autorizado no Telegram".into());
+        }
+        for c in &chats {
+            bot.send_document(*c, nome, &bytes, legenda).await?;
+        }
+        self.interno.lock().unwrap().enviados += chats.len() as u64;
+        Ok(chats.len())
+    }
+
     /// Entrada dos alertas (pode ser chamada de qualquer thread). Aplica o
     /// antirrepique por chave e entrega à fila; nunca bloqueia.
     pub fn notificar(&self, alerta: Alerta) {
