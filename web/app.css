@@ -341,3 +341,9 @@ button.link:hover { color: var(--text); }
 .tag.ia::before { background: var(--c-green); }
 .perm-input { width: 64px; height: 28px; padding: 0 var(--s2); font-size: var(--fs-sm); text-align: right; }
 .perm-wrap { display: inline-flex; align-items: center; gap: var(--s2); font-size: var(--fs-xs); color: var(--text-3); }
+
+/* IA, sugira para mim: confiança boa (>= 70%) ou baixa */
+.badge.sug-boa { color: var(--accent); border-color: var(--accent); }
+.badge.sug-fraca { color: var(--c-warn); border-color: var(--c-warn); }
+.sug-regra { color: var(--text-3); margin: var(--s1) 0 0; }
+.sugerir-topo #sug-cancelar { flex: none; }

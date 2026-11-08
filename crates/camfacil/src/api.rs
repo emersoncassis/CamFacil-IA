@@ -43,7 +43,9 @@ pub fn router(app: Shared) -> Router {
         .route("/api/cameras/{id}/foto.jpg", get(get_foto))
         .route(
             "/api/cameras/{id}/sugestoes",
-            get(get_sugestoes).post(post_sugestoes),
+            get(get_sugestoes)
+                .post(post_sugestoes)
+                .delete(delete_sugestoes),
         )
         .route("/api/cameras/{id}/regras", get(get_regras).post(post_regra))
         .route("/api/regras/{id}", patch(patch_regra).delete(delete_regra))
@@ -1070,6 +1072,17 @@ async fn post_sugestoes(
         duracao: Duration::from_secs(seg),
     });
     Ok(Json(json!({ "observando": true, "segundos": seg })))
+}
+
+/// Para a observação (Cancelar, ou depois de aceitar uma regra: uma regra por
+/// pesquisa) e descarta as sugestões.
+async fn delete_sugestoes(State(app): State<Shared>, Path(id): Path<i64>) -> ApiResult {
+    let canal = app
+        .video
+        .canal(id)
+        .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
+    *canal.observacao.lock().unwrap() = None;
+    Ok(Json(json!({ "observando": false })))
 }
 
 /// Andamento da observação e as sugestões (parciais ou finais).
