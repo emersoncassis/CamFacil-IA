@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_nome">CamFácil IA</string>
+
+    <!-- Menu do painel -->
+    <string name="menu_cameras">Câmeras ao vivo</string>
+    <string name="menu_alertas_ligar">Receber alertas no celular</string>
+    <string name="menu_alertas_desligar">Parar de receber alertas</string>
+    <string name="menu_parear">Parear com outro programa</string>
+    <string name="menu_recarregar">Recarregar</string>
+    <string name="menu_bateria">Não deixar a bateria fechar o app</string>
+    <string name="menu_site">Abrir o site cfia.ysafe.com.br</string>
+
+    <!-- Erro de conexão -->
+    <string name="erro_titulo">Não consegui falar com o CamFácil IA</string>
+    <string name="erro_texto">Confira se o programa está aberto no computador e se o celular está na mesma rede (ou com o Tailscale ligado).\n\nEndereço: %1$s</string>
+    <string name="erro_tentar">Tentar de novo</string>
+    <string name="erro_parear">Parear de novo</string>
+
+    <!-- Pareamento -->
+    <string name="parear_titulo">Parear</string>
+    <string name="parear_lede">Ligue o app ao CamFácil IA que roda no computador da loja.</string>
+    <string name="parear_qr">Ler o QR code da dashboard</string>
+    <string name="parear_qr_dica">Na dashboard, abra o quadro "Acessar de fora (Tailscale)" e aponte a câmera do celular para o QR code.</string>
+    <string name="parear_ou">ou digite o endereço</string>
+    <string name="parear_campo">192.168.0.10:7070 ou 100.x.y.z:7070</string>
+    <string name="parear_conectar">Conectar</string>
+    <string name="parear_testando">Testando a conexão…</string>
+    <string name="parear_falhou">Não respondeu em %1$s. Confira o endereço e a rede.</string>
+    <string name="parear_invalido">Endereço inválido.</string>
+    <string name="parear_tailscale_ok">Tailscale instalado: abra o app do Tailscale e ligue antes de conectar de longe.</string>
+    <string name="parear_tailscale_falta">Para ver de longe (fora da rede da loja), instale o Tailscale no celular e entre com a mesma conta do computador.</string>
+    <string name="parear_tailscale_abrir">Abrir Tailscale</string>
+    <string name="parear_tailscale_instalar">Instalar Tailscale</string>
+    <string name="parear_nuvem">Usar o painel no site (cfia.ysafe.com.br)</string>
+
+    <!-- QR -->
+    <string name="qr_titulo">Ler QR code</string>
+    <string name="qr_sem_camera">Sem permissão de câmera. Digite o endereço na tela anterior.</string>
+    <string name="qr_dica">Aponte para o QR code da dashboard</string>
+
+    <!-- Câmeras -->
+    <string name="cameras_titulo">Câmeras ao vivo</string>
+
+    <!-- Alertas -->
+    <string name="canal_alertas">Alertas das regras</string>
+    <string name="canal_alertas_desc">Aviso quando uma regra de IA dispara (linha, zona, permanência).</string>
+    <string name="canal_saude">Saúde das câmeras</string>
+    <string name="canal_vigia">Vigia de alertas</string>
+    <string name="vigia_texto">Atento aos alertas de %1$s</string>
+    <string name="vigia_sem_conexao">Sem conexão com %1$s. Tentando de novo…</string>
+    <string name="alerta_linha">Passagem: %1$s · %2$s</string>
+    <string name="alerta_zona">Zona ocupada · %1$s</string>
+    <string name="alerta_permanencia">Parado há %1$s · %2$s</string>
+    <string name="alerta_saude">%1$s: %2$s</string>
+    <string name="alertas_ligados">Alertas ligados. Você recebe um aviso quando uma regra disparar.</string>
+    <string name="alertas_desligados">Alertas desligados.</string>
+    <string name="alertas_so_local">Os alertas no celular funcionam pareado com o programa local.</string>
+</resources>
