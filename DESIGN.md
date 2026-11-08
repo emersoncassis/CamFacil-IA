@@ -53,6 +53,14 @@ Fonte do sistema (zero download): `system-ui, Segoe UI, Roboto, Ubuntu`. Mono (`
 - **Blocos** separados por linha de 1 px; sem cartões aninhados.
 - Conteúdo em **tabelas** e **linhas chave/valor** com bordas finas, raio de 6 px.
 
+## Zero rolagem (regra geral)
+- **Nenhuma página rola.** O corpo da página ocupa exatamente a tela (`height: 100dvh; overflow: hidden`) no celular, no tablet, na TV e no monitor. Se o técnico tiver que rolar, perdemos o cliente.
+- O conteúdo se **adapta ao tamanho da tela**: grade e tipografia fluidas (`clamp()`, `minmax()`, container queries), vídeo e imagem com `object-fit: contain` dentro do espaço que sobrar.
+- O que não cabe vira **seção que abre** (acordeão, `<details>`), **aba**, **menu/submenu** ou **passo seguinte**. Nunca uma página comprida.
+- Listas longas (câmeras, alertas, eventos, inventário) **paginam ou filtram** dentro de um espaço fixo. Rolagem interna só como último recurso, num bloco pequeno e claramente delimitado, nunca na página.
+- No celular, navegação embaixo (barra de abas) e um assunto por vez na tela.
+- Teste obrigatório: abrir cada tela em 360×640, 390×844, 768×1024, 1366×768 e 1920×1080 e conferir `document.documentElement.scrollHeight <= innerHeight`.
+
 ## Componentes
 
 | Componente | Regra |

@@ -18,6 +18,7 @@ Ferramenta open source (AGPL-3.0) em Rust para instaladores de CFTV aprenderem e
 6. **Escopo**: não implementar painel multicliente, busca em gravações, ronda virtual nem gravação contínua (PRD §6).
 7. **Segurança**: segredos cifrados; MCP desligado por padrão; ações físicas (portão/relé) exigem confirmação e log.
 8. Textos de interface em **pt-BR**, em arquivos de tradução.
+9. **Zero rolagem.** Nenhuma tela (programa local, app Android, site, curso) rola a página. Tudo cabe numa tela só, do celular ao monitor (layout em `100dvh`, adaptado ao tamanho da tela). Informação a mais vira seção que abre (acordeão), aba, menu ou submenu, nunca página comprida. "Rolou a página, perdeu o cliente." Listas longas paginam ou filtram dentro do espaço fixo. Ver `DESIGN.md`.
 
 ## Convenções
 - Workspace Cargo em `crates/` (`camfacil` binário, `cf-core`, `cf-modules`, `cf-notify`…), criado conforme as fases.
