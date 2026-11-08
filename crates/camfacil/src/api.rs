@@ -431,7 +431,8 @@ async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>)
             .nome
             .clone()
             .filter(|n| !n.trim().is_empty())
-            .unwrap_or_else(|| format!("Gravador {}", p.ip.trim()));
+            // Sem IP no nome: os canais viram "Gravador N · Canal N".
+            .unwrap_or_else(|| nome_livre(&app, "Gravador"));
         return Ok(Json(json!({
             "tipo": "gravador",
             "token": token,
@@ -445,7 +446,7 @@ async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>)
     let nome: String = p
         .nome
         .filter(|n| !n.trim().is_empty())
-        .unwrap_or_else(|| format!("Câmera {}", p.ip.trim()))
+        .unwrap_or_else(|| nome_livre(&app, "Câmera"))
         .trim()
         .chars()
         .take(60)
@@ -565,6 +566,48 @@ struct PedidoGravador {
     auto_ip: bool,
 }
 
+/// Câmeras antigas com nome padrão "Câmera 192.168.0.201": troca por
+/// "Câmera N" (o IP não vai no nome). Roda uma vez no início.
+pub(crate) fn tirar_ip_dos_nomes(store: &cf_core::store::Store) {
+    let Ok(cams) = store.cameras() else { return };
+    let mut usados: std::collections::HashSet<String> =
+        cams.iter().map(|c| c.nome.clone()).collect();
+    for mut c in cams {
+        let Some((host, _)) = cf_core::rede::host_da_url(&c.url) else {
+            continue;
+        };
+        if c.nome != format!("Câmera {host}") {
+            continue;
+        }
+        let Some(novo) = (1..)
+            .map(|n| format!("Câmera {n}"))
+            .find(|n| !usados.contains(n))
+        else {
+            continue;
+        };
+        usados.insert(novo.clone());
+        c.nome = novo;
+        let _ = store.atualizar_camera(&c);
+    }
+}
+
+/// Nome padrão sem IP: "Câmera 3" (o primeiro número que ainda não existe).
+fn nome_livre(app: &Shared, base: &str) -> String {
+    let nomes: std::collections::HashSet<String> = app
+        .store
+        .cameras()
+        .map(|v| v.into_iter().map(|c| c.nome).collect())
+        .unwrap_or_default();
+    (1..)
+        .map(|n| format!("{base} {n}"))
+        .find(|n| {
+            !nomes
+                .iter()
+                .any(|x| x == n || x.starts_with(&format!("{n} · ")))
+        })
+        .unwrap_or_else(|| base.to_string())
+}
+
 /// Nome de cada câmera vinda de gravador: "<gravador> · Canal N".
 fn nome_canal(gravador: &str, canal: u32, proprio: Option<&str>) -> String {
     let n = proprio
@@ -609,7 +652,7 @@ async fn post_gravador_adicionar(
         .map(|(h, _)| h)
         .unwrap_or_default();
     let base = if p.nome.trim().is_empty() {
-        format!("Gravador {host}")
+        nome_livre(&app, "Gravador")
     } else {
         p.nome.trim().to_string()
     };
