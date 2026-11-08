@@ -28,7 +28,7 @@ pub const PLACA: &str = include_str!("../../../docs/legal/PLACA-AMBIENTE-MONITOR
 /// Versões dos textos (acompanham a linha "Versão do texto" de cada arquivo).
 pub const VERSAO_TECNICO: &str = "1.0";
 pub const VERSAO_CLIENTE: &str = "1.0";
-const DOC_TECNICO: &str = "termo_tecnico";
+pub(crate) const DOC_TECNICO: &str = "termo_tecnico";
 const DOC_CLIENTE: &str = "autorizacao_cliente";
 const CHAVE_CLIENTE: &str = "termos_cliente";
 
