@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/manutencao.css">
+  <link rel="stylesheet" href="/integracoes-extra.css">
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -479,6 +480,43 @@
           </div>
           <p class="msg" id="ts-msg" role="status"></p>
         </div>
+        <div class="block" id="termos">
+          <h2 data-i18n="lg.titulo"></h2>
+          <p class="hint" data-i18n="lg.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="lg.tecnico"></dt><dd><span class="state"><span class="dot" id="lg-dot"></span><span id="lg-status"></span></span></dd>
+            <dt data-i18n="lg.cliente"></dt><dd id="lg-cliente-status">—</dd>
+          </dl>
+          <details class="avancado mt" id="lg-texto-wrap">
+            <summary data-i18n="lg.ler_termo"></summary>
+            <pre class="termo-texto" id="lg-texto"></pre>
+          </details>
+          <div class="actions mt">
+            <button class="btn primary" id="lg-aceitar" type="button"><span data-i18n="lg.aceitar"></span></button>
+          </div>
+          <h3 class="sub" data-i18n="lg.cliente_titulo"></h3>
+          <p class="hint" data-i18n="lg.cliente_dica"></p>
+          <form class="form-grid" id="lg-form" autocomplete="off">
+            <input name="cliente" data-i18n-ph="lg.ph_cliente" required>
+            <input name="documento" data-i18n-ph="lg.ph_documento">
+            <input name="tecnico" data-i18n-ph="lg.ph_tecnico" required>
+            <input name="contato" data-i18n-ph="lg.ph_contato">
+            <input name="local" data-i18n-ph="lg.ph_local">
+            <input name="prazo_dias" type="number" min="0" max="3650" inputmode="numeric" data-i18n-ph="lg.ph_prazo">
+            <button class="btn primary" type="submit"><span data-i18n="lg.salvar_cliente"></span></button>
+          </form>
+          <div class="actions mt">
+            <a class="btn sm" href="/api/termos/cliente.md" download data-i18n="lg.baixar_termo"></a>
+            <a class="btn sm" href="/api/termos/placa.md" download data-i18n="lg.baixar_placa"></a>
+          </div>
+          <p class="tiny mt" data-i18n="lg.imprimir_dica"></p>
+          <h3 class="sub" data-i18n="lg.apagar_titulo"></h3>
+          <p class="hint" data-i18n="lg.apagar_dica"></p>
+          <div class="actions mt">
+            <button class="btn sm perigo" id="lg-apagar" type="button"><span data-i18n="lg.apagar"></span></button>
+          </div>
+          <p class="msg" id="lg-msg" role="status"></p>
+        </div>
         <div class="block" id="tg">
           <h2>Telegram</h2>
           <p class="hint" data-i18n="tg.desc"></p>
@@ -510,9 +548,106 @@
             <p class="tiny mt" data-i18n="tg.comandos"></p>
           </div>
         </div>
+        <div class="block" id="whatsapp">
+          <h2>WhatsApp</h2>
+          <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="wa.aviso"></span></p>
+          <p class="hint" data-i18n="wa.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="wa.situacao"></dt><dd><span class="state"><span class="dot" id="wa-dot"></span><span id="wa-status"></span></span></dd>
+            <dt data-i18n="wa.instancia"></dt><dd class="mono" id="wa-inst">—</dd>
+            <dt data-i18n="wa.envios"></dt><dd id="wa-envios">—</dd>
+          </dl>
+          <form class="form-grid" id="wa-form" autocomplete="off">
+            <input name="url" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.url_ph" required>
+            <input name="instancia" class="mono" type="text" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.instancia_ph" required>
+            <input name="apikey" class="mono" type="password" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.apikey_ph" required>
+            <button class="btn primary" type="submit" id="wa-salvar"><span data-i18n="wa.salvar"></span></button>
+          </form>
+          <p class="tiny mt" data-i18n="wa.como"></p>
+          <div class="actions mt" id="wa-acoes" hidden>
+            <button class="btn sm" id="wa-qr-btn" type="button"><span data-i18n="wa.gerar_qr"></span></button>
+            <button class="btn sm" id="wa-testar" type="button"><span data-i18n="wa.testar"></span></button>
+            <button class="btn ghost sm" id="wa-remover" type="button" data-i18n="wa.remover"></button>
+            <label class="som-regra" id="wa-fotos-wrap"><span class="switch"><input type="checkbox" id="wa-fotos"><span></span></span><span class="tiny" data-i18n="wa.fotos"></span></label>
+          </div>
+          <div class="qr-area" id="wa-qr-area" hidden>
+            <div class="qr"><img id="wa-qr" alt="" width="200" height="200"></div>
+            <div>
+              <p data-i18n="wa.qr_passo"></p>
+              <p class="hint" data-i18n="wa.qr_dica"></p>
+            </div>
+          </div>
+          <p class="msg" id="wa-msg" role="status"></p>
+          <div id="wa-receber" hidden>
+            <h3 class="sub" data-i18n="wa.receber"></h3>
+            <p class="hint" data-i18n="wa.receber_dica"></p>
+            <div class="result"><code class="mono" id="wa-webhook-url"></code><button class="btn ghost sm" id="wa-copiar" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="cam.copiar"></span></button></div>
+            <form class="add-cam" id="wa-wh-form" autocomplete="off">
+              <input name="url_base" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.url_base_ph">
+              <button class="btn sm" type="submit" id="wa-wh-registrar"><span data-i18n="wa.registrar"></span></button>
+            </form>
+            <p class="msg" id="wa-wh-msg" role="status"></p>
+          </div>
+          <div id="wa-contatos" hidden>
+            <h3 class="sub" data-i18n="wa.contatos"></h3>
+            <p class="hint" data-i18n="wa.contatos_dica"></p>
+            <div class="table-wrap mt">
+              <table class="table">
+                <thead><tr><th data-i18n="wa.col_nome"></th><th data-i18n="wa.col_numero"></th><th data-i18n="tg.col_visto"></th><th data-i18n="tg.col_autorizado"></th><th class="right"></th></tr></thead>
+                <tbody id="wa-lista"></tbody>
+              </table>
+            </div>
+            <p class="tiny mt" data-i18n="wa.comandos"></p>
+          </div>
+        </div>
+        <div class="block" id="webhook">
+          <h2>Webhook</h2>
+          <p class="hint" data-i18n="wh.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="wh.situacao"></dt><dd><span class="state"><span class="dot" id="wh-dot"></span><span id="wh-status"></span></span></dd>
+            <dt data-i18n="wh.envios"></dt><dd id="wh-envios">—</dd>
+          </dl>
+          <form class="form-grid" id="wh-form" autocomplete="off">
+            <input name="url" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="wh.url_ph" required>
+            <input name="cabecalho" class="mono" type="password" autocapitalize="off" spellcheck="false" data-i18n-ph="wh.cabecalho_ph">
+            <button class="btn primary" type="submit" id="wh-salvar"><span data-i18n="wh.salvar"></span></button>
+          </form>
+          <div class="actions mt" id="wh-acoes" hidden>
+            <button class="btn sm" id="wh-testar" type="button"><span data-i18n="wh.testar"></span></button>
+            <button class="btn ghost sm" id="wh-editar" type="button" data-i18n="wh.editar"></button>
+            <button class="btn ghost sm" id="wh-remover" type="button" data-i18n="wh.remover"></button>
+          </div>
+          <p class="msg" id="wh-msg" role="status"></p>
+          <details class="avancado mt">
+            <summary data-i18n="wh.exemplo"></summary>
+            <p class="hint" data-i18n="wh.exemplo_dica"></p>
+            <pre class="json-exemplo mono" id="wh-exemplo"></pre>
+          </details>
+        </div>
+        <div class="block" id="arquivo">
+          <h2 data-i18n="arq.titulo"></h2>
+          <p class="hint" data-i18n="arq.desc"></p>
+          <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="arq.aviso"></span></p>
+          <dl class="rows mt">
+            <dt data-i18n="arq.situacao"></dt><dd><span class="state"><span class="dot" id="arq-dot"></span><span id="arq-status"></span></span></dd>
+          </dl>
+          <form class="form-grid" id="arq-form" autocomplete="off">
+            <label class="som-regra"><span class="switch"><input type="checkbox" name="ligado"><span></span></span><span class="tiny" data-i18n="arq.ligar"></span></label>
+            <input name="manter" type="number" min="1" max="5000" inputmode="numeric" data-i18n-ph="arq.ph_manter">
+            <input name="chat_id" class="mono" inputmode="numeric" autocapitalize="off" spellcheck="false" data-i18n-ph="arq.ph_chat">
+            <button class="btn primary" type="submit"><span data-i18n="arq.salvar"></span></button>
+          </form>
+          <p class="tiny mt" data-i18n="arq.chat_dica"></p>
+          <p class="msg" id="arq-msg" role="status"></p>
+          <div class="table-wrap mt">
+            <table class="table">
+              <thead><tr><th data-i18n="arq.col_quando"></th><th data-i18n="arq.col_camera"></th><th data-i18n="arq.col_regra"></th><th class="right"></th></tr></thead>
+              <tbody id="arq-lista"></tbody>
+            </table>
+          </div>
+        </div>
         <div class="block">
           <ul class="list">
-            <li><div><strong>WhatsApp</strong><p data-i18n="int.whatsapp"></p></div><span class="badge" data-i18n="em_breve"></span></li>
             <li><div><strong data-i18n="int.marca"></strong><p data-i18n="int.marca_desc"></p></div><span class="badge" data-i18n="em_breve"></span></li>
           </ul>
         </div>
@@ -533,5 +668,6 @@
 
   <script src="/app.js"></script>
   <script src="/manutencao.js"></script>
+  <script src="/integracoes-extra.js"></script>
 </body>
 </html>

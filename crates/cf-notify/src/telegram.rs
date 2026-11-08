@@ -158,6 +158,16 @@ impl Bot {
 
     /// Foto JPEG com legenda (multipart montado à mão).
     pub async fn send_photo(&self, chat_id: i64, jpeg: &[u8], legenda: &str) -> Result<(), String> {
+        self.send_photo_id(chat_id, jpeg, legenda).await.map(|_| ())
+    }
+
+    /// Igual a `send_photo`, devolvendo o `message_id` (para o arquivo de alertas).
+    pub async fn send_photo_id(
+        &self,
+        chat_id: i64,
+        jpeg: &[u8],
+        legenda: &str,
+    ) -> Result<i64, String> {
         let limite = "----CamFacilIA7f3a9c";
         let corpo = multipart(
             limite,
@@ -178,8 +188,13 @@ impl Bot {
             .send()
             .await
             .map_err(traduzir)?;
-        let _: Value = ler(r).await?;
-        Ok(())
+        let v: Value = ler(r).await?;
+        Ok(v.get("message_id").and_then(Value::as_i64).unwrap_or(0))
+    }
+
+    /// Dados de um chat (título, usuário) para montar o link do arquivo.
+    pub async fn get_chat(&self, chat_id: i64) -> Result<Chat, String> {
+        self.chamar("getChat", json!({ "chat_id": chat_id })).await
     }
 }
 

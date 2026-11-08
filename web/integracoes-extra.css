@@ -1,0 +1,31 @@
+/* Integrações da fase 3b (WhatsApp, webhook, termos, arquivo). Só tokens de tokens.css. */
+
+/* Aviso permanente (PRD §5): fica visível mesmo com tudo configurado. */
+.aviso-fixo {
+  display: flex; align-items: flex-start; gap: var(--s2);
+  margin: 0 0 var(--s3); padding: var(--s3) var(--s4); max-width: 720px;
+  font-size: var(--fs-sm); color: var(--c-warn);
+  border: 1px solid var(--c-warn); border-radius: var(--r); background: var(--surface);
+}
+.aviso-fixo .ico { flex: none; margin-top: 2px; color: var(--c-warn); }
+
+/* Formulário com vários campos em grade. */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); margin-top: var(--s3); max-width: 720px; }
+.form-grid input { min-width: 0; }
+.form-grid input[name="url"], .form-grid input[name="apikey"], .form-grid input[name="cabecalho"], .form-grid textarea { grid-column: 1 / -1; }
+.form-grid .btn { justify-self: start; }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+
+/* Exemplo de JSON do webhook. */
+.json-exemplo { margin: var(--s3) 0 0; padding: var(--s3) var(--s4); max-width: 720px; overflow-x: auto; font-size: var(--fs-xs); line-height: 1.5; color: var(--text-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); white-space: pre; }
+
+/* Termo do técnico: texto legível em bloco rolável. */
+.termo-texto { margin: var(--s3) 0 0; padding: var(--s3) var(--s4); max-width: 720px; max-height: 320px; overflow: auto; font-size: var(--fs-xs); line-height: 1.6; color: var(--text-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); white-space: pre-wrap; }
+
+/* Ação destrutiva (apagar dados do cliente): só a borda e o texto em perigo. */
+.btn.perigo { background: none; color: var(--c-danger); border-color: var(--c-danger); }
+.btn.perigo:hover { background: var(--surface-2); }
+
+/* Interruptor dentro da grade do formulário ocupa a linha inteira. */
+.form-grid .som-regra { grid-column: 1 / -1; }
+.form-grid input[name="chat_id"] { grid-column: 1 / -1; }
