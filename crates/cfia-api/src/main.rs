@@ -6,6 +6,7 @@
 mod api;
 mod auth;
 mod db;
+mod estudio;
 mod hub;
 mod util;
 mod web;
@@ -136,6 +137,18 @@ pub fn router(state: AppState) -> Router {
         .route("/api/eu", get(api::eu))
         .route("/api/escola/selo", get(api::meu_selo).post(api::gerar_selo))
         .route("/api/escola/selo/{codigo}", get(api::selo_publico))
+        .route(
+            "/api/estudio/receitas",
+            get(estudio::listar).post(estudio::publicar),
+        )
+        .route("/api/estudio/receitas/minhas", get(estudio::minhas))
+        .route("/api/estudio/receitas/{id}", delete(estudio::apagar))
+        .route(
+            "/api/estudio/receitas/{id}/receita.json",
+            get(estudio::baixar),
+        )
+        .route("/api/estudio/notebook", post(estudio::notebook))
+        .route("/esquemas/receita-v1.schema.json", get(estudio::esquema))
         .route(
             "/api/dispositivos",
             get(api::listar_dispositivos).post(api::criar_dispositivo),

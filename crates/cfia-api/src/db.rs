@@ -23,6 +23,10 @@ const MIGRACOES: &[(&str, &str)] = &[
         "0003_selo_escola",
         include_str!("../migrations/0003_selo_escola.sql"),
     ),
+    (
+        "0004_receitas_estudo",
+        include_str!("../migrations/0004_receitas_estudo.sql"),
+    ),
 ];
 
 /// Contexto de uma transação.
@@ -32,6 +36,8 @@ pub enum Ctx {
     Tecnico(Uuid),
     /// O próprio servidor (validar sessão, falar com agentes, pareamento).
     Sistema,
+    /// Visitante sem login: só enxerga o que a política marca como público.
+    Publico,
 }
 
 pub fn pool(url: &str) -> Result<Pool> {
@@ -92,6 +98,12 @@ pub async fn begin(client: &mut Object, ctx: Ctx) -> Result<Transaction<'_>> {
         Ctx::Sistema => {
             tx.batch_execute(
                 "SELECT set_config('app.papel', 'sistema', true), set_config('app.tecnico_id', '', true)",
+            )
+            .await?;
+        }
+        Ctx::Publico => {
+            tx.batch_execute(
+                "SELECT set_config('app.papel', '', true), set_config('app.tecnico_id', '', true)",
             )
             .await?;
         }

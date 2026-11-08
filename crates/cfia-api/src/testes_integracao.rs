@@ -387,3 +387,318 @@ async fn selo_da_escola_exige_login_e_e_publico_por_codigo() {
     let (st, _) = chamar(&s, "GET", "/api/escola/selo/nao-existe", None, None).await;
     assert_eq!(st, StatusCode::NOT_FOUND);
 }
+
+// ---------------------------------------------------------------------------
+// Modo estúdio: receitas compartilhadas (SDD-07, ADR 0013)
+
+fn receita_teste(slug: &str) -> Value {
+    let mut r = cf_core::receita::exemplo();
+    r.id = slug.into();
+    r.estudo.metricas = Some(cf_core::receita::Metricas {
+        map50: Some(0.81),
+        ..Default::default()
+    });
+    serde_json::from_str(&r.canonico()).unwrap()
+}
+
+async fn chamar_texto(s: &AppState, rota: &str) -> (StatusCode, String) {
+    let req = Request::builder().uri(rota).body(Body::empty()).unwrap();
+    let res = router(s.clone()).oneshot(req).await.unwrap();
+    let st = res.status();
+    let b = res.into_body().collect().await.unwrap().to_bytes();
+    (st, String::from_utf8_lossy(&b).into_owned())
+}
+
+#[tokio::test]
+async fn receitas_publicar_listar_baixar_e_apagar() {
+    let s = ou_pula!(estado().await);
+    let (_a, sa) = criar_sessao_teste(&s, &format!("a-{}", Uuid::new_v4()), "a@teste").await;
+    let (_b, sb) = criar_sessao_teste(&s, &format!("b-{}", Uuid::new_v4()), "b@teste").await;
+    let slug = format!("teste-{}", &Uuid::new_v4().simple().to_string()[..12]);
+
+    // Sem login não publica.
+    let corpo = json!({"receita": receita_teste(&slug), "autor": "Zé das Câmeras"});
+    let (st, _) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/receitas",
+        None,
+        Some(corpo.clone()),
+    )
+    .await;
+    assert_eq!(st, StatusCode::UNAUTHORIZED);
+
+    // Publica; a resposta traz o hash e o aviso de estudo.
+    let (st, v) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/receitas",
+        Some(&sa),
+        Some(corpo.clone()),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    assert_eq!(v["nova"], true);
+    assert_eq!(v["sha256"].as_str().unwrap().len(), 64);
+    assert!(v["aviso"].as_str().unwrap().contains("Somente para estudo"));
+    let id = v["id"].as_str().unwrap().to_string();
+
+    // Publicar de novo com o mesmo id de receita atualiza (não duplica).
+    let (_, v) = chamar(&s, "POST", "/api/estudio/receitas", Some(&sa), Some(corpo)).await;
+    assert_eq!(v["nova"], false);
+    assert_eq!(v["id"], json!(id));
+
+    // Lista pública (sem login): aparece com métricas e autor, sem e-mail.
+    let (st, v) = chamar(
+        &s,
+        "GET",
+        &format!("/api/estudio/receitas?q={slug}"),
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK);
+    let item = v["receitas"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["id"] == json!(id))
+        .expect("receita pública listada")
+        .clone();
+    assert_eq!(item["autor"], "Zé das Câmeras");
+    assert_eq!(item["classes"], json!(["caixa de banana"]));
+    assert!((item["metricas"]["map50"].as_f64().unwrap() - 0.81).abs() < 1e-6);
+    assert!(!v.to_string().contains("a@teste"));
+
+    // Outro técnico baixa (conta download) e recebe a receita válida.
+    let (st, txt) = chamar_texto(&s, &format!("/api/estudio/receitas/{id}/receita.json")).await;
+    assert_eq!(st, StatusCode::OK);
+    let baixada = cf_core::receita::ler(&txt).expect("receita baixada é válida");
+    assert_eq!(baixada.id, slug);
+    let (_, v) = chamar(
+        &s,
+        "GET",
+        &format!("/api/estudio/receitas?q={slug}"),
+        Some(&sb),
+        None,
+    )
+    .await;
+    assert_eq!(v["receitas"][0]["downloads"], 1);
+
+    // B não apaga a receita de A (404); A apaga.
+    let (st, _) = chamar(
+        &s,
+        "DELETE",
+        &format!("/api/estudio/receitas/{id}"),
+        Some(&sb),
+        None,
+    )
+    .await;
+    assert_eq!(st, StatusCode::NOT_FOUND);
+    let (_, v) = chamar(&s, "GET", "/api/estudio/receitas/minhas", Some(&sa), None).await;
+    assert_eq!(v["receitas"].as_array().unwrap().len(), 1);
+    let (_, v) = chamar(&s, "GET", "/api/estudio/receitas/minhas", Some(&sb), None).await;
+    assert!(v["receitas"].as_array().unwrap().is_empty());
+    let (st, _) = chamar(
+        &s,
+        "DELETE",
+        &format!("/api/estudio/receitas/{id}"),
+        Some(&sa),
+        None,
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK);
+    let (st, _) = chamar_texto(&s, &format!("/api/estudio/receitas/{id}/receita.json")).await;
+    assert_eq!(st, StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn receitas_recusam_fotos_biometria_e_email() {
+    let s = ou_pula!(estado().await);
+    let (_a, sa) = criar_sessao_teste(&s, &format!("a-{}", Uuid::new_v4()), "a@teste").await;
+
+    // Campo de fotos não existe no formato.
+    let mut r = receita_teste("com-fotos");
+    r["fotos"] = json!(["/9j/4AAQSkZJRgABAQ..."]);
+    let (st, v) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/receitas",
+        Some(&sa),
+        Some(json!({"receita": r})),
+    )
+    .await;
+    assert_eq!(st, StatusCode::BAD_REQUEST);
+    assert!(v["erro"]
+        .as_str()
+        .unwrap()
+        .contains("campo desconhecido `fotos`"));
+
+    // Foto escondida num texto.
+    let mut r = receita_teste("foto-escondida");
+    r["estudo"]["notas"] = json!(format!("data:image/jpeg;base64,{}", "A".repeat(300)));
+    let (st, _) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/receitas",
+        Some(&sa),
+        Some(json!({"receita": r})),
+    )
+    .await;
+    assert_eq!(st, StatusCode::BAD_REQUEST);
+
+    // Reconhecimento facial / biometria.
+    let mut r = receita_teste("portaria");
+    r["nome"] = json!("Reconhecimento facial na portaria");
+    let (st, v) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/receitas",
+        Some(&sa),
+        Some(json!({"receita": r})),
+    )
+    .await;
+    assert_eq!(st, StatusCode::BAD_REQUEST);
+    assert!(v["erro"].as_str().unwrap().contains("LGPD art. 11"));
+
+    // Autor não pode ser e-mail.
+    let (st, _) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/receitas",
+        Some(&sa),
+        Some(json!({"receita": receita_teste("autor-email"), "autor": "eu@empresa.com"})),
+    )
+    .await;
+    assert_eq!(st, StatusCode::BAD_REQUEST);
+
+    // Nada foi gravado.
+    let (_, v) = chamar(&s, "GET", "/api/estudio/receitas/minhas", Some(&sa), None).await;
+    assert!(v["receitas"].as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn receitas_rls_privada_e_contexto_publico() {
+    let s = ou_pula!(estado().await);
+    let (a, sa) = criar_sessao_teste(&s, &format!("a-{}", Uuid::new_v4()), "a@teste").await;
+    let (b, _) = criar_sessao_teste(&s, &format!("b-{}", Uuid::new_v4()), "b@teste").await;
+    let (_, v) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/receitas",
+        Some(&sa),
+        Some(json!({"receita": receita_teste("privada"), "publica": false})),
+    )
+    .await;
+    let privada = Uuid::parse_str(v["id"].as_str().unwrap()).unwrap();
+    let (_, v) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/receitas",
+        Some(&sa),
+        Some(json!({"receita": receita_teste("publica")})),
+    )
+    .await;
+    let publica = Uuid::parse_str(v["id"].as_str().unwrap()).unwrap();
+
+    // Privada não aparece nem baixa para ninguém além do dono.
+    let (st, _) = chamar_texto(&s, &format!("/api/estudio/receitas/{privada}/receita.json")).await;
+    assert_eq!(st, StatusCode::NOT_FOUND);
+
+    let mut c = s.db.get().await.unwrap();
+    // Visitante: sem WHERE, só enxerga público; não escreve.
+    let tx = db::begin(&mut c, Ctx::Publico).await.unwrap();
+    let n: i64 = tx
+        .query_one(
+            "SELECT count(*) FROM receitas_estudo WHERE id = ANY($1)",
+            &[&vec![privada, publica]],
+        )
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(n, 1, "visitante só vê a pública");
+    let n = tx
+        .execute(
+            "UPDATE receitas_estudo SET nome = 'x' WHERE id = $1",
+            &[&publica],
+        )
+        .await
+        .unwrap();
+    assert_eq!(n, 0, "visitante não altera");
+    let ins = tx
+        .execute(
+            "INSERT INTO receitas_estudo(id, tecnico_id, slug, nome, classes, receita, receita_sha256)
+             VALUES ($1, $2, 'invasao', 'x', '{}', '{}', '')",
+            &[&Uuid::new_v4(), &a],
+        )
+        .await;
+    assert!(ins.is_err(), "visitante não insere");
+    tx.rollback().await.unwrap();
+
+    // Técnico B: vê a pública de A, mas não altera nem apaga, mesmo sem WHERE de dono.
+    let tx = db::begin(&mut c, Ctx::Tecnico(b)).await.unwrap();
+    let n: i64 = tx
+        .query_one(
+            "SELECT count(*) FROM receitas_estudo WHERE id = ANY($1)",
+            &[&vec![privada, publica]],
+        )
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(n, 1);
+    let n = tx
+        .execute(
+            "UPDATE receitas_estudo SET nome = 'x' WHERE tecnico_id = $1",
+            &[&a],
+        )
+        .await
+        .unwrap();
+    assert_eq!(n, 0);
+    let n = tx
+        .execute("DELETE FROM receitas_estudo WHERE tecnico_id = $1", &[&a])
+        .await
+        .unwrap();
+    assert_eq!(n, 0);
+    // E não publica em nome de A.
+    let ins = tx
+        .execute(
+            "INSERT INTO receitas_estudo(id, tecnico_id, slug, nome, classes, receita, receita_sha256)
+             VALUES ($1, $2, 'em-nome-de-a', 'x', '{}', '{}', '')",
+            &[&Uuid::new_v4(), &a],
+        )
+        .await;
+    assert!(ins.is_err());
+    tx.rollback().await.unwrap();
+
+    // O dono vê as duas.
+    let tx = db::begin(&mut c, Ctx::Tecnico(a)).await.unwrap();
+    let n: i64 = tx
+        .query_one(
+            "SELECT count(*) FROM receitas_estudo WHERE id = ANY($1)",
+            &[&vec![privada, publica]],
+        )
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(n, 2);
+    tx.rollback().await.unwrap();
+}
+
+#[tokio::test]
+async fn notebook_e_esquema_publicos() {
+    let s = ou_pula!(estado().await);
+    let (st, v) = chamar(
+        &s,
+        "POST",
+        "/api/estudio/notebook",
+        None,
+        Some(json!({"receita": receita_teste("nb-teste")})),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK);
+    assert_eq!(v["nbformat"], 4);
+    assert_eq!(v["metadata"]["camfacil"]["somente_estudo"], true);
+    let (st, txt) = chamar_texto(&s, "/esquemas/receita-v1.schema.json").await;
+    assert_eq!(st, StatusCode::OK);
+    assert!(txt.contains("camfacil-receita"));
+}
