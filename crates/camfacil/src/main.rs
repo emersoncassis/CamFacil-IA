@@ -6,6 +6,7 @@
 mod api;
 mod assets;
 mod autoinicio;
+mod backup;
 mod elo;
 mod hardware;
 mod ia;

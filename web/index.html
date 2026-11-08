@@ -380,6 +380,33 @@
           <ul class="list mt" id="rel-lista"></ul>
           <p class="tiny" id="rel-pasta"></p>
         </div>
+
+        <div class="block" id="bkp-bloco">
+          <div class="block-head">
+            <h2 data-i18n="bkp.titulo"></h2>
+          </div>
+          <p class="hint" data-i18n="bkp.desc"></p>
+          <h3 class="sub" data-i18n="bkp.exportar"></h3>
+          <div class="man-grid mt">
+            <label class="man-campo"><span data-i18n="bkp.senha"></span><input id="bkp-senha" type="password" minlength="8" autocomplete="new-password"></label>
+            <label class="man-campo"><span data-i18n="bkp.senha2"></span><input id="bkp-senha2" type="password" minlength="8" autocomplete="new-password"></label>
+          </div>
+          <p class="tiny" data-i18n="bkp.senha_dica"></p>
+          <div class="actions mt">
+            <button class="btn primary" type="button" id="bkp-baixar"><span data-i18n="bkp.baixar"></span></button>
+            <button class="btn ghost" type="button" id="bkp-telegram"><span data-i18n="bkp.telegram"></span></button>
+          </div>
+          <h3 class="sub" data-i18n="bkp.importar"></h3>
+          <p class="hint" data-i18n="bkp.importar_dica"></p>
+          <div class="man-grid mt">
+            <label class="man-campo"><span data-i18n="bkp.arquivo"></span><input id="bkp-arquivo" type="file" accept=".cfbkp,application/octet-stream"></label>
+            <label class="man-campo"><span data-i18n="bkp.senha"></span><input id="bkp-senha-imp" type="password" autocomplete="off"></label>
+          </div>
+          <div class="actions mt">
+            <button class="btn" type="button" id="bkp-restaurar"><span data-i18n="bkp.restaurar"></span></button>
+          </div>
+          <p class="msg" id="bkp-msg" role="status"></p>
+        </div>
       </section>
 
       <!-- Integrações -->

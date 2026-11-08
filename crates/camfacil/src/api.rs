@@ -99,6 +99,14 @@ pub fn router(app: Shared) -> Router {
             "/api/relatorio/{arquivo}/telegram",
             post(crate::relatorio::post_telegram),
         )
+        .route("/api/backup", post(crate::backup::post_exportar))
+        .route("/api/backup/telegram", post(crate::backup::post_telegram))
+        .route(
+            "/api/backup/importar",
+            post(crate::backup::post_importar).layer(axum::extract::DefaultBodyLimit::max(
+                crate::backup::TAMANHO_MAX + 1024,
+            )),
+        )
         .fallback(static_file)
         .with_state(app)
 }

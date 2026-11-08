@@ -475,6 +475,173 @@ impl Store {
     }
 }
 
+// ---------------- Backup da configuração ----------------
+
+/// Configuração exportável: tudo o que o técnico montou, sem histórico de
+/// eventos e sem o que é desta máquina (identidade, porta, aparelhos
+/// pareados). Os valores vão como estão no banco; quem chama trata segredos.
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct ConfigBackup {
+    pub settings: Vec<(String, String)>,
+    pub cameras: Vec<CameraBackup>,
+    pub regras: Vec<RegraBackup>,
+    pub telegram: Vec<TelegramBackup>,
+    pub selos: Vec<(String, i64)>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct CameraBackup {
+    pub id: i64,
+    pub nome: String,
+    pub fonte: String,
+    pub url: String,
+    pub ativa: bool,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct RegraBackup {
+    pub id: i64,
+    pub camera_id: i64,
+    pub nome: String,
+    pub forma: String,
+    /// JSON dos pontos, como gravado.
+    pub pontos: String,
+    pub rotulo_on: String,
+    pub rotulo_off: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct TelegramBackup {
+    pub chat_id: i64,
+    pub nome: String,
+    pub autorizado: bool,
+}
+
+/// Chaves de configuração que são desta máquina e não viajam no backup.
+pub fn chave_local(k: &str) -> bool {
+    k == "port" || k.starts_with("elo_") || k.starts_with("bench_") || k == "estresse_resultado"
+}
+
+impl Store {
+    pub fn exportar_config(&self) -> Result<ConfigBackup> {
+        let c = self.lock();
+        let mut b = ConfigBackup::default();
+        let mut st = c.prepare("SELECT key, value FROM settings ORDER BY key")?;
+        b.settings = st
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+            .collect::<Result<Vec<(String, String)>>>()?
+            .into_iter()
+            .filter(|(k, _)| !chave_local(k))
+            .collect();
+        let mut st = c.prepare("SELECT id, nome, fonte, url, ativa FROM cameras ORDER BY id")?;
+        b.cameras = st
+            .query_map([], |r| {
+                Ok(CameraBackup {
+                    id: r.get(0)?,
+                    nome: r.get(1)?,
+                    fonte: r.get(2)?,
+                    url: r.get(3)?,
+                    ativa: r.get::<_, i64>(4)? != 0,
+                })
+            })?
+            .collect::<Result<_>>()?;
+        let mut st = c.prepare(
+            "SELECT id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off FROM regras ORDER BY id",
+        )?;
+        b.regras = st
+            .query_map([], |r| {
+                Ok(RegraBackup {
+                    id: r.get(0)?,
+                    camera_id: r.get(1)?,
+                    nome: r.get(2)?,
+                    forma: r.get(3)?,
+                    pontos: r.get(4)?,
+                    rotulo_on: r.get(5)?,
+                    rotulo_off: r.get(6)?,
+                })
+            })?
+            .collect::<Result<_>>()?;
+        let mut st =
+            c.prepare("SELECT chat_id, nome, autorizado FROM telegram_chats ORDER BY chat_id")?;
+        b.telegram = st
+            .query_map([], |r| {
+                Ok(TelegramBackup {
+                    chat_id: r.get(0)?,
+                    nome: r.get(1)?,
+                    autorizado: r.get::<_, i64>(2)? != 0,
+                })
+            })?
+            .collect::<Result<_>>()?;
+        let mut st = c.prepare("SELECT modulo, ganho_em FROM selos ORDER BY modulo")?;
+        b.selos = st
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+            .collect::<Result<_>>()?;
+        Ok(b)
+    }
+
+    /// Substitui a configuração pela do backup, numa transação só (ou entra
+    /// tudo ou nada). Mantém eventos, aceites e o que é desta máquina; eventos
+    /// de câmeras que deixaram de existir ficam como histórico.
+    pub fn importar_config(&self, b: &ConfigBackup, quando: i64) -> Result<()> {
+        let mut c = self.lock();
+        let tx = c.transaction()?;
+        let locais: Vec<(String, String)> = {
+            let mut st = tx.prepare("SELECT key, value FROM settings")?;
+            let v = st
+                .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+                .collect::<Result<Vec<(String, String)>>>()?;
+            v.into_iter().filter(|(k, _)| chave_local(k)).collect()
+        };
+        tx.execute_batch(
+            "DELETE FROM regras; DELETE FROM cameras; DELETE FROM settings;
+             DELETE FROM telegram_chats; DELETE FROM selos;",
+        )?;
+        for (k, v) in locais
+            .iter()
+            .chain(b.settings.iter().filter(|(k, _)| !chave_local(k)))
+        {
+            tx.execute(
+                "INSERT OR REPLACE INTO settings (key, value) VALUES (?1, ?2)",
+                params![k, v],
+            )?;
+        }
+        for k in &b.cameras {
+            tx.execute(
+                "INSERT INTO cameras (id, nome, fonte, url, ativa) VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![k.id, k.nome, k.fonte, k.url, k.ativa as i64],
+            )?;
+        }
+        for r in &b.regras {
+            tx.execute(
+                "INSERT INTO regras (id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![
+                    r.id,
+                    r.camera_id,
+                    r.nome,
+                    r.forma,
+                    r.pontos,
+                    r.rotulo_on,
+                    r.rotulo_off
+                ],
+            )?;
+        }
+        for t in &b.telegram {
+            tx.execute(
+                "INSERT INTO telegram_chats (chat_id, nome, autorizado, visto_em) VALUES (?1, ?2, ?3, ?4)",
+                params![t.chat_id, t.nome, t.autorizado as i64, quando],
+            )?;
+        }
+        for (m, q) in &b.selos {
+            tx.execute(
+                "INSERT INTO selos (modulo, ganho_em) VALUES (?1, ?2)",
+                params![m, q],
+            )?;
+        }
+        tx.commit()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -548,5 +715,34 @@ mod tests {
         s.accept("isencao", "1.0", 1_700_000_000).unwrap();
         assert!(s.accepted("isencao", "1.0").unwrap());
         assert!(!s.accepted("isencao", "2.0").unwrap());
+    }
+
+    #[test]
+    fn backup_ida_e_volta() {
+        use crate::visao::Ponto;
+        let a = Store::memory().unwrap();
+        a.set("port", "7070").unwrap();
+        a.set("elo_chave", "segredo-da-maquina").unwrap();
+        a.set("tv_config", "{}").unwrap();
+        let cam = a.criar_camera("Portão", "demo", "").unwrap();
+        let pts = [Ponto { x: 0.1, y: 0.2 }, Ponto { x: 0.5, y: 0.6 }];
+        a.criar_regra(cam, "Porta", "linha", &pts, "", "").unwrap();
+        a.telegram_chat_visto(42, "Dono", 1).unwrap();
+        a.telegram_autorizar(42, true).unwrap();
+        let b = a.exportar_config().unwrap();
+        assert!(b.settings.iter().all(|(k, _)| !chave_local(k)));
+
+        let dest = Store::memory().unwrap();
+        dest.set("port", "8080").unwrap();
+        dest.criar_camera("Velha", "demo", "").unwrap();
+        dest.importar_config(&b, 5).unwrap();
+        assert_eq!(dest.get("port").unwrap().as_deref(), Some("8080"));
+        assert_eq!(dest.get("elo_chave").unwrap(), None);
+        assert_eq!(dest.get("tv_config").unwrap().as_deref(), Some("{}"));
+        let cams = dest.cameras().unwrap();
+        assert_eq!(cams.len(), 1);
+        assert_eq!(cams[0].nome, "Portão");
+        assert_eq!(dest.regras(cams[0].id).unwrap()[0].pontos, pts.to_vec());
+        assert_eq!(dest.telegram_autorizados().unwrap(), vec![42]);
     }
 }
