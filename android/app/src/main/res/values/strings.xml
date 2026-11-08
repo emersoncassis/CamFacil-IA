@@ -3,7 +3,7 @@
     <string name="app_nome">CamFácil IA</string>
 
     <!-- Menu do painel -->
-    <string name="menu_cameras">Câmeras ao vivo</string>
+    <string name="menu_cameras">Visualizar câmeras</string>
     <string name="menu_botoes">Portão e relé</string>
     <string name="menu_alertas_ligar">Receber alertas no celular</string>
     <string name="menu_alertas_desligar">Parar de receber alertas</string>
