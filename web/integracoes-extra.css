@@ -29,3 +29,12 @@
 /* Interruptor dentro da grade do formulário ocupa a linha inteira. */
 .form-grid .som-regra { grid-column: 1 / -1; }
 .form-grid input[name="chat_id"] { grid-column: 1 / -1; }
+
+/* Fase 6: corpo da ação do botão (relé) e token do MCP. */
+.form-grid textarea {
+  min-width: 0; resize: vertical; padding: var(--s2) var(--s3);
+  font: inherit; font-size: var(--fs-sm); color: var(--text);
+  background: var(--field); border: 1px solid var(--line-strong); border-radius: var(--r);
+}
+.form-grid textarea:focus-visible { outline: 0; border-color: var(--focus); box-shadow: 0 0 0 3px var(--c-green-dim); }
+#mcp-token { overflow-wrap: anywhere; color: var(--text); }

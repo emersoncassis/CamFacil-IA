@@ -305,7 +305,12 @@ pub async fn get_foto(State(app): State<Shared>) -> ApiResult {
         }
         None => (false, 0, None),
     };
-    let fotos = app.store.fotos_rede(2).map_err(interno)?;
+    let fotos = app
+        .store
+        .fotos_rede(rede::FOTOS_CONFLITO as i64)
+        .map_err(interno)?;
+    let so_fotos: Vec<Foto> = fotos.iter().map(|(_, f)| f.clone()).collect();
+    let conflitos = rede::conflitos_ip(&so_fotos);
     let ultima: Option<&Foto> = fotos.first().map(|(_, f)| f);
     let anterior: Option<&Foto> = fotos.get(1).map(|(_, f)| f);
     let mudancas: Vec<Mudanca> = match (anterior, ultima) {
@@ -321,6 +326,7 @@ pub async fn get_foto(State(app): State<Shared>) -> ApiResult {
         "ultima": ultima,
         "anterior_quando": anterior.map(|a| a.quando),
         "mudancas": mudancas,
+        "conflitos": conflitos,
         "historico": historico,
     })))
 }
@@ -450,24 +456,8 @@ pub async fn get_resumo(State(app): State<Shared>) -> ApiResult {
 
 // ---------------- API: diagrama unifilar ----------------
 
-/// Textos da dashboard (`web/i18n/pt-BR.json`, embutido), lidos uma vez.
-fn traducoes() -> &'static std::collections::HashMap<String, String> {
-    static T: OnceLock<std::collections::HashMap<String, String>> = OnceLock::new();
-    T.get_or_init(|| {
-        crate::assets::find("/i18n/pt-BR.json")
-            .and_then(|a| serde_json::from_slice::<serde_json::Map<String, Value>>(a.body).ok())
-            .map(|m| {
-                // Só as chaves de texto (há listas, como `isencao.itens`).
-                m.into_iter()
-                    .filter_map(|(k, v)| v.as_str().map(|s| (k, s.to_string())))
-                    .collect()
-            })
-            .unwrap_or_default()
-    })
-}
-
 fn traduzir(k: &str) -> String {
-    traducoes().get(k).cloned().unwrap_or_else(|| k.to_string())
+    crate::i18n::t(k)
 }
 
 #[derive(Deserialize)]

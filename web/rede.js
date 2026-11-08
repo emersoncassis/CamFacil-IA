@@ -25,7 +25,8 @@ function redeTipo(d) {
   return s;
 }
 
-function redeRenderInventario(foto) {
+function redeRenderInventario(foto, conflitos) {
+  const emConflito = new Set((conflitos || []).map((c) => c.ip));
   const corpo = $("#rede-inventario");
   if (!foto) {
     corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "6" }, t("rede.sem_foto"))));
@@ -38,12 +39,25 @@ function redeRenderInventario(foto) {
     return;
   }
   corpo.replaceChildren(...foto.dispositivos.map((d) => el("tr", { class: d.eu ? "sou-eu" : "" },
-    el("td", { class: "mono" }, d.ip),
+    el("td", { class: "mono" }, d.ip, emConflito.has(d.ip) ? el("span", { class: "rede-marca conflito" }, t("rede.conflito.marca")) : null),
     el("td", {}, redeTipo(d)),
     el("td", {}, d.fabricante || "—", d.modelo ? el("span", { class: "tiny" }, " · " + d.modelo) : null),
     el("td", { class: "mono" }, d.mac || "—"),
     el("td", { class: "mono" }, d.portas.length ? d.portas.join(" ") : "—"),
     el("td", {}, d.camera_nome ? d.camera_nome : el("span", { class: "tiny" }, "—")))));
+}
+
+/// Conflito de IP: dois aparelhos respondendo pelo mesmo endereço.
+function redeRenderConflitos(lista) {
+  const caixa = $("#rede-conflitos");
+  lista = lista || [];
+  caixa.hidden = !lista.length;
+  caixa.replaceChildren(...lista.map((c) => {
+    const quem = c.macs.map((m, i) => `${m} (${c.fabricantes[i] === "?" ? t("rede.conflito.fab_desconhecido") : c.fabricantes[i]})`).join(" · ");
+    return el("p", { class: "note warn mt" }, icon("i-info"),
+      el("span", {}, tp("rede.conflito." + c.motivo, { ip: c.ip, macs: quem, camera: c.camera_nome || "" }) +
+        (c.camera_nome ? " " + tp("rede.conflito.camera", { camera: c.camera_nome }) : "") + " " + t("rede.conflito.dica")));
+  }));
 }
 
 function redeRenderMudancas(r) {
@@ -131,7 +145,8 @@ async function redeRender() {
   // Enquanto fotografa, mantém a foto anterior na tela.
   if (!r.rodando || !redeUltima) {
     redeUltima = r.ultima;
-    redeRenderInventario(r.ultima);
+    redeRenderInventario(r.ultima, r.conflitos);
+    redeRenderConflitos(r.conflitos);
     redeRenderMudancas(r);
     redeRenderHistorico(r.historico);
     redeRenderDiagrama(r.ultima);

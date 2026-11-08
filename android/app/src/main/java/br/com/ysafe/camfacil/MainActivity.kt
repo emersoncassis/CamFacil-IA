@@ -158,6 +158,7 @@ class MainActivity : Activity() {
         val local = Config.local(this)
         if (local) {
             menu.add(0, 1, 0, R.string.menu_cameras)
+            menu.add(0, 9, 1, R.string.menu_botoes)
             menu.add(0, 2, 1, if (Config.alertasLigados(this)) R.string.menu_alertas_desligar else R.string.menu_alertas_ligar)
             menu.add(0, 6, 2, R.string.menu_bateria)
         }
@@ -184,6 +185,8 @@ class MainActivity : Activity() {
             6 -> pedirBateria()
             7 -> startActivity(Intent(this, ServidorActivity::class.java))
             8 -> InicioActivity.trocarModo(this)
+            // Portão e relé: tela própria do programa local (PIN, confirmação e log no servidor).
+            9 -> web.loadUrl(base.trimEnd('/') + "/botoes")
             else -> return super.onOptionsItemSelected(item)
         }
         return true

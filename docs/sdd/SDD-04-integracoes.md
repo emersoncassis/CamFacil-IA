@@ -1,6 +1,6 @@
 # SDD-04 — Integrações (Telegram, WhatsApp, webhook, LLM, MCP)
 
-Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implementado** (fase 3b); webhook **implementado** (fase 3b); LLM e MCP propostos (fase 6)
+Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implementado** (fase 3b); webhook **implementado** (fase 3b); MCP **implementado** (fase 6); LLM proposto
 
 ## Telegram (padrão) — status: implementado
 - Bot API oficial via HTTPS (long polling `getUpdates` com timeout de 30 s, só enquanto há token; sem porta aberta). Cliente próprio com `reqwest` (rustls, provedor `ring` já usado pelo binário; sem `aws-lc`), multipart do `sendPhoto` montado à mão. Crate `cf-notify`.
@@ -65,8 +65,12 @@ Só contatos autorizados na dashboard. Ações registradas no log.
 ## Provedores LLM
 OpenRouter (modelos gratuitos, padrão), OpenAI, Google, Anthropic. Interface única `LlmProvider`. Aviso: gratuitos sem garantia e podem usar dados para treino — não enviar imagens do cliente por eles sem consentimento.
 
-## Servidor MCP (opcional)
-- Desligado por padrão; escuta só na interface Tailscale; token obrigatório.
-- Ferramentas de leitura: `status`, `listar_cameras`, `listar_regras`, `eventos`.
-- Ferramentas de escrita (exigem permissão explícita na dashboard): `criar_regra`, `ligar_modulo`, `desligar_modulo`.
-- Implementar com o SDK oficial Rust de MCP (`rmcp`).
+## Servidor MCP (opcional) — implementado (ADR 0012)
+- **Desligado por padrão.** Integrações → MCP: chave "Ligar o MCP" (aviso + confirmação, exige o termo do técnico) e chave "Permitir alterações" (escrita), também desligada por padrão.
+- Transportes: `POST /mcp` (JSON-RPC 2.0, JSON simples, sem SSE) no servidor da dashboard, com `Authorization: Bearer <token>` obrigatório; e `camfacil --mcp`, ponte stdio para o programa aberto na mesma máquina (lê o token do banco local).
+- Token aleatório guardado cifrado pelo cofre; "Gerar outro token" invalida o anterior. Chaves `mcp_*` não viajam no backup.
+- Ferramentas de leitura: `listar_cameras` (sem senha/RTSP), `ver_estado`, `listar_regras`, `ver_alertas`, `listar_botoes`.
+- Ferramentas de escrita (só com "Permitir alterações"): `criar_regra`, `remover_regra`, `ligar_modulo`. Cada uma gera evento `mcp`.
+- Portão e relé **não** são acionáveis pelo MCP (ação física exige PIN + confirmação de uma pessoa; SDD-06).
+- JSON-RPC implementado à mão (sem `rmcp`) para não trazer dependências; ver ADR 0012.
+- API da dashboard: `GET/POST /api/mcp` (`{ligado, escrita}`), `POST /api/mcp/token`.

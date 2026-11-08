@@ -453,6 +453,7 @@
           </div>
           <p class="hint" data-i18n="rede.inventario_desc"></p>
           <p class="msg err" id="rede-erro" role="alert" hidden></p>
+          <div id="rede-conflitos" role="alert" hidden></div>
           <div class="table-wrap mt">
             <table class="table rede-tabela">
               <thead><tr><th data-i18n="rede.col_ip"></th><th data-i18n="rede.col_tipo"></th><th data-i18n="rede.col_fabricante"></th><th data-i18n="rede.col_mac"></th><th data-i18n="rede.col_portas"></th><th data-i18n="rede.col_cadastrada"></th></tr></thead>
@@ -735,6 +736,72 @@
             </table>
           </div>
         </div>
+        <div class="block" id="botoes">
+          <h2 data-i18n="bt.titulo"></h2>
+          <p class="hint" data-i18n="bt.desc"></p>
+          <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="bt.aviso"></span></p>
+          <h3 class="sub" data-i18n="bt.pin_titulo"></h3>
+          <p class="hint" id="bt-pin-situacao"></p>
+          <form class="form-grid" id="bt-pin-form" autocomplete="off">
+            <input name="atual" type="password" inputmode="numeric" maxlength="8" autocomplete="off" data-i18n-ph="bt.ph_pin_atual" hidden>
+            <input name="novo" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password" data-i18n-ph="bt.ph_pin_novo" required>
+            <button class="btn sm" type="submit"><span data-i18n="bt.pin_salvar"></span></button>
+          </form>
+          <h3 class="sub" data-i18n="bt.novo_titulo"></h3>
+          <form class="form-grid" id="bt-form" autocomplete="off">
+            <input name="nome" maxlength="30" data-i18n-ph="bt.ph_nome" required>
+            <select name="icone" aria-label="Ícone">
+              <option value="portao" data-i18n="bt.icone.portao"></option>
+              <option value="rele" data-i18n="bt.icone.rele"></option>
+              <option value="luz" data-i18n="bt.icone.luz"></option>
+            </select>
+            <input name="url" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="bt.ph_url" required>
+            <select name="metodo" aria-label="Método">
+              <option>GET</option><option>POST</option><option>PUT</option>
+            </select>
+            <input name="usuario" autocapitalize="off" spellcheck="false" autocomplete="off" data-i18n-ph="bt.ph_usuario">
+            <input name="senha" type="password" autocomplete="new-password" data-i18n-ph="bt.ph_senha">
+            <textarea name="corpo" class="mono" rows="2" spellcheck="false" data-i18n-ph="bt.ph_corpo"></textarea>
+            <button class="btn primary" type="submit"><span data-i18n="bt.salvar"></span></button>
+          </form>
+          <p class="tiny mt" data-i18n="bt.dica_url"></p>
+          <p class="msg" id="bt-msg" role="status"></p>
+          <div class="table-wrap mt">
+            <table class="table">
+              <thead><tr><th data-i18n="bt.col_nome"></th><th data-i18n="bt.col_acao"></th><th class="right"></th></tr></thead>
+              <tbody id="bt-lista"></tbody>
+            </table>
+          </div>
+          <div class="actions mt">
+            <a class="btn sm" href="/botoes" target="_blank" rel="noopener"><span data-i18n="bt.abrir"></span></a>
+          </div>
+          <h3 class="sub" data-i18n="bt.log_titulo"></h3>
+          <ul class="list mt" id="bt-log"></ul>
+        </div>
+        <div class="block" id="mcp">
+          <h2 data-i18n="mcp.titulo"></h2>
+          <p class="hint" data-i18n="mcp.desc"></p>
+          <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="mcp.aviso"></span></p>
+          <div class="actions mt">
+            <label class="som-regra"><span class="switch"><input type="checkbox" id="mcp-ligado"><span></span></span><span class="tiny" data-i18n="mcp.ligar"></span></label>
+            <label class="som-regra"><span class="switch"><input type="checkbox" id="mcp-escrita"><span></span></span><span class="tiny" data-i18n="mcp.escrita"></span></label>
+          </div>
+          <div id="mcp-detalhes" hidden>
+            <dl class="rows mt">
+              <dt data-i18n="mcp.endereco"></dt><dd class="mono" id="mcp-url">—</dd>
+              <dt data-i18n="mcp.token"></dt><dd><code class="mono" id="mcp-token">—</code></dd>
+            </dl>
+            <div class="actions mt">
+              <button class="btn sm" id="mcp-copiar" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="mcp.copiar_token"></span></button>
+              <button class="btn ghost sm" id="mcp-trocar" type="button"><span data-i18n="mcp.trocar_token"></span></button>
+            </div>
+            <h3 class="sub" data-i18n="mcp.config_titulo"></h3>
+            <p class="hint" data-i18n="mcp.config_dica"></p>
+            <pre class="json-exemplo mono" id="mcp-exemplo"></pre>
+            <p class="tiny mt" data-i18n="mcp.ferramentas"></p>
+          </div>
+          <p class="msg" id="mcp-msg" role="status"></p>
+        </div>
         <div class="block">
           <ul class="list">
             <li><div><strong data-i18n="int.marca"></strong><p data-i18n="int.marca_desc"></p></div><span class="badge" data-i18n="em_breve"></span></li>
@@ -758,6 +825,7 @@
   <script src="/app.js"></script>
   <script src="/manutencao.js"></script>
   <script src="/integracoes-extra.js"></script>
+  <script src="/fase6.js"></script>
   <script src="/rede.js" defer></script>
 </body>
 </html>

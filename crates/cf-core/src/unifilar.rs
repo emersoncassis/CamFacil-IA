@@ -438,6 +438,7 @@ mod tests {
             camera_nome: None,
             eu: false,
             gateway: false,
+            outros_macs: vec![],
         }
     }
 

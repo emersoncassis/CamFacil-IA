@@ -215,20 +215,17 @@ Versão atual: **0.4.1** ([releases](https://github.com/emersoncassis/CamFacil-I
 - [x] **Fase 3** — Telegram (alertas e comandos), WhatsApp via Evolution API, webhook, termos e LGPD, arquivo de alertas
 - [x] **Fase 4** — Inventário da rede, câmera que trocou de IP (corrige pelo MAC) e diagrama unifilar em SVG
 - [x] **Fase 5** — Modo TV, monitor de hardware, relatório em PDF, backup cifrado e teste de estresse
-- [ ] **Fase 6** — App Android, web app, Agente-Cam-Elo-IA e MCP
+- [x] **Fase 6** — App Android, web app, Agente-Cam-Elo-IA e MCP
   - [x] Agente-Cam-Elo-IA e painel web (clientes, câmeras, alertas, ver ao vivo pelo Tailscale)
   - [x] App Android: servidor no próprio aparelho ou visualizador à distância
-  - [ ] MCP (configurar conversando com uma IA, desligado por padrão)
-  - [ ] Botões de portão e relé no app, com PIN, confirmação e log
+  - [x] MCP (configurar conversando com uma IA, desligado por padrão) · [ADR 0012](docs/adr/0012-mcp-json-rpc-proprio.md)
+  - [x] Botões de portão e relé no app, com PIN, confirmação e log
 - [ ] **Fase 7** — Modo estúdio · [prévia](https://cfia.ysafe.com.br/estudio) (mockup, ainda não funciona)
 
 ### Em desenvolvimento / próximos passos
-- MCP desligado por padrão (fase 6)
-- Portão e relé no app com confirmação e log (fase 6)
 - Modo estúdio: conversa → coleta → rotulagem → notebook do Colab → importar → compartilhar receitas entre técnicos (fase 7)
-- Rede: conflito de IP, senha de fábrica, quedas por hora e banda por câmera
-- Telegram: `/backup` e backup agendado; foto do alerta com a linha/zona desenhada
-- Textos do relatório em PDF no arquivo de tradução
+- Rede: senha de fábrica, quedas por hora e banda por câmera (conflito de IP já avisa na tela Rede)
+- Telegram: backup agendado; foto do alerta com a linha/zona desenhada (`/backup <senha>` já existe)
 - Android: IA de nível médio (YOLO) no aparelho, câmera do próprio celular como fonte, chave de assinatura fixa do APK
 - Testes em campo: rede real, Windows, TV Box com controle remoto
 
