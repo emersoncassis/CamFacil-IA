@@ -90,6 +90,22 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: SDK do Android (plataforma 35)
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" > /dev/null
+      # Servidor no aparelho (ADR 0010): núcleo Rust + ffmpeg mínimo em jniLibs.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, armv7-linux-androideabi
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: android
+      - name: cargo-ndk
+        run: cargo install cargo-ndk --locked --version "^4"
+      - name: Cache do ffmpeg mínimo (só recompila se o script mudar)
+        uses: actions/cache@v4
+        with:
+          path: android/app/src/main/jniLibs/*/libffmpeg.so
+          key: ffmpeg-android-${{ hashFiles('scripts/android-ffmpeg.sh') }}
+      - name: Compila o núcleo e o ffmpeg para Android (arm64-v8a, armeabi-v7a)
+        run: ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME" scripts/android-nucleo.sh
       - name: Keystore de release (opcional, por secrets)
         # Sem os secrets o APK sai assinado com a chave de debug do runner
         # (instala, mas não atualiza por cima de uma versão assinada com outra chave).
@@ -174,7 +190,7 @@ jobs:
           V: ${{ steps.versao.outputs.tag }}
         run: |
           gh release create "$V" dist/* --target "$GITHUB_SHA" --title "CamFácil IA $V" --latest \
-            --notes "Baixe pelo site https://cfia.ysafe.com.br ou veja o README. Windows: camfacil-windows-x86_64.exe · Linux: camfacil-linux-x86_64 · Raspberry Pi/ARM 64: camfacil-linux-arm64 · Android: camfacil-android.apk." \
+            --notes "Baixe pelo site https://cfia.ysafe.com.br ou veja o README. Windows: camfacil-windows-x86_64.exe · Linux: camfacil-linux-x86_64 · Raspberry Pi/ARM 64: camfacil-linux-arm64 · Android (servidor no aparelho ou visualizador): camfacil-android.apk." \
             || gh release upload "$V" dist/* --clobber
 
   imagem-api:

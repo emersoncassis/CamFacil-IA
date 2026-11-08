@@ -1,7 +1,8 @@
 // App Android do CamFácil IA: WebView do painel + recursos nativos
 // (pareamento por QR/endereço, alertas em notificação, câmeras ao vivo com
-// troca automática para foto em conexão fraca). Sem AndroidX para o APK
-// ficar pequeno.
+// troca automática para foto em conexão fraca) e, opcionalmente, o próprio
+// servidor (núcleo Rust + ffmpeg em jniLibs, gerados por
+// scripts/android-nucleo.sh). Sem AndroidX para o APK ficar pequeno.
 import java.io.File
 
 plugins {
@@ -62,6 +63,13 @@ android {
 
     packaging {
         resources.excludes += listOf("META-INF/**", "kotlin/**", "DebugProbesKt.bin")
+        // Servidor no aparelho (ADR 0010): libcamfacil.so e libffmpeg.so são
+        // executáveis. Precisam ser extraídos para o nativeLibraryDir (único
+        // lugar de onde o Android deixa executar) e já vêm sem símbolos.
+        jniLibs {
+            useLegacyPackaging = true
+            keepDebugSymbols += "**/*.so"
+        }
     }
     dependenciesInfo {
         includeInApk = false

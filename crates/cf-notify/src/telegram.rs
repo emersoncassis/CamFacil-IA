@@ -76,7 +76,7 @@ pub struct Bot {
 }
 
 fn cliente(tempo: Duration) -> reqwest::Client {
-    reqwest::Client::builder()
+    crate::tls::raizes_do_sistema(reqwest::Client::builder())
         .timeout(tempo)
         .user_agent(concat!("CamFacilIA/", env!("CARGO_PKG_VERSION")))
         .build()
