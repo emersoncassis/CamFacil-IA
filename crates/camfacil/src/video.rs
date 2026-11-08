@@ -814,6 +814,7 @@ fn laco(canal: Arc<Canal>, store: Arc<Store>, fonte: String, url: String) {
             continue;
         };
         let mut cmd = Command::new(ff);
+        crate::filhos::morrer_com_o_programa(&mut cmd);
         cmd.args(argumentos(&fonte, &url))
             .stdin(Stdio::null())
             .stdout(Stdio::piped())

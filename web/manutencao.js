@@ -380,7 +380,22 @@ async function dadosIniciar() {
   };
 }
 
+function desinstalarIniciar() {
+  const b = $("#dados-desinstalar");
+  if (!b) return;
+  b.onclick = async () => {
+    const dados = $("#desinst-dados").checked;
+    if (!(await confirmar(t("desinst.confirma"), t("desinst.botao"), t("desinst.dica") + (dados ? t("desinst.dica_dados") : "")))) return;
+    try {
+      await api("/api/desinstalar", { confirmar: "DESINSTALAR", apagar_dados: dados });
+      $("#dados-msg").className = "msg ok";
+      $("#dados-msg").textContent = t("desinst.ok");
+    } catch (e) { $("#dados-msg").className = "msg err"; $("#dados-msg").textContent = e.message; }
+  };
+}
+
 function iniciarManutencao() {
+  desinstalarIniciar();
   dadosIniciar();
   tvIniciar();
   hwIniciar();

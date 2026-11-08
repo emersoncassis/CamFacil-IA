@@ -272,3 +272,29 @@ pub async fn estatico(uri: Uri) -> Response {
         None => (StatusCode::NOT_FOUND, "não encontrado").into_response(),
     }
 }
+
+/// `/baixar/<arquivo>`: manda para o arquivo da versão atual com o número da
+/// versão no nome (ex.: camfacil-0.8.2-windows-x86_64.exe), para a pessoa
+/// saber qual versão baixou. O site e o programa saem da mesma versão.
+pub async fn baixar(axum::extract::Path(arquivo): axum::extract::Path<String>) -> Response {
+    const PERMITIDOS: &[&str] = &[
+        "camfacil-windows-x86_64.exe",
+        "camfacil-linux-x86_64",
+        "camfacil-linux-arm64",
+        "camfacil-android.apk",
+    ];
+    if !PERMITIDOS.contains(&arquivo.as_str()) {
+        return StatusCode::NOT_FOUND.into_response();
+    }
+    let v = env!("CARGO_PKG_VERSION");
+    let nome = arquivo.replacen("camfacil-", &format!("camfacil-{v}-"), 1);
+    let url = format!("https://github.com/emersoncassis/CamFacil-IA/releases/download/v{v}/{nome}");
+    (
+        StatusCode::FOUND,
+        [
+            (header::LOCATION, url),
+            (header::CACHE_CONTROL, "no-store".to_string()),
+        ],
+    )
+        .into_response()
+}

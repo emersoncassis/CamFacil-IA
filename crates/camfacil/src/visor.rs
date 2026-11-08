@@ -134,6 +134,7 @@ fn laco(id: i64, v: Arc<Visor>) {
             break;
         };
         let mut cmd = Command::new(ff);
+        crate::filhos::morrer_com_o_programa(&mut cmd);
         cmd.args(argumentos(&v.url))
             .stdin(Stdio::null())
             .stdout(Stdio::piped())

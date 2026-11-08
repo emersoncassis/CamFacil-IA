@@ -437,7 +437,8 @@ function conectarPainel() {
 }
 
 // ---------- Download do programa (Agente-Cam-Elo-IA embutido) ----------
-const REL = "https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/";
+// /baixar/<arquivo> manda para o arquivo com o número da versão no nome.
+const REL = "/baixar/";
 const SISTEMAS = {
   windows: { nome: "Windows 10 e 11", curto: "Windows", ico: "i-win", arquivo: "camfacil-windows-x86_64.exe", cmd: "irm https://cfia.ysafe.com.br/instalar.ps1 | iex", onde: "PowerShell" },
   linux: { nome: "Linux (PC ou mini PC)", curto: "Linux", ico: "i-tux", arquivo: "camfacil-linux-x86_64", cmd: "curl -fsSL https://cfia.ysafe.com.br/instalar.sh | sh", onde: "terminal" },

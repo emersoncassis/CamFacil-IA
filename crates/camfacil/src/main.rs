@@ -13,6 +13,7 @@ mod botoes;
 mod elo;
 mod estresse;
 mod estudio;
+mod filhos;
 mod hardware;
 mod i18n;
 mod ia;
@@ -95,11 +96,14 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
+    // ngrok e ffmpeg morrem junto com o programa, mesmo fechado à força.
+    filhos::iniciar();
     let dir = paths::data_dir();
     if paths::apagar_se_pedido() {
         println!("Todos os dados do CamFácil IA foram apagados. Começando do zero.");
     }
     std::fs::create_dir_all(&dir)?;
+    filhos::limpar_orfaos(&dir);
     let store = Arc::new(Store::open(&dir.join("camfacil.db"))?);
     api::tirar_ip_dos_nomes(&store);
 
@@ -231,9 +235,14 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
 /// Abre o navegador padrão sem depender de crates extras.
 fn open_browser(url: &str) {
     #[cfg(windows)]
-    let cmd = std::process::Command::new("cmd")
-        .args(["/C", "start", "", url])
-        .spawn();
+    let cmd = {
+        use std::os::windows::process::CommandExt;
+        // O navegador continua aberto depois que o programa fecha.
+        std::process::Command::new("cmd")
+            .args(["/C", "start", "", url])
+            .creation_flags(filhos::FORA_DO_JOB | 0x0800_0000)
+            .spawn()
+    };
     #[cfg(target_os = "macos")]
     let cmd = std::process::Command::new("open").arg(url).spawn();
     #[cfg(all(unix, not(target_os = "macos")))]
