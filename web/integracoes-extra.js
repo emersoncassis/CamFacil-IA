@@ -168,20 +168,116 @@ function iniciarWebhook() {
   };
 }
 
+// ---------- Termos e LGPD ----------
+function ieData(unix) { return unix ? new Date(unix * 1000).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"; }
+
+async function renderTermos() {
+  let r;
+  try { r = await api("/api/termos"); } catch (e) { ieMsg("#lg-msg", e.message, "err"); return; }
+  const tec = r.tecnico;
+  const dot = $("#lg-dot");
+  if (tec.aceito) { dot.className = "dot on"; $("#lg-status").textContent = `${t("lg.aceito_em").replace("{v}", tec.versao_aceita)} ${ieData(tec.quando)}`; }
+  else if (tec.versao_aceita) { dot.className = "dot off"; $("#lg-status").textContent = t("lg.versao_nova"); }
+  else { dot.className = "dot off"; $("#lg-status").textContent = t("lg.nao_aceito"); }
+  $("#lg-aceitar").hidden = tec.aceito;
+  $("#lg-texto").textContent = tec.texto;
+  const cli = r.cliente;
+  $("#lg-cliente-status").textContent = cli.registrado
+    ? `${t("lg.cliente_registrado")} ${ieData(cli.quando)}${cli.dados && cli.dados.cliente ? ` · ${cli.dados.cliente}` : ""}`
+    : t("lg.cliente_pendente");
+  const f = $("#lg-form");
+  if (cli.dados && !f.dataset.preenchido) {
+    for (const k of ["cliente", "documento", "tecnico", "contato", "local"]) f[k].value = cli.dados[k] || "";
+    f.prazo_dias.value = cli.dados.prazo_dias || "";
+    f.dataset.preenchido = "1";
+  }
+}
+
+function iniciarTermos() {
+  $("#lg-aceitar").onclick = async () => {
+    ieMsg("#lg-msg", "");
+    try { await api("/api/termos/tecnico", {}); ieMsg("#lg-msg", t("lg.aceito_ok"), "ok"); renderTermos(); }
+    catch (e) { ieMsg("#lg-msg", e.message, "err"); }
+  };
+  $("#lg-form").onsubmit = async (ev) => {
+    ev.preventDefault();
+    const f = ev.target;
+    ieMsg("#lg-msg", "");
+    try {
+      await api("/api/termos/cliente", {
+        cliente: f.cliente.value, documento: f.documento.value, tecnico: f.tecnico.value,
+        contato: f.contato.value, local: f.local.value, prazo_dias: parseInt(f.prazo_dias.value, 10) || 0,
+      });
+      ieMsg("#lg-msg", t("lg.cliente_ok"), "ok");
+      renderTermos();
+    } catch (e) { ieMsg("#lg-msg", e.message, "err"); }
+  };
+  $("#lg-apagar").onclick = async () => {
+    const c = prompt(t("lg.apagar_confirma"));
+    if (c == null) return;
+    ieMsg("#lg-msg", "");
+    try {
+      const r = await api("/api/termos/apagar", { confirmacao: c });
+      ieMsg("#lg-msg", t("lg.apagado").replace("{e}", r.eventos).replace("{a}", r.arquivados).replace("{f}", r.fotos), "ok");
+      renderArquivo();
+    } catch (e) { ieMsg("#lg-msg", e.message, "err"); }
+  };
+}
+
+// ---------- Arquivo de alertas ----------
+async function renderArquivo(comForm) {
+  let r;
+  try { r = await api("/api/arquivo"); } catch (e) { ieMsg("#arq-msg", e.message, "err"); return; }
+  const dot = $("#arq-dot");
+  if (!r.ligado) { dot.className = "dot"; $("#arq-status").textContent = t("arq.desligado"); }
+  else if (r.ultimo_erro) { dot.className = "dot off"; $("#arq-status").textContent = r.ultimo_erro; }
+  else { dot.className = "dot on"; $("#arq-status").textContent = t(r.chat_id ? "arq.ligado_canal" : "arq.ligado_local"); }
+  if (comForm) {
+    const f = $("#arq-form");
+    f.ligado.checked = r.ligado;
+    f.manter.value = r.manter;
+    f.chat_id.value = r.chat_id || "";
+  }
+  const corpo = $("#arq-lista");
+  if (!r.alertas.length) { corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "4" }, t("arq.vazio")))); return; }
+  corpo.replaceChildren(...r.alertas.map((a) => {
+    const links = el("td", { class: "right" });
+    if (a.foto) links.append(el("a", { class: "btn ghost sm", href: a.foto, target: "_blank", rel: "noopener" }, t("arq.ver_foto")));
+    if (a.telegram) links.append(el("a", { class: "btn ghost sm", href: a.telegram, target: "_blank", rel: "noopener" }, t("arq.ver_telegram")));
+    return el("tr", {}, el("td", { class: "mono" }, a.data), el("td", {}, a.camera), el("td", {}, a.regra || t("arq.saude")), links);
+  }));
+}
+
+function iniciarArquivo() {
+  $("#arq-form").onsubmit = async (ev) => {
+    ev.preventDefault();
+    const f = ev.target;
+    ieMsg("#arq-msg", "");
+    try {
+      await api("/api/arquivo", { ligado: f.ligado.checked, chat_id: f.chat_id.value.trim(), manter: parseInt(f.manter.value, 10) || null });
+      ieMsg("#arq-msg", t("arq.salvo"), "ok");
+      renderArquivo(true);
+    } catch (e) { ieMsg("#arq-msg", e.message, "err"); renderArquivo(true); }
+  };
+}
+
 // ---------- Ativação junto com a aba Integrações ----------
 // showTab (app.js) só esconde/mostra o painel; aqui observamos o atributo
 // `hidden` para ligar e desligar a atualização periódica sem mexer no app.js.
 function integracoesExtraAtivar(ativo) {
   clearInterval(waTimer); waTimer = null;
   if (ativo) {
+    renderTermos(); renderArquivo(true);
     renderWhatsApp(); renderWebhook();
-    waTimer = setInterval(() => { renderWhatsApp(); renderWebhook(); }, 5000);
+    waTimer = setInterval(() => { renderWhatsApp(); renderWebhook(); renderArquivo(false); }, 5000);
   }
 }
 
 function iniciarIntegracoesExtra() {
   iniciarWhatsApp();
   iniciarWebhook();
+  iniciarTermos();
+  iniciarArquivo();
   const painel = $("#integracoes");
   new MutationObserver(() => integracoesExtraAtivar(!painel.hidden)).observe(painel, { attributes: true, attributeFilter: ["hidden"] });
   integracoesExtraAtivar(!painel.hidden);
