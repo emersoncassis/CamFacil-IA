@@ -8,6 +8,7 @@ mod assets;
 mod autoinicio;
 mod elo;
 mod ia;
+mod integracoes;
 mod notificacoes;
 mod painel;
 mod resumo;
@@ -24,6 +25,7 @@ pub struct App {
     pub video: Arc<video::Video>,
     pub tailscale: tailscale::Estado,
     pub telegram: std::sync::OnceLock<Arc<cf_notify::Telegram>>,
+    pub whatsapp: std::sync::OnceLock<Arc<cf_notify::WhatsApp>>,
     pub ia: Arc<ia::Ia>,
 }
 
@@ -111,23 +113,36 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         video,
         tailscale: tailscale::Estado::default(),
         telegram: std::sync::OnceLock::new(),
+        whatsapp: std::sync::OnceLock::new(),
         ia: Arc::new(ia::Ia::new(&dir)),
     });
     // Nível médio: a thread do detector dorme até haver módulo médio ligado e
     // runtime+modelo baixados (SDD-02).
     ia::detector::iniciar(app.ia.clone(), app.video.clone(), app.store.clone());
-    // Telegram (SDD-04): alertas com foto e comandos, só quando há token salvo.
-    match cf_notify::Telegram::iniciar(
-        app.store.clone(),
-        Arc::new(notificacoes::Ponte::new(Arc::downgrade(&app))),
-    ) {
-        Ok(tg) => {
-            let n = tg.clone();
-            video::definir_notificador(Arc::new(move |a| n.notificar(a)));
-            let _ = app.telegram.set(tg);
-        }
-        Err(e) => eprintln!("Telegram desligado: {e}"),
+    // Notificações (SDD-04): Telegram e WhatsApp recebem o mesmo alerta; cada
+    // serviço só age quando está configurado.
+    let ponte: Arc<dyn cf_notify::Anfitriao> =
+        Arc::new(notificacoes::Ponte::new(Arc::downgrade(&app)));
+    let tg = cf_notify::Telegram::iniciar(app.store.clone(), ponte.clone())
+        .map_err(|e| eprintln!("Telegram desligado: {e}"))
+        .ok();
+    let wa = cf_notify::WhatsApp::iniciar(app.store.clone(), ponte)
+        .map_err(|e| eprintln!("WhatsApp desligado: {e}"))
+        .ok();
+    if let Some(t) = &tg {
+        let _ = app.telegram.set(t.clone());
     }
+    if let Some(w) = &wa {
+        let _ = app.whatsapp.set(w.clone());
+    }
+    video::definir_notificador(Arc::new(move |a: cf_notify::Alerta| {
+        if let Some(w) = &wa {
+            w.notificar(a.clone());
+        }
+        if let Some(t) = &tg {
+            t.notificar(a);
+        }
+    }));
     app.elo.definir_resumo(resumo::montar(Arc::downgrade(&app)));
     let rede = lan
         .then(|| cf_core::conectar::ip_local().map(|ip| format!("http://{ip}:{}", chosen.port)))

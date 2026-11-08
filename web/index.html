@@ -8,6 +8,7 @@
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/integracoes-extra.css">
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -395,9 +396,60 @@
             <p class="tiny mt" data-i18n="tg.comandos"></p>
           </div>
         </div>
+        <div class="block" id="whatsapp">
+          <h2>WhatsApp</h2>
+          <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="wa.aviso"></span></p>
+          <p class="hint" data-i18n="wa.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="wa.situacao"></dt><dd><span class="state"><span class="dot" id="wa-dot"></span><span id="wa-status"></span></span></dd>
+            <dt data-i18n="wa.instancia"></dt><dd class="mono" id="wa-inst">—</dd>
+            <dt data-i18n="wa.envios"></dt><dd id="wa-envios">—</dd>
+          </dl>
+          <form class="form-grid" id="wa-form" autocomplete="off">
+            <input name="url" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.url_ph" required>
+            <input name="instancia" class="mono" type="text" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.instancia_ph" required>
+            <input name="apikey" class="mono" type="password" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.apikey_ph" required>
+            <button class="btn primary" type="submit" id="wa-salvar"><span data-i18n="wa.salvar"></span></button>
+          </form>
+          <p class="tiny mt" data-i18n="wa.como"></p>
+          <div class="actions mt" id="wa-acoes" hidden>
+            <button class="btn sm" id="wa-qr-btn" type="button"><span data-i18n="wa.gerar_qr"></span></button>
+            <button class="btn sm" id="wa-testar" type="button"><span data-i18n="wa.testar"></span></button>
+            <button class="btn ghost sm" id="wa-remover" type="button" data-i18n="wa.remover"></button>
+            <label class="som-regra" id="wa-fotos-wrap"><span class="switch"><input type="checkbox" id="wa-fotos"><span></span></span><span class="tiny" data-i18n="wa.fotos"></span></label>
+          </div>
+          <div class="qr-area" id="wa-qr-area" hidden>
+            <div class="qr"><img id="wa-qr" alt="" width="200" height="200"></div>
+            <div>
+              <p data-i18n="wa.qr_passo"></p>
+              <p class="hint" data-i18n="wa.qr_dica"></p>
+            </div>
+          </div>
+          <p class="msg" id="wa-msg" role="status"></p>
+          <div id="wa-receber" hidden>
+            <h3 class="sub" data-i18n="wa.receber"></h3>
+            <p class="hint" data-i18n="wa.receber_dica"></p>
+            <div class="result"><code class="mono" id="wa-webhook-url"></code><button class="btn ghost sm" id="wa-copiar" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="cam.copiar"></span></button></div>
+            <form class="add-cam" id="wa-wh-form" autocomplete="off">
+              <input name="url_base" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.url_base_ph">
+              <button class="btn sm" type="submit" id="wa-wh-registrar"><span data-i18n="wa.registrar"></span></button>
+            </form>
+            <p class="msg" id="wa-wh-msg" role="status"></p>
+          </div>
+          <div id="wa-contatos" hidden>
+            <h3 class="sub" data-i18n="wa.contatos"></h3>
+            <p class="hint" data-i18n="wa.contatos_dica"></p>
+            <div class="table-wrap mt">
+              <table class="table">
+                <thead><tr><th data-i18n="wa.col_nome"></th><th data-i18n="wa.col_numero"></th><th data-i18n="tg.col_visto"></th><th data-i18n="tg.col_autorizado"></th><th class="right"></th></tr></thead>
+                <tbody id="wa-lista"></tbody>
+              </table>
+            </div>
+            <p class="tiny mt" data-i18n="wa.comandos"></p>
+          </div>
+        </div>
         <div class="block">
           <ul class="list">
-            <li><div><strong>WhatsApp</strong><p data-i18n="int.whatsapp"></p></div><span class="badge" data-i18n="em_breve"></span></li>
             <li><div><strong data-i18n="int.marca"></strong><p data-i18n="int.marca_desc"></p></div><span class="badge" data-i18n="em_breve"></span></li>
           </ul>
         </div>
@@ -417,5 +469,6 @@
   </dialog>
 
   <script src="/app.js"></script>
+  <script src="/integracoes-extra.js"></script>
 </body>
 </html>

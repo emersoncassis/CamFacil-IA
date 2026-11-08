@@ -1,6 +1,6 @@
 # SDD-04 — Integrações (Telegram, WhatsApp, webhook, LLM, MCP)
 
-Status: Telegram **implementado** (fase 3); WhatsApp, webhook, LLM e MCP propostos (fase 3 e 6)
+Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implementado** (fase 3b); webhook, LLM e MCP propostos (fase 3b e 6)
 
 ## Telegram (padrão) — status: implementado
 - Bot API oficial via HTTPS (long polling `getUpdates` com timeout de 30 s, só enquanto há token; sem porta aberta). Cliente próprio com `reqwest` (rustls, provedor `ring` já usado pelo binário; sem `aws-lc`), multipart do `sendPhoto` montado à mão. Crate `cf-notify`.
@@ -12,9 +12,20 @@ Status: Telegram **implementado** (fase 3); WhatsApp, webhook, LLM e MCP propost
 - **API local**: `GET/POST/DELETE /api/telegram`, `POST /api/telegram/testar`, `POST /api/telegram/fotos`, `POST/DELETE /api/telegram/chats/{id}`, `POST /api/fuso`.
 - Testado contra um servidor Bot API simulado (`CAMFACIL_TELEGRAM_API`); falta validar com um bot real (@BotFather) numa máquina com internet.
 
-## WhatsApp (opcional)
-- Biblioteca não oficial por QR code: `whatsapp-rust` (nativo) ou `whatsmeow` (Go) como processo auxiliar se o port for instável (ADR-0004).
-- **Aviso obrigatório na tela de ativação**: biblioteca não oficial; o número pode ser banido; use um chip dedicado.
+## WhatsApp (opcional) — status: implementado via Evolution API (fase 3b)
+- **Gateway HTTP, não biblioteca** (ADR-0009, substitui a ADR-0004): a [Evolution API](https://github.com/EvolutionAPI/evolution-api) roda como contêiner Docker fora do binário (no mesmo servidor do painel ou em qualquer PC com Docker); o CamFácil IA só fala HTTP com ela (`crates/cf-notify/src/whatsapp.rs`, cliente mínimo com o `reqwest` já existente, nenhuma dependência nova). Mantida a regra 2: nada de Node no caminho de execução **do programa**.
+- **Configuração**: URL da Evolution, nome da instância e chave (`AUTHENTICATION_API_KEY`), esta cifrada pelo mesmo cofre ChaCha20-Poly1305 do token do Telegram (`settings.wa_apikey = enc:…`). "Salvar e testar" chama `GET /instance/fetchInstances`; "Gerar QR" chama `GET /instance/connect/{instância}` (cria a instância Baileys com `POST /instance/create` se faltar) e mostra o PNG em base64 na tela.
+- **Aviso permanente na tela** (PRD §5): *"WhatsApp não oficial pode ter o número bloqueado; use um chip dedicado, nunca o seu número principal."*
+- **Contatos**: quem manda "oi" para o número aparece em Integrações → WhatsApp → Números autorizados e o técnico liga a chave (tabela `whatsapp_contatos`, igual ao Telegram). Só autorizados recebem alertas e usam comandos.
+- **Alertas**: mesmos textos e fotos do Telegram (`POST /message/sendText` e `sendMedia` com JPEG em base64), antirrepique de 30 s por regra, fila offline de 40 com espera crescente.
+- **Comandos** (com ou sem barra): `status`, `foto <nome ou nº>`, `resumo`, `liga/desliga <módulo>`, `ajuda` (`crates/cf-notify/src/comandos.rs`). Chegam pelo **webhook** da Evolution: `POST /api/whatsapp/webhook/{token}` (token de 128 bits gerado uma vez, guardado cifrado; sem ele a rota responde 404). O botão "Registrar na Evolution" chama `POST /webhook/set/{instância}` com `MESSAGES_UPSERT`. A Evolution precisa alcançar o PC do CamFácil IA (mesma rede com `--lan`, ou Tailscale); o técnico pode informar o endereço que ela enxerga. Polling não foi implementado: a Evolution não oferece um `getUpdates` leve (o `findMessages` consulta o banco inteiro), e o webhook na mesma rede é o caminho normal.
+- **API local**: `GET/POST/DELETE /api/whatsapp`, `POST /api/whatsapp/testar`, `POST /api/whatsapp/qr`, `POST /api/whatsapp/fotos`, `POST /api/whatsapp/webhook/registrar`, `POST /api/whatsapp/webhook/{token}`, `POST/DELETE /api/whatsapp/contatos/{jid}`.
+- **Subir a Evolution API no mesmo servidor Docker do painel** (uma linha, PostgreSQL embutido não é necessário para começar):
+  ```sh
+  docker run -d --name evolution -p 8080:8080 -e AUTHENTICATION_API_KEY=troque-esta-chave -v evolution_instances:/evolution/instances atendai/evolution-api:v2.2.3
+  ```
+  Depois aponte a dashboard para `http://<ip-do-servidor>:8080` com essa chave. Para produção, use o `docker-compose` oficial da Evolution (com Postgres e Redis) e HTTPS pelo mesmo proxy do painel.
+- Testado contra um servidor HTTP simulado (testes em `whatsapp.rs`); falta validar contra uma Evolution real e um chip dedicado.
 
 ## Comandos v1 (iguais nos dois canais)
 | Comando | Ação |

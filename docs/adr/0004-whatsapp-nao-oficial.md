@@ -1,6 +1,6 @@
 # ADR-0004 — WhatsApp por biblioteca não oficial
 
-Status: proposto · 2026-11-07
+Status: substituída pela ADR-0009 (Evolution API como gateway HTTP) · 2026-11-07
 
 ## Contexto
 A Evolution API depende de Node/Docker, pesada para máquina velha. A API oficial do WhatsApp exige empresa verificada e custo por mensagem.

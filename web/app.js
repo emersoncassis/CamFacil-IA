@@ -1076,6 +1076,7 @@ async function main() {
   iniciarCameras();
   iniciarLigar();
   iniciarAutoinicio();
+  iniciarIntegracoesExtra();
   $("#sug-iniciar").onclick = sugIniciar;
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));

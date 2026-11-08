@@ -75,7 +75,24 @@ impl Store {
                  document   TEXT NOT NULL,
                  version    TEXT NOT NULL,
                  accepted_at INTEGER NOT NULL
-             );",
+             );
+             CREATE TABLE IF NOT EXISTS whatsapp_contatos (
+                 jid        TEXT PRIMARY KEY,
+                 nome       TEXT NOT NULL DEFAULT '',
+                 autorizado INTEGER NOT NULL DEFAULT 0,
+                 visto_em   INTEGER NOT NULL
+             );
+             CREATE TABLE IF NOT EXISTS arquivo_alertas (
+                 id         INTEGER PRIMARY KEY,
+                 camera_id  INTEGER NOT NULL,
+                 regra_id   INTEGER,
+                 chave      TEXT NOT NULL,
+                 quando     INTEGER NOT NULL,
+                 arquivo    TEXT NOT NULL DEFAULT '',
+                 chat_id    INTEGER,
+                 message_id INTEGER
+             );
+             CREATE INDEX IF NOT EXISTS arquivo_quando ON arquivo_alertas(camera_id, quando DESC);",
         )?;
         Ok(Self {
             conn: Mutex::new(conn),
@@ -475,9 +492,205 @@ impl Store {
     }
 }
 
+// ---------------- WhatsApp: contatos (fase 3b) ----------------
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ContatoWhatsApp {
+    pub jid: String,
+    pub nome: String,
+    pub autorizado: bool,
+    pub visto_em: i64,
+}
+
+impl Store {
+    pub fn whatsapp_contato_visto(&self, jid: &str, nome: &str, quando: i64) -> Result<()> {
+        self.lock().execute(
+            "INSERT INTO whatsapp_contatos(jid, nome, visto_em) VALUES (?1, ?2, ?3)
+             ON CONFLICT(jid) DO UPDATE SET nome = CASE WHEN excluded.nome = '' THEN nome ELSE excluded.nome END, visto_em = excluded.visto_em",
+            params![jid, nome, quando],
+        )?;
+        Ok(())
+    }
+
+    pub fn whatsapp_contatos(&self) -> Result<Vec<ContatoWhatsApp>> {
+        let c = self.lock();
+        let mut st = c.prepare(
+            "SELECT jid, nome, autorizado, visto_em FROM whatsapp_contatos ORDER BY autorizado DESC, visto_em DESC",
+        )?;
+        let v = st
+            .query_map([], |r| {
+                Ok(ContatoWhatsApp {
+                    jid: r.get(0)?,
+                    nome: r.get(1)?,
+                    autorizado: r.get::<_, i64>(2)? != 0,
+                    visto_em: r.get(3)?,
+                })
+            })?
+            .collect();
+        v
+    }
+
+    pub fn whatsapp_autorizados(&self) -> Result<Vec<String>> {
+        Ok(self
+            .whatsapp_contatos()?
+            .into_iter()
+            .filter(|c| c.autorizado)
+            .map(|c| c.jid)
+            .collect())
+    }
+
+    pub fn whatsapp_autorizar(&self, jid: &str, autorizado: bool) -> Result<bool> {
+        Ok(self.lock().execute(
+            "UPDATE whatsapp_contatos SET autorizado = ?2 WHERE jid = ?1",
+            params![jid, autorizado as i64],
+        )? > 0)
+    }
+
+    pub fn whatsapp_remover(&self, jid: &str) -> Result<bool> {
+        Ok(self
+            .lock()
+            .execute("DELETE FROM whatsapp_contatos WHERE jid = ?1", params![jid])?
+            > 0)
+    }
+}
+
+// ---------------- Arquivo de alertas: foto local e mensagem no Telegram ----------------
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct AlertaArquivado {
+    pub id: i64,
+    pub camera_id: i64,
+    pub regra_id: Option<i64>,
+    pub chave: String,
+    pub quando: i64,
+    /// Nome do arquivo JPEG na pasta `fotos/cam_<id>/` (vazio se não houve foto).
+    pub arquivo: String,
+    pub chat_id: Option<i64>,
+    pub message_id: Option<i64>,
+}
+
+impl Store {
+    pub fn arquivar_alerta(
+        &self,
+        camera_id: i64,
+        regra_id: Option<i64>,
+        chave: &str,
+        quando: i64,
+        arquivo: &str,
+    ) -> Result<i64> {
+        let c = self.lock();
+        c.execute(
+            "INSERT INTO arquivo_alertas(camera_id, regra_id, chave, quando, arquivo) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![camera_id, regra_id, chave, quando, arquivo],
+        )?;
+        Ok(c.last_insert_rowid())
+    }
+
+    /// Guarda onde a foto ficou no Telegram (chat e mensagem) para o link "ver no arquivo".
+    pub fn arquivo_mensagem(&self, id: i64, chat_id: i64, message_id: i64) -> Result<()> {
+        self.lock().execute(
+            "UPDATE arquivo_alertas SET chat_id = ?2, message_id = ?3 WHERE id = ?1",
+            params![id, chat_id, message_id],
+        )?;
+        Ok(())
+    }
+
+    pub fn arquivo_alertas(&self, limite: i64) -> Result<Vec<AlertaArquivado>> {
+        let c = self.lock();
+        let mut st = c.prepare(
+            "SELECT id, camera_id, regra_id, chave, quando, arquivo, chat_id, message_id FROM arquivo_alertas ORDER BY id DESC LIMIT ?1",
+        )?;
+        let v = st
+            .query_map(params![limite], |r| {
+                Ok(AlertaArquivado {
+                    id: r.get(0)?,
+                    camera_id: r.get(1)?,
+                    regra_id: r.get(2)?,
+                    chave: r.get(3)?,
+                    quando: r.get(4)?,
+                    arquivo: r.get(5)?,
+                    chat_id: r.get(6)?,
+                    message_id: r.get(7)?,
+                })
+            })?
+            .collect();
+        v
+    }
+
+    /// Nomes dos arquivos de foto que saem da retenção de uma câmera (mantém os
+    /// `manter` mais recentes) e já apaga as linhas correspondentes.
+    pub fn arquivo_excedentes(&self, camera_id: i64, manter: i64) -> Result<Vec<String>> {
+        let c = self.lock();
+        let mut st = c.prepare(
+            "SELECT id, arquivo FROM arquivo_alertas WHERE camera_id = ?1 AND arquivo <> '' ORDER BY id DESC LIMIT -1 OFFSET ?2",
+        )?;
+        let velhos: Vec<(i64, String)> = st
+            .query_map(params![camera_id, manter], |r| Ok((r.get(0)?, r.get(1)?)))?
+            .collect::<Result<_>>()?;
+        drop(st);
+        for (id, _) in &velhos {
+            c.execute(
+                "UPDATE arquivo_alertas SET arquivo = '' WHERE id = ?1",
+                params![id],
+            )?;
+        }
+        Ok(velhos.into_iter().map(|(_, a)| a).collect())
+    }
+
+    /// LGPD: apaga eventos e o índice do arquivo deste cliente. Devolve
+    /// (eventos, alertas arquivados) apagados. Configurações e câmeras ficam.
+    pub fn apagar_dados_cliente(&self) -> Result<(usize, usize)> {
+        let c = self.lock();
+        let e = c.execute("DELETE FROM eventos", [])?;
+        let a = c.execute("DELETE FROM arquivo_alertas", [])?;
+        Ok((e, a))
+    }
+
+    /// Último aceite de um documento (versão, quando), se houver.
+    pub fn ultimo_aceite(&self, document: &str) -> Result<Option<(String, i64)>> {
+        self.lock()
+            .query_row(
+                "SELECT version, accepted_at FROM acceptances WHERE document = ?1 ORDER BY id DESC LIMIT 1",
+                params![document],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn contatos_do_whatsapp_e_arquivo() {
+        let s = Store::memory().unwrap();
+        s.whatsapp_contato_visto("5511@s.whatsapp.net", "Zé", 1)
+            .unwrap();
+        s.whatsapp_contato_visto("5511@s.whatsapp.net", "", 2)
+            .unwrap();
+        assert_eq!(s.whatsapp_contatos().unwrap()[0].nome, "Zé");
+        assert!(s.whatsapp_autorizados().unwrap().is_empty());
+        assert!(s.whatsapp_autorizar("5511@s.whatsapp.net", true).unwrap());
+        assert_eq!(s.whatsapp_autorizados().unwrap().len(), 1);
+        assert!(s.whatsapp_remover("5511@s.whatsapp.net").unwrap());
+
+        for i in 0..5 {
+            s.arquivar_alerta(1, Some(7), "regra:7", 100 + i, &format!("f{i}.jpg"))
+                .unwrap();
+        }
+        let id = s.arquivo_alertas(1).unwrap()[0].id;
+        s.arquivo_mensagem(id, -100123, 55).unwrap();
+        assert_eq!(s.arquivo_alertas(1).unwrap()[0].message_id, Some(55));
+        let fora = s.arquivo_excedentes(1, 3).unwrap();
+        assert_eq!(fora, vec!["f1.jpg", "f0.jpg"]);
+        assert!(s.arquivo_excedentes(1, 3).unwrap().is_empty());
+        s.registrar_evento(1, None, "saude", "escura", 11).unwrap();
+        assert_eq!(s.apagar_dados_cliente().unwrap(), (1, 5));
+        assert!(s.ultimo_aceite("tecnico").unwrap().is_none());
+        s.accept("tecnico", "1.0", 5).unwrap();
+        assert_eq!(s.ultimo_aceite("tecnico").unwrap(), Some(("1.0".into(), 5)));
+    }
 
     #[test]
     fn contatos_do_telegram() {

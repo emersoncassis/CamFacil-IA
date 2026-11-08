@@ -173,6 +173,7 @@ O CamFácil IA testa a sua máquina e libera só o que ela aguenta.
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP e senha padrão |
 | <img src="docs/assets/icons/diagrama.svg" width="20" alt=""/> | **Diagrama da rede** | Desenha o unifilar da instalação e explica em voz |
 | <img src="docs/assets/icons/mensagem.svg" width="20" alt=""/> | **Telegram e WhatsApp** | Alertas e comandos com QR code |
+| | ↳ WhatsApp usa uma [Evolution API](https://github.com/EvolutionAPI/evolution-api) que você sobe no mesmo servidor Docker do painel: `docker run -d -p 8080:8080 -e AUTHENTICATION_API_KEY=troque atendai/evolution-api:v2.2.3` e aponte a URL na dashboard (chip dedicado, nunca o seu número) | SDD-04 |
 | <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Modo TV** | Tela de quiosque para o cliente, com a sua logo |
 | <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Ao vivo, alertas e botões para portão e relé, via Tailscale |
 | <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com a sua marca para fechar a venda |
