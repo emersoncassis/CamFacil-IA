@@ -184,3 +184,36 @@
   .est-lista li { line-height: 1.4; }
   .est-nota { gap: var(--s1); }
 }
+
+/* Aplicação futura: VMS sob medida (só desenho, nada funciona) */
+.est-futuro { display: flex; align-items: center; gap: var(--s2); width: 100%; padding: var(--s2) var(--s3); background: none; border: 1px dashed var(--line); border-radius: var(--r-sm); color: var(--text-2); font: inherit; text-align: left; cursor: pointer; }
+.est-futuro:hover, .est-futuro[aria-current="page"] { color: var(--text); border-color: var(--c-warn); }
+.est-futuro-tag { padding: 1px 6px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--c-warn); font-size: var(--fs-xs); white-space: nowrap; }
+.est-vms .est-cab-linha { align-items: flex-start; }
+.vms-selo { flex: none; padding: 2px 10px; border: 1px solid var(--c-warn); border-radius: var(--r-pill); color: var(--c-warn); font-size: var(--fs-xs); white-space: nowrap; }
+.vms-grade { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--s3); }
+.vms-chat, .vms-previa { min-height: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s3); display: flex; flex-direction: column; gap: var(--s2); opacity: .9; }
+.vms-quem { margin: 0; font-size: var(--fs-xs); color: var(--text-3); }
+.vms-bolha { margin: 0; padding: var(--s2) var(--s3); border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--fs-sm); }
+.vms-ferr { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; overflow: hidden; }
+.vms-ferr li { padding: 2px 8px; border: 1px solid var(--line); border-radius: var(--r-pill); font-size: var(--fs-xs); color: var(--text-2); }
+.vms-ferr code { color: var(--accent); }
+.vms-entrada { margin-top: auto; display: flex; align-items: center; gap: var(--s2); padding: var(--s2); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--text-3); font-size: var(--fs-sm); }
+.vms-entrada span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vms-barra { display: flex; justify-content: space-between; gap: var(--s2); font-size: var(--fs-sm); }
+.vms-mosaico { flex: 1; min-height: 0; display: grid; grid-template: repeat(3, minmax(0, 1fr)) / repeat(3, minmax(0, 1fr)); gap: 3px; }
+.vms-mosaico i { position: relative; background: var(--surface-2); border-radius: 3px; }
+.vms-mosaico i.balao b { position: absolute; left: 6px; bottom: 6px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--accent); color: var(--c-black); font: 500 var(--fs-xs)/1.4 var(--font); }
+.vms-pilares { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s3); }
+.vms-pilares strong { font-size: var(--fs-sm); }
+.vms-pilares p { margin: 2px 0 0; color: var(--text-3); }
+.est-vms .actions { display: flex; justify-content: flex-end; }
+@media (max-width: 860px) {
+  .est-futuro { width: auto; padding: 4px var(--s2); }
+  .est-vms .est-cab p { display: none; }
+  .vms-grade { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .vms-chat .vms-ferr, .vms-chat .vms-quem:nth-of-type(2) { display: none; }
+  .vms-pilares { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .vms-pilares p { display: none; }
+}
+@media (max-height: 700px) { .vms-pilares p { display: none; } }

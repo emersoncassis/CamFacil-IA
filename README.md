@@ -236,6 +236,10 @@ Versão atual: **0.6.0** ([releases](https://github.com/emersoncassis/CamFacil-I
   - [x] Programa local: coletar fotos de uma câmera numa pasta e rodar o modelo de estudo ligado à mão (classes da receita no balão da regra)
   - [ ] Conversa com a IA gerando a receita, vocabulário aberto e pré-marcação no navegador
 
+- [ ] **Aplicação futura** — **VMS sob medida** · [desenho no estúdio](https://cfia.ysafe.com.br/estudio#vms) (só desenho, ainda não faz nada)
+  - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
+  - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
+
 ### Regra de tela
 Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular ao monitor. O que não cabe vira aba, seção que abre ou página (regra 9 do [`CLAUDE.md`](CLAUDE.md), detalhes no [`DESIGN.md`](DESIGN.md)).
 

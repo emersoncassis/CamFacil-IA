@@ -31,6 +31,7 @@
         <li><button type="button" role="tab" data-ir="importar"><span class="num">5</span><span class="rot">Importar</span></button></li>
         <li><button type="button" role="tab" data-ir="compartilhar"><span class="num">6</span><span class="rot">Compartilhar</span></button></li>
       </ol>
+      <button type="button" class="est-futuro" id="abrir-vms"><span class="est-futuro-tag">Em breve</span><span>VMS sob medida</span></button>
       <p class="est-aviso-curto" aria-hidden="true">Só estudo: não use em produção. Sem biometria.</p>
       <p class="est-aviso">Só para estudo e aprendizagem. Modelos do estúdio não devem ser usados em produção: para uso real, câmeras e gravadores com IA de borda ou plataformas corporativas. Reconhecimento facial e biometria ficam bloqueados.</p>
       <p class="est-receita-atual tiny" id="receita-atual" hidden></p>
@@ -244,6 +245,45 @@
           </div>
         </div>
       </div>
+    </section>
+
+
+    <!-- Aplicação futura: só desenho, nada funciona -->
+    <section class="est-passo est-vms" id="vms" aria-labelledby="t-vms" hidden>
+      <header class="est-cab est-cab-linha">
+        <div>
+          <h1 id="t-vms">VMS sob medida</h1>
+          <p>Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele, em cima de uma base que já funciona.</p>
+        </div>
+        <span class="vms-selo">Aplicação futura · só desenho</span>
+      </header>
+      <div class="vms-grade" aria-hidden="true">
+        <div class="vms-chat">
+          <p class="vms-quem">Você</p>
+          <p class="vms-bolha eu">Monte um VMS para a rede de farmácias: mosaico de 9 por loja, alerta quando o balcão ficar vazio e os canais dos NVRs Intelbras e Hikvision.</p>
+          <p class="vms-quem">Assistente · via MCP do CamFácil IA</p>
+          <ul class="vms-ferr">
+            <li><code>camfacil.cameras.listar</code></li>
+            <li><code>camfacil.regras.criar</code> · zona "Balcão"</li>
+            <li><code>intelbras.nvr.canais</code></li>
+            <li><code>hikvision.isapi.eventos</code></li>
+            <li><code>dahua.cgi.eventos</code></li>
+          </ul>
+          <div class="vms-entrada"><span>Peça uma tela, uma regra, uma integração…</span><button class="btn primary sm" type="button" disabled>Enviar</button></div>
+        </div>
+        <div class="vms-previa">
+          <div class="vms-barra"><span>Seu VMS</span><span class="tiny">Farmácia Centro · 9 câmeras</span></div>
+          <div class="vms-mosaico">
+            <i></i><i></i><i></i><i></i><i class="balao"><b>Balcão vazio</b></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+      </div>
+      <div class="vms-pilares">
+        <div><strong>Base: CamFácil IA</strong><p class="tiny">IA local leve que já roda no PC velho, na TV Box e no celular, testada em campo.</p></div>
+        <div><strong>Integração nativa</strong><p class="tiny">APIs dos fabricantes: Intelbras, Hikvision, Dahua e outros. Gravadores e câmeras sem gambiarra.</p></div>
+        <div><strong>Assistente de código</strong><p class="tiny">O MCP entrega ao assistente o que o CamFácil IA sabe fazer. Ele constrói algo que funciona e não falha.</p></div>
+      </div>
+      <div class="actions"><button class="btn" type="button" id="fechar-vms">Voltar ao estúdio</button></div>
     </section>
 
     <nav class="est-nav" aria-label="Avançar e voltar">
