@@ -669,7 +669,7 @@ async function montarSelo(area) {
   const form = el("form", { class: "form selo-form", autocomplete: "off" },
     el("p", { class: "kicker span-4" }, `Olá, ${sessao.nome || "técnico"}. Último passo.`),
     el("label", { class: "span-2" }, el("span", {}, "Seu Instagram (opcional)"), el("span", { class: "prefixo" }, el("i", {}, "@"), inst)),
-    el("label", { class: "span-4 check" }, autoriza, el("span", {}, "Autorizo o CamFácil IA (Emerson), o Papo Segurança e a Zion a repostar o meu selo nos stories, marcando o meu Instagram.")),
+    el("label", { class: "span-4 check" }, autoriza, el("span", {}, "Autorizo o CamFácil IA (Emerson), e o Papo Segurança a repostar o meu selo nos stories, marcando o meu Instagram.")),
     el("div", { class: "actions span-4" }, btn),
     msg);
   form.onsubmit = async (ev) => {
