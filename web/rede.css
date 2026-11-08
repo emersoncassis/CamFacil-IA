@@ -1,0 +1,23 @@
+/* CamFácil IA — tela Rede (SDD-05). Só tokens de tokens.css. */
+
+.rede-prog { height: 4px; background: var(--line); border-radius: var(--r-pill); overflow: hidden; }
+.rede-prog-bar { height: 100%; width: 0; background: var(--accent); transition: width .3s linear; }
+@media (prefers-reduced-motion: reduce) { .rede-prog-bar { transition: none; } }
+
+.rede-tabela td { font-size: var(--fs-sm); }
+.rede-tabela .mono { font-size: var(--fs-xs); }
+.rede-tabela .sou-eu td { background: var(--surface); }
+
+.rede-tipo { display: inline-flex; align-items: center; gap: var(--s2); color: var(--text-2); white-space: nowrap; }
+.rede-tipo::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); flex: none; }
+.rede-tipo.camera::before, .rede-tipo.gravador::before { background: var(--accent); }
+.rede-tipo.roteador::before, .rede-tipo.switch::before { background: var(--c-300); }
+.rede-tipo.desconhecido { color: var(--text-3); }
+
+.rede-marca { display: inline-block; margin-left: var(--s2); padding: 0 var(--s2); font-size: var(--fs-xs); color: var(--text-3); border: 1px solid var(--line-strong); border-radius: var(--r-pill); vertical-align: 1px; }
+
+.rede-mud { display: inline-block; min-width: 72px; font-size: var(--fs-xs); color: var(--text-3); }
+.rede-mud.mudou_ip { color: var(--c-warn); }
+.rede-mud.sumiu { color: var(--c-danger); }
+.rede-mud.apareceu { color: var(--text-2); }
+.rede-seta { color: var(--text-3); margin: 0 var(--s1); }

@@ -58,6 +58,7 @@ function showTab(id) {
   tsAtivar(id === "integracoes");
   tgAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
+  redeAtivar(id === "rede");
   ligarAtivar(id === "cameras");
 }
 
@@ -1076,6 +1077,7 @@ async function main() {
   iniciarCameras();
   iniciarLigar();
   iniciarAutoinicio();
+  iniciarRede();
   $("#sug-iniciar").onclick = sugIniciar;
   $("#elo-parear").onclick = () => eloAcao(() => api("/api/elo/codigo", {}));
   $("#elo-aceitar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: true }));

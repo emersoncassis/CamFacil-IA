@@ -9,6 +9,7 @@ pub mod elo;
 pub mod onvif;
 pub mod paths;
 pub mod ports;
+pub mod rede;
 pub mod rtsp;
 pub mod saude;
 pub mod store;
