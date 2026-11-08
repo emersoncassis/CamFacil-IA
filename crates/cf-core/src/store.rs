@@ -203,6 +203,12 @@ fn migrar_cameras(c: &Connection) -> Result<()> {
     if !colunas.iter().any(|n| n == "mac") {
         c.execute_batch("ALTER TABLE cameras ADD COLUMN mac TEXT NOT NULL DEFAULT '';")?;
     }
+    if !colunas.iter().any(|n| n == "gravador") {
+        c.execute_batch("ALTER TABLE cameras ADD COLUMN gravador TEXT NOT NULL DEFAULT '';")?;
+    }
+    if !colunas.iter().any(|n| n == "canal") {
+        c.execute_batch("ALTER TABLE cameras ADD COLUMN canal INTEGER NOT NULL DEFAULT 0;")?;
+    }
     Ok(())
 }
 
@@ -249,6 +255,10 @@ pub struct Camera {
     pub auto_ip: bool,
     /// MAC aprendido na rede (`AA:BB:…`); vazio enquanto não aprendeu.
     pub mac: String,
+    /// Host do gravador (DVR/NVR) de onde a câmera veio; vazio se é câmera IP.
+    pub gravador: String,
+    /// Canal do gravador (1, 2, …); 0 quando não veio de gravador.
+    pub canal: u32,
 }
 
 impl Camera {
@@ -298,7 +308,7 @@ impl Store {
     pub fn cameras(&self) -> Result<Vec<Camera>> {
         let c = self.lock();
         let mut st =
-            c.prepare("SELECT id, nome, fonte, url, ativa, auto_ip, mac FROM cameras ORDER BY id")?;
+            c.prepare("SELECT id, nome, fonte, url, ativa, auto_ip, mac, gravador, canal FROM cameras ORDER BY id")?;
         let v = st
             .query_map([], |r| {
                 Ok(Camera {
@@ -309,6 +319,8 @@ impl Store {
                     ativa: r.get::<_, i64>(4)? != 0,
                     auto_ip: r.get::<_, i64>(5)? != 0,
                     mac: r.get(6)?,
+                    gravador: r.get(7)?,
+                    canal: r.get::<_, i64>(8)?.max(0) as u32,
                 })
             })?
             .collect();
@@ -343,6 +355,14 @@ impl Store {
                 cam.ativa as i64,
                 cam.auto_ip as i64
             ],
+        )? > 0)
+    }
+
+    /// Marca a câmera como canal de um gravador (host vazio e canal 0 desfazem).
+    pub fn definir_gravador_canal(&self, id: i64, gravador: &str, canal: u32) -> Result<bool> {
+        Ok(self.lock().execute(
+            "UPDATE cameras SET gravador = ?2, canal = ?3 WHERE id = ?1",
+            params![id, gravador, canal],
         )? > 0)
     }
 
@@ -634,6 +654,11 @@ pub struct CameraBackup {
     /// MAC aprendido; ausente em backups antigos (o MAC vinha em `rede.macs`).
     #[serde(default)]
     pub mac: String,
+    /// Gravador (host) e canal; ausentes em backups antigos.
+    #[serde(default)]
+    pub gravador: String,
+    #[serde(default)]
+    pub canal: u32,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -679,7 +704,7 @@ impl Store {
             .filter(|(k, _)| !chave_local(k))
             .collect();
         let mut st =
-            c.prepare("SELECT id, nome, fonte, url, ativa, auto_ip, mac FROM cameras ORDER BY id")?;
+            c.prepare("SELECT id, nome, fonte, url, ativa, auto_ip, mac, gravador, canal FROM cameras ORDER BY id")?;
         b.cameras = st
             .query_map([], |r| {
                 Ok(CameraBackup {
@@ -690,6 +715,8 @@ impl Store {
                     ativa: r.get::<_, i64>(4)? != 0,
                     auto_ip: r.get::<_, i64>(5)? != 0,
                     mac: r.get(6)?,
+                    gravador: r.get(7)?,
+                    canal: r.get::<_, i64>(8)?.max(0) as u32,
                 })
             })?
             .collect::<Result<_>>()?;
@@ -767,8 +794,8 @@ impl Store {
         for k in &b.cameras {
             let mac = crate::rede::normalizar_mac(&k.mac).unwrap_or_default();
             tx.execute(
-                "INSERT INTO cameras (id, nome, fonte, url, ativa, auto_ip, mac)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                "INSERT INTO cameras (id, nome, fonte, url, ativa, auto_ip, mac, gravador, canal)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
                 params![
                     k.id,
                     k.nome,
@@ -776,7 +803,9 @@ impl Store {
                     k.url,
                     k.ativa as i64,
                     k.auto_ip as i64,
-                    mac
+                    mac,
+                    k.gravador,
+                    k.canal
                 ],
             )?;
         }
@@ -1150,6 +1179,7 @@ mod tests {
             .unwrap();
         a.definir_auto_ip(cam, true).unwrap();
         a.definir_mac_camera(cam, "58-10-8c-00-00-01").unwrap();
+        a.definir_gravador_canal(cam, "192.168.1.108", 3).unwrap();
         let b = a.exportar_config().unwrap();
         let json = serde_json::to_string(&b).unwrap();
         let b: ConfigBackup = serde_json::from_str(&json).unwrap();
@@ -1158,6 +1188,7 @@ mod tests {
         let c = &dest.cameras().unwrap()[0];
         assert!(c.auto_ip);
         assert_eq!(c.mac, "58:10:8C:00:00:01");
+        assert_eq!((c.gravador.as_str(), c.canal), ("192.168.1.108", 3));
     }
 
     #[test]

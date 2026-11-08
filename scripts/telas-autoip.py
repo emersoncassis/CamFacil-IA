@@ -20,6 +20,17 @@ def sem_rolagem(p):
     return p.evaluate("document.documentElement.scrollHeight <= innerHeight && document.documentElement.scrollWidth <= innerWidth")
 
 
+def alcancavel(p, sel):
+    """O botão está na tela e nada o cobre (nem a barra de abas, nem o corte do painel)."""
+    return p.evaluate("""(s) => { const e = document.querySelector(s); if (!e) return false;
+        const r = e.getBoundingClientRect(); if (!r.width || r.bottom > innerHeight || r.top < 0) return false;
+        const x = r.left + r.width / 2, y = r.top + r.height / 2; const a = document.elementFromPoint(x, y);
+        if (!a || !(a === e || e.contains(a))) return false;
+        for (let p = e.parentElement; p; p = p.parentElement) { const q = p.getBoundingClientRect();
+          const cs = getComputedStyle(p); if (cs.overflow !== 'visible' && (y > q.bottom || y < q.top)) return false; }
+        return true; }""", sel)
+
+
 def main():
     base, com_mac, sem_mac, demo = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
     falhas = []
@@ -59,6 +70,7 @@ def main():
                 return getComputedStyle(a.nextElementSibling).outlineStyle; })()""")
             ok(foco == "solid", f"foco não visível na chave do Ligar câmera ({foco})")
             ok(sem_rolagem(p), "Ligar câmera rolou a página")
+            ok(alcancavel(p, "#ligar-conectar"), "botão Conectar fora da tela ou coberto")
             r = sw.bounding_box()
             ok(r and r["y"] + r["height"] <= h, "chave do Ligar câmera fora da tela")
             ok(r and r["height"] >= 24, "alvo de toque pequeno")
@@ -78,6 +90,7 @@ def main():
             dlg = p.evaluate("(() => { const d = document.getElementById('cam-dlg'); const r = d.getBoundingClientRect(); return [r.top, r.bottom, d.scrollHeight, d.clientHeight]; })()")
             ok(dlg[0] >= 0 and dlg[1] <= h and dlg[2] <= dlg[3] + 1, f"diálogo Editar não cabe/rola {dlg}")
             ok(sem_rolagem(p), "Editar câmera rolou a página")
+            ok(alcancavel(p, "#cam-dlg-salvar"), "botão Salvar fora da tela ou coberto")
             p.screenshot(path=f"autoip-editar-{tam}.png")
             p.click("#cam-dlg-cancelar")
 

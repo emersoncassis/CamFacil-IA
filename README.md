@@ -192,7 +192,7 @@ Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também 
 | | | |
 |:---:|---|---|
 | <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Aula em cada clique** | Agente guia com voz explica cada botão, mostra o certo e o erro comum, e propõe um desafio |
-| <img src="docs/assets/icons/lupa.svg" width="20" alt=""/> | **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante; login salvo (cifrado) para as câmeras que usam o mesmo usuário e senha; editar e remover câmera |
+| <img src="docs/assets/icons/lupa.svg" width="20" alt=""/> | **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante; login salvo (cifrado) para as câmeras que usam o mesmo usuário e senha; editar e remover câmera; reconhece gravador (DVR/NVR) e deixa escolher um ou vários canais |
 | <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Ao vivo** | Mosaico de 1, 2, 3 ou 4 câmeras e, embaixo, o status: aparelho, IA (regras ativas, modelos rodando), alertas, para quem vai cada alerta e serviços ativos |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP e senha padrão |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Autocorreção de IP** | Opção por câmera: se o DHCP mudar o IP, o programa reconhece a câmera pelo MAC, troca o endereço sozinho, confere a imagem e avisa |
@@ -232,6 +232,7 @@ Versão atual: **0.6.0** ([releases](https://github.com/emersoncassis/CamFacil-I
   - [x] MCP (configurar conversando com uma IA, desligado por padrão) · [ADR 0012](docs/adr/0012-mcp-json-rpc-proprio.md)
   - [x] Botões de portão e relé no app, com PIN, confirmação e log
   - [x] Autocorreção de IP da câmera pelo MAC (opção por câmera, com conferência da imagem e antirrepique)
+  - [x] Gravador (DVR/NVR): escolher os canais ao ligar, trocar o canal no Editar e corrigir o IP de todos os canais juntos
 - [ ] **Fase 7** — Modo estúdio · [versão básica](https://cfia.ysafe.com.br/estudio)
   - [x] Receita de módulo validada (biometria bloqueada), gerador do notebook do Colab, importar modelo de estudo, compartilhar receitas no site
   - [x] Assistente no site, de ponta a ponta e sem rolagem: descrever (receita conferida pelo núcleo), coletar, rotular no navegador (fotos nunca vão ao servidor, exporta .zip YOLO), notebook do Colab, importar e galeria de receitas
