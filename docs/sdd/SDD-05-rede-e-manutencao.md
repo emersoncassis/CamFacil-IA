@@ -15,6 +15,15 @@ Na primeira varredura com tudo funcionando, grava `{camera_id, ip, mac, fabrican
 4. Também: câmeras instáveis (quedas por hora), senha padrão de fábrica, banda por câmera.
 Limite: MAC só é visível na mesma sub-rede.
 
+## Autocorreção de IP pelo MAC (status: implementado · fase 6)
+Opção por câmera RTSP (`cameras.auto_ip`, padrão desligado) para o programa trocar sozinho o host da URL RTSP quando a câmera (mesmo MAC, `cameras.mac`) aparece noutro IP. Vale para Windows, Linux e Android (mesmo núcleo e mesma interface web).
+- **Controle**: chave "Corrigir o IP sozinho se a câmera mudar de endereço" no Ligar câmera e no Editar câmera. Escondida para demo, webcam e arquivo; travada com "Aguardando a primeira varredura da rede" enquanto o MAC não foi aprendido. O MAC é aprendido na conexão (ARP logo depois do `POST /api/conectar`, ou o MAC do ONVIF da busca), na foto da rede ou na vigília. Trocar o host da câmera à mão apaga o MAC aprendido.
+- **Fluxo** (`crates/camfacil/src/autoip.rs`): a vigília de 5 min (e o diagnóstico) acha o MAC noutro IP → (a) o IP novo responde na porta RTSP salva e a ARP mostra o mesmo MAC nele → (b) troca só o host (usuário, senha, porta e caminho iguais) → (c) reinicia o vídeo e espera a imagem por até 15 s → (d) evento `rede` "IP corrigido sozinho: A → B", aviso informativo no Início e no Ao vivo e mensagem curta pelos canais ligados (Telegram, WhatsApp, webhook) → (e) se a imagem não volta, desfaz, grava o motivo e cai no aviso com o botão "Corrigir para…" (com confirmação).
+- **Proteções**: IP novo em conflito (fotos da rede) ou já usado por outra câmera cadastrada → não corrige; MAC desconhecido → não corrige; antirrepique de 1 correção por câmera a cada 10 min — se a câmera mudar de novo nesse prazo, a autocorreção dela é desligada e o técnico é avisado. Câmera desativada não é corrigida sozinha.
+- **Registro**: últimas 50 tentativas em `settings["rede.autoip_log"]` (desta máquina, fora do backup), visíveis na tela Rede (seção "Correções automáticas de IP") junto da coluna "Autocorreção" do diagnóstico e do indicador no inventário.
+- **Dados**: colunas `auto_ip` e `mac` em `cameras`, criadas por migração ao abrir o banco; a chave antiga `rede.macs` é levada para a coluna e apagada (também ao importar backup antigo). O backup cifrado leva `auto_ip` e `mac`. API: `POST /api/conectar` e `POST /api/cameras` aceitam `auto_ip`; `PATCH /api/cameras/{id}` aceita `auto_ip`; `GET /api/cameras` devolve `auto_ip` e `mac_conhecido`; `GET /api/rede/resumo` devolve `auto_avisos`; `GET /api/rede/diagnostico` devolve `autocorrecao` e `auto_log`.
+- **Fora do escopo**: mudar o IP no próprio aparelho via ONVIF.
+
 ## Plano de IPs e diagrama unifilar (status: diagrama implementado · fase 4; plano de IPs pendente)
 - Sugere faixas (ex.: câmeras .100–.150) e exporta documentação.
 - Diagrama unifilar em SVG gerado no servidor: roteador → switch → máquina/gravador → câmeras, com IP e MAC.

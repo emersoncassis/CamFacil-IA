@@ -372,6 +372,8 @@ function camFonteMudou() {
   const f = $("#cam-form").fonte.value;
   $("#cam-url-campo").hidden = f === "demo";
   $("#cam-senha-campo").hidden = f !== "rtsp";
+  // Autocorreção de IP só existe para RTSP (demo, webcam e arquivo não têm rede).
+  $("#cam-autoip-campo").hidden = f !== "rtsp";
   $("#cam-url-rotulo").textContent = t("camed.url_" + (f === "demo" ? "rtsp" : f));
   $("#cam-form").url.placeholder = f === "rtsp" ? "rtsp://admin:***@192.168.1.108:554/…" : "";
 }
@@ -386,6 +388,11 @@ function editarCamera(id) {
   f.url.value = c.url_sem_senha || "";
   f.senha.value = "";
   f.ativa.checked = c.ativa !== false;
+  // Sem MAC aprendido a autocorreção não tem como reconhecer a câmera: trava.
+  f.auto_ip.checked = !!c.auto_ip;
+  f.auto_ip.disabled = !c.mac_conhecido;
+  $("#cam-autoip-campo").classList.toggle("travado", !c.mac_conhecido);
+  $("#cam-autoip-ajuda").textContent = t(c.mac_conhecido ? "autoip.ajuda" : "autoip.aguardando");
   $("#cam-dlg-msg").textContent = "";
   $("#cam-dlg-msg").className = "msg";
   camFonteMudou();
@@ -400,6 +407,7 @@ async function salvarCamera(ev) {
   const corpo = { nome: f.nome.value.trim(), fonte: f.fonte.value, ativa: f.ativa.checked };
   if (corpo.fonte !== "demo" && (f.url.value.trim() !== (c.url_sem_senha || "") || corpo.fonte !== c.fonte)) corpo.url = f.url.value.trim();
   if (corpo.fonte === "rtsp" && f.senha.value) corpo.senha = f.senha.value;
+  if (corpo.fonte === "rtsp" && !f.auto_ip.disabled && f.auto_ip.checked !== !!c.auto_ip) corpo.auto_ip = f.auto_ip.checked;
   if (!corpo.nome) { m.className = "msg err"; m.textContent = t("cam.nome_ph"); f.nome.focus(); return; }
   b.disabled = true; m.className = "msg"; m.textContent = t("camed.salvando");
   try {
@@ -969,14 +977,14 @@ async function ligarProcurar(autoescolher = true) {
           el("div", {}, el("strong", { class: "mono" }, c.ip), el("p", {}, desc)),
           c.ja_adicionada ? el("span", { class: "badge" }, t("ligar.ja")) : el("span", { class: "btn sm" }, t("ligar.escolher")));
         if (!c.ja_adicionada) {
-          const ir = () => ligarEscolher(c.ip, c.fabricante);
+          const ir = () => ligarEscolher(c.ip, c.fabricante, c.mac);
           li.onclick = ir;
           li.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ir(); } };
         }
         return li;
       }));
       const livres = cameras.filter((c) => !c.ja_adicionada);
-      if (autoescolher && livres.length === 1) ligarEscolher(livres[0].ip, livres[0].fabricante);
+      if (autoescolher && livres.length === 1) ligarEscolher(livres[0].ip, livres[0].fabricante, livres[0].mac);
     }
   } catch (e) { st.textContent = e.message; }
   b.disabled = false;
@@ -995,8 +1003,8 @@ function mostrarLogin() {
   document.querySelectorAll("#ligar-form [data-login]").forEach((l) => { l.hidden = usarLoginSalvo; });
 }
 
-function ligarEscolher(ip, fabricante) {
-  ligarAlvo = { ip: ip.trim(), fabricante: fabricante || null };
+function ligarEscolher(ip, fabricante, mac) {
+  ligarAlvo = { ip: ip.trim(), fabricante: fabricante || null, mac: mac || null };
   $("#ligar-ip").textContent = ligarAlvo.ip;
   $("#ligar-passo2").hidden = false;
   $("#ligar-ok").hidden = true;
@@ -1017,13 +1025,14 @@ async function ligarConectar(ev) {
     const r = await api("/api/conectar", {
       ip: ligarAlvo.ip, fabricante: ligarAlvo.fabricante, usar_salvo: usarLoginSalvo,
       usuario: login ? login.usuario : "", senha: login ? login.senha : "", nome: f.nome.value.trim() || null,
+      auto_ip: f.auto_ip.checked, mac: ligarAlvo.mac,
     });
     // Login digitado e que funcionou: pergunta se vale para as outras câmeras.
     ultimoLogin = login;
     $("#ligar-perguntar").hidden = !login;
-    f.senha.value = ""; f.nome.value = "";
+    f.senha.value = ""; f.nome.value = ""; f.auto_ip.checked = false;
     m.textContent = "";
-    $("#ligar-ok-texto").textContent = `${r.nome} ${t("ligar.ligada")}`;
+    $("#ligar-ok-texto").textContent = `${r.nome} ${t("ligar.ligada")}` + (r.auto_ip && !r.mac_conhecido ? ` ${t("autoip.ligar_depois")}` : "");
     $("#ligar-ok").hidden = false;
     $("#ligar-form").hidden = true;
     await carregarCameras();

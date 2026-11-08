@@ -195,6 +195,7 @@ Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também 
 | <img src="docs/assets/icons/lupa.svg" width="20" alt=""/> | **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante; login salvo (cifrado) para as câmeras que usam o mesmo usuário e senha; editar e remover câmera |
 | <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Ao vivo** | Mosaico de 1, 2, 3 ou 4 câmeras e, embaixo, o status: aparelho, IA (regras ativas, modelos rodando), alertas, para quem vai cada alerta e serviços ativos |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP e senha padrão |
+| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Autocorreção de IP** | Opção por câmera: se o DHCP mudar o IP, o programa reconhece a câmera pelo MAC, troca o endereço sozinho, confere a imagem e avisa |
 | <img src="docs/assets/icons/diagrama.svg" width="20" alt=""/> | **Diagrama da rede** | Desenha o unifilar da instalação e explica em voz |
 | <img src="docs/assets/icons/mensagem.svg" width="20" alt=""/> | **Telegram e WhatsApp** | Alertas e comandos com QR code |
 | | ↳ WhatsApp usa uma [Evolution API](https://github.com/EvolutionAPI/evolution-api) que você sobe no mesmo servidor Docker do painel: `docker run -d -p 8080:8080 -e AUTHENTICATION_API_KEY=troque atendai/evolution-api:v2.2.3` e aponte a URL na dashboard (chip dedicado, nunca o seu número) | SDD-04 |
@@ -230,6 +231,7 @@ Versão atual: **0.6.0** ([releases](https://github.com/emersoncassis/CamFacil-I
   - [x] App Android: servidor no próprio aparelho ou visualizador à distância
   - [x] MCP (configurar conversando com uma IA, desligado por padrão) · [ADR 0012](docs/adr/0012-mcp-json-rpc-proprio.md)
   - [x] Botões de portão e relé no app, com PIN, confirmação e log
+  - [x] Autocorreção de IP da câmera pelo MAC (opção por câmera, com conferência da imagem e antirrepique)
 - [ ] **Fase 7** — Modo estúdio · [versão básica](https://cfia.ysafe.com.br/estudio)
   - [x] Receita de módulo validada (biometria bloqueada), gerador do notebook do Colab, importar modelo de estudo, compartilhar receitas no site
   - [x] Assistente no site, de ponta a ponta e sem rolagem: descrever (receita conferida pelo núcleo), coletar, rotular no navegador (fotos nunca vão ao servidor, exporta .zip YOLO), notebook do Colab, importar e galeria de receitas

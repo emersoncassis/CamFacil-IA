@@ -94,6 +94,8 @@ impl Store {
              );
              CREATE INDEX IF NOT EXISTS arquivo_quando ON arquivo_alertas(camera_id, quando DESC);",
         )?;
+        migrar_cameras(&conn)?;
+        migrar_macs_antigos(&conn)?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
@@ -180,6 +182,61 @@ impl Store {
 
 // ---------------- Câmeras, regras, eventos e selos ----------------
 
+/// Chave antiga em `settings` com o MAC aprendido por câmera
+/// (`{"7":"58:10:8C:…"}`). Hoje o MAC mora na coluna `cameras.mac`; a chave
+/// só aparece em bancos e backups de antes da autocorreção de IP.
+pub const CHAVE_MACS_ANTIGA: &str = "rede.macs";
+
+/// Acrescenta as colunas novas de `cameras` em bancos antigos (SQLite não tem
+/// `ADD COLUMN IF NOT EXISTS`, então confere pela `table_info`).
+fn migrar_cameras(c: &Connection) -> Result<()> {
+    let colunas: Vec<String> = {
+        let mut st = c.prepare("PRAGMA table_info(cameras)")?;
+        let v = st
+            .query_map([], |r| r.get::<_, String>(1))?
+            .collect::<Result<_>>()?;
+        v
+    };
+    if !colunas.iter().any(|n| n == "auto_ip") {
+        c.execute_batch("ALTER TABLE cameras ADD COLUMN auto_ip INTEGER NOT NULL DEFAULT 0;")?;
+    }
+    if !colunas.iter().any(|n| n == "mac") {
+        c.execute_batch("ALTER TABLE cameras ADD COLUMN mac TEXT NOT NULL DEFAULT '';")?;
+    }
+    Ok(())
+}
+
+/// Leva os MACs da chave antiga `rede.macs` para a coluna `cameras.mac` (só
+/// onde a coluna está vazia) e apaga a chave. Serve ao abrir o banco e ao
+/// importar backup antigo.
+fn migrar_macs_antigos(c: &Connection) -> Result<()> {
+    let guardado: Option<String> = c
+        .query_row(
+            "SELECT value FROM settings WHERE key = ?1",
+            params![CHAVE_MACS_ANTIGA],
+            |r| r.get(0),
+        )
+        .optional()?;
+    let Some(json) = guardado else {
+        return Ok(());
+    };
+    let mapa: std::collections::BTreeMap<String, String> =
+        serde_json::from_str(&json).unwrap_or_default();
+    for (id, mac) in mapa {
+        if let (Ok(id), Some(mac)) = (id.parse::<i64>(), crate::rede::normalizar_mac(&mac)) {
+            c.execute(
+                "UPDATE cameras SET mac = ?2 WHERE id = ?1 AND mac = ''",
+                params![id, mac],
+            )?;
+        }
+    }
+    c.execute(
+        "DELETE FROM settings WHERE key = ?1",
+        params![CHAVE_MACS_ANTIGA],
+    )?;
+    Ok(())
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Camera {
     pub id: i64,
@@ -188,6 +245,16 @@ pub struct Camera {
     pub fonte: String,
     pub url: String,
     pub ativa: bool,
+    /// Autocorreção de IP pelo MAC (só RTSP). Padrão desligado.
+    pub auto_ip: bool,
+    /// MAC aprendido na rede (`AA:BB:…`); vazio enquanto não aprendeu.
+    pub mac: String,
+}
+
+impl Camera {
+    pub fn mac_conhecido(&self) -> bool {
+        !self.mac.is_empty()
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -230,7 +297,8 @@ pub struct EventoSalvo {
 impl Store {
     pub fn cameras(&self) -> Result<Vec<Camera>> {
         let c = self.lock();
-        let mut st = c.prepare("SELECT id, nome, fonte, url, ativa FROM cameras ORDER BY id")?;
+        let mut st =
+            c.prepare("SELECT id, nome, fonte, url, ativa, auto_ip, mac FROM cameras ORDER BY id")?;
         let v = st
             .query_map([], |r| {
                 Ok(Camera {
@@ -239,6 +307,8 @@ impl Store {
                     fonte: r.get(2)?,
                     url: r.get(3)?,
                     ativa: r.get::<_, i64>(4)? != 0,
+                    auto_ip: r.get::<_, i64>(5)? != 0,
+                    mac: r.get(6)?,
                 })
             })?
             .collect();
@@ -258,12 +328,38 @@ impl Store {
         Ok(c.last_insert_rowid())
     }
 
-    /// Grava nome, fonte, endereço e se está ativa. `false` se a câmera não existe.
+    /// Grava nome, fonte, endereço, se está ativa e a autocorreção de IP
+    /// (o MAC não: ele só muda pela rede, em [`Store::definir_mac_camera`]).
+    /// `false` se a câmera não existe.
     pub fn atualizar_camera(&self, cam: &Camera) -> Result<bool> {
         let c = self.lock();
         Ok(c.execute(
-            "UPDATE cameras SET nome = ?2, fonte = ?3, url = ?4, ativa = ?5 WHERE id = ?1",
-            params![cam.id, cam.nome, cam.fonte, cam.url, cam.ativa as i64],
+            "UPDATE cameras SET nome = ?2, fonte = ?3, url = ?4, ativa = ?5, auto_ip = ?6 WHERE id = ?1",
+            params![
+                cam.id,
+                cam.nome,
+                cam.fonte,
+                cam.url,
+                cam.ativa as i64,
+                cam.auto_ip as i64
+            ],
+        )? > 0)
+    }
+
+    /// Liga ou desliga a autocorreção de IP de uma câmera.
+    pub fn definir_auto_ip(&self, id: i64, ligado: bool) -> Result<bool> {
+        Ok(self.lock().execute(
+            "UPDATE cameras SET auto_ip = ?2 WHERE id = ?1",
+            params![id, ligado as i64],
+        )? > 0)
+    }
+
+    /// Guarda o MAC aprendido da câmera (normalizado; vazio apaga).
+    pub fn definir_mac_camera(&self, id: i64, mac: &str) -> Result<bool> {
+        let mac = crate::rede::normalizar_mac(mac).unwrap_or_default();
+        Ok(self.lock().execute(
+            "UPDATE cameras SET mac = ?2 WHERE id = ?1",
+            params![id, mac],
         )? > 0)
     }
 
@@ -532,6 +628,12 @@ pub struct CameraBackup {
     pub fonte: String,
     pub url: String,
     pub ativa: bool,
+    /// Autocorreção de IP; ausente em backups antigos (desligada).
+    #[serde(default)]
+    pub auto_ip: bool,
+    /// MAC aprendido; ausente em backups antigos (o MAC vinha em `rede.macs`).
+    #[serde(default)]
+    pub mac: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -561,6 +663,8 @@ pub fn chave_local(k: &str) -> bool {
         || k == "estresse_resultado"
         // MCP liga por máquina: restaurar um backup não abre a porta para a IA.
         || k.starts_with("mcp_")
+        // Registro das correções automáticas de IP: histórico, como os eventos.
+        || k == "rede.autoip_log"
 }
 
 impl Store {
@@ -574,7 +678,8 @@ impl Store {
             .into_iter()
             .filter(|(k, _)| !chave_local(k))
             .collect();
-        let mut st = c.prepare("SELECT id, nome, fonte, url, ativa FROM cameras ORDER BY id")?;
+        let mut st =
+            c.prepare("SELECT id, nome, fonte, url, ativa, auto_ip, mac FROM cameras ORDER BY id")?;
         b.cameras = st
             .query_map([], |r| {
                 Ok(CameraBackup {
@@ -583,6 +688,8 @@ impl Store {
                     fonte: r.get(2)?,
                     url: r.get(3)?,
                     ativa: r.get::<_, i64>(4)? != 0,
+                    auto_ip: r.get::<_, i64>(5)? != 0,
+                    mac: r.get(6)?,
                 })
             })?
             .collect::<Result<_>>()?;
@@ -658,11 +765,23 @@ impl Store {
             )?;
         }
         for k in &b.cameras {
+            let mac = crate::rede::normalizar_mac(&k.mac).unwrap_or_default();
             tx.execute(
-                "INSERT INTO cameras (id, nome, fonte, url, ativa) VALUES (?1, ?2, ?3, ?4, ?5)",
-                params![k.id, k.nome, k.fonte, k.url, k.ativa as i64],
+                "INSERT INTO cameras (id, nome, fonte, url, ativa, auto_ip, mac)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![
+                    k.id,
+                    k.nome,
+                    k.fonte,
+                    k.url,
+                    k.ativa as i64,
+                    k.auto_ip as i64,
+                    mac
+                ],
             )?;
         }
+        // Backup de antes da autocorreção: o MAC vinha na chave `rede.macs`.
+        migrar_macs_antigos(&tx)?;
         for r in &b.regras {
             tx.execute(
                 "INSERT INTO regras (id, camera_id, nome, forma, pontos, rotulo_on, rotulo_off)
@@ -1021,5 +1140,69 @@ mod tests {
         assert_eq!(dest.regras(cams[0].id).unwrap()[0].pontos, pts.to_vec());
         assert_eq!(dest.telegram_autorizados().unwrap(), vec![42]);
         assert!(dest.whatsapp_contatos().unwrap().is_empty());
+    }
+
+    #[test]
+    fn backup_leva_auto_ip_e_mac() {
+        let a = Store::memory().unwrap();
+        let cam = a
+            .criar_camera("Portão", "rtsp", "rtsp://a:b@192.168.1.108:554/x")
+            .unwrap();
+        a.definir_auto_ip(cam, true).unwrap();
+        a.definir_mac_camera(cam, "58-10-8c-00-00-01").unwrap();
+        let b = a.exportar_config().unwrap();
+        let json = serde_json::to_string(&b).unwrap();
+        let b: ConfigBackup = serde_json::from_str(&json).unwrap();
+        let dest = Store::memory().unwrap();
+        dest.importar_config(&b, 1).unwrap();
+        let c = &dest.cameras().unwrap()[0];
+        assert!(c.auto_ip);
+        assert_eq!(c.mac, "58:10:8C:00:00:01");
+    }
+
+    #[test]
+    fn backup_antigo_sem_auto_ip_traz_mac_da_chave_antiga() {
+        // Backup da versão 0.6: câmera sem auto_ip/mac e MAC em `rede.macs`.
+        let json = r#"{"settings":[["rede.macs","{\"3\":\"3C:EF:8C:00:00:02\"}"]],
+            "cameras":[{"id":3,"nome":"Fundos","fonte":"rtsp","url":"rtsp://x@10.0.0.9/","ativa":true}],
+            "regras":[],"telegram":[],"selos":[]}"#;
+        let b: ConfigBackup = serde_json::from_str(json).unwrap();
+        let dest = Store::memory().unwrap();
+        dest.importar_config(&b, 1).unwrap();
+        let c = &dest.cameras().unwrap()[0];
+        assert!(!c.auto_ip);
+        assert_eq!(c.mac, "3C:EF:8C:00:00:02");
+        assert_eq!(dest.get(CHAVE_MACS_ANTIGA).unwrap(), None);
+    }
+
+    #[test]
+    fn migra_banco_antigo_sem_colunas_novas() {
+        let dir = std::env::temp_dir().join(format!("cfia-migra-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let arq = dir.join("antigo.db");
+        let _ = std::fs::remove_file(&arq);
+        {
+            let c = Connection::open(&arq).unwrap();
+            c.execute_batch(
+                "CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                 CREATE TABLE cameras (id INTEGER PRIMARY KEY, nome TEXT NOT NULL,
+                     fonte TEXT NOT NULL, url TEXT NOT NULL DEFAULT '', ativa INTEGER NOT NULL DEFAULT 1);
+                 INSERT INTO cameras (id, nome, fonte, url) VALUES (7, 'Rua', 'rtsp', 'rtsp://u:p@192.168.0.50/s');
+                 INSERT INTO settings VALUES ('rede.macs', '{\"7\":\"44:19:b6:00:00:07\"}');",
+            )
+            .unwrap();
+        }
+        let s = Store::open(&arq).unwrap();
+        let c = &s.cameras().unwrap()[0];
+        assert_eq!(c.id, 7);
+        assert!(!c.auto_ip);
+        assert_eq!(c.mac, "44:19:B6:00:00:07");
+        assert_eq!(s.get(CHAVE_MACS_ANTIGA).unwrap(), None);
+        drop(s);
+        // Abrir de novo não quebra (migração idempotente).
+        let s = Store::open(&arq).unwrap();
+        assert_eq!(s.cameras().unwrap().len(), 1);
+        drop(s);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
