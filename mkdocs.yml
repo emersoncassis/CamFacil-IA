@@ -68,6 +68,7 @@ plugins:
           copyright: Free software (AGPL-3.0) · Independent project, not affiliated with any manufacturer.
           nav_translations:
             Início: Home
+            Vídeo: Video
             Instalação: Installation
             Primeiros passos: Getting started
             Formação de IA para CFTV: AI training for CCTV
@@ -83,6 +84,7 @@ plugins:
           copyright: Software libre (AGPL-3.0) · Proyecto independiente, sin vínculo con fabricantes.
           nav_translations:
             Início: Inicio
+            Vídeo: Video
             Instalação: Instalación
             Primeiros passos: Primeros pasos
             Formação de IA para CFTV: Formación de IA para CCTV
@@ -94,6 +96,7 @@ plugins:
 
 nav:
   - Início: index.md
+  - Vídeo: video.md
   - Instalação: instalacao.md
   - Primeiros passos: uso.md
   - Formação de IA para CFTV: formacao.md

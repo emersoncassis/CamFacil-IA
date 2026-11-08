@@ -219,3 +219,15 @@ code, kbd, pre { font-family: var(--md-code-font-family); }
 .apoio-aviso.ok { color: var(--c-green); }
 .apoio-aviso.erro { color: #f06a55; }
 .md-typeset .apoio-botoes .md-button[disabled] { opacity: 0.6; cursor: wait; }
+
+/* ---------- Página do vídeo: capa + partes que abrem, numa tela só ---------- */
+.video__lado { display: flex; flex-direction: column; gap: 0.7rem; min-width: 0; }
+.video__capa { width: 100%; height: auto; max-height: 38dvh; object-fit: cover; border-radius: 8px; border: 1px solid var(--c-line-strong); background: var(--c-900); }
+.md-typeset .partes details.parte > ul.video__caps { columns: 2; column-gap: 1.2rem; }
+.video__caps li { break-inside: avoid; font-size: 0.68rem; }
+.video__caps strong { font-family: var(--md-code-font-family); margin-right: 0.35rem; color: var(--c-green) !important; }
+@media (max-width: 600px) {
+  .video__capa { max-height: 14dvh; }
+  .video__lado { gap: 0.5rem; }
+  .md-typeset .partes details.parte > ul.video__caps { columns: 1; }
+}
