@@ -24,7 +24,7 @@
 </p>
 <p>
   <a href="https://emersoncassis.github.io/CamFacil-IA/"><img src="https://img.shields.io/badge/manifesto%20e%20docs-PT%20%C2%B7%20EN%20%C2%B7%20ES-06CB3F?style=flat-square&labelColor=000000" alt="Manifesto e documentação em português, inglês e espanhol"/></a>
-  <a href="https://buymeacoffee.com/emersoncarvalho"><img src="https://img.shields.io/badge/apoie%20o%20projeto-pague%20um%20caf%C3%A9-06CB3F?style=flat-square&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoie o projeto: pague um café"/></a>
+  <a href="https://emersoncassis.github.io/CamFacil-IA/apoiadores/"><img src="https://img.shields.io/badge/apoie%20o%20projeto-pague%20um%20caf%C3%A9-06CB3F?style=flat-square&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoie o projeto: pague um café"/></a>
 </p>
 
 </div>
@@ -249,7 +249,28 @@ O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem te
 
 Se ele te ajudou a aprender, a vender ou a ganhar tempo, **pague um café**. Cada apoio mantém o projeto vivo e aberto para o próximo técnico.
 
-<a href="https://buymeacoffee.com/emersoncarvalho"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-apoiar%20o%20CamF%C3%A1cil%20IA-06CB3F?style=for-the-badge&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoiar no Buy Me a Coffee" height="40"/></a>
+<table>
+  <tr>
+    <td><img src="docs/assets/pix-qr.png" width="170" alt="QR code do Pix"/></td>
+    <td>
+      <b>Pix (CPF)</b><br/>
+      <code></code><br/>
+      Emerson de Carvalho Assis<br/><br/>
+      Fora do Brasil: <a href="https://buymeacoffee.com/emersoncarvalho">Buy Me a Coffee</a>
+    </td>
+  </tr>
+</table>
+
+| Apoio | O que você recebe |
+|---|---|
+| **Doação livre** · qualquer valor | Seu nome e recado no mural |
+| **Até R$ 500** · pedido de funcionalidade | Sua sugestão é lida e avaliada por mim |
+| **A partir de R$ 1.000** · conversa | Uma hora de conversa comigo por vídeo |
+| **A partir de R$ 5.000** · desenvolvimento | Desenvolvemos juntos uma aplicação para você, com base no CamFácil IA |
+
+Ideias e pedidos de funcionalidade passam pelo apoio. Prefere fazer você mesmo? O código é aberto: abra um pull request, que eu avalio quando possível.
+
+Depois do Pix, **[entre no mural de apoiadores](https://emersoncassis.github.io/CamFacil-IA/apoiadores/)**: mande o comprovante, um recado e o que você gostaria que fosse desenvolvido.
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Contribua
 

@@ -36,6 +36,7 @@ extra_css:
   - assets/css/camfacil.css
 extra_javascript:
   - assets/js/manifesto.js
+  - assets/js/apoio.js
 
 extra:
   generator: false
@@ -73,6 +74,7 @@ plugins:
             Painel no seu servidor: Your own dashboard
             Como funciona: How it works
             Privacidade e LGPD: Privacy and LGPD
+            Apoiadores: Supporters
             Contribuir: Contributing
         - locale: es
           name: Español
@@ -87,6 +89,7 @@ plugins:
             Painel no seu servidor: Panel en tu servidor
             Como funciona: Cómo funciona
             Privacidade e LGPD: Privacidad y LGPD
+            Apoiadores: Apoyadores
             Contribuir: Contribuir
 
 nav:
@@ -97,6 +100,7 @@ nav:
   - Painel no seu servidor: painel.md
   - Como funciona: arquitetura.md
   - Privacidade e LGPD: privacidade.md
+  - Apoiadores: apoiadores.md
   - Contribuir: contribuindo.md
 
 markdown_extensions:
@@ -107,6 +111,9 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
+  - pymdownx.snippets:
+      base_path: [includes]
+      check_paths: true
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.tabbed:

@@ -8,7 +8,7 @@ O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem te
 
 Se ele te ajudou a aprender, a vender ou a ganhar tempo, pague um café. Cada apoio mantém o projeto vivo e aberto para o próximo técnico.
 
-[:fontawesome-solid-mug-hot: Apoiar no Buy Me a Coffee](https://buymeacoffee.com/emersoncarvalho){ .md-button .md-button--primary target="_blank" rel="noopener" }
+[:fontawesome-solid-mug-hot: Apoiar com Pix ou cartão](apoiadores.md){ .md-button .md-button--primary }
 
 ## Para quem programa
 
