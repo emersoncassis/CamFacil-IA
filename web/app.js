@@ -1436,7 +1436,49 @@ function sugDesenhar() {
   }
 }
 
+function avalRender(r) {
+  const lista = $("#sug-lista");
+  sugPreview = [];
+  sugDesenhar();
+  const rodando = !r.terminou;
+  $("#sug-andamento").hidden = false;
+  $("#sug-cancelar").hidden = false;
+  $("#sug-iniciar").hidden = rodando;
+  $("#aval-abrir").hidden = rodando;
+  $("#aval-linha").hidden = true;
+  $("#sug-barra").style.width = `${Math.round((r.progresso || 0) * 100)}%`;
+  const nome = r.avaliacao ? r.avaliacao.regra : "";
+  $("#sug-status").textContent = r.terminou ? `${t("aval.pronto")} · ${nome}` : `${t("aval.avaliando")} ${nome} · ${t("sug.olhando")} ${r.restante_s} s`;
+  const achados = (r.avaliacao && r.avaliacao.achados) || [];
+  if (!r.terminou && !achados.length) { lista.replaceChildren(el("li", { class: "tiny" }, t("aval.aguarde"))); return; }
+  lista.replaceChildren(...achados.map((a) => el("li", {},
+    el("div", { class: "sug-info" },
+      el("span", { class: "badge aval-" + a.tom }, t("aval.tom." + a.tom)),
+      el("p", { class: "tiny" }, a.texto)))));
+}
+
+async function avalIniciar() {
+  if (camAberta == null) return;
+  const id = Number($("#aval-regra").value);
+  if (!id) return;
+  clearTimeout(sugTimer);
+  $("#sug-lista").replaceChildren();
+  try { await api(`/api/cameras/${camAberta}/sugestoes`, { segundos: 60, regra_id: id }); sugAtualizar(); }
+  catch (e) { alert(e.message); }
+}
+
+function avalAbrir() {
+  const sel = $("#aval-regra");
+  sel.replaceChildren(...regrasAbertas.map((r) => el("option", { value: r.id }, r.nome)));
+  const tem = regrasAbertas.length > 0;
+  $("#aval-iniciar").disabled = !tem;
+  if (!tem) sel.replaceChildren(el("option", { value: "" }, t("aval.sem_regra")));
+  $("#aval-linha").hidden = !$("#aval-linha").hidden;
+}
+
 function sugRender(r) {
+  if (r.avaliacao) { avalRender(r); return; }
+  $("#aval-abrir").hidden = !!(r.iniciado && !r.terminou);
   const lista = $("#sug-lista");
   sugPreview = r.sugestoes || [];
   sugDesenhar();
@@ -1476,6 +1518,8 @@ async function sugParar() {
   $("#sug-cancelar").hidden = true;
   $("#sug-iniciar").hidden = false;
   $("#sug-iniciar").disabled = false;
+  $("#aval-abrir").hidden = false;
+  $("#aval-linha").hidden = true;
 }
 
 // Uma regra por pesquisa: aceitar cria a regra e encerra a observação.
@@ -1587,6 +1631,8 @@ async function main() {
   // rede.js é "defer": pode carregar depois deste arquivo.
   if (typeof iniciarRede === "function") iniciarRede(); else addEventListener("DOMContentLoaded", () => iniciarRede());
   $("#sug-iniciar").onclick = sugIniciar;
+  $("#aval-abrir").onclick = avalAbrir;
+  $("#aval-iniciar").onclick = avalIniciar;
   const formas = $("#formas-toggle");
   if (formas) {
     formas.checked = mostrarFormas;

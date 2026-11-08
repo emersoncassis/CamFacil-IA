@@ -207,6 +207,9 @@ fn laco(ia: Arc<Ia>, video: Arc<Video>, store: Arc<Store>) {
                                     .map(|t| (t.id, t.pos.x, t.pos.y, t.classe))
                                     .collect();
                                 o.obs.alimentar_classes(&tr, 2);
+                                if let Some(av) = o.aval.as_mut() {
+                                    av.alimentar(&tr, 2);
+                                }
                             }
                         }
                         md.deteccoes = dets;

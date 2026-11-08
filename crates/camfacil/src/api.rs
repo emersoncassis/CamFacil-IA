@@ -1275,6 +1275,9 @@ async fn delete_camera(State(app): State<Shared>, Path(id): Path<i64>) -> ApiRes
 struct PedidoSugestao {
     #[serde(default)]
     segundos: Option<u64>,
+    /// Com isto, em vez de sugerir regras, avalia a regra criada.
+    #[serde(default)]
+    regra_id: Option<i64>,
 }
 
 /// Começa a observar a câmera para sugerir regras.
@@ -1287,8 +1290,24 @@ async fn post_sugestoes(
         .video
         .canal(id)
         .ok_or_else(|| bad(StatusCode::NOT_FOUND, "câmera não encontrada"))?;
-    let seg = body.and_then(|b| b.0.segundos).unwrap_or(60).clamp(15, 600);
+    let pedido = body.map(|b| b.0).unwrap_or_default();
+    let seg = pedido.segundos.unwrap_or(60).clamp(15, 600);
+    let aval = match pedido.regra_id {
+        Some(rid) => {
+            let r = app
+                .store
+                .regras(id)
+                .map_err(internal)?
+                .into_iter()
+                .find(|r| r.id == rid)
+                .and_then(|r| r.para_visao())
+                .ok_or_else(|| bad(StatusCode::NOT_FOUND, "regra não encontrada"))?;
+            Some(cf_core::avaliacao::Avaliador::new(r))
+        }
+        None => None,
+    };
     *canal.observacao.lock().unwrap() = Some(crate::video::Observacao {
+        aval,
         obs: cf_core::sugestao::Observador::new(),
         inicio: std::time::Instant::now(),
         duracao: Duration::from_secs(seg),
@@ -1325,7 +1344,8 @@ async fn get_sugestoes(State(app): State<Shared>, Path(id): Path<i64>) -> ApiRes
         "restante_s": o.duracao.saturating_sub(passou).as_secs(),
         "progresso": (passou.as_secs_f32() / o.duracao.as_secs_f32()).min(1.0),
         "pessoas": o.obs.pessoas(),
-        "sugestoes": o.obs.sugerir(),
+        "sugestoes": if o.aval.is_some() { Vec::new() } else { o.obs.sugerir() },
+        "avaliacao": o.aval.as_ref().map(|a| a.resultado()),
     })))
 }
 

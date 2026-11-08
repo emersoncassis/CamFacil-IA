@@ -194,7 +194,7 @@
   "regra.col_som": "Som do alerta",
   "regra.som_dica": "Toca um bipe quando esta regra disparar",
   "sug.titulo": "IA, sugira para mim",
-  "sug.desc": "Observa 1 minuto e sugere a regra já desenhada. Você só aceita.",
+  "sug.desc": "Observa 1 minuto. Sugere regras novas ou avalia uma que você já criou.",
   "sug.iniciar": "Observar e sugerir",
   "sug.olhando": "Observando… faltam",
   "sug.pronto": "Pronto",
@@ -1231,5 +1231,15 @@
   "regra.editar": "Editar",
   "regra.editar_titulo": "Editar regra",
   "regra.intel_fixa": "O que a regra faz não muda depois de criada. Para outra coisa, crie outra regra.",
-  "regra.salvar_edicao": "Salvar alterações"
+  "regra.salvar_edicao": "Salvar alterações",
+  "aval.abrir": "Avaliar uma regra",
+  "aval.qual": "Qual regra avaliar",
+  "aval.iniciar": "Observar e avaliar",
+  "aval.sem_regra": "Crie uma regra antes para avaliar.",
+  "aval.avaliando": "Avaliando",
+  "aval.pronto": "Avaliação pronta",
+  "aval.aguarde": "Deixe as pessoas e os carros passarem normalmente. O resultado aparece aqui.",
+  "aval.tom.ok": "bom",
+  "aval.tom.atencao": "atenção",
+  "aval.tom.problema": "problema"
 }

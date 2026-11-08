@@ -416,3 +416,9 @@ button.link:hover { color: var(--text); }
 .regra-form .campo-regra, .regra-form .param { color: var(--text-2); }
 .regra-form .linha-form { display: flex; gap: var(--s3); max-width: none; }
 .regra-form .linha-form label { flex: 1; }
+
+.aval-linha { display: flex; gap: var(--s3); align-items: flex-end; margin-top: var(--s3); flex-wrap: wrap; }
+.aval-linha .campo { flex: 1; min-width: 160px; }
+.badge.aval-ok { color: var(--c-green); border-color: var(--c-green); }
+.badge.aval-atencao { color: var(--c-warn); border-color: var(--c-warn); }
+.badge.aval-problema { color: var(--c-danger); border-color: var(--c-danger); }

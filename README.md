@@ -244,6 +244,10 @@ Versão atual: **0.8.2** ([releases](https://github.com/emersoncassis/CamFacil-I
   - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
   - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
 
+### Novidades da 0.9.2
+- **Alertas dizem o que passou**: o balão e a mensagem do Telegram trazem "carro passou — entrada", "pessoa parada há 65 s", "3 carros ao mesmo tempo".
+- **IA, avalie a minha regra**: ao lado de "Observar e sugerir" há "Avaliar uma regra". Você escolhe a regra criada, ela observa 1 minuto e diz em frases curtas se está bem posicionada (quantos passaram e quantos cruzaram a linha, quem entrou na área), se o limite de densidade ou o tempo de permanência estão certos (e sugere o número) e quem a regra está ignorando.
+
 ### Novidades da 0.9.1
 - **Nada vem ligado**: movimento, cerca, saúde e os demais módulos começam desligados. Você escolhe quais alertas quer, inclusive ficar só com IA de vídeo e sem o movimento por pixel (que enche o histórico).
 - **Alertas da própria câmera** (módulo novo, desligado por padrão): o programa escuta os eventos que a câmera ou o gravador manda (Intelbras/Dahua e Hikvision: movimento, cruzou a linha, invadiu a área…) e registra cada um como "recebido da câmera". Ligue e desligue em Módulos de IA.

@@ -80,6 +80,20 @@ Botão **Editar** na lista de regras abre o mesmo formulário já preenchido: no
 
 Módulo `camera` ("Alertas da câmera"), desligado por padrão como todos. Com ele ligado, uma conexão por aparelho escuta a API de eventos do fabricante (Intelbras/Dahua `eventManager.cgi`, Hikvision `alertStream`), com login Digest/Basic. Cada alerta (ignorando batimento e perda de vídeo) vira evento `camera` "… (recebido da câmera)", no máximo um por tipo a cada 10 s por câmera, e segue para o Telegram como os demais. O canal do alerta é casado com o canal da câmera no gravador. Desligar o módulo fecha as conexões. Validado só contra um servidor de teste que imita a Intelbras; falta confirmar em equipamento real.
 
+## IA, avalie a minha regra
+
+Mesma observação do "sugira" (60 s, mesmas trilhas), mas em cima de uma regra já criada (`POST /api/cameras/{id}/sugestoes` com `regra_id`; o `GET` devolve `avaliacao.achados` com tom `ok`, `atencao` ou `problema`). Verifica:
+
+- **Linha:** quantos passaram, quantos cruzaram, e se pega pouco do fluxo ou está fora do caminho.
+- **Zona:** quantos entraram; se está fora do movimento.
+- **Densidade:** máximo ao mesmo tempo contra o limite (sugere o limite que dispararia).
+- **Permanência:** maior tempo dentro contra o tempo da regra (sugere o tempo); avisa se todos passam do tempo.
+- **Classes ignoradas** que apareceram onde a regra olha.
+
+## O que o alerta diz
+
+Balão, histórico e Telegram dizem a classe: "carro — entrada", "moto parada há 65 s", "3 carros ao mesmo tempo".
+
 ## Fora de escopo
 
 Densidade por área (pessoas por metro quadrado), placas e reconhecimento de modelo/cor de veículo, e juntar inteligências na mesma regra. Quem precisa disso usa as regras em paralelo ou parceiros (PRD §6).

@@ -343,6 +343,8 @@ struct Interno {
 /// "IA, sugira para mim": observação em andamento ou concluída.
 pub struct Observacao {
     pub obs: cf_core::sugestao::Observador,
+    /// "Avaliar a regra criada": só existe quando o técnico escolheu uma regra.
+    pub aval: Option<cf_core::avaliacao::Avaliador>,
     pub inicio: Instant,
     pub duracao: Duration,
 }
@@ -452,17 +454,15 @@ impl Canal {
                         i.alertas.insert(*regra, Instant::now());
                         *i.contagens.entry(*regra).or_default() += 1;
                         let que = nome_objeto(*classe, estudo.as_deref());
-                        if *classe >= deteccao::CLASSE_ESTUDO {
-                            // Balão da regra com o nome da classe do modelo de estudo.
-                            i.avisos.insert(*regra, que.clone());
-                        }
+                        // O balão diz o que passou (pessoa, carro…).
+                        i.avisos.insert(*regra, que.clone());
                         let det =
-                            format!("{} ({que})", if *sentido > 0 { "entrada" } else { "saída" });
+                            format!("{que} — {}", if *sentido > 0 { "entrada" } else { "saída" });
                         let _ =
                             store.registrar_evento(self.id, Some(*regra), "linha_cruzada", &det, t);
                         avisos.push((
                             format!("regra:{regra}"),
-                            format!("{hora} — {}: passagem {det} · {cam}", nome(*regra)),
+                            format!("{hora} — {}: passou {det} · {cam}", nome(*regra)),
                         ));
                         selo = true;
                     }
@@ -475,10 +475,7 @@ impl Canal {
                         i.alertas.insert(*regra, Instant::now());
                         *i.contagens.entry(*regra).or_default() += 1;
                         let det = rotulo_contagem(*classe, *quantas, estudo.as_deref());
-                        if *classe >= deteccao::CLASSE_ESTUDO {
-                            i.avisos
-                                .insert(*regra, nome_objeto(*classe, estudo.as_deref()));
-                        }
+                        i.avisos.insert(*regra, det.clone());
                         let _ =
                             store.registrar_evento(self.id, Some(*regra), "zona_ocupada", &det, t);
                         avisos.push((
@@ -1074,7 +1071,13 @@ fn analisar(canal: &Canal, store: &Store, jpeg: &[u8], an: &mut Analisador) {
             .quando
             .is_some_and(|q| q.elapsed() < Duration::from_secs(3));
         if o.inicio.elapsed() < o.duracao && !detector_vivo {
-            o.obs.alimentar(&an.centros());
+            let centros = an.centros();
+            o.obs.alimentar(&centros);
+            if let Some(av) = o.aval.as_mut() {
+                let v: Vec<(u32, f32, f32, usize)> =
+                    centros.iter().map(|&(i, x, y)| (i, x, y, 0)).collect();
+                av.alimentar(&v, 1);
+            }
         }
     }
     if eventos.is_empty() {

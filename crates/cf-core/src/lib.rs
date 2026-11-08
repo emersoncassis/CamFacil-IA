@@ -2,6 +2,7 @@
 //!
 //! Cada módulo é pequeno e testável sem rede. Ver `docs/sdd/SDD-01-nucleo.md`.
 
+pub mod avaliacao;
 pub mod bench;
 pub mod conectar;
 pub mod deteccao;
