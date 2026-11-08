@@ -11,6 +11,7 @@
 //! Só vale para os padrões de caminho com canal (Intelbras/Dahua
 //! `cam/realmonitor` e Hikvision `Streaming/Channels`).
 
+use crate::nomes_canais;
 use crate::onvif::tag_values;
 use crate::rtsp::{self, Stream};
 use serde::Serialize;
@@ -29,7 +30,7 @@ const LIMITE_SONDA: Duration = Duration::from_millis(2500);
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct CanalGravador {
     pub canal: u32,
-    /// Nome dado pelo ONVIF, quando há.
+    /// Nome real do canal (título no vídeo), quando há e não é genérico.
     pub nome: Option<String>,
     /// Respondeu ao `DESCRIBE` com o login informado.
     pub responde: bool,
@@ -229,17 +230,43 @@ pub async fn detectar(
     if rtsp::fabricante_do_caminho(url_conectada).is_none() {
         return Deteccao::camera();
     }
-    let onvif = tokio::time::timeout(Duration::from_secs(6), canais_onvif(ip, 80, usuario, senha))
-        .await
-        .ok()
-        .flatten();
-    let s = SondaRtsp {
-        ip,
-        porta,
-        usuario,
-        senha,
-    };
-    decidir(&s, url_conectada, onvif, modelo).await
+    let fab = rtsp::fabricante_do_caminho(url_conectada).unwrap_or("");
+    // Nome real dos canais (HTTP do fabricante, ≈3 s) em paralelo com a
+    // detecção; se falhar, fica o ONVIF ou o "Canal N".
+    let (det, http) = tokio::join!(
+        async {
+            let onvif =
+                tokio::time::timeout(Duration::from_secs(6), canais_onvif(ip, 80, usuario, senha))
+                    .await
+                    .ok()
+                    .flatten();
+            let s = SondaRtsp {
+                ip,
+                porta,
+                usuario,
+                senha,
+            };
+            decidir(&s, url_conectada, onvif, modelo).await
+        },
+        tokio::time::timeout(
+            nomes_canais::LIMITE,
+            nomes_canais::buscar_http(ip, 80, usuario, senha, fab),
+        ),
+    );
+    com_nomes(det, &http.unwrap_or_default())
+}
+
+/// Põe o nome real em cada canal: HTTP do fabricante primeiro, depois o
+/// ONVIF; nome genérico vira `None`.
+pub fn com_nomes(mut det: Deteccao, http: &nomes_canais::Nomes) -> Deteccao {
+    for c in &mut det.canais {
+        c.nome = http
+            .get(&c.canal)
+            .filter(|n| !nomes_canais::generico(n))
+            .cloned()
+            .or_else(|| c.nome.take().filter(|n| !nomes_canais::generico(n)));
+    }
+    det
 }
 
 // ---------------- ONVIF com login (SOAP) ----------------
@@ -341,26 +368,10 @@ async fn post_soap(ip: &str, porta: u16, caminho: &str, xml: &str) -> Option<Str
         .to_ascii_lowercase()
         .contains("transfer-encoding: chunked");
     Some(if chunked {
-        desfazer_chunked(corpo)
+        crate::digest::desfazer_chunked(corpo)
     } else {
         corpo.to_string()
     })
-}
-
-fn desfazer_chunked(mut s: &str) -> String {
-    let mut out = String::new();
-    while let Some((tam, resto)) = s.split_once("\r\n") {
-        let Ok(n) = usize::from_str_radix(tam.trim().split(';').next().unwrap_or(""), 16) else {
-            break;
-        };
-        if n == 0 || resto.len() < n {
-            out.push_str(&resto[..n.min(resto.len())]);
-            break;
-        }
-        out.push_str(&resto[..n]);
-        s = resto[n..].trim_start_matches("\r\n");
-    }
-    out
 }
 
 /// Caminho do serviço de mídia a partir do `GetCapabilities`.
@@ -529,6 +540,25 @@ mod tests {
         );
     }
 
+    #[test]
+    fn nomes_reais_antes_do_onvif_e_sem_genericos() {
+        let det = Deteccao {
+            gravador: true,
+            canais: (1..=3)
+                .map(|n| CanalGravador {
+                    canal: n,
+                    nome: Some(["Entrada", "MainStream", "Fundos"][n as usize - 1].into()),
+                    responde: true,
+                })
+                .collect(),
+            origem: "onvif",
+        };
+        let http: nomes_canais::Nomes = [(1, "INTERNA FUNDO".into()), (3, "CAM 3".into())].into();
+        let d = com_nomes(det, &http);
+        let n: Vec<_> = d.canais.iter().map(|c| c.nome.as_deref()).collect();
+        assert_eq!(n, [Some("INTERNA FUNDO"), None, Some("Fundos")]);
+    }
+
     #[tokio::test(flavor = "current_thread")]
     async fn gravador_pelo_modelo_mostra_ao_menos_4() {
         let d = decidir(&Falsa(vec![1]), DAHUA, None, Some("MHDX 1104")).await;
@@ -576,10 +606,6 @@ mod tests {
         assert!(x.contains("AAAAAAAAAAAAAAAAAAAAAA=="));
         assert_eq!(data_utc(0), "1970-01-01T00:00:00Z");
         assert_eq!(data_utc(1_794_139_200), "2026-11-08T12:00:00Z");
-        assert_eq!(
-            desfazer_chunked("4\r\nabcd\r\n2\r\nef\r\n0\r\n\r\n"),
-            "abcdef"
-        );
     }
 
     /// Gravador falso de verdade (TCP): canais 1 a 3 respondem 200, o resto 404.

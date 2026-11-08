@@ -244,25 +244,30 @@ async fn disparar(a: &Acao) -> Result<u16, String> {
         .user_agent(concat!("CamFacilIA/", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|e| e.to_string())?;
-    let mut r = match a.metodo.as_str() {
-        "POST" => http.post(&a.url),
-        "PUT" => http.put(&a.url),
-        _ => http.get(&a.url),
-    };
-    if !a.usuario.is_empty() {
-        r = r.basic_auth(&a.usuario, Some(&a.senha));
-    }
-    if !a.corpo.is_empty() && a.metodo != "GET" {
-        let tipo = if a.corpo.trim_start().starts_with(['{', '[']) {
-            "application/json"
-        } else {
-            "application/x-www-form-urlencoded"
+    let montar = |auth: Option<&str>| {
+        let mut r = match a.metodo.as_str() {
+            "POST" => http.post(&a.url),
+            "PUT" => http.put(&a.url),
+            _ => http.get(&a.url),
         };
-        r = r
-            .header(reqwest::header::CONTENT_TYPE, tipo)
-            .body(a.corpo.clone());
-    }
-    let resp = r.send().await.map_err(|e| {
+        match auth {
+            Some(h) => r = r.header(reqwest::header::AUTHORIZATION, h),
+            None if !a.usuario.is_empty() => r = r.basic_auth(&a.usuario, Some(&a.senha)),
+            None => {}
+        }
+        if !a.corpo.is_empty() && a.metodo != "GET" {
+            let tipo = if a.corpo.trim_start().starts_with(['{', '[']) {
+                "application/json"
+            } else {
+                "application/x-www-form-urlencoded"
+            };
+            r = r
+                .header(reqwest::header::CONTENT_TYPE, tipo)
+                .body(a.corpo.clone());
+        }
+        r
+    };
+    let erro = |e: reqwest::Error| {
         if e.is_timeout() {
             "o equipamento não respondeu em 8 s".to_string()
         } else if e.is_connect() {
@@ -270,7 +275,15 @@ async fn disparar(a: &Acao) -> Result<u16, String> {
         } else {
             "falha na chamada ao equipamento".to_string()
         }
-    })?;
+    };
+    let mut resp = montar(None).send().await.map_err(erro)?;
+    // Relé/controladora com HTTP Digest (Intelbras, Hikvision…): responde ao
+    // desafio e tenta de novo, uma vez.
+    if resp.status().as_u16() == 401 && !a.usuario.is_empty() {
+        if let Some(h) = digest_para(&resp, &a.metodo, &a.usuario, &a.senha) {
+            resp = montar(Some(&h)).send().await.map_err(erro)?;
+        }
+    }
     let st = resp.status().as_u16();
     if resp.status().is_success() {
         Ok(st)
@@ -281,6 +294,35 @@ async fn disparar(a: &Acao) -> Result<u16, String> {
     } else {
         Err(format!("o equipamento respondeu HTTP {st}"))
     }
+}
+
+/// `Authorization: Digest …` para o desafio de uma resposta 401.
+fn digest_para(
+    resp: &reqwest::Response,
+    metodo: &str,
+    usuario: &str,
+    senha: &str,
+) -> Option<String> {
+    let desafios: Vec<&str> = resp
+        .headers()
+        .get_all(reqwest::header::WWW_AUTHENTICATE)
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .collect();
+    let d = cf_core::digest::Desafio::escolher(desafios)?;
+    let u = resp.url();
+    let uri = match u.query() {
+        Some(q) => format!("{}?{q}", u.path()),
+        None => u.path().to_string(),
+    };
+    Some(d.autorizacao(
+        metodo,
+        &uri,
+        usuario,
+        senha,
+        &cf_core::digest::novo_cnonce(),
+        1,
+    ))
 }
 
 // ---------------- API ----------------
@@ -718,5 +760,43 @@ mod tests {
         let pedido = servidor.join().unwrap();
         assert!(pedido.starts_with("POST /relay/0?turn=on"));
         assert!(pedido.to_lowercase().contains("authorization: basic"));
+    }
+
+    #[tokio::test]
+    async fn dispara_em_rele_com_digest() {
+        use std::io::{Read, Write};
+        let _ = rustls::crypto::ring::default_provider().install_default();
+        let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let porta = l.local_addr().unwrap().port();
+        let servidor = std::thread::spawn(move || {
+            let mut pedidos = Vec::new();
+            for _ in 0..2 {
+                let (mut s, _) = l.accept().unwrap();
+                let mut buf = vec![0u8; 4096];
+                let n = s.read(&mut buf).unwrap();
+                let p = String::from_utf8_lossy(&buf[..n]).to_string();
+                let r: &[u8] = if p.contains("Digest username=\"admin\"") {
+                    b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\n\r\nok"
+                } else {
+                    b"HTTP/1.1 401 Unauthorized\r\nwww-authenticate: Digest realm=\"rele\", qop=\"auth\", nonce=\"n1\"\r\ncontent-length: 0\r\nconnection: close\r\n\r\n"
+                };
+                s.write_all(r).unwrap();
+                pedidos.push(p);
+            }
+            pedidos
+        });
+        let a = Acao {
+            url: format!(
+                "http://127.0.0.1:{porta}/cgi-bin/accessControl.cgi?action=openDoor&channel=1"
+            ),
+            metodo: "GET".into(),
+            usuario: "admin".into(),
+            senha: "x".into(),
+            corpo: String::new(),
+        };
+        assert_eq!(disparar(&a).await, Ok(200));
+        let p = servidor.join().unwrap();
+        assert!(p[1].contains(r#"uri="/cgi-bin/accessControl.cgi?action=openDoor&channel=1""#));
+        assert!(p[1].contains("qop=auth"));
     }
 }
