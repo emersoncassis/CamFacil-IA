@@ -1,13 +1,47 @@
 // Página de apoiadores: copiar o Pix e enviar o formulário do mural.
 // O envio cai numa planilha e numa pasta privadas do Google Drive do autor
 // (Apps Script em deploy/apoio/Codigo.gs). Nada fica público sem ele aprovar.
+// Usado também pelo cfia.ysafe.com.br (servido em /apoio.js pelo cfia-api).
 (function () {
   var EMAIL = "emersonassis.work@gmail.com";
   // URL /exec do Apps Script (deploy/apoio/Codigo.gs). Vazio: o botão abre o e-mail.
   var APOIO_URL = "";
 
+
+  // Mural ao vivo na tela inicial do cfia.ysafe.com.br: cada apoiador
+  // aparece como um evento que a IA "detectou" na câmera da cena.
+  function muralVivo() {
+    var el = document.querySelector(".mural-vivo");
+    if (!el || el.dataset.pronto) return;
+    el.dataset.pronto = "1";
+    var nome = el.querySelector(".mv-nome"), pediu = el.querySelector(".mv-pediu");
+    var calmo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    fetch(el.getAttribute("data-mural")).then(function (r) { return r.json(); }).then(function (d) {
+      var lista = (d.apoiadores || []).filter(function (a) { return a.exemplo || a.nome; });
+      if (!lista.length) return;
+      el.hidden = false;
+      var i = 0, timer = null;
+      function mostrar() {
+        var a = lista[i % lista.length]; i++;
+        el.classList.remove("mv-entra");
+        el.classList.toggle("mv-exemplo", !!a.exemplo);
+        el.classList.toggle("mv-destaque", !!a.nivel);
+        nome.textContent = a.exemplo ? "Seu nome aqui" : a.nome + (a.empresa ? " · " + a.empresa : "");
+        pediu.textContent = a.exemplo ? "Exemplo · pediu: " + a.pediu
+          : (a.nivel ? a.nivel : "Apoiador") + (a.criou ? " · criou o " + a.criou : "") + (a.pediu ? " · pediu: " + a.pediu : "");
+        void el.offsetWidth; // reinicia a animação
+        el.classList.add("mv-entra");
+      }
+      function seguir() { clearInterval(timer); timer = setInterval(mostrar, calmo ? 6000 : 4200); }
+      mostrar(); seguir();
+      el.addEventListener("mouseenter", function () { clearInterval(timer); });
+      el.addEventListener("mouseleave", seguir);
+    }).catch(function () {});
+  }
+
   function montar() {
-    document.querySelectorAll("[data-copiar]").forEach(function (b) {
+    muralVivo();
+    document.querySelectorAll("[data-copiar]:not([data-copiar=''])").forEach(function (b) {
       if (b.dataset.pronto) return;
       b.dataset.pronto = "1";
       b.addEventListener("click", function () {

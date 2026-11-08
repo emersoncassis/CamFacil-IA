@@ -233,7 +233,8 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px soli
 .hero-pe { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3) var(--s5); }
 .cena-hero { position: relative; min-width: 0; height: 100%; container-type: size; display: grid; place-items: center; }
 .cena-hero::before { content: ""; position: absolute; inset: 8% 0; z-index: -1; background: radial-gradient(closest-side, rgba(6, 203, 63, .16), transparent 70%); filter: blur(10px); animation: h-respira 6s ease-in-out infinite; }
-.cena-hero svg { display: block; width: min(100cqw, 100cqh * 16 / 9); height: auto; border-radius: 16px; }
+.cena-quadro { position: relative; width: min(100cqw, 100cqh * 16 / 9); }
+.cena-hero svg { display: block; width: 100%; height: auto; border-radius: 16px; }
 @container (max-height: 90px) { .cena-hero svg { display: none; } }
 
 .escolha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
@@ -494,7 +495,7 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px soli
   .site { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "brand acoes" "main main" "foot foot" "nav nav"; }
   .topo-site > .brand, .topo-acoes { padding: 0 var(--s4); min-height: 48px; }
   .secoes { border-bottom: 0; border-top: 1px solid var(--line); min-height: 0; }
-  .secoes ul { width: 100%; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; }
+  .secoes ul { width: 100%; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
   .secoes button { width: 100%; flex-direction: column; gap: 2px; padding: 7px 0 6px; font-size: calc(var(--fs-xs) - 1px); letter-spacing: -0.01em; border-bottom: 0; border-top: 2px solid transparent; }
   .secoes button .ico { display: block; width: 18px; height: 18px; }
   .secoes button[aria-selected="true"] { border-top-color: var(--accent); }
@@ -575,3 +576,73 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px soli
 @media (max-height: 820px) and (min-width: 761px) {
   .inicio .lede { font-size: var(--fs-md); }
 }
+
+/* ---------- Apoiar: Pix, níveis e formulário do mural ---------- */
+.apoiar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(var(--s5), 4vw, 56px); align-content: start; }
+.pix-cartao { display: flex; gap: var(--s4); align-items: center; padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); margin-bottom: var(--s3); }
+.pix-cartao img { flex: none; width: 148px; height: 148px; background: var(--c-white); border-radius: var(--r); padding: var(--s1); }
+.pix-cartao > div { min-width: 0; flex: 1; }
+.pix-cartao .tiny { margin: 0; }
+.secao .pix-chave { margin: 2px 0; font-size: var(--fs-xl); color: var(--text); letter-spacing: 0.02em; }
+.pix-cc code { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.niveis { list-style: none; margin: 0 0 var(--s2); padding: 0; display: grid; gap: var(--s1); }
+.niveis li { font-size: var(--fs-sm); color: var(--text-2); }
+.niveis li strong { color: var(--text); font-weight: 500; }
+.niveis li span { display: block; color: var(--text-3); font-size: var(--fs-xs); }
+.apoiar-form { padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.apoiar-form h3 { margin: 0 0 var(--s1); font-size: var(--fs-lg); font-weight: 600; }
+.apoiar-form > .tiny { margin: 0 0 var(--s3); }
+.apoio-grade { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2) var(--s3); }
+.apoio-grade .largo { grid-column: 1 / -1; }
+.apoiar-form label { display: flex; flex-direction: column; gap: var(--s1); font-size: var(--fs-xs); color: var(--text-2); }
+.apoiar-form textarea { font: inherit; font-size: var(--fs-md); color: var(--text); background: var(--field); border: 1px solid var(--line-strong); border-radius: var(--r); padding: var(--s2) var(--s3); resize: none; }
+.apoiar-form textarea:focus-visible { outline: 0; border-color: var(--focus); box-shadow: 0 0 0 3px var(--c-green-dim); }
+.apoiar-form input[type="file"] { padding: var(--s1); color: var(--text-2); }
+.apoiar-form input[type="file"]::file-selector-button { font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 2px var(--s3); margin-right: var(--s3); cursor: pointer; }
+.apoiar-form .apoio-ok { flex-direction: row; align-items: center; gap: var(--s2); margin: var(--s3) 0; }
+.apoiar-form .apoio-ok input { accent-color: var(--accent); width: auto; }
+.apoio-isca { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.apoio-botoes { display: flex; align-items: center; gap: var(--s3); }
+.apoio-aviso.ok { color: var(--accent); }
+.apoio-aviso.erro { color: var(--c-danger); }
+@media (max-width: 760px) {
+  .apoiar { grid-template-columns: 1fr; gap: var(--s3); }
+  .apoiar-pix > p { display: none; }
+  .pix-cartao img { width: 104px; height: 104px; }
+  .apoio-grade { grid-template-columns: 1fr; }
+}
+
+/* ---------- Mural ao vivo: a IA "detecta" cada apoiador na cena ---------- */
+.mural-vivo { position: absolute; left: 4%; bottom: 6%; z-index: 2; display: grid; gap: 2px; min-width: min(78%, 340px); max-width: 86%; padding: 10px 16px 11px; text-decoration: none; color: var(--text); background: rgba(0, 0, 0, .78); border-radius: var(--r); overflow: hidden; backdrop-filter: blur(6px); }
+.mural-vivo[hidden] { display: none; }
+.mural-vivo:hover { background: rgba(0, 0, 0, .9); }
+.mv-cantos, .mv-cantos::before, .mv-cantos::after { position: absolute; pointer-events: none; }
+.mv-cantos { inset: 0; border-radius: var(--r);
+  background:
+    linear-gradient(var(--accent), var(--accent)) top left / 14px 2px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) top right / 14px 2px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) top right / 2px 14px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) bottom left / 14px 2px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) bottom left / 2px 14px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) bottom right / 14px 2px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) bottom right / 2px 14px no-repeat; }
+.mv-varre { position: absolute; top: 0; bottom: 0; left: -30%; width: 30%; background: linear-gradient(90deg, transparent, var(--c-green-dim), transparent); pointer-events: none; opacity: 0; }
+.mv-tag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.mv-tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--c-green-dim); }
+.mv-nome { font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mv-pediu { font-size: var(--fs-sm); color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mural-vivo.mv-exemplo .mv-nome { color: var(--text-2); font-style: italic; font-weight: 500; }
+.mural-vivo.mv-destaque .mv-nome { color: var(--c-white); }
+
+.mural-vivo.mv-entra .mv-cantos { animation: mv-trava .45s cubic-bezier(.2, .8, .2, 1) both; }
+.mural-vivo.mv-entra .mv-varre { animation: mv-varre 1s ease-out .1s both; }
+.mural-vivo.mv-entra .mv-tag i { animation: mv-pisca 1s steps(2, jump-none) 3; }
+.mural-vivo.mv-entra .mv-nome { animation: mv-surge .5s ease-out .35s both; }
+.mural-vivo.mv-entra .mv-pediu { animation: mv-surge .5s ease-out .6s both; }
+@keyframes mv-trava { from { transform: scale(1.18); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes mv-varre { 0% { left: -30%; opacity: 1; } 100% { left: 110%; opacity: 0; } }
+@keyframes mv-pisca { 50% { opacity: .2; } }
+@keyframes mv-surge { from { opacity: 0; transform: translateY(4px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .mural-vivo.mv-entra * { animation: none !important; } }
+@media (max-width: 760px) { .mural-vivo { padding: 7px 12px 8px; } .mv-nome { font-size: var(--fs-md); } .mv-pediu { font-size: var(--fs-xs); } }

@@ -3,4 +3,5 @@
 
 | Apoiador | Recado | Pediu |
 |---|---|---|
-| *O seu nome pode ser o primeiro aqui.* | | |
+| **Marconi** · Mar Câmeras · apoiador principal | Criou o [Contagem Inteligente](https://contagem.marcameras.com.br/) | |
+| *O seu nome pode ser o próximo aqui.* | | |

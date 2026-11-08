@@ -31,6 +31,22 @@ const ARQUIVOS: &[Arquivo] = &[
         "../../web/tokens.css"
     ),
     arq!("/icon.svg", "image/svg+xml", "../../web/icon.svg"),
+    // Apoio: mesmo script e QR do site de documentação (uma fonte só).
+    arq!(
+        "/apoio.js",
+        "text/javascript; charset=utf-8",
+        "../../site-docs/assets/js/apoio.js"
+    ),
+    arq!(
+        "/mural.json",
+        "application/json; charset=utf-8",
+        "../../site-docs/assets/mural.json"
+    ),
+    arq!(
+        "/img/pix-qr.svg",
+        "image/svg+xml",
+        "../../site-docs/assets/img/pix-qr.svg"
+    ),
     // Escolinha de IA: aprender do zero, no navegador.
     arq!("/aprender", "text/html; charset=utf-8", "web/escola.html"),
     arq!(
