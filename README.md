@@ -175,7 +175,7 @@ Tudo aberto, livre e gratuito (AGPL-3.0). Cada peça faz uma coisa:
 | **Painel de monitoramento** | [cfia.ysafe.com.br](https://cfia.ysafe.com.br) ou o seu servidor | Todos os seus clientes, câmeras no ar, alertas e "ver ao vivo" pelo Tailscale |
 | **App Android** | Celular e TV Box | Vira o servidor das câmeras ou vê um cliente à distância |
 | **Formação de IA para CFTV** | No navegador | Curso curto com narração, exercícios e selo |
-| **Modo estúdio** *(em desenvolvimento)* | Navegador + Google Colab | Criar, treinar e compartilhar inteligências novas, só para estudo |
+| **Modo estúdio** *(versão básica)* | Navegador + Google Colab | Criar, treinar e compartilhar inteligências novas, só para estudo |
 
 Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também é do técnico.
 
@@ -194,7 +194,7 @@ Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também 
 | <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Servidor no próprio celular ou TV Box (com IA de pessoas, YOLO), endereço da rede da loja com QR e botão do Tailscale; ou visualizador à distância, com alertas |
 | <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com a sua marca para fechar a venda |
 | <img src="docs/assets/icons/robo.svg" width="20" alt=""/> | **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
-| <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** *(em desenvolvimento)* | Descreva uma inteligência nova, rotule, treine no Colab e compartilhe com outros técnicos (só estudo) |
+| <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** *(versão básica)* | Descreva uma inteligência nova, rotule, treine no Colab e compartilhe com outros técnicos (só estudo) |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Agente-Cam-Elo-IA** | O elo entre o programa do cliente e o seu painel: pareia por QR e manda só o resumo (o vídeo nunca passa pela nuvem) |
 
 ## <img src="docs/assets/icons/chave.svg" width="22" alt=""/> Para você, técnico
@@ -221,16 +221,17 @@ Versão atual: **0.5.4** ([releases](https://github.com/emersoncassis/CamFacil-I
   - [x] App Android: servidor no próprio aparelho ou visualizador à distância
   - [x] MCP (configurar conversando com uma IA, desligado por padrão) · [ADR 0012](docs/adr/0012-mcp-json-rpc-proprio.md)
   - [x] Botões de portão e relé no app, com PIN, confirmação e log
-- [ ] **Fase 7** — Modo estúdio · [prévia](https://cfia.ysafe.com.br/estudio)
+- [ ] **Fase 7** — Modo estúdio · [versão básica](https://cfia.ysafe.com.br/estudio)
   - [x] Receita de módulo validada (biometria bloqueada), gerador do notebook do Colab, importar modelo de estudo, compartilhar receitas no site
-  - [ ] Interface do estúdio (conversa, rotulagem, galeria) e rodar o modelo de estudo com classes próprias
+  - [x] Assistente no site, de ponta a ponta e sem rolagem: descrever (receita conferida pelo núcleo), coletar, rotular no navegador (fotos nunca vão ao servidor, exporta .zip YOLO), notebook do Colab, importar e galeria de receitas
+  - [x] Programa local: coletar fotos de uma câmera numa pasta e rodar o modelo de estudo ligado à mão (classes da receita no balão da regra)
+  - [ ] Conversa com a IA gerando a receita, vocabulário aberto e pré-marcação no navegador
 
 ### Regra de tela
 Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular ao monitor. O que não cabe vira aba, seção que abre ou página (regra 9 do [`CLAUDE.md`](CLAUDE.md), detalhes no [`DESIGN.md`](DESIGN.md)).
 
 ### Em desenvolvimento / próximos passos
-- **Modo estúdio funcionando no básico** (em andamento): descrever → coletar fotos → rotular no navegador → notebook do Colab → importar → compartilhar; rodar o modelo de estudo com classes próprias
-- Estúdio: conversa com IA para montar a receita e pré-marcação automática das fotos
+- Modo estúdio: conversa com a IA montando a receita, pré-marcação das fotos (vocabulário aberto) e posição da linha/zona vinda da receita (fase 7)
 - Mosaico ao vivo com mais de 4 câmeras (6, 9, 16)
 - Rede: senha de fábrica, quedas por hora e banda por câmera (conflito de IP já avisa na tela Rede)
 - Telegram: backup agendado; foto do alerta com a linha/zona desenhada (`/backup <senha>` já existe)

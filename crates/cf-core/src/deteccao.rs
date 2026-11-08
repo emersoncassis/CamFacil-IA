@@ -23,6 +23,17 @@ pub const CLASSES: &[(usize, &str)] = &[
     (7, "caminhão"),
 ];
 
+/// Classes de um **modelo de estudo** (SDD-07) entram a partir deste índice,
+/// para nunca se confundirem com as do COCO (`0` = pessoa). A classe `i` da
+/// receita vira `CLASSE_ESTUDO + i`.
+pub const CLASSE_ESTUDO: usize = 1000;
+
+/// A trilha conta para zona, permanência e calor? Pessoa (COCO) ou qualquer
+/// objeto de um modelo de estudo.
+pub fn conta_em_zona(classe: usize) -> bool {
+    classe == 0 || classe >= CLASSE_ESTUDO
+}
+
 pub fn nome_classe(c: usize) -> Option<&'static str> {
     CLASSES.iter().find(|(i, _)| *i == c).map(|(_, n)| *n)
 }
@@ -65,20 +76,25 @@ pub struct Encaixe {
 /// (114) e devolve o tensor CHW normalizado 0–1. Vizinho mais próximo: barato
 /// e suficiente para um detector nano.
 pub fn letterbox(img: &Rgb<'_>) -> (Vec<f32>, Encaixe) {
-    let escala = (LADO as f32 / img.w as f32).min(LADO as f32 / img.h as f32);
-    let nw = ((img.w as f32 * escala).round() as usize).clamp(1, LADO);
-    let nh = ((img.h as f32 * escala).round() as usize).clamp(1, LADO);
-    let dx = ((LADO - nw) / 2) as f32;
-    let dy = ((LADO - nh) / 2) as f32;
-    let mut t = vec![114.0 / 255.0; 3 * LADO * LADO];
-    let plano = LADO * LADO;
+    letterbox_lado(img, LADO)
+}
+
+/// Letterbox para um lado qualquer (modelo de estudo treinado em 320–1280).
+pub fn letterbox_lado(img: &Rgb<'_>, lado: usize) -> (Vec<f32>, Encaixe) {
+    let escala = (lado as f32 / img.w as f32).min(lado as f32 / img.h as f32);
+    let nw = ((img.w as f32 * escala).round() as usize).clamp(1, lado);
+    let nh = ((img.h as f32 * escala).round() as usize).clamp(1, lado);
+    let dx = ((lado - nw) / 2) as f32;
+    let dy = ((lado - nh) / 2) as f32;
+    let mut t = vec![114.0 / 255.0; 3 * lado * lado];
+    let plano = lado * lado;
     for y in 0..nh {
         let sy = ((y as f32 / escala) as usize).min(img.h - 1);
         let oy = y + dy as usize;
         for x in 0..nw {
             let sx = ((x as f32 / escala) as usize).min(img.w - 1);
             let i = (sy * img.w + sx) * 3;
-            let o = oy * LADO + x + dx as usize;
+            let o = oy * lado + x + dx as usize;
             t[o] = img.px[i] as f32 / 255.0;
             t[plano + o] = img.px[i + 1] as f32 / 255.0;
             t[2 * plano + o] = img.px[i + 2] as f32 / 255.0;
@@ -141,11 +157,49 @@ pub fn decodificar(
     h_img: usize,
     conf_min: f32,
 ) -> Vec<Deteccao> {
+    decodificar_com(saida, shape, enc, w_img, h_img, conf_min, |c| {
+        nome_classe(c).map(|_| c)
+    })
+}
+
+/// Lê a saída de um **modelo de estudo** com `nc` classes próprias (YOLO do
+/// Ultralytics, mesma saída `[1, 4+nc, N]`). A classe `i` volta como
+/// `CLASSE_ESTUDO + i`.
+pub fn decodificar_estudo(
+    saida: &[f32],
+    shape: &[usize],
+    enc: Encaixe,
+    w_img: usize,
+    h_img: usize,
+    conf_min: f32,
+    nc: usize,
+) -> Vec<Deteccao> {
+    if shape.len() == 3 && shape[1] != 4 + nc {
+        return Vec::new();
+    }
+    decodificar_com(saida, shape, enc, w_img, h_img, conf_min, |c| {
+        (c < nc).then_some(CLASSE_ESTUDO + c)
+    })
+}
+
+/// Núcleo da leitura: `mapear` diz se a classe interessa e qual índice usar.
+fn decodificar_com(
+    saida: &[f32],
+    shape: &[usize],
+    enc: Encaixe,
+    w_img: usize,
+    h_img: usize,
+    conf_min: f32,
+    mapear: impl Fn(usize) -> Option<usize>,
+) -> Vec<Deteccao> {
     if shape.len() != 3 || shape[0] != 1 || shape[1] < 5 {
         return Vec::new();
     }
     let (canais, n) = (shape[1], shape[2]);
     let nc = canais - 4;
+    if saida.len() < canais * n {
+        return Vec::new();
+    }
     let mut cand: Vec<Deteccao> = Vec::new();
     for i in 0..n {
         let mut melhor = (0usize, 0f32);
@@ -155,9 +209,12 @@ pub fn decodificar(
                 melhor = (c, s);
             }
         }
-        if melhor.1 < conf_min || nome_classe(melhor.0).is_none() {
+        if melhor.1 < conf_min {
             continue;
         }
+        let Some(classe) = mapear(melhor.0) else {
+            continue;
+        };
         let (cx, cy, w, h) = (saida[i], saida[n + i], saida[2 * n + i], saida[3 * n + i]);
         // Desfaz o letterbox e normaliza pela imagem original.
         let cx = ((cx - enc.dx) / enc.escala) / w_img as f32;
@@ -168,7 +225,7 @@ pub fn decodificar(
             continue;
         }
         cand.push(Deteccao {
-            classe: melhor.0,
+            classe,
             conf: melhor.1,
             cx,
             cy,
@@ -234,10 +291,12 @@ pub enum EventoMedio {
         sentido: i8,
         classe: usize,
     },
-    /// Zona passou a ter pessoa / ficou vazia.
+    /// Zona passou a ter pessoa (ou objeto do modelo de estudo) / ficou vazia.
     ZonaOcupada {
         regra: i64,
         quantas: usize,
+        /// Classe de quem ocupou (a primeira trilha confirmada na zona).
+        classe: usize,
     },
     ZonaLivre {
         regra: i64,
@@ -353,7 +412,11 @@ impl Rastreador {
     ) -> Vec<EventoMedio> {
         let mut ev = Vec::new();
         self.casar(dets, agora);
-        let pessoas: Vec<&Trilha> = self.trilhas.iter().filter(|t| t.classe == 0).collect();
+        let pessoas: Vec<&Trilha> = self
+            .trilhas
+            .iter()
+            .filter(|t| conta_em_zona(t.classe))
+            .collect();
 
         for r in regras {
             match r.forma {
@@ -380,6 +443,7 @@ impl Rastreador {
                         ev.push(EventoMedio::ZonaOcupada {
                             regra: r.id,
                             quantas: dentro_zona.len(),
+                            classe: dentro_zona[0].classe,
                         });
                     } else if !ocupada && antes {
                         ev.push(EventoMedio::ZonaLivre { regra: r.id });
@@ -403,7 +467,7 @@ impl Rastreador {
             }
         }
         if calor {
-            for t in self.trilhas.iter().filter(|t| t.classe == 0) {
+            for t in self.trilhas.iter().filter(|t| conta_em_zona(t.classe)) {
                 self.calor.marcar(t.pos);
             }
         }
@@ -540,6 +604,90 @@ mod tests {
     }
 
     #[test]
+    fn decodifica_modelo_de_estudo_com_classes_proprias() {
+        // Modelo de estudo com 2 classes: saída [1, 6, N].
+        let n = 2;
+        let mut s = vec![0f32; 6 * n];
+        // caixa 0: classe 1 (0.8); caixa 1: classe 0 abaixo da confiança.
+        s[0] = 320.0;
+        s[n] = 320.0;
+        s[2 * n] = 64.0;
+        s[3 * n] = 64.0;
+        s[5 * n] = 0.8;
+        s[1] = 100.0;
+        s[n + 1] = 100.0;
+        s[2 * n + 1] = 10.0;
+        s[3 * n + 1] = 10.0;
+        s[4 * n + 1] = 0.1;
+        let enc = Encaixe {
+            escala: 1.0,
+            dx: 0.0,
+            dy: 0.0,
+        };
+        let d = decodificar_estudo(&s, &[1, 6, n], enc, 640, 640, 0.35, 2);
+        assert_eq!(d.len(), 1, "{d:?}");
+        assert_eq!(d[0].classe, CLASSE_ESTUDO + 1);
+        // Lida como COCO, a classe 1 viraria "bicicleta": por isso o deslocamento.
+        assert_eq!(
+            decodificar(&s, &[1, 6, n], enc, 640, 640, 0.35)[0].classe,
+            1
+        );
+        // Número de classes diferente do modelo: não inventa detecções.
+        assert!(decodificar_estudo(&s, &[1, 6, n], enc, 640, 640, 0.35, 3).is_empty());
+        // Saída truncada não derruba o programa.
+        assert!(decodificar_estudo(&s[..5], &[1, 6, n], enc, 640, 640, 0.35, 2).is_empty());
+        assert!(conta_em_zona(CLASSE_ESTUDO) && conta_em_zona(0) && !conta_em_zona(2));
+        let (t, e) = letterbox_lado(
+            &Rgb {
+                w: 4,
+                h: 2,
+                px: &[200; 24],
+            },
+            320,
+        );
+        assert_eq!(t.len(), 3 * 320 * 320);
+        assert!((e.escala - 80.0).abs() < 1e-3);
+    }
+
+    #[test]
+    fn objeto_de_estudo_ocupa_zona() {
+        let mut r = Rastreador::default();
+        let regras = vec![Regra {
+            id: 9,
+            nome: "Doca".into(),
+            forma: Forma::Zona,
+            pontos: vec![
+                Ponto { x: 0.0, y: 0.0 },
+                Ponto { x: 1.0, y: 0.0 },
+                Ponto { x: 1.0, y: 1.0 },
+                Ponto { x: 0.0, y: 1.0 },
+            ],
+        }];
+        let t0 = Instant::now();
+        let mut todos = Vec::new();
+        for i in 0..3 {
+            let mut d = pessoa(0.5, 0.4);
+            d.classe = CLASSE_ESTUDO + 2;
+            todos.extend(r.processar(
+                &[d],
+                &regras,
+                t0 + Duration::from_millis(300 * i),
+                true,
+                false,
+                false,
+            ));
+        }
+        assert!(
+            todos.contains(&EventoMedio::ZonaOcupada {
+                regra: 9,
+                quantas: 1,
+                classe: CLASSE_ESTUDO + 2
+            }),
+            "{todos:?}"
+        );
+    }
+
+    #[test]
     fn conta_passagem_e_ocupa_zona() {
         let mut r = Rastreador::default();
         let regras = vec![
@@ -584,7 +732,8 @@ mod tests {
                 e,
                 EventoMedio::ZonaOcupada {
                     regra: 2,
-                    quantas: 1
+                    quantas: 1,
+                    classe: 0
                 }
             )),
             "{todos:?}"

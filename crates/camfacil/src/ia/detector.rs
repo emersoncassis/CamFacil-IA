@@ -2,8 +2,14 @@
 //! câmeras, 2–3 inferências por segundo no total, no quadro já reduzido do
 //! stream secundário. Só roda com algum módulo médio ligado e com runtime e
 //! modelo baixados; parada, libera o modelo da RAM depois de um minuto.
+//!
+//! Com um **modelo de estudo** ligado (SDD-07), a mesma sessão carrega o ONNX
+//! do técnico no lugar do YOLO do COCO: classes da receita (índice
+//! `CLASSE_ESTUDO + i`), lado e confiança da receita. Um modelo por vez, para
+//! não dobrar a RAM.
 
 use super::Ia;
+use crate::estudio::ModeloEstudo;
 use crate::video::{modulos, Video};
 use cf_core::deteccao::{self, Rgb, LADO};
 use cf_core::store::Store;
@@ -28,9 +34,12 @@ pub fn iniciar(ia: Arc<Ia>, video: Arc<Video>, store: Arc<Store>) {
         .spawn(move || laco(ia, video, store));
 }
 
-fn carregar(ia: &Ia) -> Result<Session, String> {
+fn carregar(ia: &Ia, estudo: Option<&ModeloEstudo>) -> Result<Session, String> {
     let lib = ia.lib_ort().ok_or("ONNX Runtime ainda não baixado")?;
-    let modelo = ia.modelo().ok_or("modelo ainda não baixado")?;
+    let modelo = match estudo {
+        Some(m) => m.onnx.clone(),
+        None => ia.modelo().ok_or("modelo ainda não baixado")?,
+    };
     let env = AMBIENTE
         .get_or_init(|| {
             ort::init_from(&lib)
@@ -66,11 +75,16 @@ fn decodificar_rgb(jpeg: &[u8]) -> Option<(usize, usize, Vec<u8>)> {
     (px.len() == w * h * 3).then_some((w, h, px))
 }
 
-fn inferir(sessao: &mut Session, jpeg: &[u8]) -> Result<Vec<deteccao::Deteccao>, String> {
+fn inferir(
+    sessao: &mut Session,
+    jpeg: &[u8],
+    estudo: Option<&ModeloEstudo>,
+) -> Result<Vec<deteccao::Deteccao>, String> {
     let (w, h, px) = decodificar_rgb(jpeg).ok_or("quadro JPEG inválido")?;
-    let (tensor, enc) = deteccao::letterbox(&Rgb { w, h, px: &px });
+    let lado = estudo.map_or(LADO, |m| m.lado);
+    let (tensor, enc) = deteccao::letterbox_lado(&Rgb { w, h, px: &px }, lado);
     let entrada =
-        Tensor::from_array(([1usize, 3, LADO, LADO], tensor)).map_err(|e| e.to_string())?;
+        Tensor::from_array(([1usize, 3, lado, lado], tensor)).map_err(|e| e.to_string())?;
     let saidas = sessao
         .run(ort::inputs![entrada])
         .map_err(|e| format!("inferência: {e}"))?;
@@ -78,16 +92,41 @@ fn inferir(sessao: &mut Session, jpeg: &[u8]) -> Result<Vec<deteccao::Deteccao>,
         .try_extract_tensor::<f32>()
         .map_err(|e| e.to_string())?;
     let shape: Vec<usize> = shape.iter().map(|&d| d.max(0) as usize).collect();
-    Ok(deteccao::decodificar(dados, &shape, enc, w, h, CONF_MIN))
+    Ok(match estudo {
+        None => deteccao::decodificar(dados, &shape, enc, w, h, CONF_MIN),
+        Some(m) => {
+            let nc = m.nomes.len();
+            if shape.len() != 3 || shape[1] != 4 + nc {
+                return Err(format!(
+                    "o modelo de estudo devolve {shape:?}, mas a receita tem {nc} classes (esperado [1, {}, N]); exporte de novo pelo notebook",
+                    4 + nc
+                ));
+            }
+            deteccao::decodificar_estudo(dados, &shape, enc, w, h, m.confianca, nc)
+        }
+    })
 }
 
 fn laco(ia: Arc<Ia>, video: Arc<Video>, store: Arc<Store>) {
     let mut sessao: Option<Session> = None;
+    // Qual modelo está na sessão: None = padrão (COCO), Some(id) = estudo.
+    let mut carregado: Option<String> = None;
     let mut ultimos: HashMap<i64, Arc<Vec<u8>>> = HashMap::new();
     let mut ocioso_desde = Instant::now();
     loop {
         let m = modulos(&store);
-        if !m.qualquer_medio() || !ia.pronto() {
+        let estudo = ia.estudo.lock().unwrap().clone();
+        let pronto = match &estudo {
+            Some(_) => ia.lib_ort().is_some(),
+            None => ia.pronto(),
+        };
+        let quer = estudo.as_ref().map(|e| e.id.clone());
+        if sessao.is_some() && carregado != quer {
+            // O técnico ligou ou desligou um modelo de estudo: troca na hora.
+            sessao = None;
+            ia.detector.lock().unwrap().carregado = false;
+        }
+        if !(m.qualquer_medio() || estudo.is_some()) || !pronto {
             if sessao.is_some() && ocioso_desde.elapsed() > DESCARREGAR_APOS {
                 sessao = None;
                 ia.detector.lock().unwrap().carregado = false;
@@ -102,12 +141,14 @@ fn laco(ia: Arc<Ia>, video: Arc<Video>, store: Arc<Store>) {
         }
         ocioso_desde = Instant::now();
         if sessao.is_none() {
-            match carregar(&ia) {
+            match carregar(&ia, estudo.as_deref()) {
                 Ok(s) => {
                     sessao = Some(s);
+                    carregado = quer.clone();
                     let mut d = ia.detector.lock().unwrap();
                     d.carregado = true;
                     d.erro = None;
+                    d.estudo = estudo.as_ref().map(|e| e.nome.clone());
                 }
                 Err(e) => {
                     ia.detector.lock().unwrap().erro = Some(e);
@@ -140,7 +181,7 @@ fn laco(ia: Arc<Ia>, video: Arc<Video>, store: Arc<Store>) {
             ultimos.insert(canal.id, jpeg.clone());
             trabalhou = true;
             let t0 = Instant::now();
-            match inferir(s, &jpeg) {
+            match inferir(s, &jpeg, estudo.as_deref()) {
                 Ok(dets) => {
                     let agora = Instant::now();
                     let regras = canal.regras();
@@ -157,6 +198,7 @@ fn laco(ia: Arc<Ia>, video: Arc<Video>, store: Arc<Store>) {
                         );
                         md.deteccoes = dets;
                         md.quando = Some(agora);
+                        md.estudo = estudo.as_ref().map(|e| Arc::new(e.nomes.clone()));
                         ev
                     };
                     canal.aplicar_medio(&store, eventos);

@@ -169,6 +169,22 @@ pub fn router(app: Shared) -> Router {
             delete(crate::estudio::delete_modelo),
         )
         .route(
+            "/api/estudio/modelos/{id}/ligar",
+            post(crate::estudio::post_ligar),
+        )
+        .route(
+            "/api/estudio/coleta",
+            get(crate::estudio::get_coleta).post(crate::estudio::post_coleta),
+        )
+        .route(
+            "/api/estudio/coleta/parar",
+            post(crate::estudio::post_coleta_parar),
+        )
+        .route(
+            "/api/estudio/coleta/{receita}",
+            delete(crate::estudio::delete_coleta),
+        )
+        .route(
             "/api/estudio/modelos/{id}/onnx",
             axum::routing::put(crate::estudio::put_onnx).layer(
                 axum::extract::DefaultBodyLimit::max(crate::estudio::ONNX_MAX + 1024),
@@ -1336,6 +1352,7 @@ mod tests {
             arquivo: std::sync::OnceLock::new(),
             ia: Arc::new(crate::ia::Ia::new(&dir)),
             estudio: crate::estudio::Estudio::new(&dir),
+            coleta: Arc::default(),
         });
         (app, dir)
     }

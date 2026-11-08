@@ -42,6 +42,7 @@ pub struct App {
     pub arquivo: std::sync::OnceLock<Arc<arquivo::Arquivo>>,
     pub ia: Arc<ia::Ia>,
     pub estudio: estudio::Estudio,
+    pub coleta: Arc<estudio::Coleta>,
 }
 
 pub type Shared = Arc<App>;
@@ -137,7 +138,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         arquivo: std::sync::OnceLock::new(),
         ia: Arc::new(ia::Ia::new(&dir)),
         estudio: estudio::Estudio::new(&dir),
+        coleta: Arc::default(),
     });
+    // Modelo de estudo ligado antes de fechar o programa volta ligado (SDD-07).
+    estudio::sincronizar(&app);
     // Nível médio: a thread do detector dorme até haver módulo médio ligado e
     // runtime+modelo baixados (SDD-02).
     ia::detector::iniciar(app.ia.clone(), app.video.clone(), app.store.clone());
