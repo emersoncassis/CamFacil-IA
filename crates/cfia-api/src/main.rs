@@ -131,6 +131,7 @@ async fn cabecalhos(
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/api/saude", get(api::saude))
+        .route("/baixar/{arquivo}", get(web::baixar))
         .route("/api/auth/google", get(auth::iniciar))
         .route("/api/auth/google/callback", get(auth::retorno))
         .route("/api/auth/sair", post(auth::sair))

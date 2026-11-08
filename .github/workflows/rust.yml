@@ -159,6 +159,12 @@ jobs:
         if: steps.versao.outputs.nova == 'sim'
         run: |
           cp scripts/install.sh scripts/install.ps1 dist/
+          # Cópias com o número da versão no nome (o site baixa estas); os
+          # nomes fixos continuam para os instaladores e links antigos.
+          V="$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)"
+          for f in camfacil-windows-x86_64.exe camfacil-linux-x86_64 camfacil-linux-arm64 camfacil-android.apk; do
+            [ -f "dist/$f" ] && cp "dist/$f" "dist/${f/camfacil-/camfacil-$V-}"
+          done
           cd dist && sha256sum * > SHA256SUMS.txt && ls -la
       - name: Publica os modelos de IA (release modelos-v1), se ainda não existir
         env:
@@ -181,7 +187,9 @@ jobs:
           V: ${{ steps.versao.outputs.tag }}
         run: |
           if ! gh release view "$V" --json assets -q '.assets[].name' | grep -qx camfacil-android.apk; then
-            gh release upload "$V" apk/camfacil-android.apk
+            N="${V#v}"
+            cp apk/camfacil-android.apk "apk/camfacil-$N-android.apk"
+            gh release upload "$V" apk/camfacil-android.apk "apk/camfacil-$N-android.apk"
           fi
       - name: Cria a versão no GitHub
         if: steps.versao.outputs.nova == 'sim'

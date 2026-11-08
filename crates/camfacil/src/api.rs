@@ -196,6 +196,7 @@ pub fn router(app: Shared) -> Router {
         )
         .route("/api/dados", get(get_dados))
         .route("/api/dados/apagar-tudo", post(post_apagar_tudo))
+        .route("/api/desinstalar", post(post_desinstalar))
         .route("/api/backup", post(crate::backup::post_exportar))
         .route("/api/backup/telegram", post(crate::backup::post_telegram))
         .route(
@@ -824,18 +825,114 @@ struct PedidoApagarTudo {
 /// Apaga TUDO: câmeras, regras, histórico, fotos, logins, chaves e a pasta
 /// antiga. O banco está aberto, então marca e fecha o programa; ao abrir de
 /// novo, ele apaga e começa do zero. Também desliga o "abrir com o computador".
-async fn post_apagar_tudo(Json(p): Json<PedidoApagarTudo>) -> ApiResult {
+async fn post_apagar_tudo(State(app): State<Shared>, Json(p): Json<PedidoApagarTudo>) -> ApiResult {
     if p.confirmar.trim() != "APAGAR" {
         return Err(bad(StatusCode::BAD_REQUEST, "digite APAGAR para confirmar"));
     }
-    let _ = crate::autoinicio::definir(false);
+    encerrar_servicos(&app).await;
     let marca = cf_core::paths::data_dir().join(cf_core::paths::MARCA_APAGAR);
     std::fs::write(&marca, b"1").map_err(internal)?;
+    sair_em_seguida();
+    Ok(Json(json!({ "ok": true })))
+}
+
+/// Para tudo o que roda em segundo plano: túnel do ngrok, endereço HTTPS do
+/// Tailscale (Serve/Funnel do /mcp) e o abrir junto com o computador. Os
+/// ffmpeg morrem com o programa (ver filhos.rs).
+pub(crate) async fn encerrar_servicos(app: &Shared) {
+    crate::ngrok::parar();
+    crate::mcp_https::despublicar_tudo(app).await;
+    let _ = crate::autoinicio::definir(false);
+}
+
+fn sair_em_seguida() {
     tokio::spawn(async {
         tokio::time::sleep(Duration::from_millis(800)).await;
+        crate::ngrok::parar();
         std::process::exit(0);
     });
+}
+
+#[derive(Deserialize)]
+struct PedidoDesinstalar {
+    confirmar: String,
+    #[serde(default)]
+    apagar_dados: bool,
+}
+
+/// Desinstalar: para todos os serviços, tira o atalho e o programa da
+/// máquina e, se pedido, apaga os dados. O programa fecha em seguida.
+async fn post_desinstalar(
+    State(app): State<Shared>,
+    Json(p): Json<PedidoDesinstalar>,
+) -> ApiResult {
+    if p.confirmar.trim() != "DESINSTALAR" {
+        return Err(bad(StatusCode::BAD_REQUEST, "confirme a desinstalação"));
+    }
+    encerrar_servicos(&app).await;
+    let exe = std::env::current_exe().map_err(internal)?;
+    let dados = cf_core::paths::data_dir();
+    let antiga = cf_core::paths::pasta_antiga_existente();
+    limpar_depois_de_sair(
+        &exe,
+        p.apagar_dados.then_some(&dados),
+        antiga.as_deref().filter(|_| p.apagar_dados),
+    );
+    sair_em_seguida();
     Ok(Json(json!({ "ok": true })))
+}
+
+/// Um processo à parte espera o programa fechar e apaga o executável, o
+/// atalho e (se pedido) as pastas de dados.
+fn limpar_depois_de_sair(
+    exe: &std::path::Path,
+    dados: Option<&std::path::Path>,
+    antiga: Option<&std::path::Path>,
+) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let q = |p: &std::path::Path| format!("\"{}\"", p.display());
+        let mut passos = vec![
+            "timeout /t 3 /nobreak >nul".to_string(),
+            format!("del /f /q {}", q(exe)),
+        ];
+        if let Some(d) = std::env::var_os("USERPROFILE") {
+            let atalho = std::path::Path::new(&d)
+                .join("Desktop")
+                .join("CamFacil IA.lnk");
+            passos.push(format!("del /f /q {}", q(&atalho)));
+        }
+        for d in [dados, antiga].into_iter().flatten() {
+            passos.push(format!("rmdir /s /q {}", q(d)));
+        }
+        let _ = std::process::Command::new("cmd")
+            .args(["/C", &passos.join(" & ")])
+            .creation_flags(crate::filhos::FORA_DO_JOB | 0x0800_0000)
+            .spawn();
+    }
+    #[cfg(not(windows))]
+    {
+        let q =
+            |p: &std::path::Path| format!("'{}'", p.display().to_string().replace('\'', "'\\''"));
+        let mut passos = vec!["sleep 3".to_string(), format!("rm -f {}", q(exe))];
+        if let Some(h) = std::env::var_os("HOME") {
+            let h = std::path::Path::new(&h);
+            passos.push(format!(
+                "rm -f {}",
+                q(&h.join(".local/share/applications/camfacil.desktop"))
+            ));
+        }
+        for d in [dados, antiga].into_iter().flatten() {
+            passos.push(format!("rm -rf {}", q(d)));
+        }
+        let _ = std::process::Command::new("sh")
+            .args(["-c", &passos.join("; ")])
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn();
+    }
 }
 
 // ---------- Login padrão das câmeras (o mesmo para todas) ----------

@@ -1161,5 +1161,11 @@
   "vivo.som_mutar": "Silenciar o som dos alertas",
   "vivo.som_desmutar": "Ligar o som dos alertas",
   "formas.toggle": "Mostrar linhas e zonas",
-  "formas.dica": "Mostra na imagem a linha e a zona desenhadas, além do balão. Desligado, o cliente vê só o balão com o nome da regra."
+  "formas.dica": "Mostra na imagem a linha e a zona desenhadas, além do balão. Desligado, o cliente vê só o balão com o nome da regra.",
+  "desinst.botao": "Desinstalar o CamFácil IA",
+  "desinst.junto": "Ao desinstalar, apagar também os dados",
+  "desinst.confirma": "Desinstalar o CamFácil IA deste computador?",
+  "desinst.dica": "Para tudo o que roda em segundo plano (ngrok, endereço HTTPS do Tailscale, câmeras, abrir com o computador), tira o atalho e o programa. O programa fecha.",
+  "desinst.dica_dados": " Câmeras, regras, histórico e logins também serão apagados.",
+  "desinst.ok": "Desinstalado. Pode fechar esta página."
 }

@@ -606,6 +606,7 @@ async fn ligar(app: &Shared, alvo: Alvo, quem: &str) -> Result<(), String> {
     };
     let politica = politica.map(|p| p.display().to_string());
     let mut cmd = std::process::Command::new(&bin);
+    crate::filhos::morrer_com_o_programa(&mut cmd);
     cmd.args(argumentos(porta, politica.as_deref()))
         .env("NGROK_AUTHTOKEN", token)
         .stdin(std::process::Stdio::null())
