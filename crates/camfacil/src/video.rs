@@ -535,7 +535,11 @@ impl Canal {
     }
 
     pub fn definir_regras(&self, regras: &[RegraSalva]) {
-        *self.regras.write().unwrap() = regras.iter().filter_map(|r| r.para_visao()).collect();
+        *self.regras.write().unwrap() = regras
+            .iter()
+            .filter(|r| r.ajustes.ativa)
+            .filter_map(|r| r.para_visao())
+            .collect();
     }
 
     fn encerrar(&self) {

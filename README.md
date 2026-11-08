@@ -244,6 +244,12 @@ Versão atual: **0.8.2** ([releases](https://github.com/emersoncassis/CamFacil-I
   - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
   - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
 
+### Novidades da 0.9.4
+
+- **Ligar e desligar regra** sem excluir (botão na lista de regras); desligada some do ao vivo e da TV e não alerta.
+- **Permanência fica na regra** (editar a regra, campo de segundos); saiu da tela de Módulos.
+- **Linha conta carro rápido:** o rastreio aceita mais deslocamento quando o PC demora entre leituras.
+
 ### Novidades da 0.9.3
 
 - **Um módulo só liga a IA:** "Pessoas e veículos". Contagem, permanência e mapa de calor deixaram de ser interruptores separados na tela; viraram tipos de regra. Filtro de classe (pessoa, carro, moto, ônibus, caminhão, bicicleta) funciona sem ligar mais nada.

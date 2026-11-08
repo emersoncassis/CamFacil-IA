@@ -556,6 +556,13 @@ impl Rastreador {
     fn casar(&mut self, dets: &[Deteccao], agora: Instant) {
         let mut usadas = vec![false; dets.len()];
         for t in &mut self.trilhas {
+            // Carro rápido (ou PC lento, com poucos quadros por segundo) anda mais
+            // entre duas leituras: o raio de busca cresce com o tempo desde que a
+            // trilha foi vista, até 3x. Sem isso nascia uma trilha nova a cada
+            // quadro e a linha nunca contava.
+            let folga =
+                (agora.saturating_duration_since(t.visto_em).as_secs_f32() / 0.4).clamp(1.0, 3.0);
+            let alcance = self.ajustes.casar_max * folga;
             let mut melhor: Option<(usize, f32)> = None;
             for (i, d) in dets.iter().enumerate() {
                 if usadas[i] || d.classe != t.classe {
@@ -563,7 +570,7 @@ impl Rastreador {
                 }
                 let p = d.pe();
                 let dist = ((p.x - t.pos.x).powi(2) + (p.y - t.pos.y).powi(2)).sqrt();
-                if dist < self.ajustes.casar_max && melhor.is_none_or(|(_, m)| dist < m) {
+                if dist < alcance && melhor.is_none_or(|(_, m)| dist < m) {
                     melhor = Some((i, dist));
                 }
             }
@@ -947,6 +954,41 @@ mod tests {
             })
             .collect();
         assert_eq!(cruzamentos, vec![2], "{ev:?}");
+    }
+
+    #[test]
+    fn carro_rapido_em_pc_lento_ainda_conta_na_linha() {
+        let linha = vec![Regra {
+            id: 4,
+            nome: "Rua".into(),
+            forma: Forma::Linha,
+            pontos: vec![Ponto { x: 0.5, y: 0.0 }, Ponto { x: 0.5, y: 1.0 }],
+            ajustes: crate::visao::AjustesRegra {
+                intel: Intel::Passagem,
+                classes: vec![2],
+                ..Default::default()
+            },
+        }];
+        let mut r = Rastreador::default();
+        let t0 = Instant::now();
+        let mut n = 0;
+        // 1 leitura por segundo, 0,17 da tela por leitura: passava do raio fixo.
+        for i in 0..6u64 {
+            let x = 0.05 + 0.17 * i as f32;
+            n += r
+                .processar(
+                    &[carro(x, 0.6)],
+                    &linha,
+                    t0 + Duration::from_millis(1000 * i),
+                    false,
+                    false,
+                    false,
+                )
+                .iter()
+                .filter(|e| matches!(e, EventoMedio::LinhaCruzada { .. }))
+                .count();
+        }
+        assert_eq!(n, 1);
     }
 
     #[test]

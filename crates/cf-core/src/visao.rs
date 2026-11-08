@@ -88,9 +88,29 @@ impl Intel {
     }
 }
 
+fn verdade() -> bool {
+    true
+}
+
+impl Default for AjustesRegra {
+    fn default() -> Self {
+        Self {
+            ativa: true,
+            intel: Intel::default(),
+            classes: Vec::new(),
+            parametro: 0,
+            cor: String::new(),
+            som: String::new(),
+        }
+    }
+}
+
 /// Ajustes de uma regra além do desenho: inteligência, classes, cor e som.
-#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AjustesRegra {
+    /// Regra ligada. Desligada fica salva, mas não detecta nem alerta.
+    #[serde(default = "verdade")]
+    pub ativa: bool,
     #[serde(default)]
     pub intel: Intel,
     /// Classes que a regra observa (índices do COCO ou de um modelo de

@@ -1285,6 +1285,7 @@ mod tests {
             parametro: 4,
             cor: "ambar".into(),
             som: "sino".into(),
+            ativa: false,
         };
         s.definir_ajustes(nova, &a).unwrap();
         let rs = s.regras(cam).unwrap();
@@ -1292,6 +1293,7 @@ mod tests {
             rs.iter().find(|r| r.id == antiga).unwrap().ajustes.intel,
             Intel::Legado
         );
+        assert!(rs.iter().find(|r| r.id == antiga).unwrap().ajustes.ativa);
         assert_eq!(rs.iter().find(|r| r.id == nova).unwrap().ajustes, a);
         let json = serde_json::to_string(&s.exportar_config().unwrap()).unwrap();
         let dest = Store::memory().unwrap();

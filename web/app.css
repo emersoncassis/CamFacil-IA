@@ -422,3 +422,5 @@ button.link:hover { color: var(--text); }
 .badge.aval-ok { color: var(--c-green); border-color: var(--c-green); }
 .badge.aval-atencao { color: var(--c-warn); border-color: var(--c-warn); }
 .badge.aval-problema { color: var(--c-danger); border-color: var(--c-danger); }
+
+.regra-off td { opacity: .55; }

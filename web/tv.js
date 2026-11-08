@@ -68,7 +68,8 @@ function conferirAlertas(cam, tile) {
   const problema = SAUDE_PROBLEMA.includes(saude);
   if (problema && alertaAntes[chaveS] === false) { piscar(tile.raiz); if (config.som) { tocarAlerta(); tocou = true; } }
   alertaAntes[chaveS] = problema;
-  for (const r of cam.regras) {
+  const regrasLigadas = cam.regras.filter((r) => !(r.ajustes && r.ajustes.ativa === false));
+  for (const r of regrasLigadas) {
     const er = e && e.regras ? e.regras[r.id] : null;
     const agora = !!(er && er.alerta_ms > 0);
     const chave = `${cam.id}:${r.id}`;
@@ -83,7 +84,7 @@ function renderBaloes(cam, tile) {
   const saude = e ? e.saude : "ok";
   const baloes = SAUDE_PROBLEMA.includes(saude)
     ? [el("div", { class: "cf-bubble is-alert saude" }, t("saude.balao." + saude))] : [];
-  tile.baloes.replaceChildren(...baloes, ...cam.regras.map((r) => {
+  tile.baloes.replaceChildren(...baloes, ...regrasLigadas.map((r) => {
     const er = e && e.regras ? e.regras[r.id] : null;
     const c = centro(r);
     const b = el("div", { class: "cf-bubble" + (er && er.alerta_ms > 0 ? " is-alert" : "") }, textoBalao(r, er));

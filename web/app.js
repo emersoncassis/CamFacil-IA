@@ -166,11 +166,6 @@ async function renderLevels() {
         b.onclick = () => abrirEscola(ESCOLA_LICAO[id]);
         acoes.append(b);
       }
-      if (id === "pessoas") {
-        const n = el("input", { class: "perm-input mono", type: "number", min: "5", max: "3600", value: String(ligados.permanencia_s || 60), "aria-label": t("mod.permanencia_s") });
-        n.onchange = async () => { try { await api("/api/ia/permanencia", { segundos: Number(n.value) }); } catch (e) { alert(e.message); } };
-        acoes.append(el("span", { class: "perm-wrap" }, n, t("mod.permanencia_s")));
-      }
       acoes.append(sw);
       rows.push(el("tr", { class: disponivel ? "" : "locked" },
         el("td", {}, name),
@@ -709,7 +704,12 @@ function renderBaloes(estadoCam) {
     const som = el("label", { class: "som-regra", title: t("regra.som_dica") }, el("span", { class: "switch" }, chk, el("span")), el("span", { class: "tiny" }, t("regra.som")));
     const edt = el("button", { class: "btn ghost sm", type: "button" }, t("regra.editar"));
     edt.onclick = () => editarRegra(r);
-    return el("tr", {}, el("td", {}, r.nome), el("td", {}, tipoDaRegra(r)), el("td", {}, agora), el("td", {}, som), el("td", { class: "right" }, edt, rem));
+    const ligada = !(r.ajustes && r.ajustes.ativa === false);
+    const lig = el("button", { class: "btn ghost sm", type: "button", "aria-pressed": String(ligada) }, t(ligada ? "regra.desligar" : "regra.ligar"));
+    lig.onclick = async () => {
+      try { await api(`/api/regras/${r.id}`, { camera_id: camAberta, nome: r.nome, rotulo_on: r.rotulo_on || "", rotulo_off: r.rotulo_off || "", ativa: !ligada }, "PATCH"); carregarRegras(); } catch (e) { alert(e.message); }
+    };
+    return el("tr", { class: ligada ? "" : "regra-off" }, el("td", {}, r.nome, ligada ? null : el("span", { class: "tiny" }, " · " + t("regra.desligada"))), el("td", {}, tipoDaRegra(r)), el("td", {}, agora), el("td", {}, som), el("td", { class: "right" }, lig, edt, rem));
   });
   $("#regras").replaceChildren(...(linhas.length ? linhas : [el("tr", { class: "empty" }, el("td", { colspan: "5" }, t("regra.nenhuma")))]));
 }

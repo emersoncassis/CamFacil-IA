@@ -1241,5 +1241,8 @@
   "aval.aguarde": "Deixe as pessoas e os carros passarem normalmente. O resultado aparece aqui.",
   "aval.tom.ok": "bom",
   "aval.tom.atencao": "atenção",
-  "aval.tom.problema": "problema"
+  "aval.tom.problema": "problema",
+  "regra.desligar": "Desligar",
+  "regra.ligar": "Ligar",
+  "regra.desligada": "desligada"
 }

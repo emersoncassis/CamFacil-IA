@@ -1638,6 +1638,7 @@ pub(crate) fn criar_regra(
         parametro: r.parametro,
         cor: r.cor.clone(),
         som: r.som.clone(),
+        ativa: true,
     };
     let id = app
         .store
@@ -1678,6 +1679,8 @@ struct EditarRegra {
     rotulo_off: String,
     /// Opcionais: só muda o que vier.
     #[serde(default)]
+    ativa: Option<bool>,
+    #[serde(default)]
     classes: Option<Vec<usize>>,
     #[serde(default)]
     parametro: Option<u32>,
@@ -1703,7 +1706,12 @@ async fn patch_regra(
     {
         return Err(bad(StatusCode::NOT_FOUND, "regra não encontrada"));
     }
-    if r.classes.is_some() || r.parametro.is_some() || r.cor.is_some() || r.som.is_some() {
+    if r.ativa.is_some()
+        || r.classes.is_some()
+        || r.parametro.is_some()
+        || r.cor.is_some()
+        || r.som.is_some()
+    {
         let atual = app
             .store
             .regras(r.camera_id)
@@ -1712,6 +1720,9 @@ async fn patch_regra(
             .find(|x| x.id == id)
             .ok_or_else(|| bad(StatusCode::NOT_FOUND, "regra não encontrada"))?;
         let mut a = atual.ajustes.clone();
+        if let Some(v) = r.ativa {
+            a.ativa = v;
+        }
         if let Some(c) = r.classes {
             a.classes = c;
         }

@@ -361,7 +361,7 @@
     const chave = (l) => l.map((c) => `${c.id}${c.nome}${c.stream_principal}`).join();
     const mudou = chave(novas) !== chave(cams);
     cams = novas;
-    await Promise.all(cams.map(async (c) => { const x = await get(`/api/cameras/${c.id}/regras`); regras[c.id] = (x && x.regras) || []; }));
+    await Promise.all(cams.map(async (c) => { const x = await get(`/api/cameras/${c.id}/regras`); regras[c.id] = ((x && x.regras) || []).filter((r) => !(r.ajustes && r.ajustes.ativa === false)); }));
     if (mudou) montar();
   }
 
