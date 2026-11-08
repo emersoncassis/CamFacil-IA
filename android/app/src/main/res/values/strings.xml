@@ -4,6 +4,7 @@
 
     <!-- Menu do painel -->
     <string name="menu_cameras">Câmeras ao vivo</string>
+    <string name="menu_botoes">Portão e relé</string>
     <string name="menu_alertas_ligar">Receber alertas no celular</string>
     <string name="menu_alertas_desligar">Parar de receber alertas</string>
     <string name="menu_parear">Parear com outro programa</string>
