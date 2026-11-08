@@ -268,7 +268,7 @@ Se ele te ajudou a aprender, a vender ou a ganhar tempo, **pague um café**. Cad
 | **A partir de R$ 1.000** · conversa | Uma hora de conversa comigo pelo Google Meet |
 | **A partir de R$ 5.000** · desenvolvimento | Desenvolvemos juntos uma aplicação para você, com base no CamFácil IA |
 
-Os **10 primeiros** apoiadores viram **Apoiadores Fundadores**, com selo para sempre no mural. Já estão lá **Marcone (Mar Câmeras)**, que criou o [Contagem Inteligente](https://contagem.marcameras.com.br/), e o **Papo Segurança**.
+Os **10 primeiros** apoiadores viram **Apoiadores Fundadores**, com selo para sempre no mural. Já estão lá **Marcone (Mar Câmeras)**, que criou o [Contagem Inteligente](https://contagem.marcameras.com.br/), e o **Alexandre (Papo Segurança)**.
 
 Ideias e pedidos de funcionalidade passam pelo apoio. Prefere fazer você mesmo? O código é aberto: abra um pull request, que eu avalio quando possível.
 
