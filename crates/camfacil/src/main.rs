@@ -10,6 +10,7 @@ mod autoinicio;
 mod backup;
 mod elo;
 mod estresse;
+mod estudio;
 mod hardware;
 mod ia;
 mod integracoes;
@@ -37,6 +38,7 @@ pub struct App {
     pub webhook: std::sync::OnceLock<Arc<cf_notify::Webhook>>,
     pub arquivo: std::sync::OnceLock<Arc<arquivo::Arquivo>>,
     pub ia: Arc<ia::Ia>,
+    pub estudio: estudio::Estudio,
 }
 
 pub type Shared = Arc<App>;
@@ -127,6 +129,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         webhook: std::sync::OnceLock::new(),
         arquivo: std::sync::OnceLock::new(),
         ia: Arc::new(ia::Ia::new(&dir)),
+        estudio: estudio::Estudio::new(&dir),
     });
     // Nível médio: a thread do detector dorme até haver módulo médio ligado e
     // runtime+modelo baixados (SDD-02).

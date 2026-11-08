@@ -153,6 +153,20 @@ pub fn router(app: Shared) -> Router {
                 .post(crate::estresse::post_iniciar)
                 .delete(crate::estresse::delete_cancelar),
         )
+        .route(
+            "/api/estudio/modelos",
+            get(crate::estudio::get_modelos).post(crate::estudio::post_modelo),
+        )
+        .route(
+            "/api/estudio/modelos/{id}",
+            delete(crate::estudio::delete_modelo),
+        )
+        .route(
+            "/api/estudio/modelos/{id}/onnx",
+            axum::routing::put(crate::estudio::put_onnx).layer(
+                axum::extract::DefaultBodyLimit::max(crate::estudio::ONNX_MAX + 1024),
+            ),
+        )
         .route("/api/backup", post(crate::backup::post_exportar))
         .route("/api/backup/telegram", post(crate::backup::post_telegram))
         .route(
