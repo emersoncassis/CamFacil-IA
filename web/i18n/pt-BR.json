@@ -1076,5 +1076,7 @@
   "dados.apagar": "Apagar todos os dados",
   "dados.confirma": "Apagar TODOS os dados do CamFácil IA?",
   "dados.confirma_dica": "Câmeras, regras, histórico de passagens, fotos, logins salvos, integrações e a pasta antiga. Não dá para desfazer. Faça um backup antes, se quiser guardar. O programa fecha; ao abrir de novo, começa do zero.",
-  "dados.apagado": "Apagado. O programa fechou; abra de novo para começar do zero."
+  "dados.apagado": "Apagado. O programa fechou; abra de novo para começar do zero.",
+  "formas.toggle": "Mostrar linhas e zonas",
+  "formas.dica": "Mostra na imagem a linha e a zona desenhadas, além do balão. Desligado, o cliente vê só o balão com o nome da regra."
 }
