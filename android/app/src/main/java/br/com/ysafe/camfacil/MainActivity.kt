@@ -191,7 +191,8 @@ class MainActivity : Activity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            1 -> startActivity(Intent(this, CamerasActivity::class.java))
+            // Visualizar: câmeras em cima (1 a 4) e status da IA embaixo, do programa local.
+            1 -> web.loadUrl(base.trimEnd('/') + "/ao-vivo")
             2 -> alternarAlertas()
             3 -> web.reload()
             4 -> parear()
