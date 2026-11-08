@@ -84,7 +84,32 @@ function redeRenderHistorico(hist) {
   }
   lista.replaceChildren(...hist.map((h, i) => el("li", {},
     el("div", {}, el("strong", {}, redeData(h.quando)), i === 0 ? el("span", { class: "rede-marca" }, t("rede.atual")) : null),
-    el("span", { class: "tiny" }, `${h.dispositivos} ${t("rede.aparelhos")}`))));
+    el("div", { class: "actions" },
+      el("span", { class: "tiny" }, `${h.dispositivos} ${t("rede.aparelhos")}`),
+      el("a", { class: "btn sm", href: `/api/rede/diagrama.svg?foto=${h.id}&baixar=true`, download: "" }, t("rede.diagrama.historico"))))));
+}
+
+// ---------- Diagrama unifilar ----------
+let redeDiagramaDe = null; // `quando` da foto desenhada
+
+async function redeRenderDiagrama(foto) {
+  const caixa = $("#rede-diagrama");
+  const baixar = $("#rede-diagrama-baixar");
+  if (!foto) {
+    redeDiagramaDe = null;
+    baixar.hidden = true;
+    caixa.replaceChildren(el("p", { class: "hint" }, t("rede.diagrama.sem_foto")));
+    return;
+  }
+  if (redeDiagramaDe === foto.quando) return;
+  try {
+    const r = await fetch("/api/rede/diagrama.svg");
+    if (!r.ok) throw new Error(r.statusText);
+    // SVG do próprio servidor, com textos já escapados.
+    caixa.innerHTML = await r.text();
+    redeDiagramaDe = foto.quando;
+    baixar.hidden = false;
+  } catch (_) { /* tenta de novo na próxima renderização */ }
 }
 
 async function redeRender() {
@@ -109,6 +134,7 @@ async function redeRender() {
     redeRenderInventario(r.ultima);
     redeRenderMudancas(r);
     redeRenderHistorico(r.historico);
+    redeRenderDiagrama(r.ultima);
   }
   if (r.rodando && redeTimer == null) {
     redeTimer = setInterval(redeRender, 800);
