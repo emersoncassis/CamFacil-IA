@@ -63,6 +63,7 @@
     S.passo = Math.max(0, Math.min(PASSOS.length - 1, n));
     const id = PASSOS[S.passo];
     PASSOS.forEach((p) => { $("#" + p).hidden = p !== id; });
+    $("#vms").hidden = true; $(".est-nav").hidden = false; $("#abrir-vms").removeAttribute("aria-current");
     botoesPasso.forEach((b, i) => {
       b.setAttribute("aria-selected", String(i === S.passo));
       b.tabIndex = i === S.passo ? 0 : -1;
@@ -629,6 +630,18 @@
   desenharChips();
   mostrarRegra();
   atualizarReceitaAtual();
+  // Aplicação futura (só desenho): VMS sob medida.
+  const abrirVms = () => {
+    PASSOS.forEach((p) => { $("#" + p).hidden = true; });
+    botoesPasso.forEach((b) => b.setAttribute("aria-selected", "false"));
+    $("#vms").hidden = false; $(".est-nav").hidden = true;
+    $("#abrir-vms").setAttribute("aria-current", "page");
+    $("#t-vms").focus();
+  };
+  $("#t-vms").tabIndex = -1;
+  $("#abrir-vms").onclick = abrirVms;
+  $("#fechar-vms").onclick = () => ir(S.passo, true);
+  if (location.hash === "#vms") setTimeout(abrirVms, 0);
   const pedido = PASSOS.indexOf(location.hash.slice(1));
   ir(pedido >= 0 ? pedido : inicial);
 })();

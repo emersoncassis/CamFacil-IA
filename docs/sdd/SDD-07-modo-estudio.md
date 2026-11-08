@@ -68,3 +68,6 @@ O técnico descreve em linguagem natural uma inteligência nova ("detectar caixa
 - `GET /api/estudio/modelos` — lista com aviso, `ativo` e `executa` por modelo.
 - `POST /api/estudio/modelos` `{receita, manifesto?}` → `PUT /api/estudio/modelos/{id}/onnx` (corpo = arquivo, até 64 MB) → `POST /api/estudio/modelos/{id}/ligar` `{ligado}` → `DELETE /api/estudio/modelos/{id}`.
 - `POST /api/estudio/coleta` `{camera_id, receita, intervalo_s (2–3600), total (1–500)}` — guarda fotos em `pasta de dados/estudio/<receita>/fotos` (exige termo do técnico; uma coleta por vez); `GET /api/estudio/coleta`; `POST /api/estudio/coleta/parar`; `DELETE /api/estudio/coleta/{receita}` ("apagar tudo" das fotos).
+
+## Aplicação futura: VMS sob medida
+Só desenho na página `/estudio#vms`; nada funciona ainda. Ideia: o técnico usa um assistente de código (Claude Code, Codex ou outro) ligado ao CamFácil IA pelo MCP (ADR 0012) para montar um VMS próprio sobre a base do CamFácil IA: IA local já testada e integração nativa com as APIs de gravadores e câmeras (Intelbras, Hikvision, Dahua e outros). Antes de implementar: ADR própria, escopo frente ao PRD §6 e quais ferramentas MCP de fabricante entram.
