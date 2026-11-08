@@ -236,7 +236,7 @@ fn validar_senha(senha: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn nome_arquivo(app: &crate::App) -> String {
+pub fn nome_arquivo(app: &crate::App) -> String {
     let off = cf_notify::servico::offset_local_s(&app.store);
     let t = agora();
     let (a, m, d) = crate::relatorio::data_civil(t, off);

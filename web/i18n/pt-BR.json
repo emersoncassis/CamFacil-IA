@@ -284,7 +284,7 @@
   "tg.nenhum_contato": "Ninguém falou com o bot ainda. Mande /start para ele no celular.",
   "tg.remover_contato": "Remover",
   "tg.confirma_remover_contato": "Remover este contato? Ele para de receber alertas.",
-  "tg.comandos": "Comandos no Telegram: /status · /foto <nome ou nº> · /resumo · /liga <módulo> · /desliga <módulo> · /ajuda. Alertas da mesma regra respeitam um intervalo mínimo de 30 s. Sem internet, os últimos 40 alertas ficam na fila e saem quando ela voltar.",
+  "tg.comandos": "Comandos no Telegram: /status · /foto <nome ou nº> · /resumo · /liga <módulo> · /desliga <módulo> · /backup <senha> (manda o backup cifrado só para você e apaga a mensagem com a senha) · /ajuda. Alertas da mesma regra respeitam um intervalo mínimo de 30 s. Sem internet, os últimos 40 alertas ficam na fila e saem quando ela voltar.",
   "tg.fila": "na fila",
   "tg.enviados": "enviados",
   "tg.descartados": "descartados",
