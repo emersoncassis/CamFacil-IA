@@ -45,6 +45,7 @@
       <symbol id="i-painel" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="12" rx="1.5"/><path d="M3.5 13h17M9 20h6M12 16.5V20"/><circle cx="7" cy="8.5" r="1" fill="currentColor"/></symbol>
       <symbol id="i-ant" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
       <symbol id="i-prox" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-cafe" viewBox="0 0 24 24"><path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 9.5h1.5a2.5 2.5 0 0 1 0 5H16M8 3v2.5M12 3v2.5"/></symbol>
       <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></symbol>
     </defs>
   </svg>
@@ -61,6 +62,7 @@
           <li><button role="tab" type="button" data-secao="formacao" aria-controls="formacao"><svg class="ico"><use href="#i-curso"/></svg><span>Formação</span></button></li>
           <li><button role="tab" type="button" data-secao="quem" aria-controls="quem"><svg class="ico"><use href="#i-user"/></svg><span>Quem fez</span></button></li>
           <li><button role="tab" type="button" data-secao="painel" aria-controls="painel"><svg class="ico"><use href="#i-painel"/></svg><span>Painel</span></button></li>
+          <li><button role="tab" type="button" data-secao="apoiar" aria-controls="apoiar"><svg class="ico"><use href="#i-cafe"/></svg><span>Apoiar</span></button></li>
         </ul>
       </nav>
       <div class="topo-acoes">
@@ -94,10 +96,12 @@
               <span class="tiny">Na voz do Emerson, criador do projeto</span>
             </div>
             <a class="tiny" href="/manifesto">Por que isso existe: o manifesto →</a>
+            <a class="tiny" href="#apoiar">Apoie o projeto pelo Pix →</a>
           </div>
         </div>
-        <div class="cena-hero" aria-hidden="true">
-          <svg viewBox="0 0 960 540">
+        <div class="cena-hero">
+          <div class="cena-quadro">
+          <svg viewBox="0 0 960 540" aria-hidden="true">
             <defs>
               <clipPath id="ch"><rect width="960" height="540" rx="16"/></clipPath>
               <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06cb3f" stop-opacity="0"/><stop offset="1" stop-color="#06cb3f" stop-opacity=".22"/></linearGradient>
@@ -116,6 +120,14 @@
             </g>
             <rect x="1" y="1" width="958" height="538" rx="16" fill="none" stroke="#2e2e2e" stroke-width="2"/>
           </svg>
+          <a class="mural-vivo" href="#apoiar" aria-label="Mural de apoiadores" data-mural="/mural.json" hidden>
+            <span class="mv-cantos" aria-hidden="true"></span>
+            <span class="mv-varre" aria-hidden="true"></span>
+            <span class="mv-tag"><i></i>IA · apoio detectado</span>
+            <strong class="mv-nome"></strong>
+            <span class="mv-pediu"></span>
+          </a>
+          </div>
         </div>
       </section>
 
@@ -209,9 +221,63 @@
           <p class="tiny">Passo a passo completo no <a href="https://github.com/emersoncassis/CamFacil-IA#painel-no-seu-servidor">README do projeto</a>.</p>
         </details>
       </section>
+
+      <!-- Apoiar: Pix, níveis de apoio e formulário do mural -->
+      <section class="secao apoiar" id="apoiar" role="tabpanel" aria-labelledby="apoiar-t" hidden>
+        <div class="apoiar-pix">
+          <h2 id="apoiar-t">Apoie o CamFácil IA</h2>
+          <p>Livre e gratuito, e vai continuar assim. Cada apoio volta todo para o projeto: servidor no ar, câmeras para testar, novas inteligências e mais horas de desenvolvimento.</p>
+          <div class="pix-cartao">
+            <img src="/img/pix-qr.svg" width="148" height="148" alt="QR code do Pix para apoiar o CamFácil IA">
+            <div>
+              <p class="tiny">Chave Pix (CPF)</p>
+              <p class="pix-chave mono">390.690.838-09</p>
+              <p class="tiny">Emerson de Carvalho Assis</p>
+              <div class="cmd"><code class="mono">39069083809</code><button class="btn ghost sm" type="button" data-copiar><svg class="ico sm"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
+              <div class="cmd pix-cc"><code class="mono">00020126330014br.gov.bcb.pix0111390690838095204000053039865802BR5925EMERSON DE CARVALHO ASSIS6015SAO JOSE DO RIO62140510CAMFACILIA6304FBB7</code><button class="btn ghost sm" type="button" data-copiar><svg class="ico sm"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
+            </div>
+          </div>
+          <details class="acord" id="niveis">
+            <summary><span>O que o seu apoio libera</span><svg class="ico sm"><use href="#i-prox"/></svg></summary>
+            <ul class="niveis">
+              <li><strong>Doação livre</strong> · qualquer valor<span>Seu nome e recado no mural</span></li>
+              <li><strong>Até R$ 500</strong> · pedido de funcionalidade<span>Sua sugestão é lida e avaliada por mim</span></li>
+              <li><strong>A partir de R$ 1.000</strong> · conversa<span>Uma hora comigo pelo Google Meet</span></li>
+              <li><strong>A partir de R$ 5.000</strong> · desenvolvimento<span>Desenvolvemos juntos uma aplicação para você, com base no CamFácil IA</span></li>
+            </ul>
+            <p class="tiny">Ideias e pedidos de funcionalidade passam pelo apoio. Prefere fazer você mesmo? O código é aberto: abra um <a href="https://github.com/emersoncassis/CamFacil-IA/pulls">pull request</a>. Fora do Brasil: <a href="https://buymeacoffee.com/emersoncarvalho">Buy Me a Coffee</a>.</p>
+          </details>
+        </div>
+        <form class="apoio-form apoiar-form" data-titulo="Apoio ao CamFácil IA" data-assunto="Apoio ao CamFácil IA" data-anexo="(comprovante em anexo)" data-msg-enviando="Enviando…" data-msg-ok="Recebido! Muito obrigado pelo apoio. Seu nome entra no mural depois que eu conferir." data-msg-erro="Não foi possível enviar agora. Tente de novo em instantes." data-msg-grande="O comprovante passou de 6 MB. Mande um print menor.">
+          <h3>Entrar no mural</h3>
+          <p class="tiny">Fez o Pix? Preencha, anexe o comprovante e envie. Chega direto para mim. <a href="https://emersoncassis.github.io/CamFacil-IA/apoiadores/">Ver o mural →</a></p>
+          <div class="apoio-grade">
+            <label>Nome para o mural<input data-campo="Nome" name="nome" required maxlength="60"></label>
+            <label>Instagram ou LinkedIn (opcional)<input data-campo="Link" name="link" maxlength="120"></label>
+            <label>Valor<input data-campo="Valor" name="valor" inputmode="decimal" placeholder="R$" maxlength="20"></label>
+            <label>Tipo de apoio
+              <select data-campo="Tipo" name="tipo">
+                <option>Doação livre</option>
+                <option>Pedido de funcionalidade</option>
+                <option>Conversa de uma hora</option>
+                <option>Desenvolvimento juntos</option>
+              </select>
+            </label>
+            <label class="largo">Recado<textarea data-campo="Recado" name="recado" rows="1" maxlength="400"></textarea></label>
+            <label class="largo">O que você quer? Uma funcionalidade, o assunto da conversa ou a aplicação (opcional)<textarea data-campo="O que quer" name="pedido" rows="1" maxlength="600"></textarea></label>
+            <label class="largo">Comprovante (foto ou PDF)<input type="file" name="comprovante" accept="image/*,application/pdf"></label>
+            <input class="apoio-isca" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
+          </div>
+          <label class="apoio-ok"><input type="checkbox" name="publicar" data-campo="Publicar no mural" data-sim="sim, autorizo" data-nao="não" checked> Autorizo publicar meu nome, link e recado no mural</label>
+          <div class="apoio-botoes">
+            <button class="btn primary" type="submit" data-enviar>Enviar</button>
+            <span class="apoio-aviso tiny" role="status" aria-live="polite"></span>
+          </div>
+        </form>
+      </section>
     </main>
 
-    <footer class="foot site-foot"><span class="foot-aviso">Ambiente de aprendizagem e validação, </span>sem garantias (AGPL-3.0). <a href="/manifesto">Manifesto</a> · <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="https://emersoncassis.github.io/CamFacil-IA/apoiadores/" target="_blank" rel="noopener">Apoie o projeto</a> · <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></footer>
+    <footer class="foot site-foot"><span class="foot-aviso">Ambiente de aprendizagem e validação, </span>sem garantias (AGPL-3.0). <a href="/manifesto">Manifesto</a> · <a href="https://github.com/emersoncassis/CamFacil-IA">GitHub</a> · <a href="#apoiar">Apoie o projeto</a> · <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a></footer>
   </div>
 
   <!-- App (logado) -->
@@ -372,6 +438,7 @@
     </main>
   </div>
 
+  <script src="/apoio.js" defer></script>
   <script src="/app.js"></script>
 </body>
 </html>

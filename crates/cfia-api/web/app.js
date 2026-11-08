@@ -584,7 +584,7 @@ async function prepararNarracao(guia) {
 }
 
 // ---------- Site do visitante: uma seção por vez ----------
-const SECOES = ["inicio", "baixar", "ferramentas", "formacao", "quem", "painel"];
+const SECOES = ["inicio", "baixar", "ferramentas", "formacao", "quem", "painel", "apoiar"];
 // Âncoras antigas e de fora (/#baixar, /#site-t, /#ferramentas…) abrem a seção certa.
 const ANCORAS = { "baixar-t": "baixar", como: "baixar", "como-t": "baixar", "ferr-t": "ferramentas", "form-t": "formacao", "quem-t": "quem", "site-t": "painel", "painel-t": "painel", proprio: "painel", entrar: "painel" };
 const largo = matchMedia("(min-width: 1000px) and (min-height: 560px)");
