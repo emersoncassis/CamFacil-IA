@@ -298,11 +298,13 @@ const SISTEMAS = {
   windows: { nome: "Windows 10 e 11", ico: "i-win", arquivo: "camfacil-windows-x86_64.exe", cmd: "irm https://cfia.ysafe.com.br/instalar.ps1 | iex", onde: "PowerShell" },
   linux: { nome: "Linux (PC ou mini PC)", ico: "i-tux", arquivo: "camfacil-linux-x86_64", cmd: "curl -fsSL https://cfia.ysafe.com.br/instalar.sh | sh", onde: "terminal" },
   rpi: { nome: "Raspberry Pi e TV Box (ARM 64)", ico: "i-rpi", arquivo: "camfacil-linux-arm64", cmd: "curl -fsSL https://cfia.ysafe.com.br/instalar.sh | sh", onde: "terminal" },
+  android: { nome: "Android (celular e TV Box)", ico: "i-phone", arquivo: "camfacil-android.apk" },
 };
 
 function sistemaDoVisitante() {
   const ua = navigator.userAgent;
   if (/Windows/.test(ua)) return "windows";
+  if (/Android/.test(ua)) return "android";
   if (/aarch64|arm64|armv8|Raspbian/i.test(ua)) return "rpi";
   if (/Linux|X11/.test(ua) && !/Android/.test(ua)) return "linux";
   return "windows";
@@ -326,6 +328,17 @@ function montarDownload(alvo) {
   const abas = el("div", { class: "seg", role: "radiogroup", "aria-label": "Sistema" });
   const desenhar = () => {
     const s = SISTEMAS[atual];
+    if (atual === "android") {
+      corpo.replaceChildren(
+        el("div", { class: "actions" },
+          el("a", { class: "btn primary grande", href: REL + s.arquivo, download: "" }, icone("i-down"), el("span", {}, "Baixar o app Android")),
+          el("span", { class: "tiny" }, "Grátis · cerca de 8 MB · Android 7 ou mais novo")),
+        el("ol", { class: "steps mt" },
+          el("li", {}, "Baixe pelo celular ou pela TV Box e toque no arquivo."),
+          el("li", {}, "Se o Android avisar, toque em ", el("strong", {}, "Configurações"), " e ative ", el("strong", {}, "Permitir desta fonte"), ". O app é gratuito e fora da Play Store."),
+          el("li", {}, "Escolha ", el("strong", {}, "Este aparelho é o servidor"), " para ligar as câmeras nele, ou ", el("strong", {}, "Ver um servidor à distância"), " para ver de longe pelo Tailscale.")));
+      return;
+    }
     const passos = atual === "windows"
       ? [
           el("li", {}, "Clique em ", el("strong", {}, "Baixar para Windows"), " e abra o arquivo baixado."),

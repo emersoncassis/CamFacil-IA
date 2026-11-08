@@ -171,6 +171,16 @@ const ARQUIVOS: &[Arquivo] = &[
         "web/privacidade.html"
     ),
     arq!("/termos", "text/html; charset=utf-8", "web/termos.html"),
+    arq!(
+        "/manifesto",
+        "text/html; charset=utf-8",
+        "web/manifesto.html"
+    ),
+    arq!(
+        "/img/manifesto-og.png",
+        "image/png",
+        "web/img/manifesto-og.png"
+    ),
     // Instaladores de um comando (curl | sh, irm | iex).
     arq!(
         "/instalar.sh",

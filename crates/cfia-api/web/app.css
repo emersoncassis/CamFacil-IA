@@ -361,3 +361,9 @@ a.btn { text-decoration: none; }
 .cam-link { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
 .dica-ts { margin-top: var(--s4); }
 .dica-ts summary { cursor: pointer; color: var(--text-2); }
+
+/* Manifesto */
+.manifesto h1 { font-size: clamp(var(--fs-xl), 6vw, 3rem); line-height: 1.1; margin-bottom: var(--s5); }
+.manifesto p, .manifesto li { font-size: var(--fs-md); line-height: 1.7; color: var(--text-2); }
+.manifesto strong { color: var(--text); }
+.manifesto .assina { margin-top: var(--s6); color: var(--text); }
