@@ -213,3 +213,13 @@ dialog { max-height: calc(100dvh - 32px); overflow: auto; }
   .painel .aviso-fixo > span:not(.aberta) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
   .painel .note > span:not(.aberta) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; line-clamp: 1; overflow: hidden; cursor: pointer; }
 }
+
+/* Cabeçalho das páginas em celular estreito: ações só com ícone (o texto
+   continua para leitor de tela), para não passar da borda. */
+@media (max-width: 480px) {
+  .pagehead { flex-wrap: nowrap; }
+  .pagehead > div:first-child { flex: 1 1 auto; min-width: 0; }
+  .pagehead .actions { flex: none; flex-wrap: nowrap; gap: var(--s1); }
+  .pagehead .actions .btn { padding-inline: 10px; text-decoration: none; }
+  .pagehead .actions .btn > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
