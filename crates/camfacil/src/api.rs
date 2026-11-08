@@ -26,6 +26,7 @@ pub fn router(app: Shared) -> Router {
         .route("/api/procurar", get(get_procurar))
         .route("/api/autoinicio", get(get_autoinicio).post(post_autoinicio))
         .route("/api/conectar", post(post_conectar))
+        .route("/api/gravador/adicionar", post(post_gravador_adicionar))
         .route(
             "/api/login-cameras",
             get(get_login).post(post_login).delete(delete_login),
@@ -375,6 +376,15 @@ struct PedidoConectar {
     /// Usar o login salvo (o mesmo das outras câmeras) em vez de usuário/senha.
     #[serde(default)]
     usar_salvo: bool,
+    /// Corrigir o IP sozinho se a câmera mudar de endereço (padrão desligado).
+    #[serde(default)]
+    auto_ip: bool,
+    /// MAC visto na busca (ONVIF), quando houver.
+    #[serde(default)]
+    mac: Option<String>,
+    /// Modelo visto na busca (ONVIF): ajuda a reconhecer gravador.
+    #[serde(default)]
+    modelo: Option<String>,
 }
 
 fn porta_rtsp() -> u16 {
@@ -396,6 +406,37 @@ async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>)
     let c = conectar::conectar(&p.ip, p.porta, &usuario, &senha, p.fabricante.as_deref())
         .await
         .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    // Gravador (DVR/NVR)? Então o técnico escolhe os canais antes de criar.
+    let det = cf_core::gravador::detectar(
+        p.ip.trim(),
+        p.porta,
+        &usuario,
+        &senha,
+        &c.url,
+        p.modelo.as_deref(),
+    )
+    .await;
+    if det.gravador {
+        let token = guardar_gravador(GravadorPendente {
+            url: c.url.clone(),
+            mac: p.mac.clone(),
+            criado: std::time::Instant::now(),
+        });
+        let nome = p
+            .nome
+            .clone()
+            .filter(|n| !n.trim().is_empty())
+            .unwrap_or_else(|| format!("Gravador {}", p.ip.trim()));
+        return Ok(Json(json!({
+            "tipo": "gravador",
+            "token": token,
+            "nome": nome,
+            "fabricante": c.fabricante,
+            "endereco": c.url_sem_senha,
+            "origem": det.origem,
+            "canais": det.canais,
+        })));
+    }
     let nome: String = p
         .nome
         .filter(|n| !n.trim().is_empty())
@@ -408,12 +449,177 @@ async fn post_conectar(State(app): State<Shared>, Json(p): Json<PedidoConectar>)
         .store
         .criar_camera(&nome, "rtsp", &c.url)
         .map_err(internal)?;
+    if p.auto_ip {
+        app.store.definir_auto_ip(id, true).map_err(internal)?;
+    }
     app.video.iniciar(id, "rtsp", &c.url);
+    // Aprende o MAC já: a conexão que acabou de dar certo deixa o IP na ARP.
+    let host = cf_core::rede::host_da_url(&c.url).map(|(h, _)| h);
+    let mut mac = match &host {
+        Some(h) => crate::rede::aprender_mac_agora(&app, id, h).await,
+        None => None,
+    };
+    if mac.is_none() {
+        if let Some(m) = p.mac.as_deref().and_then(cf_core::rede::normalizar_mac) {
+            let _ = app.store.definir_mac_camera(id, &m);
+            mac = Some(m);
+        }
+    }
     Ok(Json(json!({
+        "tipo": "camera",
         "id": id,
         "nome": nome,
         "fabricante": c.fabricante,
         "endereco": c.url_sem_senha,
+        "auto_ip": p.auto_ip,
+        "mac_conhecido": mac.is_some(),
+    })))
+}
+
+// ---------- Gravador (DVR/NVR): escolher os canais ----------
+
+/// Gravador já conferido esperando o técnico escolher os canais. A senha
+/// fica só aqui, na memória, por no máximo 15 min.
+struct GravadorPendente {
+    url: String,
+    mac: Option<String>,
+    criado: std::time::Instant,
+}
+
+const GRAVADOR_VALIDADE: Duration = Duration::from_secs(15 * 60);
+
+fn gravadores_pendentes(
+) -> &'static std::sync::Mutex<std::collections::HashMap<String, GravadorPendente>> {
+    static P: std::sync::OnceLock<
+        std::sync::Mutex<std::collections::HashMap<String, GravadorPendente>>,
+    > = std::sync::OnceLock::new();
+    P.get_or_init(Default::default)
+}
+
+fn guardar_gravador(g: GravadorPendente) -> String {
+    let token: String = cf_notify::cofre::aleatorio(16)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    let mut m = gravadores_pendentes()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    m.retain(|_, v| v.criado.elapsed() < GRAVADOR_VALIDADE);
+    m.insert(token.clone(), g);
+    token
+}
+
+#[derive(Deserialize)]
+struct CanalEscolhido {
+    canal: u32,
+    #[serde(default)]
+    nome: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct PedidoGravador {
+    token: String,
+    #[serde(default)]
+    nome: String,
+    canais: Vec<CanalEscolhido>,
+    #[serde(default)]
+    stream: rtsp::Stream,
+    #[serde(default)]
+    auto_ip: bool,
+}
+
+/// Nome de cada câmera vinda de gravador: "<gravador> · Canal N".
+fn nome_canal(gravador: &str, canal: u32, proprio: Option<&str>) -> String {
+    let n = proprio
+        .map(str::trim)
+        .filter(|n| !n.is_empty())
+        .map(String::from)
+        .unwrap_or_else(|| format!("{} · Canal {canal}", gravador.trim()));
+    n.chars().take(60).collect()
+}
+
+/// `POST /api/gravador/adicionar`: cada canal escolhido vira uma câmera.
+async fn post_gravador_adicionar(
+    State(app): State<Shared>,
+    Json(p): Json<PedidoGravador>,
+) -> ApiResult {
+    if p.canais.is_empty() {
+        return Err(bad(StatusCode::BAD_REQUEST, "escolha pelo menos um canal"));
+    }
+    if p.canais.len() > cf_core::gravador::MAX_CANAIS as usize
+        || p.canais
+            .iter()
+            .any(|c| c.canal == 0 || c.canal > cf_core::gravador::MAX_CANAIS)
+    {
+        return Err(bad(StatusCode::BAD_REQUEST, "canal inválido"));
+    }
+    let (url, mac_busca) = {
+        let m = gravadores_pendentes()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let g = m
+            .get(&p.token)
+            .filter(|g| g.criado.elapsed() < GRAVADOR_VALIDADE)
+            .ok_or_else(|| {
+                bad(
+                    StatusCode::GONE,
+                    "a conexão com o gravador expirou; conecte de novo",
+                )
+            })?;
+        (g.url.clone(), g.mac.clone())
+    };
+    let host = cf_core::rede::host_da_url(&url)
+        .map(|(h, _)| h)
+        .unwrap_or_default();
+    let base = if p.nome.trim().is_empty() {
+        format!("Gravador {host}")
+    } else {
+        p.nome.trim().to_string()
+    };
+    let mut criadas = Vec::new();
+    let mut vistos = std::collections::BTreeSet::new();
+    for c in p.canais.iter().filter(|c| vistos.insert(c.canal)) {
+        let Some(u) = rtsp::url_do_canal(&url, c.canal, p.stream) else {
+            return Err(bad(
+                StatusCode::BAD_REQUEST,
+                "endereço do gravador sem canal",
+            ));
+        };
+        let nome = nome_canal(&base, c.canal, c.nome.as_deref());
+        let id = app
+            .store
+            .criar_camera(&nome, "rtsp", &u)
+            .map_err(internal)?;
+        app.store
+            .definir_gravador_canal(id, &host, c.canal)
+            .map_err(internal)?;
+        if p.auto_ip {
+            app.store.definir_auto_ip(id, true).map_err(internal)?;
+        }
+        app.video.iniciar(id, "rtsp", &u);
+        criadas.push((id, nome));
+    }
+    // O MAC é do gravador: vale para todos os canais.
+    let mut mac = match criadas.first() {
+        Some((id, _)) => crate::rede::aprender_mac_agora(&app, *id, &host).await,
+        None => None,
+    };
+    if mac.is_none() {
+        mac = mac_busca.as_deref().and_then(cf_core::rede::normalizar_mac);
+    }
+    if let Some(m) = &mac {
+        for (id, _) in &criadas {
+            let _ = app.store.definir_mac_camera(*id, m);
+        }
+    }
+    gravadores_pendentes()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .remove(&p.token);
+    Ok(Json(json!({
+        "cameras": criadas.iter().map(|(id, nome)| json!({ "id": id, "nome": nome })).collect::<Vec<_>>(),
+        "auto_ip": p.auto_ip,
+        "mac_conhecido": mac.is_some(),
     })))
 }
 
@@ -655,6 +861,10 @@ async fn get_cameras(State(app): State<Shared>) -> ApiResult {
                 "url_sem_senha": rtsp::redact(&c.url),
                 "ativa": c.ativa,
                 "estado": estado,
+                "auto_ip": c.auto_ip,
+                "mac_conhecido": c.mac_conhecido(),
+                "gravador": (!c.gravador.is_empty()).then_some(&c.gravador),
+                "canal": (c.canal > 0).then_some(c.canal),
             })
         })
         .collect();
@@ -667,6 +877,9 @@ struct NovaCamera {
     fonte: String,
     #[serde(default)]
     url: String,
+    /// Autocorreção de IP (só vale para RTSP).
+    #[serde(default)]
+    auto_ip: bool,
 }
 
 async fn post_camera(State(app): State<Shared>, Json(n): Json<NovaCamera>) -> ApiResult {
@@ -679,6 +892,9 @@ async fn post_camera(State(app): State<Shared>, Json(n): Json<NovaCamera>) -> Ap
         .store
         .criar_camera(&nome, &n.fonte, n.url.trim())
         .map_err(internal)?;
+    if n.auto_ip && n.fonte == "rtsp" {
+        app.store.definir_auto_ip(id, true).map_err(internal)?;
+    }
     app.video.iniciar(id, &n.fonte, n.url.trim());
     Ok(Json(json!({ "id": id })))
 }
@@ -709,6 +925,12 @@ struct EdicaoCamera {
     senha: Option<String>,
     #[serde(default)]
     ativa: Option<bool>,
+    /// Autocorreção de IP pelo MAC (só RTSP).
+    #[serde(default)]
+    auto_ip: Option<bool>,
+    /// Troca o canal de uma câmera que veio de gravador.
+    #[serde(default)]
+    canal: Option<u32>,
 }
 
 fn aplicar_edicao(
@@ -746,6 +968,28 @@ fn aplicar_edicao(
     if let Some(a) = e.ativa {
         c.ativa = a;
     }
+    if let Some(a) = e.auto_ip {
+        if a && c.fonte != "rtsp" {
+            return Err("correção de IP só vale para câmera RTSP");
+        }
+        c.auto_ip = a;
+    }
+    if c.fonte != "rtsp" {
+        c.auto_ip = false;
+    }
+    if let Some(n) = e.canal.filter(|n| *n != atual.canal) {
+        if atual.canal == 0 || c.fonte != "rtsp" {
+            return Err("só câmera que veio de gravador tem canal");
+        }
+        if n == 0 || n > cf_core::gravador::MAX_CANAIS {
+            return Err("canal inválido");
+        }
+        let stream = rtsp::canal_da_url(&c.url)
+            .map(|(_, s)| s)
+            .unwrap_or_default();
+        c.url = rtsp::url_do_canal(&c.url, n, stream).ok_or("endereço do gravador sem canal")?;
+        c.canal = n;
+    }
     Ok(c)
 }
 
@@ -763,6 +1007,20 @@ async fn patch_camera(
     if !app.store.atualizar_camera(&nova).map_err(internal)? {
         return Err(bad(StatusCode::NOT_FOUND, "câmera não encontrada"));
     }
+    // Endereço apontado para outro aparelho à mão: o MAC aprendido não vale
+    // mais (senão a vigília "corrigiria" de volta para o aparelho antigo).
+    let host = |u: &str| cf_core::rede::host_da_url(u).map(|(h, _)| h);
+    if nova.fonte != "rtsp" || host(&nova.url) != host(&atual.url) {
+        let _ = app.store.definir_mac_camera(id, "");
+    }
+    if nova.canal != atual.canal {
+        let _ = app
+            .store
+            .definir_gravador_canal(id, &nova.gravador, nova.canal);
+    } else if nova.fonte != "rtsp" && atual.canal > 0 {
+        let _ = app.store.definir_gravador_canal(id, "", 0);
+    }
+    let nova = app.store.camera(id).map_err(internal)?.unwrap_or(nova);
     // Reinicia o vídeo com o endereço novo (ou desliga, se ficou inativa).
     if nova.ativa {
         app.video.iniciar(id, &nova.fonte, &nova.url);
@@ -775,6 +1033,9 @@ async fn patch_camera(
         "fonte": nova.fonte,
         "url_sem_senha": rtsp::redact(&nova.url),
         "ativa": nova.ativa,
+        "auto_ip": nova.auto_ip,
+        "mac_conhecido": nova.mac_conhecido(),
+        "canal": (nova.canal > 0).then_some(nova.canal),
     })))
 }
 

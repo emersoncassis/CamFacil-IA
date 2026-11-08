@@ -154,6 +154,23 @@ pub async fn conectar(
     Err(ErroConexao::CaminhoNaoAchado)
 }
 
+/// Um `DESCRIBE` autenticado num caminho: `true` só se respondeu 200.
+/// Serve para sondar os canais de um gravador depois que a senha já foi
+/// conferida no canal 1 (por isso não há risco de bloquear o login).
+pub(crate) async fn caminho_responde(
+    ip: &str,
+    porta: u16,
+    caminho: &str,
+    usuario: &str,
+    senha: &str,
+) -> bool {
+    let uri = format!("rtsp://{ip}:{porta}{caminho}");
+    matches!(
+        describe(ip, porta, &uri, usuario, senha).await,
+        Resposta::Ok
+    )
+}
+
 #[derive(Debug, PartialEq, Eq)]
 enum Resposta {
     Ok,

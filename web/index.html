@@ -92,6 +92,7 @@
           <p class="hint" data-i18n="saude.desc"></p>
           <p class="note warn mt" id="saude-desligado" hidden><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="saude.desligado"></span></p>
           <p class="note warn mt" id="rede-resumo" hidden><svg class="ico sm"><use href="#i-info"/></svg><span></span></p>
+          <p class="note info mt" id="rede-auto-aviso" role="status" hidden><svg class="ico sm"><use href="#i-info"/></svg><span></span></p>
           <div class="table-wrap mt">
             <table class="table">
               <thead><tr><th data-i18n="saude.col_camera"></th><th data-i18n="saude.col_situacao"></th><th data-i18n="saude.col_desde"></th><th data-i18n="saude.col_ultimo"></th></tr></thead>
@@ -157,12 +158,37 @@
             <label data-login><span data-i18n="cam.usuario"></span><input name="usuario" value="admin" autocapitalize="off"></label>
             <label data-login><span data-i18n="cam.senha"></span><input name="senha" type="password" id="ligar-senha"></label>
             <label class="span-2"><span data-i18n="ligar.nome"></span><input name="nome" maxlength="60" data-i18n-ph="cam.nome_ph"></label>
+            <label class="span-4 autoip" id="ligar-autoip"><span class="switch"><input type="checkbox" name="auto_ip" role="switch" aria-describedby="ligar-autoip-ajuda"><span></span></span><span class="autoip-txt"><span data-i18n="autoip.rotulo"></span><span class="tiny" id="ligar-autoip-ajuda" data-i18n="autoip.ajuda"></span></span></label>
             <div class="actions span-4">
               <button class="btn primary" type="submit" id="ligar-conectar"><span data-i18n="ligar.conectar"></span></button>
               <button class="btn ghost" type="button" id="ligar-voltar"><span data-i18n="ligar.voltar"></span></button>
             </div>
           </form>
           <p class="msg" id="ligar-msg" role="status"></p>
+          <div class="gravador" id="ligar-gravador" hidden>
+            <p class="gravador-titulo" id="ligar-gravador-titulo" role="status"></p>
+            <div class="form gravador-opcoes">
+              <label class="span-2"><span data-i18n="gravador.nome"></span><input id="ligar-gravador-nome" maxlength="50"></label>
+              <label class="span-2"><span data-i18n="gravador.qualidade"></span><select id="ligar-gravador-stream">
+                <option value="secundario" data-i18n="gravador.secundario"></option>
+                <option value="principal" data-i18n="gravador.principal"></option>
+              </select></label>
+            </div>
+            <div class="gravador-barra">
+              <span class="tiny" id="ligar-gravador-conta"></span>
+              <span class="actions">
+                <button class="btn ghost sm" type="button" id="ligar-gravador-todos"><span data-i18n="gravador.todos"></span></button>
+                <button class="btn ghost sm" type="button" id="ligar-gravador-nenhum"><span data-i18n="gravador.nenhum"></span></button>
+              </span>
+            </div>
+            <ul class="list gravador-canais" id="ligar-gravador-canais" aria-labelledby="ligar-gravador-titulo"></ul>
+            <p class="tiny" id="ligar-gravador-dica"></p>
+            <div class="actions">
+              <button class="btn primary" type="button" id="ligar-gravador-add"><span data-i18n="gravador.adicionar"></span></button>
+              <button class="btn ghost" type="button" id="ligar-gravador-voltar"><span data-i18n="ligar.voltar"></span></button>
+            </div>
+            <p class="msg" id="ligar-gravador-msg" role="status"></p>
+          </div>
           <div class="ligar-ok" id="ligar-ok" hidden>
             <p class="msg ok" id="ligar-ok-texto"></p>
             <div class="login-perguntar" id="ligar-perguntar" hidden>
@@ -540,11 +566,13 @@
           <ul class="list mt" id="rede-ip-mudou" hidden></ul>
           <div class="table-wrap mt">
             <table class="table rede-tabela">
-              <thead><tr><th data-i18n="rede.col_camera"></th><th data-i18n="rede.col_endereco"></th><th data-i18n="rede.col_alcance"></th><th data-i18n="rede.col_video"></th><th data-i18n="rede.col_dicas"></th></tr></thead>
+              <thead><tr><th data-i18n="rede.col_camera"></th><th data-i18n="rede.col_endereco"></th><th data-i18n="rede.col_alcance"></th><th data-i18n="rede.col_video"></th><th data-i18n="autoip.col"></th><th data-i18n="rede.col_dicas"></th></tr></thead>
               <tbody id="rede-diag"></tbody>
             </table>
           </div>
           <p class="msg" id="rede-diag-msg" role="status"></p>
+          <h3 class="sub" data-i18n="autoip.log"></h3>
+          <ul class="list rede-auto-log" id="rede-auto-log"></ul>
         </div>
 
         <div class="block bloco-cheio" data-sub="diagrama">
@@ -902,6 +930,8 @@
         <label class="campo" id="cam-url-campo"><span id="cam-url-rotulo"></span><input name="url" class="mono" autocapitalize="off" spellcheck="false" inputmode="url"></label>
         <label class="campo" id="cam-senha-campo"><span data-i18n="cam.senha"></span><input name="senha" type="password" autocomplete="new-password" data-i18n-ph="camed.senha_ph"></label>
         <label class="som-regra"><span class="switch"><input type="checkbox" name="ativa"><span></span></span><span data-i18n="camed.ativa"></span></label>
+        <label class="campo" id="cam-canal-campo" hidden><span data-i18n="gravador.canal"></span><input name="canal" type="number" min="1" max="64" inputmode="numeric" class="mono"></label>
+        <label class="autoip" id="cam-autoip-campo"><span class="switch"><input type="checkbox" name="auto_ip" role="switch" aria-describedby="cam-autoip-ajuda"><span></span></span><span class="autoip-txt"><span data-i18n="autoip.rotulo"></span><span class="tiny" id="cam-autoip-ajuda"></span></span></label>
       </div>
       <p class="tiny" id="cam-dlg-dica" data-i18n="camed.dica"></p>
       <p class="msg" id="cam-dlg-msg" role="status"></p>

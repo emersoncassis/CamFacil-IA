@@ -109,10 +109,13 @@
   };
 
   async function status() {
-    const [hw, sys, ia, mod, ev, elo, tg, wa, wh, arq, mcp, ts] = await Promise.all([
+    const [hw, sys, ia, mod, ev, elo, tg, wa, wh, arq, mcp, ts, rede] = await Promise.all([
       get("/api/hardware"), get("/api/system"), get("/api/ia"), get("/api/modulos"), get("/api/eventos?limite=12"),
       get("/api/elo"), get("/api/telegram"), get("/api/whatsapp"), get("/api/webhook"), get("/api/arquivo"), get("/api/mcp"), get("/api/tailscale"),
+      get("/api/rede/resumo"),
     ]);
+    // Última correção automática de IP nas 24 h (aviso informativo, não erro).
+    const autoIp = ((rede && rede.auto_avisos) || [])[0];
     const a = (hw && hw.atual) || {}; const s = (sys && sys.sistema) || {};
 
     // Aparelho
@@ -169,11 +172,15 @@
     // Serviços
     caber($("#c-serv"), [
       lin(cams.length ? "on" : "off", t("vivo.serv.video"), t("vivo.cameras_no_ar", { n: Object.values(estadoCams).filter((e) => e.online).length, t: cams.length })),
+      autoIp ? el("div", { class: "lin", title: autoIp.resultado === "oscilou" ? t("autoip.aviso_oscilou", autoIp) : t("autoip.aviso_corrigido", autoIp) },
+        el("i", { class: "dot " + (autoIp.resultado === "oscilou" ? "warn" : "on") }),
+        el("span", {}, t(autoIp.resultado === "oscilou" ? "vivo.serv.ip_oscilou" : "vivo.serv.ip")),
+        el("span", { class: "v" }, autoIp.resultado === "oscilou" ? autoIp.nome : `${autoIp.nome} · ${autoIp.para}`)) : null,
       lin(elo && elo.conectado ? "on" : (elo && elo.pareado ? "warn" : "off"), t("vivo.serv.elo"), elo && elo.conectado ? t("vivo.conectado") : (elo && elo.pareado ? t("vivo.reconectando") : t("vivo.desligado"))),
       lin(ts && ts.escutando ? "on" : "off", "Tailscale", ts && ts.escutando ? (ts.ip || t("vivo.ligado")) : t(ts && ts.instalado ? "vivo.desligado" : "vivo.nao_instalado")),
       lin(tgOk && tg.situacao.escutando ? "on" : (tgOk ? "warn" : "off"), t("vivo.serv.comandos"), tgOk ? t(tg.situacao.escutando ? "vivo.ouvindo" : "vivo.parado") : t("vivo.desligado")),
       lin(mcp && mcp.ligado ? "on" : "off", "MCP", mcp && mcp.ligado ? t(mcp.escrita ? "vivo.mcp_escrita" : "vivo.mcp_leitura") : t("vivo.desligado")),
-    ]);
+    ].filter(Boolean));
   }
 
   async function estado() {
