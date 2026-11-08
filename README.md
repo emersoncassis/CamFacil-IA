@@ -183,7 +183,7 @@ Tudo aberto, livre e gratuito (AGPL-3.0). Cada peça faz uma coisa:
 | **Painel de monitoramento** | [cfia.ysafe.com.br](https://cfia.ysafe.com.br) ou o seu servidor | Todos os seus clientes, câmeras no ar, alertas e "ver ao vivo" pelo Tailscale |
 | **App Android** | Celular e TV Box | Vira o servidor das câmeras ou vê um cliente à distância |
 | **Formação de IA para CFTV** | No navegador | Curso curto com narração, exercícios e selo |
-| **Modo estúdio** *(versão básica)* | Navegador + Google Colab | Criar, treinar e compartilhar inteligências novas, só para estudo |
+| **Modo estúdio** *(versão básica)* | Navegador + Google Colab | Dois blocos: **Treine sua IA** (descrever, coletar, rotular, treinar no Colab, importar e compartilhar, já funciona) e **VMS sob medida** (aplicação futura, só desenho) |
 
 Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também é do técnico.
 
@@ -203,7 +203,7 @@ Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também 
 | <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Servidor no próprio celular ou TV Box (com IA de pessoas, YOLO), endereço da rede da loja com QR e botão do Tailscale; ou visualizador à distância, com alertas |
 | <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com a sua marca para fechar a venda |
 | <img src="docs/assets/icons/robo.svg" width="20" alt=""/> | **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
-| <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** *(versão básica)* | Descreva uma inteligência nova, rotule, treine no Colab e compartilhe com outros técnicos (só estudo) |
+| <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** *(versão básica)* | **Treine sua IA**: descreva uma inteligência nova, rotule no navegador, treine no Colab, rode no programa e compartilhe com outros técnicos (só estudo). **VMS sob medida**: em breve |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Agente-Cam-Elo-IA** | O elo entre o programa do cliente e o seu painel: pareia por QR e manda só o resumo (o vídeo nunca passa pela nuvem) |
 
 ## <img src="docs/assets/icons/chave.svg" width="22" alt=""/> Para você, técnico
@@ -243,6 +243,19 @@ Versão atual: **0.7.0** ([releases](https://github.com/emersoncassis/CamFacil-I
   - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
   - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
 
+### Novidades da 0.7.0
+- **Autocorreção de IP pelo MAC**: chave por câmera (Ligar e Editar), desligada por padrão. Confere porta RTSP e MAC no IP novo, troca só o host, confere a imagem em até 15 s e desfaz se não voltar. Não corrige com conflito de IP; no máximo uma correção a cada 10 min. Avisa no Início, no Ao vivo e no Telegram/WhatsApp/webhook. Histórico na tela Rede e no backup.
+- **Gravador (DVR/NVR)**: reconhece o gravador (ONVIF, modelo ou teste dos canais) e deixa escolher um ou vários canais; cada canal vira uma câmera "Gravador · Canal N", no substream por padrão. Troca de canal no Editar; se o gravador mudar de IP, todos os canais corrigem juntos.
+- **Estúdio**: abre com dois blocos fechados, *Treine sua IA* (os seis passos, funcionando) e *VMS sob medida* (só desenho).
+- **Celular estreito**: ações do cabeçalho das telas viram só ícone, para não passar da borda.
+- Ainda falta validar autocorreção e DVR/NVR com equipamento real (testados com rede simulada e gravador falso de 4 canais).
+
+### Novidades da 0.5 e 0.6
+- **Ao vivo**: mosaico de 1 a 4 câmeras e, embaixo, aparelho, IA, alertas, para quem vai e serviços ativos.
+- **Login salvo das câmeras**, editar e remover câmera, zero rolagem em todas as telas.
+- **Android**: IA de pessoas (YOLO) no aparelho, tela do servidor com o endereço da rede da loja e QR, botão do Tailscale.
+- **Estúdio básico** de ponta a ponta e **manifesto narrado** no site.
+
 ### Regra de tela
 Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular ao monitor. O que não cabe vira aba, seção que abre ou página (regra 9 do [`CLAUDE.md`](CLAUDE.md), detalhes no [`DESIGN.md`](DESIGN.md)).
 
@@ -252,7 +265,7 @@ Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular a
 - Rede: senha de fábrica, quedas por hora e banda por câmera (conflito de IP já avisa na tela Rede)
 - Telegram: backup agendado; foto do alerta com a linha/zona desenhada (`/backup <senha>` já existe)
 - Android: câmera do próprio celular como fonte, chave de assinatura fixa do APK, APK por arquitetura (hoje ~20 MB com a IA)
-- Testes em campo: rede real, Windows, TV Box com controle remoto
+- Testes em campo: rede real, Windows, TV Box com controle remoto, autocorreção de IP e canais de DVR/NVR com equipamento de verdade
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Apoie o projeto
 
