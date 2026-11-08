@@ -1044,6 +1044,7 @@ function iniciarLigar() {
   $("#discover").onclick = () => { ligarResetar(); ligarProcurar(); };
   $("#ligar-ffmpeg-btn").onclick = ligarInstalarFfmpeg;
   $("#ligar-form").onsubmit = ligarConectar;
+  const aoVivo = $("#nav-aovivo"); if (aoVivo) aoVivo.onclick = () => { location.href = "/ao-vivo"; };
   carregarLogin();
   $("#ligar-outro-login").onclick = () => { usarLoginSalvo = false; mostrarLogin(); $("#ligar-senha").focus(); };
   $("#ligar-esquecer").onclick = async () => {

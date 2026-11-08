@@ -43,6 +43,7 @@
       <nav aria-label="Seções">
         <ul class="nav" role="tablist">
           <li><button role="tab" data-tab="inicio" aria-selected="true"><svg class="ico"><use href="#i-home"/></svg><span class="nav-longo" data-i18n="tab.inicio"></span><span class="nav-curto" data-i18n="tabc.inicio"></span></button></li>
+          <li><button type="button" id="nav-aovivo" class="nav-aovivo"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="7" rx="1"/><rect x="13" y="4" width="8" height="7" rx="1"/><rect x="3" y="13" width="8" height="7" rx="1"/><rect x="13" y="13" width="8" height="7" rx="1"/></svg><span class="nav-longo" data-i18n="tab.aovivo"></span><span class="nav-curto" data-i18n="tabc.aovivo"></span></button></li>
           <li><button role="tab" data-tab="cameras"><svg class="ico"><use href="#i-cam"/></svg><span class="nav-longo" data-i18n="tab.cameras"></span><span class="nav-curto" data-i18n="tabc.cameras"></span></button></li>
           <li><button role="tab" data-tab="modulos"><svg class="ico"><use href="#i-chip"/></svg><span class="nav-longo" data-i18n="tab.modulos"></span><span class="nav-curto" data-i18n="tabc.modulos"></span></button></li>
           <li><button role="tab" data-tab="rede"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg><span class="nav-longo" data-i18n="tab.rede"></span><span class="nav-curto" data-i18n="tabc.rede"></span></button></li>
@@ -64,7 +65,10 @@
             <h1 data-i18n="inicio.titulo"></h1>
             <p class="lede" data-i18n="guia.inicio"></p>
           </div>
-          <button class="btn primary" id="bench-run"><svg class="ico"><use href="#i-play"/></svg><span data-i18n="inicio.teste_btn"></span></button>
+          <div class="actions">
+            <a class="btn primary" href="/ao-vivo"><svg class="ico"><use href="#i-cam"/></svg><span data-i18n="nav.visualizar"></span></a>
+            <button class="btn" id="bench-run"><svg class="ico"><use href="#i-play"/></svg><span data-i18n="inicio.teste_btn"></span></button>
+          </div>
         </header>
 
         <div class="block" data-sub="maquina">
@@ -116,7 +120,10 @@
             <h1 data-i18n="tab.cameras"></h1>
             <p class="lede" data-i18n="guia.cameras"></p>
           </div>
-          <button class="btn primary" id="discover"><svg class="ico"><use href="#i-search"/></svg><span data-i18n="cam.busca_btn"></span></button>
+          <div class="actions">
+            <a class="btn" href="/ao-vivo"><svg class="ico"><use href="#i-cam"/></svg><span data-i18n="nav.visualizar"></span></a>
+            <button class="btn primary" id="discover"><svg class="ico"><use href="#i-search"/></svg><span data-i18n="cam.busca_btn"></span></button>
+          </div>
         </header>
 
         <div class="block" id="ligar-ffmpeg" data-sub="ligar" hidden>

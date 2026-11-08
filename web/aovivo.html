@@ -7,40 +7,35 @@
   <title>Ao vivo · CamFácil IA</title>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tokens.css">
-  <style>
-    /* Zero rolagem: o mosaico ocupa a tela que sobrar e pagina o excesso. */
-    html, body { height: 100%; overflow: hidden; }
-    body { margin: 0; display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font); }
-    header { flex: none; display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line); }
-    header strong { font-size: var(--fs-md); white-space: nowrap; }
-    header .tiny { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-3); font-size: var(--fs-xs); margin-left: auto; font-variant-numeric: tabular-nums; }
-    header a { color: var(--text-2); font-size: var(--fs-sm); white-space: nowrap; }
-    .pag { display: inline-flex; align-items: center; gap: var(--s1); }
-    .pag button { display: inline-grid; place-items: center; width: 36px; height: 32px; padding: 0; color: var(--text-2); background: none; border: 1px solid var(--line-strong); border-radius: var(--r); cursor: pointer; }
-    .pag button:disabled { opacity: .35; cursor: default; }
-    .pag svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-    .mosaico { flex: 1; min-height: 0; display: grid; gap: var(--s1); padding: var(--s1); align-content: center; }
-    figure { margin: 0; position: relative; min-width: 0; min-height: 0; background: var(--surface); border-radius: var(--r-sm); overflow: hidden; cursor: zoom-in; }
-    figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
-    figcaption { position: absolute; left: var(--s1); bottom: var(--s1); padding: 2px var(--s2); border-radius: var(--r-pill); background: var(--c-black); color: var(--text); font-size: var(--fs-xs); display: flex; align-items: center; gap: 6px; }
-    figcaption i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-    figure.off figcaption i { background: var(--c-danger); }
-    figure.cheia { position: fixed; inset: 0; z-index: 2; border-radius: 0; cursor: zoom-out; }
-    .vazio { padding: var(--s5) var(--s3); color: var(--text-2); text-align: center; }
-  </style>
+  <link rel="stylesheet" href="/aovivo.css">
 </head>
 <body>
-  <header>
-    <img src="/icon.svg" width="20" height="20" alt="">
-    <strong id="titulo">Ao vivo</strong>
-    <span class="tiny" id="info"></span>
-    <span class="pag" id="pag" hidden>
-      <button type="button" id="ant"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
-      <button type="button" id="prox"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
-    </span>
-    <a href="/">Painel completo</a>
+  <header class="vv-topo">
+    <a class="vv-marca" href="/" data-i18n-title="vivo.painel"><img src="/icon.svg" width="20" height="20" alt=""><strong data-i18n="vivo.titulo"></strong></a>
+    <div class="vv-layouts" role="radiogroup" data-i18n-aria="vivo.layout">
+      <button type="button" data-n="1" aria-label="1"><svg viewBox="0 0 20 20"><rect x="2" y="3" width="16" height="14" rx="1.5"/></svg></button>
+      <button type="button" data-n="2" aria-label="2"><svg viewBox="0 0 20 20"><rect x="2" y="3" width="7.5" height="14" rx="1.5"/><rect x="10.5" y="3" width="7.5" height="14" rx="1.5"/></svg></button>
+      <button type="button" data-n="3" aria-label="3"><svg viewBox="0 0 20 20"><rect x="2" y="3" width="10" height="14" rx="1.5"/><rect x="13" y="3" width="5" height="6.5" rx="1.2"/><rect x="13" y="10.5" width="5" height="6.5" rx="1.2"/></svg></button>
+      <button type="button" data-n="4" aria-label="4"><svg viewBox="0 0 20 20"><rect x="2" y="3" width="7.5" height="6.5" rx="1.2"/><rect x="10.5" y="3" width="7.5" height="6.5" rx="1.2"/><rect x="2" y="10.5" width="7.5" height="6.5" rx="1.2"/><rect x="10.5" y="10.5" width="7.5" height="6.5" rx="1.2"/></svg></button>
+    </div>
+    <div class="vv-pag" id="pag" hidden>
+      <button type="button" id="pag-ant" aria-label="‹">‹</button><span id="pag-txt"></span><button type="button" id="pag-prox" aria-label="›">›</button>
+    </div>
+    <a class="vv-voltar" href="/" data-i18n="vivo.painel"></a>
   </header>
-  <main class="mosaico" id="mosaico"></main>
+
+  <main class="vv-mosaico" id="mosaico" data-n="4"></main>
+
+  <section class="vv-status" aria-label="Status">
+    <nav class="vv-abas" id="abas" role="tablist"></nav>
+    <div class="vv-cartoes">
+      <article class="vv-c" data-c="disp"><h2 data-i18n="vivo.c.disp"></h2><div id="c-disp"></div></article>
+      <article class="vv-c" data-c="ia"><h2 data-i18n="vivo.c.ia"></h2><div id="c-ia"></div></article>
+      <article class="vv-c" data-c="alertas"><h2 data-i18n="vivo.c.alertas"></h2><div id="c-alertas"></div></article>
+      <article class="vv-c" data-c="quem"><h2 data-i18n="vivo.c.quem"></h2><div id="c-quem"></div></article>
+      <article class="vv-c" data-c="serv"><h2 data-i18n="vivo.c.serv"></h2><div id="c-serv"></div></article>
+    </div>
+  </section>
   <script src="/aovivo.js"></script>
 </body>
 </html>
