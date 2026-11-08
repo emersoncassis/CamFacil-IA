@@ -79,7 +79,7 @@
         el("p", { class: "kicker" }, "Selo verificado"),
         el("h2", {}, s.nome),
         el("p", { class: "hint" }, `Concluiu a Formação de IA para CFTV em ${dataBr(s.criado_em)}${s.instagram ? ` · @${s.instagram}` : ""}.`),
-        el("p", { class: "tiny" }, "Para o Instagram: baixe a imagem e poste nos stories. Se você autorizou e informou o seu Instagram, o selo será repostado pelo Emerson, pelo Papo Segurança e pela Zion, marcando você."),
+        el("p", { class: "tiny" }, "Para o Instagram: baixe a imagem e poste nos stories. Se você autorizou e informou o seu Instagram, o selo será repostado pelo Emerson e pelo Papo Segurança, marcando você."),
         el("div", { class: "selo-acoes" }, baixar, whats, linkedin, partilhar, copiar),
         el("p", { class: "tiny" }, el("a", { href: url }, url))));
   }
