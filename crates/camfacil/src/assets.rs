@@ -51,6 +51,8 @@ pub const ASSETS: &[Asset] = &[
         "text/javascript; charset=utf-8",
         "manutencao.js"
     ),
+    asset!("/rede.css", "text/css; charset=utf-8", "rede.css"),
+    asset!("/rede.js", "text/javascript; charset=utf-8", "rede.js"),
     asset!("/ao-vivo", "text/html; charset=utf-8", "aovivo.html"),
     asset!("/aovivo.js", "text/javascript; charset=utf-8", "aovivo.js"),
 ];
