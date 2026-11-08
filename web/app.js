@@ -48,7 +48,7 @@ function busy(btn, on, labelKey) {
 
 // ---------- Navegação ----------
 function showTab(id) {
-  document.querySelectorAll("[role=tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
+  document.querySelectorAll("[role=tab][data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
   document.querySelectorAll("[role=tabpanel]").forEach((p) => { p.hidden = p.id !== id; });
   try { localStorage.setItem("cf-tab", id); } catch (_) { /* opcional */ }
   if (id === "modulos") renderLevels();
@@ -61,6 +61,7 @@ function showTab(id) {
   redeAtivar(id === "rede");
   ligarAtivar(id === "cameras");
   manutencaoAtivar(id === "manutencao");
+  telaMostrouPagina(id);
 }
 
 // ---------- Visão geral ----------
@@ -341,26 +342,91 @@ async function carregarCameras() {
   try { ({ cameras: cams } = await api("/api/cameras")); } catch (_) { return; }
   const corpo = $("#minhas");
   if (!cams.length) {
-    corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "4" }, t("cam.sem_cameras"))));
+    corpo.replaceChildren(el("li", { class: "empty" }, el("p", {}, t("cam.sem_cameras"))));
     return;
   }
   corpo.replaceChildren(...cams.map((c) => {
-    const [ok, texto] = situacaoCam(c.estado);
-    const abrir = el("button", { class: "btn sm", type: "button" }, t("cam.abrir"));
+    const [ok, texto] = c.ativa === false ? [false, t("cam.inativa")] : situacaoCam(c.estado);
+    const abrir = el("button", { class: "btn sm", type: "button" }, icon("i-play"), el("span", {}, t("cam.abrir")));
     abrir.onclick = () => abrirCamera(c.id);
-    const rem = el("button", { class: "btn ghost sm", type: "button" }, t("cam.remover"));
-    rem.onclick = async () => {
-      if (!confirm(t("cam.confirma_remover"))) return;
-      await api(`/api/cameras/${c.id}`, undefined, "DELETE");
-      if (camAberta === c.id) fecharCamera();
-      carregarCameras();
-    };
-    return el("tr", {},
-      el("td", {}, c.nome),
-      el("td", {}, fonteNome(c.fonte)),
-      el("td", {}, el("div", { class: "actions" }, el("span", { class: "state" }, el("span", { class: "dot " + (ok ? "on" : "off") }), texto), c.estado ? saudeTag(c.estado.saude) : null)),
-      el("td", { class: "right" }, el("div", { class: "actions end" }, abrir, rem)));
+    abrir.disabled = c.ativa === false;
+    const editar = el("button", { class: "btn sm", type: "button", "aria-label": `${t("cam.editar")}: ${c.nome}` }, icon("i-edit"), el("span", {}, t("cam.editar")));
+    editar.onclick = () => editarCamera(c.id);
+    const rem = el("button", { class: "btn sm perigo", type: "button", "aria-label": `${t("cam.remover")}: ${c.nome}` }, icon("i-trash"), el("span", {}, t("cam.remover")));
+    rem.onclick = () => removerCamera(c.id);
+    return el("li", { class: "cam-item" },
+      el("div", { class: "cam-info" },
+        el("strong", {}, c.nome),
+        el("div", { class: "cam-meta" },
+          el("span", { class: "tiny" }, fonteNome(c.fonte)),
+          el("span", { class: "state" }, el("span", { class: "dot " + (ok ? "on" : "off") }), texto),
+          c.ativa !== false && c.estado ? saudeTag(c.estado.saude) : null)),
+      el("div", { class: "actions cam-acoes" }, abrir, editar, rem));
   }));
+}
+
+// ---------- Editar e remover câmera ----------
+let camEditando = null;
+
+function camFonteMudou() {
+  const f = $("#cam-form").fonte.value;
+  $("#cam-url-campo").hidden = f === "demo";
+  $("#cam-senha-campo").hidden = f !== "rtsp";
+  $("#cam-url-rotulo").textContent = t("camed.url_" + (f === "demo" ? "rtsp" : f));
+  $("#cam-form").url.placeholder = f === "rtsp" ? "rtsp://admin:***@192.168.1.108:554/…" : "";
+}
+
+function editarCamera(id) {
+  const c = cams.find((x) => x.id === id);
+  if (!c) return;
+  camEditando = c;
+  const f = $("#cam-form");
+  f.nome.value = c.nome;
+  f.fonte.value = c.fonte;
+  f.url.value = c.url_sem_senha || "";
+  f.senha.value = "";
+  f.ativa.checked = c.ativa !== false;
+  $("#cam-dlg-msg").textContent = "";
+  $("#cam-dlg-msg").className = "msg";
+  camFonteMudou();
+  $("#cam-dlg").showModal();
+}
+
+async function salvarCamera(ev) {
+  ev.preventDefault();
+  const c = camEditando;
+  if (!c) return;
+  const f = $("#cam-form"); const m = $("#cam-dlg-msg"); const b = $("#cam-dlg-salvar");
+  const corpo = { nome: f.nome.value.trim(), fonte: f.fonte.value, ativa: f.ativa.checked };
+  if (corpo.fonte !== "demo" && (f.url.value.trim() !== (c.url_sem_senha || "") || corpo.fonte !== c.fonte)) corpo.url = f.url.value.trim();
+  if (corpo.fonte === "rtsp" && f.senha.value) corpo.senha = f.senha.value;
+  if (!corpo.nome) { m.className = "msg err"; m.textContent = t("cam.nome_ph"); f.nome.focus(); return; }
+  b.disabled = true; m.className = "msg"; m.textContent = t("camed.salvando");
+  try {
+    const r = await api(`/api/cameras/${c.id}`, corpo, "PATCH");
+    f.senha.value = "";
+    $("#cam-dlg").close();
+    await carregarCameras();
+    if (camAberta === c.id) {
+      if (r.ativa) {
+        $("#aovivo-nome").textContent = r.nome;
+        $("#video").src = `/api/cameras/${c.id}/mjpeg?t=${Date.now()}`;
+      } else fecharCamera();
+    }
+  } catch (e) { m.className = "msg err"; m.textContent = e.message; }
+  b.disabled = false;
+}
+
+async function removerCamera(id) {
+  const c = cams.find((x) => x.id === id);
+  const nome = c ? c.nome : "";
+  if (!(await confirmar(`${t("cam.remover")} ${nome}?`, t("cam.remover_sim"), t("cam.remover_dica")))) return false;
+  try {
+    await api(`/api/cameras/${id}`, undefined, "DELETE");
+  } catch (e) { alert(e.message); return false; }
+  if (camAberta === id) fecharCamera();
+  await carregarCameras();
+  return true;
 }
 
 async function adicionarCamera(nome, fonte, url = "") {
@@ -375,6 +441,7 @@ function fecharCamera() {
   camAberta = null;
   $("#aovivo").hidden = true;
   $("#video").removeAttribute("src");
+  if (document.getElementById("cameras").dataset.sub === "aovivo") irSub("cameras", "suas");
 }
 
 async function abrirCamera(id) {
@@ -394,7 +461,7 @@ async function abrirCamera(id) {
   definirModo("ver");
   await carregarRegras();
   sugAbrirCamera();
-  $("#aovivo").scrollIntoView({ block: "start" });
+  irSub("cameras", "aovivo");
 }
 
 async function carregarRegras() {
@@ -526,7 +593,11 @@ function renderBaloes(estadoCam) {
   renderObjetos(estadoCam);
   const baloes = SAUDE_PROBLEMA.includes(saude) && saude !== "sem_sinal"
     ? [el("div", { class: "cf-bubble is-alert saude" }, t("saude.balao." + saude))] : [];
-  if (!regrasAbertas.length) { camada.replaceChildren(...baloes); return; }
+  if (!regrasAbertas.length) {
+    camada.replaceChildren(...baloes);
+    if (!$("#regras").querySelector(".empty")) $("#regras").replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "5" }, t("regra.nenhuma"))));
+    return;
+  }
   camada.replaceChildren(...baloes, ...regrasAbertas.map((r) => {
     const e = estadoCam && estadoCam.regras ? estadoCam.regras[r.id] : null;
     const c = centro(r);
@@ -542,7 +613,7 @@ function renderBaloes(estadoCam) {
     else { const n = e ? e.contagem : 0; agora = `${n} ${t(n === 1 ? "regra.passagem" : "regra.passagens")}`; }
     const rem = el("button", { class: "btn ghost sm", type: "button" }, t("cam.remover"));
     rem.onclick = async () => {
-      if (!confirm(t("regra.confirma_remover"))) return;
+      if (!(await confirmar(t("regra.confirma_remover"), t("regra.remover_sim")))) return;
       await api(`/api/regras/${r.id}?camera_id=${camAberta}`, undefined, "DELETE");
       carregarRegras();
     };
@@ -671,6 +742,15 @@ function iniciarCameras() {
   $("#viewer").addEventListener("dblclick", () => { if (desenho.modo === "zona" && desenho.pontos.length >= 3 && !desenho.fechada) concluirDesenho(); });
   $("#regra-form").onsubmit = salvarRegra;
   $("#regra-cancelar").onclick = () => definirModo("ver");
+  $("#cam-form").onsubmit = salvarCamera;
+  $("#cam-form").fonte.onchange = camFonteMudou;
+  $("#cam-dlg-cancelar").onclick = () => $("#cam-dlg").close();
+  $("#cam-dlg-remover").onclick = async () => {
+    const c = camEditando;
+    if (!c) return;
+    $("#cam-dlg").close();
+    if (!(await removerCamera(c.id))) editarCamera(c.id);
+  };
 }
 
 // ---------- Pareamento com o site (Agente-Cam-Elo-IA) ----------
@@ -800,7 +880,7 @@ async function renderTelegram() {
     chk.checked = c.autorizado;
     chk.onchange = async () => { try { await api(`/api/telegram/chats/${c.chat_id}`, { autorizado: chk.checked }); renderTelegram(); } catch (e) { chk.checked = !chk.checked; tgMsg(e.message, "err"); } };
     const rem = el("button", { class: "btn ghost sm", type: "button" }, t("tg.remover_contato"));
-    rem.onclick = async () => { if (!confirm(t("tg.confirma_remover_contato"))) return; await api(`/api/telegram/chats/${c.chat_id}`, undefined, "DELETE"); renderTelegram(); };
+    rem.onclick = async () => { if (!await confirmar(t("tg.confirma_remover_contato"))) return; await api(`/api/telegram/chats/${c.chat_id}`, undefined, "DELETE"); renderTelegram(); };
     return el("tr", {},
       el("td", {}, c.nome || "—"),
       el("td", { class: "mono" }, String(c.chat_id)),
@@ -909,7 +989,6 @@ function ligarEscolher(ip, fabricante) {
   $("#ligar-ok").hidden = true;
   $("#ligar-form").hidden = false;
   $("#ligar-msg").textContent = "";
-  $("#ligar-passo2").scrollIntoView({ block: "nearest" });
   $("#ligar-senha").focus();
 }
 
@@ -948,7 +1027,8 @@ function iniciarLigar() {
   $("#ligar-ffmpeg-btn").onclick = ligarInstalarFfmpeg;
   $("#ligar-form").onsubmit = ligarConectar;
   $("#ligar-manual").onsubmit = (ev) => { ev.preventDefault(); ligarEscolher(ev.target.ip.value, null); };
-  $("#ligar-outra").onclick = () => { ligarResetar(); $("#ligar-passo1").scrollIntoView({ block: "start" }); };
+  $("#ligar-outra").onclick = ligarResetar;
+  $("#ligar-voltar").onclick = ligarResetar;
   $("#ligar-aula").onclick = () => abrirEscola("linha");
   $("#ligar-demo").onclick = () => adicionarCamera(t("cam.demo_nome"), "demo");
 }
@@ -1069,8 +1149,9 @@ async function main() {
   T = await fetch("/i18n/pt-BR.json").then((r) => r.json());
   document.querySelectorAll("[data-i18n]").forEach((e) => { e.textContent = t(e.dataset.i18n); });
   document.querySelectorAll("[data-i18n-ph]").forEach((e) => { e.placeholder = t(e.dataset.i18nPh); });
+  iniciarTela();
 
-  document.querySelectorAll("[role=tab]").forEach((b) => { b.onclick = () => showTab(b.dataset.tab); });
+  document.querySelectorAll("[role=tab][data-tab]").forEach((b) => { b.onclick = () => showTab(b.dataset.tab); });
   $("#bench-run").onclick = runBench;
   $("#rtsp-form").onsubmit = buildRtsp;
   $("#rtsp-test").onclick = testRtsp;
@@ -1087,15 +1168,15 @@ async function main() {
   $("#elo-recusar").onclick = () => eloAcao(() => api("/api/elo/confirmar", { aceito: false }));
   $("#ia-baixar").onclick = async () => { try { await api("/api/ia/baixar", {}); renderIa(); } catch (e) { iaMsg(e.message, "err"); } };
   $("#ia-cancelar").onclick = async () => { try { await api("/api/ia/cancelar", {}); renderIa(); } catch (e) { iaMsg(e.message, "err"); } };
-  $("#ia-apagar").onclick = async () => { if (!confirm(t("ia.confirma_apagar"))) return; try { await api("/api/ia", undefined, "DELETE"); renderIa(); renderLevels(); } catch (e) { iaMsg(e.message, "err"); } };
+  $("#ia-apagar").onclick = async () => { if (!await confirmar(t("ia.confirma_apagar"))) return; try { await api("/api/ia", undefined, "DELETE"); renderIa(); renderLevels(); } catch (e) { iaMsg(e.message, "err"); } };
   $("#tg-form").onsubmit = tgSalvar;
   $("#tg-testar").onclick = tgTestar;
-  $("#tg-remover").onclick = async () => { if (!confirm(t("tg.confirma_remover"))) return; try { await api("/api/telegram", undefined, "DELETE"); tgMsg(t("tg.removido"), "ok"); renderTelegram(); } catch (e) { tgMsg(e.message, "err"); } };
+  $("#tg-remover").onclick = async () => { if (!await confirmar(t("tg.confirma_remover"))) return; try { await api("/api/telegram", undefined, "DELETE"); tgMsg(t("tg.removido"), "ok"); renderTelegram(); } catch (e) { tgMsg(e.message, "err"); } };
   $("#tg-fotos").onchange = async (e) => { try { await api("/api/telegram/fotos", { ligado: e.target.checked }); } catch (err) { tgMsg(err.message, "err"); } };
   // O bot escreve a hora no fuso do técnico: informa o do navegador.
   api("/api/fuso", { minutos: -new Date().getTimezoneOffset() }).catch(() => {});
   $("#ts-copiar-cmd").onclick = async () => { try { await navigator.clipboard.writeText($("#ts-comando").textContent); tsMsg(t("ts.cmd_copiado"), "ok"); } catch (_) { /* sem permissão */ } };
-  $("#elo-desparear").onclick = () => { if (confirm(t("elo.confirma_desparear"))) eloAcao(() => api("/api/elo/desparear", {})); };
+  $("#elo-desparear").onclick = async () => { if (await confirmar(t("elo.confirma_desparear"))) eloAcao(() => api("/api/elo/desparear", {})); };
 
   const { fabricantes } = await api("/api/rtsp/vendors");
   $("#vendor").replaceChildren(...fabricantes.map((f) =>
@@ -1108,7 +1189,11 @@ async function main() {
   let tab = "inicio";
   try { tab = localStorage.getItem("cf-tab") || tab; } catch (_) { /* opcional */ }
   // Sem câmera nenhuma: o programa abre direto em "Ligar câmera".
-  try { const { cameras } = await api("/api/cameras"); if (!cameras.length) tab = "cameras"; } catch (_) { /* segue */ }
+  try {
+    const { cameras } = await api("/api/cameras");
+    if (!cameras.length) { tab = "cameras"; irSub("cameras", "ligar", false); }
+    else { let s = null; try { s = localStorage.getItem("cf-sub-cameras"); } catch (_) { /* opcional */ } if (!s || s === "aovivo") irSub("cameras", "suas", false); }
+  } catch (_) { /* segue */ }
   iniciarManutencao();
   await loadSystem();
   showTab(tab);

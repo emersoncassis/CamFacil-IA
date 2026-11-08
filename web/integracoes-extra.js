@@ -42,7 +42,7 @@ async function renderWhatsApp() {
     };
     const rem = el("button", { class: "btn ghost sm", type: "button" }, t("wa.remover_contato"));
     rem.onclick = async () => {
-      if (!confirm(t("wa.confirma_remover_contato"))) return;
+      if (!await confirmar(t("wa.confirma_remover_contato"))) return;
       await api(`/api/whatsapp/contatos/${encodeURIComponent(c.jid)}`, undefined, "DELETE"); renderWhatsApp();
     };
     return el("tr", {},
@@ -110,7 +110,7 @@ function iniciarWhatsApp() {
   $("#wa-testar").onclick = waTestar;
   $("#wa-wh-form").onsubmit = waRegistrar;
   $("#wa-remover").onclick = async () => {
-    if (!confirm(t("wa.confirma_remover"))) return;
+    if (!await confirmar(t("wa.confirma_remover"))) return;
     try { await api("/api/whatsapp", undefined, "DELETE"); $("#wa-qr-area").hidden = true; ieMsg("#wa-msg", t("wa.removido"), "ok"); renderWhatsApp(); }
     catch (e) { ieMsg("#wa-msg", e.message, "err"); }
   };
@@ -162,7 +162,7 @@ function iniciarWebhook() {
   $("#wh-testar").onclick = whTestar;
   $("#wh-editar").onclick = () => { whEditando = true; renderWebhook(); $("#wh-form").url.focus(); };
   $("#wh-remover").onclick = async () => {
-    if (!confirm(t("wh.confirma_remover"))) return;
+    if (!await confirmar(t("wh.confirma_remover"))) return;
     try { await api("/api/webhook", undefined, "DELETE"); ieMsg("#wh-msg", t("wh.removido"), "ok"); renderWebhook(); }
     catch (e) { ieMsg("#wh-msg", e.message, "err"); }
   };

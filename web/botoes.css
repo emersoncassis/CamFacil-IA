@@ -1,19 +1,26 @@
 /* Tela de botões (portão/relé) para o celular. Só tokens de tokens.css. */
-body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
-header { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line); }
+/* Zero rolagem: a tela inteira é cabeçalho + quem + grade (paginada) + aviso. */
+html, body { height: 100%; overflow: hidden; }
+body { margin: 0; display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font); }
+[hidden] { display: none !important; }
+header { flex: none; display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line); }
 header strong { font-size: var(--fs-md); }
 header a { margin-left: auto; color: var(--text-2); font-size: var(--fs-sm); }
-main { padding: var(--s3); max-width: 640px; margin: 0 auto; }
-.quem { display: grid; gap: var(--s1); font-size: var(--fs-sm); color: var(--text-2); margin-bottom: var(--s3); }
+main { flex: 1; min-height: 0; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: var(--s3); max-width: 640px; margin: 0 auto; }
+.quem { flex: none; display: grid; gap: var(--s1); font-size: var(--fs-sm); color: var(--text-2); margin-bottom: var(--s3); }
 input { height: 44px; padding: 0 var(--s3); font: inherit; font-size: var(--fs-md); color: var(--text); background: var(--field); border: 1px solid var(--line-strong); border-radius: var(--r); }
 input:focus-visible { outline: 0; border-color: var(--focus); box-shadow: 0 0 0 3px var(--c-green-dim); }
-.grade { display: grid; gap: var(--s2); grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.grade { flex: 1; min-height: 120px; overflow: hidden; display: grid; gap: var(--s2); grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); grid-auto-rows: 120px; align-content: start; }
+.pager { flex: none; display: flex; align-items: center; justify-content: center; gap: var(--s3); margin-top: var(--s2); font-size: var(--fs-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pager .btn { display: inline-grid; place-items: center; width: 44px; padding: 0; }
+.pager .btn:disabled { opacity: .35; cursor: default; }
+.pager svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .botao { display: grid; place-items: center; gap: var(--s2); min-height: 120px; padding: var(--s3); font: inherit; font-size: var(--fs-md); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r); cursor: pointer; }
 .botao:hover { background: var(--surface-2); }
 .botao:focus-visible { outline: 0; border-color: var(--focus); box-shadow: 0 0 0 3px var(--c-green-dim); }
 .botao svg { width: 32px; height: 32px; fill: none; stroke: var(--text-2); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .vazio { color: var(--text-2); font-size: var(--fs-sm); }
-.msg { min-height: 1.2em; font-size: var(--fs-sm); color: var(--text-2); }
+.msg { flex: none; min-height: 1.2em; font-size: var(--fs-sm); color: var(--text-2); }
 .msg.ok { color: var(--accent); }
 .msg.err { color: var(--c-danger); }
 dialog { width: min(92vw, 360px); padding: var(--s4); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r); }

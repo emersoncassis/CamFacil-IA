@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
   <title>CamFácil IA</title>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/manutencao.css">
   <link rel="stylesheet" href="/integracoes-extra.css">
   <link rel="stylesheet" href="/rede.css">
+  <link rel="stylesheet" href="/tela.css">
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -27,6 +28,8 @@
       <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
       <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></symbol>
       <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
       <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
     </defs>
   </svg>
@@ -39,12 +42,12 @@
       </div>
       <nav aria-label="Seções">
         <ul class="nav" role="tablist">
-          <li><button role="tab" data-tab="inicio" aria-selected="true"><svg class="ico"><use href="#i-home"/></svg><span data-i18n="tab.inicio"></span></button></li>
-          <li><button role="tab" data-tab="cameras"><svg class="ico"><use href="#i-cam"/></svg><span data-i18n="tab.cameras"></span></button></li>
-          <li><button role="tab" data-tab="modulos"><svg class="ico"><use href="#i-chip"/></svg><span data-i18n="tab.modulos"></span></button></li>
-          <li><button role="tab" data-tab="rede"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg><span data-i18n="tab.rede"></span></button></li>
-          <li><button role="tab" data-tab="integracoes"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="tab.integracoes"></span></button></li>
-          <li><button role="tab" data-tab="manutencao"><svg class="ico" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 0 0-5 5l-6 6a1.5 1.5 0 0 0 2 2l6-6a4 4 0 0 0 5-5l-2.5 2.5-2-2z"/></svg><span data-i18n="tab.manutencao"></span></button></li>
+          <li><button role="tab" data-tab="inicio" aria-selected="true"><svg class="ico"><use href="#i-home"/></svg><span class="nav-longo" data-i18n="tab.inicio"></span><span class="nav-curto" data-i18n="tabc.inicio"></span></button></li>
+          <li><button role="tab" data-tab="cameras"><svg class="ico"><use href="#i-cam"/></svg><span class="nav-longo" data-i18n="tab.cameras"></span><span class="nav-curto" data-i18n="tabc.cameras"></span></button></li>
+          <li><button role="tab" data-tab="modulos"><svg class="ico"><use href="#i-chip"/></svg><span class="nav-longo" data-i18n="tab.modulos"></span><span class="nav-curto" data-i18n="tabc.modulos"></span></button></li>
+          <li><button role="tab" data-tab="rede"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg><span class="nav-longo" data-i18n="tab.rede"></span><span class="nav-curto" data-i18n="tabc.rede"></span></button></li>
+          <li><button role="tab" data-tab="integracoes"><svg class="ico"><use href="#i-plug"/></svg><span class="nav-longo" data-i18n="tab.integracoes"></span><span class="nav-curto" data-i18n="tabc.integracoes"></span></button></li>
+          <li><button role="tab" data-tab="manutencao"><svg class="ico" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 0 0-5 5l-6 6a1.5 1.5 0 0 0 2 2l6-6a4 4 0 0 0 5-5l-2.5 2.5-2-2z"/></svg><span class="nav-longo" data-i18n="tab.manutencao"></span><span class="nav-curto" data-i18n="tabc.manutencao"></span></button></li>
         </ul>
       </nav>
       <div class="rail-foot">
@@ -64,7 +67,7 @@
           <button class="btn primary" id="bench-run"><svg class="ico"><use href="#i-play"/></svg><span data-i18n="inicio.teste_btn"></span></button>
         </header>
 
-        <div class="block">
+        <div class="block" data-sub="maquina">
           <div class="opcao">
             <div>
               <h2 data-i18n="auto.titulo"></h2>
@@ -75,12 +78,12 @@
           <p class="msg" id="auto-msg" role="status"></p>
         </div>
 
-        <div class="block">
+        <div class="block" data-sub="teste">
           <h2 data-i18n="inicio.teste"></h2>
           <div id="bench-result"></div>
         </div>
 
-        <div class="block" id="saude-bloco">
+        <div class="block" id="saude-bloco" data-sub="saude">
           <h2 data-i18n="saude.titulo"></h2>
           <p class="hint" data-i18n="saude.desc"></p>
           <p class="note warn mt" id="saude-desligado" hidden><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="saude.desligado"></span></p>
@@ -95,12 +98,12 @@
           <ul class="list eventos" id="saude-eventos"></ul>
         </div>
 
-        <div class="block">
+        <div class="block" data-sub="teste">
           <h2 data-i18n="inicio.selos"></h2>
           <div class="selos" id="selos"></div>
         </div>
 
-        <div class="block">
+        <div class="block" data-sub="maquina">
           <h2 data-i18n="inicio.maquina"></h2>
           <dl class="rows" id="sysinfo"></dl>
         </div>
@@ -116,7 +119,7 @@
           <button class="btn primary" id="discover"><svg class="ico"><use href="#i-search"/></svg><span data-i18n="cam.busca_btn"></span></button>
         </header>
 
-        <div class="block" id="ligar-ffmpeg" hidden>
+        <div class="block" id="ligar-ffmpeg" data-sub="ligar" hidden>
           <p class="note warn"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="ligar.ffmpeg"></span></p>
           <div class="actions">
             <button class="btn primary" id="ligar-ffmpeg-btn"><span data-i18n="ligar.ffmpeg_btn"></span></button>
@@ -124,7 +127,7 @@
           <p class="msg" id="ligar-ffmpeg-msg" role="status"></p>
         </div>
 
-        <div class="block" id="ligar-passo1">
+        <div class="block" id="ligar-passo1" data-sub="ligar">
           <div class="passo"><span class="num">1</span><h2 id="ligar-status" data-i18n="ligar.procurando"></h2></div>
           <ul class="list pick" id="ligar-lista"></ul>
           <form class="add-cam mt" id="ligar-manual" autocomplete="off">
@@ -134,7 +137,7 @@
           <p class="tiny" id="ligar-demo-linha"><span data-i18n="ligar.sem_camera"></span> <button class="link" id="ligar-demo" type="button" data-i18n="ligar.demo"></button></p>
         </div>
 
-        <div class="block" id="ligar-passo2" hidden>
+        <div class="block" id="ligar-passo2" data-sub="ligar" hidden>
           <div class="passo"><span class="num">2</span><h2><span data-i18n="ligar.senha_titulo"></span> <span class="mono" id="ligar-ip"></span></h2></div>
           <form class="form" id="ligar-form" autocomplete="off">
             <label><span data-i18n="cam.usuario"></span><input name="usuario" value="admin" autocapitalize="off"></label>
@@ -142,6 +145,7 @@
             <label class="span-2"><span data-i18n="ligar.nome"></span><input name="nome" maxlength="60" data-i18n-ph="cam.nome_ph"></label>
             <div class="actions span-4">
               <button class="btn primary" type="submit" id="ligar-conectar"><span data-i18n="ligar.conectar"></span></button>
+              <button class="btn ghost" type="button" id="ligar-voltar"><span data-i18n="ligar.voltar"></span></button>
             </div>
           </form>
           <p class="msg" id="ligar-msg" role="status"></p>
@@ -155,7 +159,7 @@
         </div>
 
 
-        <div class="block">
+        <div class="block" data-sub="suas">
           <div class="block-head">
             <h2 data-i18n="cam.suas"></h2>
             <div class="actions">
@@ -164,15 +168,10 @@
             </div>
           </div>
           <p class="note warn" id="ffmpeg-aviso" hidden><svg class="ico sm"><use href="#i-info"/></svg><span id="ffmpeg-texto"></span></p>
-          <div class="table-wrap">
-            <table class="table">
-              <thead><tr><th data-i18n="cam.col_nome"></th><th data-i18n="cam.col_fonte"></th><th data-i18n="cam.col_situacao"></th><th class="right"></th></tr></thead>
-              <tbody id="minhas"></tbody>
-            </table>
-          </div>
+          <ul class="list cams" id="minhas"></ul>
         </div>
 
-        <div class="block" id="aovivo" hidden>
+        <div class="block aovivo" id="aovivo" data-sub="aovivo" hidden>
           <div class="block-head">
             <div class="aovivo-titulo">
               <h2 id="aovivo-nome"></h2>
@@ -187,13 +186,19 @@
               <label><input type="radio" name="modo" value="linha"><span data-i18n="desenho.linha"></span></label>
             </div>
           </div>
+          <div class="aovivo-corpo">
+          <div class="viewer-wrap">
           <div class="viewer" id="viewer">
             <img id="video" alt="">
             <svg id="desenho" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
             <div id="baloes"></div>
             <div class="viewer-off" id="viewer-off" hidden></div>
           </div>
+          </div>
+          <div class="aovivo-lado">
           <p class="note" id="desenho-dica"></p>
+          <details class="secao" name="sec-aovivo">
+          <summary><span data-i18n="sug.titulo"></span></summary>
           <div class="sugerir" id="sugerir">
             <div class="sugerir-topo">
               <div>
@@ -208,6 +213,7 @@
             </div>
             <ul class="sug-lista" id="sug-lista"></ul>
           </div>
+          </details>
           <form class="form regra-form" id="regra-form" hidden autocomplete="off">
             <label class="span-2"><span data-i18n="regra.nome"></span><input name="nome" required maxlength="40"></label>
             <label class="zona-only"><span data-i18n="regra.on"></span><input name="rotulo_on" maxlength="24"></label>
@@ -217,24 +223,29 @@
               <button class="btn" type="button" id="regra-cancelar" data-i18n="regra.cancelar"></button>
             </div>
           </form>
-          <div class="table-wrap mt">
+          <details class="secao" name="sec-aovivo" open>
+          <summary><span data-i18n="regra.titulo"></span></summary>
+          <div class="table-wrap">
             <table class="table">
               <thead><tr><th data-i18n="regra.col_nome"></th><th data-i18n="regra.col_tipo"></th><th data-i18n="regra.col_estado"></th><th data-i18n="regra.col_som"></th><th class="right"></th></tr></thead>
               <tbody id="regras"></tbody>
             </table>
           </div>
+          </details>
+          </div>
+          </div>
         </div>
 
-        <details class="block avancado">
-          <summary data-i18n="cam.avancado"></summary>
+        <div class="block" data-sub="avancado">
+          <h2 data-i18n="cam.avancado"></h2>
           <p class="hint" data-i18n="cam.avancado_desc"></p>
           <form id="rtsp-form" class="form" autocomplete="off">
-            <label class="span-2"><span data-i18n="cam.fabricante"></span><select name="fabricante" id="vendor"></select></label>
+            <label class="span-2 m-4"><span data-i18n="cam.fabricante"></span><select name="fabricante" id="vendor"></select></label>
             <label class="span-2"><span data-i18n="cam.ip"></span><input name="ip" required placeholder="192.168.1.108" class="mono" inputmode="decimal"></label>
             <label><span data-i18n="cam.porta"></span><input name="porta" type="number" value="554" min="1" max="65535" class="mono"></label>
             <label><span data-i18n="cam.canal"></span><input name="canal" type="number" value="1" min="1" class="mono"></label>
-            <label><span data-i18n="cam.usuario"></span><input name="usuario" value="admin"></label>
-            <label><span data-i18n="cam.senha"></span><input name="senha" type="password"></label>
+            <label class="m-2"><span data-i18n="cam.usuario"></span><input name="usuario" value="admin"></label>
+            <label class="m-2"><span data-i18n="cam.senha"></span><input name="senha" type="password"></label>
             <fieldset class="span-4">
               <legend data-i18n="cam.stream"></legend>
               <div class="seg" role="radiogroup">
@@ -258,7 +269,7 @@
             <button class="btn primary" type="submit" data-i18n="cam.adicionar"></button>
           </form>
           <p id="rtsp-msg" class="msg" role="status"></p>
-        </details>
+        </div>
       </section>
 
       <!-- Módulos de IA -->
@@ -269,7 +280,7 @@
             <p class="lede" data-i18n="guia.modulos"></p>
           </div>
         </header>
-        <div class="block">
+        <div class="block" data-sub="niveis">
           <div class="table-wrap">
             <table class="table">
               <thead><tr><th data-i18n="mod.col_modulo"></th><th data-i18n="mod.col_nivel"></th><th data-i18n="mod.col_estado"></th><th class="right" data-i18n="mod.col_ativo"></th></tr></thead>
@@ -277,7 +288,7 @@
             </table>
           </div>
         </div>
-        <div class="block" id="ia-bloco">
+        <div class="block" id="ia-bloco" data-sub="modelo">
           <div class="block-head">
             <h2 data-i18n="ia.titulo"></h2>
             <div class="actions">
@@ -310,16 +321,18 @@
           </div>
         </header>
 
-        <div class="block" id="hw-bloco">
+        <div class="block" id="hw-bloco" data-sub="maquina">
           <div class="block-head">
             <h2 data-i18n="hw.titulo"></h2>
-            <div class="seg" role="radiogroup" id="hw-periodo">
-              <label><input type="radio" name="hw-periodo" value="24" checked><span data-i18n="hw.24h"></span></label>
-              <label><input type="radio" name="hw-periodo" value="168"><span data-i18n="hw.7d"></span></label>
-            </div>
           </div>
           <p class="hint" data-i18n="hw.desc"></p>
+          <h3 class="sub" data-i18n="secao.agora" data-aberta></h3>
           <dl class="rows mt hw-atual" id="hw-atual"></dl>
+          <h3 class="sub" data-i18n="secao.grafico"></h3>
+          <div class="seg" role="radiogroup" id="hw-periodo">
+            <label><input type="radio" name="hw-periodo" value="24" checked><span data-i18n="hw.24h"></span></label>
+            <label><input type="radio" name="hw-periodo" value="168"><span data-i18n="hw.7d"></span></label>
+          </div>
           <div class="hw-grafico mt" id="hw-grafico" role="img" aria-label=""></div>
           <p class="tiny" id="hw-legenda"></p>
           <h3 class="sub" data-i18n="hw.alertas"></h3>
@@ -327,7 +340,7 @@
           <p class="msg" id="hw-msg" role="status"></p>
         </div>
 
-        <div class="block" id="tv-bloco">
+        <div class="block" id="tv-bloco" data-sub="tv">
           <div class="block-head">
             <h2 data-i18n="tv.titulo"></h2>
             <a class="btn sm" href="/tv" target="_blank" rel="noopener" id="tv-abrir"><span data-i18n="tv.abrir"></span></a>
@@ -367,7 +380,7 @@
           </details>
         </div>
 
-        <div class="block" id="est-bloco">
+        <div class="block" id="est-bloco" data-sub="estresse">
           <div class="block-head">
             <h2 data-i18n="est.titulo"></h2>
           </div>
@@ -384,7 +397,7 @@
           <ul class="list mt" id="est-degraus"></ul>
         </div>
 
-        <div class="block" id="rel-bloco">
+        <div class="block" id="rel-bloco" data-sub="relatorio">
           <div class="block-head">
             <h2 data-i18n="rel.titulo"></h2>
           </div>
@@ -403,7 +416,7 @@
           <p class="tiny" id="rel-pasta"></p>
         </div>
 
-        <div class="block" id="bkp-bloco">
+        <div class="block" id="bkp-bloco" data-sub="backup">
           <div class="block-head">
             <h2 data-i18n="bkp.titulo"></h2>
           </div>
@@ -441,12 +454,12 @@
           <button class="btn primary" id="rede-foto"><svg class="ico"><use href="#i-search"/></svg><span data-i18n="rede.foto_btn"></span></button>
         </header>
 
-        <div class="block" id="rede-prog-bloco" hidden>
+        <div class="block" id="rede-prog-bloco" data-sub="*" hidden>
           <div class="rede-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="rede-prog"><div class="rede-prog-bar" id="rede-prog-bar"></div></div>
           <p class="msg" id="rede-prog-txt" role="status"></p>
         </div>
 
-        <div class="block">
+        <div class="block" data-sub="inventario">
           <div class="block-head">
             <h2 data-i18n="rede.inventario"></h2>
             <span class="tiny mono" id="rede-meta"></span>
@@ -462,7 +475,7 @@
           </div>
         </div>
 
-        <div class="block">
+        <div class="block" data-sub="diag">
           <div class="block-head">
             <h2 data-i18n="rede.diag"></h2>
             <button class="btn sm" id="rede-diag-btn"><span data-i18n="rede.diag_btn"></span></button>
@@ -478,7 +491,7 @@
           <p class="msg" id="rede-diag-msg" role="status"></p>
         </div>
 
-        <div class="block">
+        <div class="block bloco-cheio" data-sub="diagrama">
           <div class="block-head">
             <h2 data-i18n="rede.diagrama.titulo"></h2>
             <a class="btn sm" id="rede-diagrama-baixar" href="/api/rede/diagrama.svg?baixar=true" download hidden><svg class="ico sm"><use href="#i-download"/></svg><span data-i18n="rede.diagrama.baixar"></span></a>
@@ -487,13 +500,13 @@
           <div class="rede-diagrama mt" id="rede-diagrama"></div>
         </div>
 
-        <div class="block">
+        <div class="block" data-sub="mudancas">
           <h2 data-i18n="rede.mudancas"></h2>
           <p class="hint" id="rede-mudancas-desc"></p>
           <ul class="list mt" id="rede-mudancas"></ul>
         </div>
 
-        <div class="block">
+        <div class="block" data-sub="historico">
           <h2 data-i18n="rede.historico"></h2>
           <p class="hint" data-i18n="rede.historico_desc"></p>
           <ul class="list mt" id="rede-historico"></ul>
@@ -508,7 +521,7 @@
             <p class="lede" data-i18n="guia.integracoes"></p>
           </div>
         </header>
-        <div class="block" id="elo">
+        <div class="block" id="elo" data-sub="site">
           <h2 data-i18n="elo.titulo"></h2>
           <p class="hint" data-i18n="elo.desc"></p>
           <dl class="rows mt">
@@ -539,7 +552,7 @@
           </div>
           <p class="msg" id="elo-msg" role="status"></p>
         </div>
-        <div class="block" id="ts">
+        <div class="block" id="ts" data-sub="tailscale">
           <h2 data-i18n="ts.titulo"></h2>
           <p class="hint" data-i18n="ts.desc"></p>
           <dl class="rows mt">
@@ -570,7 +583,7 @@
           </div>
           <p class="msg" id="ts-msg" role="status"></p>
         </div>
-        <div class="block" id="termos">
+        <div class="block" id="termos" data-sub="lgpd">
           <h2 data-i18n="lg.titulo"></h2>
           <p class="hint" data-i18n="lg.desc"></p>
           <dl class="rows mt">
@@ -607,7 +620,7 @@
           </div>
           <p class="msg" id="lg-msg" role="status"></p>
         </div>
-        <div class="block" id="tg">
+        <div class="block" id="tg" data-sub="telegram">
           <h2>Telegram</h2>
           <p class="hint" data-i18n="tg.desc"></p>
           <dl class="rows mt">
@@ -615,6 +628,7 @@
             <dt data-i18n="tg.bot"></dt><dd class="mono" id="tg-bot">—</dd>
             <dt data-i18n="tg.envios"></dt><dd id="tg-envios">—</dd>
           </dl>
+<h3 class="sub" data-i18n="secao.configurar"></h3>
           <form class="add-cam" id="tg-form" autocomplete="off">
             <input name="token" class="mono" type="password" autocapitalize="off" spellcheck="false" data-i18n-ph="tg.token_ph">
             <button class="btn primary" type="submit" id="tg-salvar"><span data-i18n="tg.salvar"></span></button>
@@ -638,7 +652,7 @@
             <p class="tiny mt" data-i18n="tg.comandos"></p>
           </div>
         </div>
-        <div class="block" id="whatsapp">
+        <div class="block" id="whatsapp" data-sub="whatsapp">
           <h2>WhatsApp</h2>
           <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="wa.aviso"></span></p>
           <p class="hint" data-i18n="wa.desc"></p>
@@ -647,6 +661,7 @@
             <dt data-i18n="wa.instancia"></dt><dd class="mono" id="wa-inst">—</dd>
             <dt data-i18n="wa.envios"></dt><dd id="wa-envios">—</dd>
           </dl>
+<h3 class="sub" data-i18n="secao.configurar"></h3>
           <form class="form-grid" id="wa-form" autocomplete="off">
             <input name="url" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.url_ph" required>
             <input name="instancia" class="mono" type="text" autocapitalize="off" spellcheck="false" data-i18n-ph="wa.instancia_ph" required>
@@ -690,13 +705,14 @@
             <p class="tiny mt" data-i18n="wa.comandos"></p>
           </div>
         </div>
-        <div class="block" id="webhook">
+        <div class="block" id="webhook" data-sub="webhook">
           <h2>Webhook</h2>
           <p class="hint" data-i18n="wh.desc"></p>
           <dl class="rows mt">
             <dt data-i18n="wh.situacao"></dt><dd><span class="state"><span class="dot" id="wh-dot"></span><span id="wh-status"></span></span></dd>
             <dt data-i18n="wh.envios"></dt><dd id="wh-envios">—</dd>
           </dl>
+<h3 class="sub" data-i18n="secao.configurar"></h3>
           <form class="form-grid" id="wh-form" autocomplete="off">
             <input name="url" class="mono" type="url" autocapitalize="off" spellcheck="false" data-i18n-ph="wh.url_ph" required>
             <input name="cabecalho" class="mono" type="password" autocapitalize="off" spellcheck="false" data-i18n-ph="wh.cabecalho_ph">
@@ -714,13 +730,14 @@
             <pre class="json-exemplo mono" id="wh-exemplo"></pre>
           </details>
         </div>
-        <div class="block" id="arquivo">
+        <div class="block" id="arquivo" data-sub="arquivo">
           <h2 data-i18n="arq.titulo"></h2>
           <p class="hint" data-i18n="arq.desc"></p>
           <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="arq.aviso"></span></p>
           <dl class="rows mt">
             <dt data-i18n="arq.situacao"></dt><dd><span class="state"><span class="dot" id="arq-dot"></span><span id="arq-status"></span></span></dd>
           </dl>
+<h3 class="sub" data-i18n="secao.configurar"></h3>
           <form class="form-grid" id="arq-form" autocomplete="off">
             <label class="som-regra"><span class="switch"><input type="checkbox" name="ligado"><span></span></span><span class="tiny" data-i18n="arq.ligar"></span></label>
             <input name="manter" type="number" min="1" max="5000" inputmode="numeric" data-i18n-ph="arq.ph_manter">
@@ -729,6 +746,7 @@
           </form>
           <p class="tiny mt" data-i18n="arq.chat_dica"></p>
           <p class="msg" id="arq-msg" role="status"></p>
+          <h3 class="sub" data-i18n="secao.fotos" data-aberta></h3>
           <div class="table-wrap mt">
             <table class="table">
               <thead><tr><th data-i18n="arq.col_quando"></th><th data-i18n="arq.col_camera"></th><th data-i18n="arq.col_regra"></th><th class="right"></th></tr></thead>
@@ -736,10 +754,19 @@
             </table>
           </div>
         </div>
-        <div class="block" id="botoes">
-          <h2 data-i18n="bt.titulo"></h2>
+        <div class="block" id="botoes" data-sub="botoes">
+          <div class="block-head">
+            <h2 data-i18n="bt.titulo"></h2>
+            <a class="btn sm" href="/botoes" target="_blank" rel="noopener"><span data-i18n="bt.abrir"></span></a>
+          </div>
           <p class="hint" data-i18n="bt.desc"></p>
           <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="bt.aviso"></span></p>
+          <div class="table-wrap mt">
+            <table class="table">
+              <thead><tr><th data-i18n="bt.col_nome"></th><th data-i18n="bt.col_acao"></th><th class="right"></th></tr></thead>
+              <tbody id="bt-lista"></tbody>
+            </table>
+          </div>
           <h3 class="sub" data-i18n="bt.pin_titulo"></h3>
           <p class="hint" id="bt-pin-situacao"></p>
           <form class="form-grid" id="bt-pin-form" autocomplete="off">
@@ -766,19 +793,10 @@
           </form>
           <p class="tiny mt" data-i18n="bt.dica_url"></p>
           <p class="msg" id="bt-msg" role="status"></p>
-          <div class="table-wrap mt">
-            <table class="table">
-              <thead><tr><th data-i18n="bt.col_nome"></th><th data-i18n="bt.col_acao"></th><th class="right"></th></tr></thead>
-              <tbody id="bt-lista"></tbody>
-            </table>
-          </div>
-          <div class="actions mt">
-            <a class="btn sm" href="/botoes" target="_blank" rel="noopener"><span data-i18n="bt.abrir"></span></a>
-          </div>
           <h3 class="sub" data-i18n="bt.log_titulo"></h3>
           <ul class="list mt" id="bt-log"></ul>
         </div>
-        <div class="block" id="mcp">
+        <div class="block" id="mcp" data-sub="mcp">
           <h2 data-i18n="mcp.titulo"></h2>
           <p class="hint" data-i18n="mcp.desc"></p>
           <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="mcp.aviso"></span></p>
@@ -802,7 +820,7 @@
           </div>
           <p class="msg" id="mcp-msg" role="status"></p>
         </div>
-        <div class="block">
+        <div class="block" data-sub="site">
           <ul class="list">
             <li><div><strong data-i18n="int.marca"></strong><p data-i18n="int.marca_desc"></p></div><span class="badge" data-i18n="em_breve"></span></li>
           </ul>
@@ -813,6 +831,42 @@
     </main>
   </div>
 
+
+  <dialog id="cam-dlg" class="dlg-form" aria-labelledby="cam-dlg-titulo">
+    <form id="cam-form" autocomplete="off" novalidate>
+      <h2 id="cam-dlg-titulo" data-i18n="camed.titulo"></h2>
+      <div class="campos">
+        <label class="campo"><span data-i18n="cam.col_nome"></span><input name="nome" required maxlength="60"></label>
+        <label class="campo"><span data-i18n="camed.fonte"></span><select name="fonte">
+          <option value="rtsp" data-i18n="fonte.rtsp"></option>
+          <option value="demo" data-i18n="fonte.demo"></option>
+          <option value="webcam" data-i18n="fonte.webcam"></option>
+          <option value="arquivo" data-i18n="fonte.arquivo"></option>
+        </select></label>
+        <label class="campo" id="cam-url-campo"><span id="cam-url-rotulo"></span><input name="url" class="mono" autocapitalize="off" spellcheck="false" inputmode="url"></label>
+        <label class="campo" id="cam-senha-campo"><span data-i18n="cam.senha"></span><input name="senha" type="password" autocomplete="new-password" data-i18n-ph="camed.senha_ph"></label>
+        <label class="som-regra"><span class="switch"><input type="checkbox" name="ativa"><span></span></span><span data-i18n="camed.ativa"></span></label>
+      </div>
+      <p class="tiny" id="cam-dlg-dica" data-i18n="camed.dica"></p>
+      <p class="msg" id="cam-dlg-msg" role="status"></p>
+      <div class="dlg-acoes">
+        <button type="button" class="btn perigo" id="cam-dlg-remover"><svg class="ico sm"><use href="#i-trash"/></svg><span data-i18n="cam.remover"></span></button>
+        <span class="espaco"></span>
+        <button type="button" class="btn ghost" id="cam-dlg-cancelar" data-i18n="regra.cancelar"></button>
+        <button type="submit" class="btn primary" id="cam-dlg-salvar"><span data-i18n="camed.salvar"></span></button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirma-dlg" aria-labelledby="confirma-texto">
+    <h2 id="confirma-texto"></h2>
+    <p class="hint" id="confirma-dica"></p>
+    <div class="dlg-acoes">
+      <span class="espaco"></span>
+      <button type="button" class="btn ghost" id="confirma-nao" data-i18n="regra.cancelar"></button>
+      <button type="button" class="btn perigo" id="confirma-sim"></button>
+    </div>
+  </dialog>
 
   <dialog id="disclaimer" aria-labelledby="disc-title">
     <h2 id="disc-title" data-i18n="isencao.titulo"></h2>
@@ -827,5 +881,6 @@
   <script src="/integracoes-extra.js"></script>
   <script src="/fase6.js"></script>
   <script src="/rede.js" defer></script>
+  <script src="/tela.js"></script>
 </body>
 </html>

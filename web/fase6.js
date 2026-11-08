@@ -25,7 +25,7 @@ async function renderBotoes() {
     corpo.replaceChildren(...r.botoes.map((b) => {
       const rem = el("button", { class: "btn ghost sm", type: "button" }, t("bt.remover"));
       rem.onclick = async () => {
-        if (!confirm(t("bt.confirma_remover").replace("{nome}", b.nome))) return;
+        if (!await confirmar(t("bt.confirma_remover").replace("{nome}", b.nome))) return;
         try { await api(`/api/botoes/${b.id}`, undefined, "DELETE"); renderBotoes(); } catch (e) { ieMsg("#bt-msg", e.message, "err"); }
       };
       return el("tr", {},
@@ -89,18 +89,18 @@ async function renderMcp(r) {
 function iniciarMcp() {
   $("#mcp-ligado").onchange = async (e) => {
     const ligar = e.target.checked;
-    if (ligar && !confirm(t("mcp.confirma_ligar"))) { e.target.checked = false; return; }
+    if (ligar && !await confirmar(t("mcp.confirma_ligar"))) { e.target.checked = false; return; }
     try { renderMcp(await api("/api/mcp", { ligado: ligar })); ieMsg("#mcp-msg", t(ligar ? "mcp.ligado" : "mcp.desligado"), "ok"); }
     catch (err) { e.target.checked = !ligar; ieMsg("#mcp-msg", err.message, "err"); }
   };
   $("#mcp-escrita").onchange = async (e) => {
     const sim = e.target.checked;
-    if (sim && !confirm(t("mcp.confirma_escrita"))) { e.target.checked = false; return; }
+    if (sim && !await confirmar(t("mcp.confirma_escrita"))) { e.target.checked = false; return; }
     try { renderMcp(await api("/api/mcp", { escrita: sim })); }
     catch (err) { e.target.checked = !sim; ieMsg("#mcp-msg", err.message, "err"); }
   };
   $("#mcp-trocar").onclick = async () => {
-    if (!confirm(t("mcp.confirma_trocar"))) return;
+    if (!await confirmar(t("mcp.confirma_trocar"))) return;
     try { renderMcp(await api("/api/mcp/token", {})); ieMsg("#mcp-msg", t("mcp.token_trocado"), "ok"); }
     catch (e) { ieMsg("#mcp-msg", e.message, "err"); }
   };
