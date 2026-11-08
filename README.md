@@ -209,7 +209,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 
 ## <img src="docs/assets/icons/mapa.svg" width="22" alt=""/> Roadmap
 
-Versão atual: **0.5.4** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
+Versão atual: **0.6.0** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
 
 - [x] **Fase 1** — Núcleo: binário, dashboard, benchmark, ONVIF, gerador RTSP
 - [x] **Fase 2** — Cerca virtual com balões e aula guiada · Formação de IA para CFTV no site, com narração e selo
