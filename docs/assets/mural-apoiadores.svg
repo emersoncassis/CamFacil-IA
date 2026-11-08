@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="64" viewBox="0 0 900 64" role="img" aria-label="Apoiadores do CamFácil IA: Marcone, Alexandre, Emerson de Carvalho Assis">
+  <style>
+    .n { font: 600 15px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #ededed; }
+    .d { font: 400 13px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #b4b4b4; }
+    .r { font: 500 11px ui-monospace, 'Cascadia Mono', Consolas, monospace; fill: #06cb3f; letter-spacing: .08em; }
+  </style>
+  <defs>
+    <clipPath id="palco"><rect x="168" y="1" width="731" height="62"/></clipPath>
+    <linearGradient id="some" x1="0" x2="1">
+      <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="varre" x1="0" x2="1">
+      <stop offset="0" stop-color="#06cb3f" stop-opacity="0"/><stop offset=".5" stop-color="#06cb3f" stop-opacity=".16"/><stop offset="1" stop-color="#06cb3f" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x=".5" y=".5" width="899" height="63" rx="10" fill="#000" stroke="#232323"/>
+  <g clip-path="url(#palco)">
+    <g>
+      <g transform="translate(192 0)"><g transform="translate(0 0)"><circle cx="6" cy="32" r="4" fill="#06cb3f"/><text x="20" y="37" class="n">Marcone · Mar Câmeras</text><text x="213" y="37" class="d">Apoiador fundador · criou o Contagem Inteligente</text></g><g transform="translate(605 0)"><circle cx="6" cy="32" r="4" fill="#06cb3f"/><text x="20" y="37" class="n">Alexandre · Papo Segurança</text><text x="256" y="37" class="d">Apoiador da causa</text></g><g transform="translate(1035 0)"><circle cx="6" cy="32" r="4" fill="#06cb3f"/><text x="20" y="37" class="n">Emerson de Carvalho Assis</text><text x="247" y="37" class="d">Criador · investiu do próprio bolso para o projeto existir</text></g><g transform="translate(1744 0)"><g transform="translate(0 0)"><circle cx="6" cy="32" r="4" fill="#06cb3f"/><text x="20" y="37" class="n">Marcone · Mar Câmeras</text><text x="213" y="37" class="d">Apoiador fundador · criou o Contagem Inteligente</text></g><g transform="translate(605 0)"><circle cx="6" cy="32" r="4" fill="#06cb3f"/><text x="20" y="37" class="n">Alexandre · Papo Segurança</text><text x="256" y="37" class="d">Apoiador da causa</text></g><g transform="translate(1035 0)"><circle cx="6" cy="32" r="4" fill="#06cb3f"/><text x="20" y="37" class="n">Emerson de Carvalho Assis</text><text x="247" y="37" class="d">Criador · investiu do próprio bolso para o projeto existir</text></g></g></g>
+      <animateTransform attributeName="transform" type="translate" from="0 0" to="-1744 0" dur="38.8s" repeatCount="indefinite"/>
+    </g>
+    <rect x="168" y="1" width="140" height="62" fill="url(#varre)">
+      <animate attributeName="x" values="28;900" dur="3.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="168" y="1" width="36" height="62" fill="url(#some)"/>
+  </g>
+  <g>
+    <path d="M14 22v-8h8M146 14h8v8M154 42v8h-8M22 50h-8v-8" fill="none" stroke="#06cb3f" stroke-width="2"/>
+    <circle cx="30" cy="32" r="4" fill="#06cb3f"><animate attributeName="opacity" values="1;.25;1" dur="1.2s" repeatCount="indefinite"/></circle>
+    <text x="42" y="36" class="r">APOIADORES</text>
+    <line x1="168" y1="12" x2="168" y2="52" stroke="#232323"/>
+  </g>
+</svg>

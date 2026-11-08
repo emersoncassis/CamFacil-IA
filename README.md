@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:163134,50:035144,100:06CB3F&height=220&section=header&text=CamF%C3%A1cil%20IA&fontSize=64&fontColor=EFEFED&animation=fadeIn&fontAlignY=38&desc=Intelig%C3%AAncia%20de%20v%C3%ADdeo%20para%20quem%20instala%20c%C3%A2meras&descAlignY=58&descSize=18" width="100%" alt="CamFácil IA"/>
+<img src="docs/assets/banner.svg" width="100%" alt="CamFácil IA: inteligência de vídeo para quem instala câmeras. Uma mira de câmera procura e trava numa pessoa que cruza a linha virtual."/>
 
 <a href="https://cfia.ysafe.com.br">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1200&color=06CB3F&center=true&vCenter=true&width=720&lines=IA+de+v%C3%ADdeo+em+qualquer+m%C3%A1quina%2C+com+um+comando.;Aprenda+IA+e+rede+IP+fazendo.;Valide+no+cliente.+Venda+a+c%C3%A2mera+com+IA.;Feito+por+instalador%2C+para+instalador." alt="Frases animadas"/>
@@ -15,9 +15,11 @@
   <img src="https://img.shields.io/badge/Windows-PC%20velho%20ok-163134?style=flat-square&logo=windows&logoColor=white" alt="Windows"/>
   <img src="https://img.shields.io/badge/Linux-mini%20PC-163134?style=flat-square&logo=linux&logoColor=white" alt="Linux"/>
   <img src="https://img.shields.io/badge/Raspberry%20Pi-ARM64-163134?style=flat-square&logo=raspberrypi&logoColor=white" alt="Raspberry Pi"/>
-  <img src="https://img.shields.io/badge/Android-TV%20Box%20(em%20breve)-163134?style=flat-square&logo=android&logoColor=white" alt="Android"/>
+  <a href="https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk"><img src="https://img.shields.io/badge/Android-celular%20e%20TV%20Box-163134?style=flat-square&logo=android&logoColor=white" alt="Android"/></a>
   <img src="https://img.shields.io/github/stars/emersoncassis/CamFacil-IA?style=flat-square&color=06CB3F" alt="Estrelas"/>
 </p>
+
+<a href="https://emersoncassis.github.io/CamFacil-IA/apoiadores/"><img src="docs/assets/mural-apoiadores.svg" width="100%" alt="Apoiadores do CamFácil IA"/></a>
 
 <p>
   <a href="https://cfia.ysafe.com.br"><img src="https://img.shields.io/badge/COMECE%20PELO%20SITE-cfia.ysafe.com.br-06CB3F?style=for-the-badge&labelColor=000000" alt="Comece pelo site: cfia.ysafe.com.br" height="44"/></a>
@@ -115,7 +117,9 @@ irm https://cfia.ysafe.com.br/instalar.ps1 | iex
 curl -fsSL https://cfia.ysafe.com.br/instalar.sh | sh
 ```
 
-<img src="docs/assets/icons/download.svg" width="20" alt=""/> **Sem comando:** baixe direto da [última versão](https://github.com/emersoncassis/CamFacil-IA/releases/latest): [Windows](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-windows-x86_64.exe) · [Linux](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-linux-x86_64) · [Raspberry/ARM 64](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-linux-arm64). Dê dois cliques e o navegador abre. No Windows, se aparecer a tela azul, clique em **Mais informações → Executar assim mesmo** (o programa é gratuito e não tem certificado pago).
+<img src="docs/assets/icons/celular.svg" width="20" alt=""/> **Android (celular e TV Box)**: baixe o **[app Android (APK)](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk)**, abra no aparelho e permita instalar de fonte desconhecida quando ele pedir. Ele vira o servidor das câmeras ou vê um cliente à distância.
+
+<img src="docs/assets/icons/download.svg" width="20" alt=""/> **Sem comando:** baixe direto da [última versão](https://github.com/emersoncassis/CamFacil-IA/releases/latest): [Windows](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-windows-x86_64.exe) · [Linux](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-linux-x86_64) · [Raspberry/ARM 64](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-linux-arm64) · [Android (APK)](https://github.com/emersoncassis/CamFacil-IA/releases/latest/download/camfacil-android.apk). Dê dois cliques e o navegador abre. No Windows, se aparecer a tela azul, clique em **Mais informações → Executar assim mesmo** (o programa é gratuito e não tem certificado pago).
 
 **Primeira vez:** o programa abre direto em **Ligar câmera**. Ele procura as câmeras na rede, você escolhe uma, digita usuário e senha e a imagem aparece. A IA vem depois.
 
