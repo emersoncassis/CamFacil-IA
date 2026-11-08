@@ -9,6 +9,7 @@ mod assets;
 mod autoinicio;
 mod backup;
 mod elo;
+mod estresse;
 mod hardware;
 mod ia;
 mod integracoes;

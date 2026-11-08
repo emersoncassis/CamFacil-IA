@@ -535,5 +535,19 @@
   "arq.ver_foto": "Foto",
   "arq.ver_telegram": "Telegram",
   "arq.vazio": "Nenhum alerta arquivado ainda.",
-  "arq.saude": "saúde da câmera"
+  "arq.saude": "saúde da câmera",
+  "est.titulo": "Teste de estresse",
+  "est.desc": "Descobre quantas câmeras com cerca virtual esta máquina aguenta além das que já estão ligadas. Sobe câmeras de teste em degraus (1, 2, 3, 4, 6, 8…) e para quando o processador passa de 85 %, alguma câmera cai abaixo de 4 quadros/s, a memória passa de 90 % ou a temperatura de 85 °C. Leva de 1 a 3 minutos; as câmeras de teste não geram alertas nem aparecem na TV. O resultado entra no relatório.",
+  "est.maximo": "Ir até",
+  "est.iniciar": "Começar teste",
+  "est.cancelar": "Cancelar",
+  "est.rodando": "Testando com {n} câmera(s)…",
+  "est.cancelado": "Teste cancelado.",
+  "est.resultado": "Resultado de {quando}:",
+  "est.nunca": "Ainda não foi feito nesta máquina.",
+  "est.degrau": "{n} câmera(s)",
+  "est.ok": "aguentou",
+  "est.cpu": "CPU",
+  "est.ram": "memória",
+  "est.fps": "menor q/s"
 }

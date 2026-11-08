@@ -147,6 +147,12 @@ pub fn router(app: Shared) -> Router {
             "/api/relatorio/{arquivo}/telegram",
             post(crate::relatorio::post_telegram),
         )
+        .route(
+            "/api/estresse",
+            get(crate::estresse::get_estado)
+                .post(crate::estresse::post_iniciar)
+                .delete(crate::estresse::delete_cancelar),
+        )
         .route("/api/backup", post(crate::backup::post_exportar))
         .route("/api/backup/telegram", post(crate::backup::post_telegram))
         .route(

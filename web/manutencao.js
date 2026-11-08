@@ -238,6 +238,7 @@ async function relGerar() {
     const r = await api("/api/relatorio", { cliente: $("#rel-cliente").value, tecnico: $("#rel-tecnico").value, observacoes: $("#rel-obs").value });
     manMsg("#rel-msg", `${t("rel.gerado")} · ${r.arquivo} · ${relTamanho(r.bytes)}`, "ok");
     relCarregar();
+  estCarregar();
   } catch (e) { manMsg("#rel-msg", e.message, "err"); }
   b.disabled = false;
 }
@@ -304,6 +305,49 @@ function bkpIniciar() {
   $("#bkp-restaurar").onclick = bkpRestaurar;
 }
 
+// ---------- Teste de estresse ----------
+let estTimer = null;
+
+function estDegraus(lista) {
+  $("#est-degraus").replaceChildren(...lista.map((d) => el("li", {},
+    el("div", {}, el("p", {}, el("strong", {}, t("est.degrau").replace("{n}", d.cameras))),
+      el("span", { class: "tiny" }, `${t("est.cpu")} ${d.cpu.toFixed(0)} % · ${t("est.ram")} ${d.ram_pct.toFixed(0)} % · ${t("est.fps")} ${d.fps_min.toFixed(1)}${d.temperatura == null ? "" : ` · ${d.temperatura.toFixed(0)} °C`}`)),
+    el("span", { class: d.falha ? "tag est-falha" : "tag est-ok" }, d.falha || t("est.ok")))));
+}
+
+async function estCarregar() {
+  try {
+    const r = await api("/api/estresse");
+    const a = r.andamento;
+    $("#est-iniciar").disabled = a.rodando;
+    $("#est-cancelar").hidden = !a.rodando;
+    const v = $("#est-veredito");
+    if (a.rodando) {
+      manMsg("#est-msg", t("est.rodando").replace("{n}", a.cameras));
+      estDegraus(a.degraus); v.hidden = true;
+      clearTimeout(estTimer); estTimer = setTimeout(estCarregar, 2000);
+      return;
+    }
+    manMsg("#est-msg", a.erro || "", a.erro ? "err" : "");
+    if (r.resultado) {
+      const quando = new Date(r.resultado.quando * 1000).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+      v.textContent = `${t("est.resultado").replace("{quando}", quando)} ${r.resultado.veredito}`;
+      v.hidden = false;
+      estDegraus(r.resultado.degraus);
+    } else { v.hidden = false; v.textContent = t("est.nunca"); estDegraus([]); }
+  } catch (e) { manMsg("#est-msg", e.message, "err"); }
+}
+
+async function estIniciar() {
+  try { await api("/api/estresse", { maximo: Number($("#est-maximo").value) }); estCarregar(); }
+  catch (e) { manMsg("#est-msg", e.message, "err"); }
+}
+
+function estIniciarTela() {
+  $("#est-iniciar").onclick = estIniciar;
+  $("#est-cancelar").onclick = async () => { try { await api("/api/estresse", undefined, "DELETE"); manMsg("#est-msg", t("est.cancelado")); } catch (e) { manMsg("#est-msg", e.message, "err"); } };
+}
+
 // ---------- Entrada da tela ----------
 let manutencaoCarregada = false;
 function manutencaoAtivar(ativo) {
@@ -319,4 +363,5 @@ function iniciarManutencao() {
   hwIniciar();
   relIniciar();
   bkpIniciar();
+  estIniciarTela();
 }

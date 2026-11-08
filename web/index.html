@@ -363,6 +363,23 @@
           </details>
         </div>
 
+        <div class="block" id="est-bloco">
+          <div class="block-head">
+            <h2 data-i18n="est.titulo"></h2>
+          </div>
+          <p class="hint" data-i18n="est.desc"></p>
+          <div class="actions mt">
+            <label class="man-campo est-max"><span data-i18n="est.maximo"></span>
+              <select id="est-maximo"><option value="4">4</option><option value="8">8</option><option value="16" selected>16</option><option value="32">32</option></select>
+            </label>
+            <button class="btn primary" type="button" id="est-iniciar"><span data-i18n="est.iniciar"></span></button>
+            <button class="btn ghost" type="button" id="est-cancelar" hidden><span data-i18n="est.cancelar"></span></button>
+          </div>
+          <p class="msg" id="est-msg" role="status"></p>
+          <p class="est-veredito" id="est-veredito" hidden></p>
+          <ul class="list mt" id="est-degraus"></ul>
+        </div>
+
         <div class="block" id="rel-bloco">
           <div class="block-head">
             <h2 data-i18n="rel.titulo"></h2>
