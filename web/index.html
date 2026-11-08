@@ -8,6 +8,7 @@
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/rede.css">
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -38,6 +39,7 @@
           <li><button role="tab" data-tab="inicio" aria-selected="true"><svg class="ico"><use href="#i-home"/></svg><span data-i18n="tab.inicio"></span></button></li>
           <li><button role="tab" data-tab="cameras"><svg class="ico"><use href="#i-cam"/></svg><span data-i18n="tab.cameras"></span></button></li>
           <li><button role="tab" data-tab="modulos"><svg class="ico"><use href="#i-chip"/></svg><span data-i18n="tab.modulos"></span></button></li>
+          <li><button role="tab" data-tab="rede"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg><span data-i18n="tab.rede"></span></button></li>
           <li><button role="tab" data-tab="integracoes"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="tab.integracoes"></span></button></li>
         </ul>
       </nav>
@@ -294,6 +296,49 @@
         </div>
       </section>
 
+      <!-- Rede -->
+      <section id="rede" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1 data-i18n="tab.rede"></h1>
+            <p class="lede" data-i18n="guia.rede"></p>
+          </div>
+          <button class="btn primary" id="rede-foto"><svg class="ico"><use href="#i-search"/></svg><span data-i18n="rede.foto_btn"></span></button>
+        </header>
+
+        <div class="block" id="rede-prog-bloco" hidden>
+          <div class="rede-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="rede-prog"><div class="rede-prog-bar" id="rede-prog-bar"></div></div>
+          <p class="msg" id="rede-prog-txt" role="status"></p>
+        </div>
+
+        <div class="block">
+          <div class="block-head">
+            <h2 data-i18n="rede.inventario"></h2>
+            <span class="tiny mono" id="rede-meta"></span>
+          </div>
+          <p class="hint" data-i18n="rede.inventario_desc"></p>
+          <p class="msg err" id="rede-erro" role="alert" hidden></p>
+          <div class="table-wrap mt">
+            <table class="table rede-tabela">
+              <thead><tr><th data-i18n="rede.col_ip"></th><th data-i18n="rede.col_tipo"></th><th data-i18n="rede.col_fabricante"></th><th data-i18n="rede.col_mac"></th><th data-i18n="rede.col_portas"></th><th data-i18n="rede.col_cadastrada"></th></tr></thead>
+              <tbody id="rede-inventario"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 data-i18n="rede.mudancas"></h2>
+          <p class="hint" id="rede-mudancas-desc"></p>
+          <ul class="list mt" id="rede-mudancas"></ul>
+        </div>
+
+        <div class="block">
+          <h2 data-i18n="rede.historico"></h2>
+          <p class="hint" data-i18n="rede.historico_desc"></p>
+          <ul class="list mt" id="rede-historico"></ul>
+        </div>
+      </section>
+
       <!-- Integrações -->
       <section id="integracoes" class="page" role="tabpanel" hidden>
         <header class="pagehead">
@@ -417,5 +462,6 @@
   </dialog>
 
   <script src="/app.js"></script>
+  <script src="/rede.js" defer></script>
 </body>
 </html>

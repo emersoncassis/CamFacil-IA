@@ -72,6 +72,11 @@ pub fn router(app: Shared) -> Router {
         )
         .route("/api/tailscale", get(get_tailscale))
         .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
+        .route(
+            "/api/rede/foto",
+            get(crate::rede::get_foto).post(crate::rede::post_foto),
+        )
+        .route("/api/rede/fotos/{id}", get(crate::rede::get_foto_id))
         .fallback(static_file)
         .with_state(app)
 }
