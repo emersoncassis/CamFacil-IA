@@ -660,11 +660,15 @@ const svgNS = "http://www.w3.org/2000/svg";
 function svgEl(tag, attrs) { const e = document.createElementNS(svgNS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); return e; }
 const pts = (lista) => lista.map((p) => `${p.x * 1000},${p.y * 1000}`).join(" ");
 
+let mostrarFormas = false;
+try { mostrarFormas = localStorage.getItem("cf-formas") === "1"; } catch (_) { /* opcional */ }
+
 function desenharSalvas() {
   const svg = $("#desenho");
   svg.replaceChildren();
-  // Formas salvas só aparecem no modo de desenho (para o cliente, só balões).
-  if (desenho.modo !== "ver") {
+  // Formas salvas aparecem no modo de desenho. No modo Ver, só se o operador
+  // ligar "Mostrar linhas e zonas" (padrão: só os balões, regra 4).
+  if (desenho.modo !== "ver" || mostrarFormas) {
     for (const r of regrasAbertas) {
       svg.append(r.forma === "linha"
         ? svgEl("polyline", { class: "forma linha salva", points: pts(r.pontos) })
@@ -1349,6 +1353,16 @@ async function main() {
   // rede.js é "defer": pode carregar depois deste arquivo.
   if (typeof iniciarRede === "function") iniciarRede(); else addEventListener("DOMContentLoaded", () => iniciarRede());
   $("#sug-iniciar").onclick = sugIniciar;
+  const formas = $("#formas-toggle");
+  if (formas) {
+    formas.checked = mostrarFormas;
+    $("#formas-wrap").title = t("formas.dica");
+    formas.onchange = () => {
+      mostrarFormas = formas.checked;
+      try { localStorage.setItem("cf-formas", mostrarFormas ? "1" : "0"); } catch (_) { /* opcional */ }
+      desenharSalvas();
+    };
+  }
   $("#sug-cancelar").onclick = async () => {
     await sugParar();
     $("#sug-lista").replaceChildren(el("li", { class: "tiny" }, t("sug.cancelada")));
