@@ -59,6 +59,7 @@ function showTab(id) {
   tgAtivar(id === "integracoes");
   camerasAtivar(id === "cameras");
   ligarAtivar(id === "cameras");
+  manutencaoAtivar(id === "manutencao");
 }
 
 // ---------- Visão geral ----------
@@ -1104,6 +1105,7 @@ async function main() {
   try { tab = localStorage.getItem("cf-tab") || tab; } catch (_) { /* opcional */ }
   // Sem câmera nenhuma: o programa abre direto em "Ligar câmera".
   try { const { cameras } = await api("/api/cameras"); if (!cameras.length) tab = "cameras"; } catch (_) { /* segue */ }
+  iniciarManutencao();
   await loadSystem();
   showTab(tab);
   disclaimer();

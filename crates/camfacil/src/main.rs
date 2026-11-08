@@ -12,6 +12,7 @@ mod notificacoes;
 mod painel;
 mod resumo;
 mod tailscale;
+mod tv;
 mod video;
 
 use cf_core::{paths, ports, store::Store};

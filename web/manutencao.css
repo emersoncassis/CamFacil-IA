@@ -1,0 +1,14 @@
+/* Tela Manutenção (fase 5): modo TV, máquina, relatório, backup e estresse.
+ * Só variáveis de tokens.css. */
+.man-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s3); max-width: 720px; }
+.man-campo { display: flex; flex-direction: column; gap: var(--s1); font-size: var(--fs-sm); color: var(--text-3); }
+.man-campo input, .man-campo select { width: 100%; }
+.man-logo { display: flex; gap: var(--s4); align-items: center; max-width: 720px; }
+.man-logo-prev { flex: none; width: 160px; height: 72px; display: grid; place-items: center; background: var(--surface); border: 1px dashed var(--line-strong); border-radius: var(--r); overflow: hidden; }
+.man-logo-prev img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.passos { margin: var(--s3) 0 0; padding-left: var(--s5); color: var(--text-2); font-size: var(--fs-sm); max-width: 68ch; }
+.passos li { margin: var(--s1) 0; }
+.passos code { font-family: var(--font-mono); color: var(--text); }
+#tv-cameras li { cursor: default; }
+#tv-cameras .ordem { display: inline-flex; gap: 2px; }
+#tv-cameras .tiny { margin-left: var(--s2); }

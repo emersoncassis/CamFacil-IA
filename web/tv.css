@@ -1,0 +1,55 @@
+/* Modo TV (quiosque). Só variáveis de tokens.css. Fundo preto, texto grande
+ * (legível a 3 m), nenhuma caixa: só os balões das regras. */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+html, body.tv { height: 100%; overflow: hidden; background: var(--c-black); cursor: none; }
+body.tv { display: flex; flex-direction: column; }
+body.tv.com-mouse { cursor: default; }
+
+/* Mosaico: 1, 2, 4, 6 ou 9 câmeras */
+.mosaico { flex: 1; min-height: 0; display: grid; gap: var(--s1); padding: var(--s1); }
+.mosaico.g1 { grid-template-columns: 1fr; }
+.mosaico.g2 { grid-template-columns: 1fr 1fr; }
+.mosaico.g4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.mosaico.g6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; }
+.mosaico.g9 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
+
+.cam { position: relative; min-width: 0; min-height: 0; background: var(--c-900); overflow: hidden; border-radius: var(--r-sm); }
+.cam img.video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+.cam .baloes { position: absolute; inset: 0; pointer-events: none; }
+.cam .baloes .cf-bubble { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; }
+.cam .nome { position: absolute; left: var(--s3); bottom: var(--s2); color: var(--c-300); font: 500 var(--fs-tv-sm)/1.2 var(--font); text-shadow: 0 1px 2px var(--c-black); }
+.cam .fora { position: absolute; inset: 0; display: grid; place-items: center; color: var(--c-500); font-size: var(--fs-tv-sm); background: var(--c-900); text-align: center; padding: var(--s4); }
+
+/* Texto grande para TV: tamanhos relativos à tela */
+:root { --fs-tv-sm: clamp(14px, 1.4vw, 26px); --fs-tv: clamp(18px, 2.2vw, 40px); --fs-tv-lg: clamp(24px, 3.2vw, 56px); }
+.mosaico .cf-bubble { font-size: var(--fs-tv-sm); padding: var(--s2) var(--s4); }
+.mosaico.g1 .cf-bubble, .mosaico.g2 .cf-bubble { font-size: var(--fs-tv); padding: var(--s3) var(--s5); }
+.mosaico .cf-bubble::before { width: 0.5em; height: 0.5em; }
+
+/* Piscada da imagem no alerta (igual à do ao vivo) */
+.cam.alerta { animation: cf-tv-alerta 1.2s ease-out; }
+.cam.alerta::after { content: ""; position: absolute; inset: 0; pointer-events: none; border: 4px solid var(--c-alert); border-radius: inherit; animation: cf-tv-alerta-borda 1.2s ease-out forwards; }
+@keyframes cf-tv-alerta { 0%, 30%, 60% { filter: brightness(1.25); } 15%, 45%, 100% { filter: none; } }
+@keyframes cf-tv-alerta-borda { 0%, 30%, 60% { opacity: 1; } 15%, 45% { opacity: .2; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cam.alerta { animation: none; } .cam.alerta::after { animation: none; opacity: 0; } }
+
+/* Relógio e indicador de página */
+.relogio { position: fixed; top: var(--s3); right: var(--s4); color: var(--c-100); font-size: var(--fs-tv); line-height: 1; padding: var(--s1) var(--s3); background: rgba(0, 0, 0, 0.6); border-radius: var(--r-pill); }
+.paginas { position: fixed; top: var(--s3); left: var(--s4); color: var(--c-500); font-size: var(--fs-tv-sm); padding: var(--s1) var(--s3); background: rgba(0, 0, 0, 0.6); border-radius: var(--r-pill); }
+
+/* Rodapé: logo à esquerda, QR do WhatsApp à direita */
+.rodape { flex: none; display: flex; align-items: center; gap: var(--s4); padding: var(--s2) var(--s4); min-height: 0; }
+.rodape:empty, .rodape.vazio { display: none; }
+.rodape .espaco { flex: 1; }
+.rodape .logo { max-height: clamp(40px, 7vh, 96px); max-width: 30vw; object-fit: contain; }
+.rodape .whats { display: flex; align-items: center; gap: var(--s3); }
+.rodape .chamada { color: var(--c-300); font-size: var(--fs-tv-sm); text-align: right; max-width: 40vw; }
+.rodape .qr { height: clamp(56px, 9vh, 120px); width: auto; background: var(--c-white); padding: var(--s1); border-radius: var(--r-sm); display: block; }
+
+/* Aviso passageiro (F11, teclas) */
+.aviso { position: fixed; left: 50%; bottom: 12vh; transform: translateX(-50%); max-width: 80vw; padding: var(--s3) var(--s5); background: var(--c-850); color: var(--c-100); border: 1px solid var(--c-line-strong); border-radius: var(--r); font-size: var(--fs-tv-sm); text-align: center; transition: opacity .4s; }
+.aviso.sumindo { opacity: 0; }
+.vazio-tela { display: grid; place-items: center; height: 100%; color: var(--c-500); font-size: var(--fs-tv); text-align: center; padding: var(--s6); }
