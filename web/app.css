@@ -262,6 +262,41 @@ button.link:hover { color: var(--text); }
 .opcao .switch { margin-top: 2px; flex: none; }
 .codigo-par { margin: var(--s2) 0 0; padding: var(--s2) var(--s3); font-size: var(--fs-lg); letter-spacing: .06em; color: var(--text); background: var(--field); border: 1px solid var(--line-strong); border-radius: var(--r); user-select: all; overflow-wrap: anywhere; }
 .som-regra { display: inline-flex; align-items: center; gap: var(--s2); cursor: pointer; }
+/* Autocorreção de IP: chave + rótulo + ajuda curta; a linha inteira é o alvo do toque. */
+.autoip, .form label.autoip { display: flex; flex-direction: row; align-items: flex-start; gap: var(--s2); cursor: pointer; padding: var(--s1) 0; color: var(--text-2); font-size: var(--fs-sm); }
+.autoip .switch { flex: none; margin-top: 1px; }
+.autoip-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.autoip-txt .tiny { line-height: 1.35; }
+.autoip.travado { cursor: not-allowed; }
+.autoip.travado .autoip-txt > span:first-child { color: var(--text-3); }
+.autoip-tag { white-space: nowrap; }
+.note.info { color: var(--text-2); margin: 0 0 var(--s3); }
+.note.info .ico { color: var(--accent); }
+/* Gravador (DVR/NVR): canais em grade compacta, paginada pelo tela.js. */
+.gravador { display: flex; flex-direction: column; gap: var(--s3); max-width: 720px; }
+.gravador-titulo { margin: 0; font-size: var(--fs-md); color: var(--text); font-weight: 600; }
+.gravador-opcoes { gap: var(--s2) var(--s3); }
+.gravador-barra { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.list.gravador-canais { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s2); border: 0; }
+.list.gravador-canais > li { padding: 0; border: 0; background: none; display: block; }
+.list.gravador-canais > li.pg-fora { display: none; }
+.canal { display: flex; align-items: center; gap: var(--s2); min-height: 40px; padding: var(--s1) var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--field); cursor: pointer; }
+.canal:has(input:checked) { border-color: var(--accent); }
+.canal:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.canal input { flex: none; margin: 0; accent-color: var(--accent); }
+.canal-txt { display: flex; flex-direction: column; min-width: 0; font-size: var(--fs-sm); }
+.canal-txt .tiny { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gravador > .tiny { margin: 0; }
+.gravador-opcoes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gravador-opcoes .span-2 { grid-column: span 1; }
+/* Escolhendo canais: o passo "usuário e senha" já foi; some para dar espaço. */
+#ligar-passo2:has(#ligar-gravador:not([hidden])) > .passo { display: none; }
+@media (max-height: 700px) {
+  .gravador { gap: var(--s2); }
+  .gravador-titulo { font-size: var(--fs-sm); }
+  #ligar-gravador-dica { display: none; }
+}
+.rede-auto-log li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s1) var(--s3); }
 /* Piscada da imagem quando um alerta dispara */
 .viewer.alerta { animation: cf-tela-alerta 1.2s ease-out; }
 .viewer.alerta::after { content: ""; position: absolute; inset: 0; pointer-events: none; border: 3px solid var(--c-alert); border-radius: inherit; box-shadow: inset 0 0 60px rgba(255, 156, 156, .35); animation: cf-tela-alerta-borda 1.2s ease-out forwards; }

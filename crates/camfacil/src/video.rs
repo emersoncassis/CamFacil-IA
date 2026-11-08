@@ -540,7 +540,7 @@ pub fn definir_notificador(n: Notificador) {
     let _ = NOTIFICADOR.set(n);
 }
 
-fn notificar(chave: String, texto: String, foto: Option<Arc<Vec<u8>>>) {
+pub(crate) fn notificar(chave: String, texto: String, foto: Option<Arc<Vec<u8>>>) {
     if let Some(n) = NOTIFICADOR.get() {
         n(cf_notify::Alerta { chave, texto, foto });
     }

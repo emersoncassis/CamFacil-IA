@@ -7,6 +7,7 @@ mod api;
 mod arquivo;
 mod assets;
 mod autoinicio;
+mod autoip;
 mod backup;
 mod botoes;
 mod elo;
