@@ -265,7 +265,7 @@ Se ele te ajudou a aprender, a vender ou a ganhar tempo, **pague um café**. Cad
 |---|---|
 | **Doação livre** · qualquer valor | Seu nome e recado no mural |
 | **Até R$ 500** · pedido de funcionalidade | Sua sugestão é lida e avaliada por mim |
-| **A partir de R$ 1.000** · conversa | Uma hora de conversa comigo por vídeo |
+| **A partir de R$ 1.000** · conversa | Uma hora de conversa comigo pelo Google Meet |
 | **A partir de R$ 5.000** · desenvolvimento | Desenvolvemos juntos uma aplicação para você, com base no CamFácil IA |
 
 Ideias e pedidos de funcionalidade passam pelo apoio. Prefere fazer você mesmo? O código é aberto: abra um pull request, que eu avalio quando possível.

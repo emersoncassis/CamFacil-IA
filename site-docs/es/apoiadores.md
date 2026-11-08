@@ -29,7 +29,7 @@ CamFácil IA es libre y gratuito, y va a seguir así. Cada apoyo vuelve entero a
     |---|---|
     | **Donación libre** · cualquier monto | Tu nombre y tu mensaje en el mural, si quieres |
     | **Hasta R$ 500** · pedido de funcionalidad | Leo y evalúo tu sugerencia de mejora |
-    | **Desde R$ 1.000** · conversación | Una hora de conversación conmigo por video sobre tu proyecto |
+    | **Desde R$ 1.000** · conversación | Una hora de conversación conmigo por Google Meet sobre tu proyecto |
     | **Desde R$ 5.000** · desarrollo | Desarrollamos juntos una aplicación para ti, basada en CamFácil IA |
 
     !!! tip "Ideas y pedidos de funcionalidad pasan por aquí"
@@ -53,7 +53,7 @@ CamFácil IA es libre y gratuito, y va a seguir así. Cada apoyo vuelve entero a
           </select>
         </label>
         <label class="largo">Mensaje<textarea data-campo="Mensaje" name="recado" rows="1" maxlength="400"></textarea></label>
-        <label class="largo">¿Qué te gustaría que se desarrollara? (opcional)<textarea data-campo="Pedido" name="pedido" rows="1" maxlength="600"></textarea></label>
+        <label class="largo">¿Qué quieres? Una función, el tema de la conversación o la aplicación (opcional)<textarea data-campo="Qué quiero" name="pedido" rows="1" maxlength="600"></textarea></label>
       </div>
       <label class="apoio-ok"><input type="checkbox" data-campo="Publicar en el mural" data-sim="sí, autorizo" data-nao="no" checked> Autorizo publicar mi nombre, link y mensaje en el mural</label>
       <div class="apoio-botoes">
