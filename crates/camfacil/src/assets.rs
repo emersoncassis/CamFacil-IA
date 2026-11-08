@@ -27,6 +27,20 @@ pub const ASSETS: &[Asset] = &[
         "i18n/pt-BR.json"
     ),
     asset!("/icon.svg", "image/svg+xml", "icon.svg"),
+    // Fase 5: Modo TV e tela Manutenção.
+    asset!("/tv.html", "text/html; charset=utf-8", "tv.html"),
+    asset!("/tv.css", "text/css; charset=utf-8", "tv.css"),
+    asset!("/tv.js", "text/javascript; charset=utf-8", "tv.js"),
+    asset!(
+        "/manutencao.css",
+        "text/css; charset=utf-8",
+        "manutencao.css"
+    ),
+    asset!(
+        "/manutencao.js",
+        "text/javascript; charset=utf-8",
+        "manutencao.js"
+    ),
 ];
 
 pub fn find(path: &str) -> Option<&'static Asset> {

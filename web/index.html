@@ -8,6 +8,7 @@
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/manutencao.css">
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -39,6 +40,7 @@
           <li><button role="tab" data-tab="cameras"><svg class="ico"><use href="#i-cam"/></svg><span data-i18n="tab.cameras"></span></button></li>
           <li><button role="tab" data-tab="modulos"><svg class="ico"><use href="#i-chip"/></svg><span data-i18n="tab.modulos"></span></button></li>
           <li><button role="tab" data-tab="integracoes"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="tab.integracoes"></span></button></li>
+          <li><button role="tab" data-tab="manutencao"><svg class="ico" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 0 0-5 5l-6 6a1.5 1.5 0 0 0 2 2l6-6a4 4 0 0 0 5-5l-2.5 2.5-2-2z"/></svg><span data-i18n="tab.manutencao"></span></button></li>
         </ul>
       </nav>
       <div class="rail-foot">
@@ -294,6 +296,56 @@
         </div>
       </section>
 
+      <!-- Manutenção -->
+      <section id="manutencao" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1 data-i18n="tab.manutencao"></h1>
+            <p class="lede" data-i18n="guia.manutencao"></p>
+          </div>
+        </header>
+
+        <div class="block" id="tv-bloco">
+          <div class="block-head">
+            <h2 data-i18n="tv.titulo"></h2>
+            <a class="btn sm" href="/tv" target="_blank" rel="noopener" id="tv-abrir"><span data-i18n="tv.abrir"></span></a>
+          </div>
+          <p class="hint" data-i18n="tv.desc"></p>
+          <div class="result"><code class="mono" id="tv-endereco"></code><button class="btn ghost sm" id="tv-copiar" type="button"><svg class="ico sm"><use href="#i-copy"/></svg><span data-i18n="cam.copiar"></span></button></div>
+          <p class="tiny mt" id="tv-endereco-dica"></p>
+          <h3 class="sub" data-i18n="tv.cameras"></h3>
+          <p class="hint" data-i18n="tv.cameras_dica"></p>
+          <ul class="list mt" id="tv-cameras"></ul>
+          <div class="man-grid mt">
+            <label class="man-campo"><span data-i18n="tv.whatsapp"></span><input id="tv-whatsapp" class="mono" type="tel" inputmode="numeric" autocomplete="off" data-i18n-ph="tv.whatsapp_ph"></label>
+            <label class="man-campo"><span data-i18n="tv.chamada"></span><input id="tv-chamada" type="text" maxlength="60" autocomplete="off" data-i18n-ph="tv.chamada_ph"></label>
+          </div>
+          <div class="man-logo mt">
+            <div class="man-logo-prev" id="tv-logo-prev"><img id="tv-logo-img" alt="" hidden><span class="tiny" id="tv-logo-vazio" data-i18n="tv.logo_vazia"></span></div>
+            <div>
+              <p class="hint" style="margin:0" data-i18n="tv.logo_dica"></p>
+              <div class="actions mt">
+                <label class="btn sm"><span data-i18n="tv.logo_enviar"></span><input type="file" id="tv-logo-file" accept="image/png" hidden></label>
+                <button class="btn ghost sm" type="button" id="tv-logo-remover" hidden data-i18n="tv.logo_remover"></button>
+              </div>
+            </div>
+          </div>
+          <div class="actions mt" id="tv-opcoes">
+            <label class="som-regra"><span class="switch"><input type="checkbox" id="tv-som"><span></span></span><span class="tiny" data-i18n="tv.som"></span></label>
+            <label class="som-regra"><span class="switch"><input type="checkbox" id="tv-piscar"><span></span></span><span class="tiny" data-i18n="tv.piscar"></span></label>
+            <label class="som-regra"><span class="switch"><input type="checkbox" id="tv-relogio"><span></span></span><span class="tiny" data-i18n="tv.relogio"></span></label>
+          </div>
+          <div class="actions mt">
+            <button class="btn primary" type="button" id="tv-salvar"><span data-i18n="tv.salvar"></span></button>
+          </div>
+          <p class="msg" id="tv-msg" role="status"></p>
+          <details class="avancado mt">
+            <summary data-i18n="tv.como_abrir"></summary>
+            <ol class="passos" id="tv-passos"></ol>
+          </details>
+        </div>
+      </section>
+
       <!-- Integrações -->
       <section id="integracoes" class="page" role="tabpanel" hidden>
         <header class="pagehead">
@@ -417,5 +469,6 @@
   </dialog>
 
   <script src="/app.js"></script>
+  <script src="/manutencao.js"></script>
 </body>
 </html>

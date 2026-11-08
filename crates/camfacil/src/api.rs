@@ -72,6 +72,19 @@ pub fn router(app: Shared) -> Router {
         )
         .route("/api/tailscale", get(get_tailscale))
         .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
+        // Fase 5 (Manutenção): módulos próprios.
+        .route("/tv", get(crate::tv::pagina))
+        .route(
+            "/api/tv",
+            get(crate::tv::get_config).post(crate::tv::post_config),
+        )
+        .route("/api/tv/estado", get(crate::tv::get_estado))
+        .route(
+            "/api/tv/logo",
+            post(crate::tv::post_logo).delete(crate::tv::delete_logo),
+        )
+        .route("/api/tv/logo.png", get(crate::tv::get_logo))
+        .route("/api/tv/whatsapp.svg", get(crate::tv::get_whatsapp_qr))
         .fallback(static_file)
         .with_state(app)
 }
