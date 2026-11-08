@@ -281,6 +281,7 @@ version = "0.4.1"
 dependencies = [
  "axum",
  "base64 0.23.1",
+ "cf-core",
  "deadpool-postgres",
  "ed25519-dalek 3.0.0",
  "futures-util",

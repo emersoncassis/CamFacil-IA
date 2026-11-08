@@ -4,5 +4,6 @@ target
 **/*.sqlite
 .impeccable
 docs
+!docs/esquemas
 *.md
 !crates/**/*.md
