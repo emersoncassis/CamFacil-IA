@@ -17,5 +17,5 @@ O SDD-06 deixou em aberto Tauri 2 mobile vs. Kotlin nativo, com prioridade para 
 ## Consequências
 
 - APK de ~140 KB (meta era < 10 MB), minSdk 24 (Android 7).
-- O núcleo Rust **não** roda dentro do APK ainda (`aarch64-linux-android`, ver SDD-06 · Dispositivos); fica para uma ADR futura se a TV Box Android virar servidor.
+- O núcleo Rust **não** roda dentro do APK ainda (`aarch64-linux-android`, ver SDD-06 · Dispositivos); fica para uma ADR futura se a TV Box Android virar servidor. **Atualização:** resolvido na [ADR 0010](0010-servidor-no-android.md) (núcleo + ffmpeg mínimo no APK, ~7 MB).
 - Alertas por consulta a cada 10 s (sem push): simples e offline-first, mas gastam um pouco de bateria; o app pede a exceção de bateria pelo menu.

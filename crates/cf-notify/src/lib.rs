@@ -4,5 +4,6 @@
 pub mod cofre;
 pub mod servico;
 pub mod telegram;
+pub mod tls;
 
 pub use servico::{Alerta, Anfitriao, Telegram};

@@ -9,6 +9,8 @@ import java.net.URL
 object Config {
     const val SITE = "https://cfia.ysafe.com.br"
     const val PORTA_PADRAO = 7070
+    const val MODO_SERVIDOR = "servidor"
+    const val MODO_REMOTO = "remoto"
 
     private fun prefs(c: Context): SharedPreferences =
         c.getSharedPreferences("camfacil", Context.MODE_PRIVATE)
@@ -23,6 +25,35 @@ object Config {
         prefs(c).edit().putString("endereco", endereco).putBoolean("local", local)
             .remove("ultimo_evento").apply()
     }
+
+    /** Modo escolhido na tela inicial: [MODO_SERVIDOR], [MODO_REMOTO] ou null (ainda não escolheu). */
+    fun modo(c: Context): String? = prefs(c).getString("modo", null)
+        // Quem já usava o app (só visualizador) e atualizou continua no modo remoto.
+        ?: if (endereco(c) != null) MODO_REMOTO else null
+    fun definirModo(c: Context, m: String?) = prefs(c).edit().putString("modo", m).apply()
+    fun servidor(c: Context): Boolean = modo(c) == MODO_SERVIDOR
+
+    /** O usuário quer o servidor deste aparelho ligado (religa no boot/atualização). */
+    fun servidorLigado(c: Context): Boolean = prefs(c).getBoolean("servidor_ligado", false)
+    fun ligarServidor(c: Context, v: Boolean) = prefs(c).edit().putBoolean("servidor_ligado", v).apply()
+
+    fun iniciarNoBoot(c: Context): Boolean = prefs(c).getBoolean("servidor_boot", true)
+    fun definirIniciarNoBoot(c: Context, v: Boolean) = prefs(c).edit().putBoolean("servidor_boot", v).apply()
+
+    /** Aceitar acesso pela rede Wi-Fi da loja (`--lan`); sem isso, só este aparelho e o Tailscale. */
+    fun aceitarRede(c: Context): Boolean = prefs(c).getBoolean("servidor_lan", false)
+    fun definirAceitarRede(c: Context, v: Boolean) = prefs(c).edit().putBoolean("servidor_lan", v).apply()
+
+    /** Porta em que o servidor deste aparelho respondeu da última vez. */
+    fun portaServidor(c: Context): Int = prefs(c).getInt("servidor_porta", PORTA_PADRAO)
+    fun salvarPortaServidor(c: Context, p: Int) = prefs(c).edit().putInt("servidor_porta", p).apply()
+
+    fun enderecoLocal(c: Context): String = "http://127.0.0.1:${portaServidor(c)}"
+
+    fun esquecerEndereco(c: Context) = prefs(c).edit().remove("endereco").remove("local").apply()
+
+    /** O endereço salvo é o servidor deste próprio aparelho? */
+    fun enderecoEhLocal(c: Context): Boolean = endereco(c)?.startsWith("http://127.0.0.1:") == true
 
     fun alertasLigados(c: Context): Boolean = prefs(c).getBoolean("alertas", false)
     fun ligarAlertas(c: Context, v: Boolean) = prefs(c).edit().putBoolean("alertas", v).apply()

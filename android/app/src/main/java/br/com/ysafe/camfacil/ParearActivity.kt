@@ -70,6 +70,7 @@ class ParearActivity : Activity() {
 
         col.addView(Ui.botao(this, getString(R.string.parear_nuvem)) {
             Config.salvar(this, Config.SITE, local = false)
+            Config.definirModo(this, Config.MODO_REMOTO)
             abrirPainel()
         }.apply { (layoutParams as LinearLayout.LayoutParams).topMargin = px(24) })
 
@@ -101,6 +102,7 @@ class ParearActivity : Activity() {
                     aviso.text = getString(R.string.parear_falhou, end)
                 } else {
                     Config.salvar(this, end, local)
+                    Config.definirModo(this, Config.MODO_REMOTO)
                     abrirPainel()
                 }
             }
