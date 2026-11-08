@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>Ao vivo · CamFácil IA</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/tokens.css">
+  <style>
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+    header { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line); }
+    header strong { font-size: var(--fs-md); }
+    header .tiny { color: var(--text-3); font-size: var(--fs-xs); margin-left: auto; }
+    header a { color: var(--text-2); font-size: var(--fs-sm); }
+    .mosaico { display: grid; gap: var(--s1); padding: var(--s1); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    figure { margin: 0; position: relative; background: var(--surface); border-radius: var(--r-sm); overflow: hidden; aspect-ratio: 16 / 9; cursor: zoom-in; }
+    figure img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    figcaption { position: absolute; left: var(--s1); bottom: var(--s1); padding: 2px var(--s2); border-radius: var(--r-pill); background: var(--c-black); color: var(--text); font-size: var(--fs-xs); display: flex; align-items: center; gap: 6px; }
+    figcaption i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    figure.off figcaption i { background: var(--c-danger); }
+    figure.cheia { position: fixed; inset: 0; z-index: 2; aspect-ratio: auto; border-radius: 0; cursor: zoom-out; }
+    .vazio { padding: var(--s5) var(--s3); color: var(--text-2); text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/icon.svg" width="20" height="20" alt="">
+    <strong id="titulo">Ao vivo</strong>
+    <span class="tiny" id="info"></span>
+    <a href="/">Painel completo</a>
+  </header>
+  <main class="mosaico" id="mosaico"></main>
+  <script src="/aovivo.js"></script>
+</body>
+</html>

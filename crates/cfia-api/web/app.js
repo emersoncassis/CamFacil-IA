@@ -73,29 +73,31 @@ function mostrar(id) {
 
 // ---------- Agentes ----------
 async function carregarAgentes() {
-  const corpo = $("#lista-agentes");
+  const caixa = $("#lista-agentes");
   try {
     const { agentes } = await api("/api/agentes");
     if (!agentes.length) {
-      corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "5" }, "Nenhum agente pareado ainda. Clique em Parear agente para ver como.")));
+      caixa.replaceChildren(el("div", { class: "block cliente-vazio" },
+        el("h2", {}, "Nenhum cliente ainda"),
+        el("p", { class: "hint" }, "Instale o CamFácil IA no computador do cliente e pareie com este painel. As câmeras dele aparecem aqui."),
+        el("div", { class: "actions" },
+          el("button", { class: "btn primary", type: "button", onclick: () => mostrar("comecar") }, "Instalar num cliente"),
+          el("button", { class: "btn", type: "button", onclick: () => $("#como-parear").click() }, "Já instalei, parear"))));
       return;
     }
-    corpo.replaceChildren(...agentes.flatMap((a) => {
-      const campo = el("input", { class: "cell-edit", value: a.apelido_cliente, placeholder: "Nome do cliente", "aria-label": "Nome do cliente", maxlength: "60" });
+    caixa.replaceChildren(...agentes.map((a) => {
+      const campo = el("input", { class: "cell-edit cliente-nome", value: a.apelido_cliente, placeholder: "Nome do cliente", "aria-label": "Nome do cliente", maxlength: "60" });
       campo.addEventListener("change", async () => {
         try { await api(`/api/agentes/${a.id}`, "PATCH", { apelido_cliente: campo.value }); } catch (e) { campo.value = a.apelido_cliente; alert(e.message); }
       });
-      const linha = el("tr", { "data-agente": a.id },
-        el("td", {}, campo),
-        el("td", {}, el("span", { class: "state" }, el("span", { class: "dot " + (a.online ? "on" : "") }), a.online ? "On-line" : "Desconectado")),
-        el("td", { class: "mono" }, a.impressao),
-        el("td", { class: "mono" }, (a.estado && a.estado.versao) || a.versao || "—"),
-        el("td", { class: "right" }, data(a.pareado_em)));
-      const det = el("tr", { class: "detalhe", "data-estado": a.id }, el("td", { colspan: "5" }, visaoAgente(a.estado, a.estado_em, a.online)));
-      return [linha, det];
+      return el("article", { class: "cliente", "data-agente": a.id },
+        el("header", {}, campo,
+          el("span", { class: "state", "data-online": a.id }, el("span", { class: "dot " + (a.online ? "on" : "") }), a.online ? "On-line" : "Desconectado"),
+          el("span", { class: "tiny mono", title: `Impressão ${a.impressao} · pareado em ${data(a.pareado_em)}` }, (a.estado && a.estado.versao) || a.versao || "")),
+        el("div", { "data-estado": a.id }, visaoAgente(a.estado, a.estado_em, a.online)));
     }));
   } catch (e) {
-    corpo.replaceChildren(el("tr", { class: "empty" }, el("td", { colspan: "5" }, e.message)));
+    caixa.replaceChildren(el("p", { class: "msg err" }, e.message));
   }
 }
 
@@ -125,9 +127,12 @@ function visaoAgente(e, em, online) {
     : "Ainda sem resumo deste computador. Ele aparece quando o programa estiver aberto e com internet.");
   const cams = e.cameras || [];
   const on = cams.filter((c) => c.online).length;
+  // Ao vivo pelo Tailscale: abre a página leve do próprio programa do cliente.
+  const ts = online && e.tailscale && e.tailscale.url;
+  const aoVivo = (q, rotulo, cls) => el("a", { class: cls, href: `${ts}/ao-vivo${q}`, target: "_blank", rel: "noopener" }, rotulo);
   const camLista = el("ul", { class: "cams-agente" }, ...(cams.length ? cams.map((c) =>
     el("li", {}, el("span", { class: "dot " + (c.online ? "on" : "off") }),
-      el("span", {}, c.nome || "Câmera"),
+      ts && c.id != null ? aoVivo(`?camera=${c.id}`, c.nome || "Câmera", "cam-link") : el("span", {}, c.nome || "Câmera"),
       el("span", { class: "tiny" }, c.online ? `${c.fps ?? 0} q/s${c.regras ? ` · ${c.regras} ${c.regras === 1 ? "regra" : "regras"}` : ""}${c.saude ? ` · ${c.saude}` : ""}` : (c.erro || "sem sinal"))))
     : [el("li", { class: "tiny" }, "Nenhuma câmera ligada ainda.")]));
   const ramPct = e.ram_total_mb ? (e.ram_usada_mb * 100) / e.ram_total_mb : 0;
@@ -141,7 +146,13 @@ function visaoAgente(e, em, online) {
       el("span", { class: "tiny" }, `${TIPO_ALERTA[a.tipo] || a.tipo} · ${quandoRel(a.quando)}`)))
     : [el("li", { class: "tiny" }, "Nenhum alerta ainda.")]));
   const atual = em ? `Atualizado ${quandoRel(Date.parse(em) / 1000)}` : "";
+  const barraVivo = el("div", { class: "vivo-barra" }, ts
+    ? aoVivo("", "Ver câmeras ao vivo", "btn primary")
+    : el("p", { class: "tiny" }, online
+      ? "Para ver ao vivo, ligue o Tailscale no computador do cliente e no seu celular (veja como, abaixo)."
+      : "Ao vivo fica disponível quando o computador do cliente estiver ligado."));
   return el("div", { class: "agente-visao" },
+    barraVivo,
     el("section", {}, el("h3", {}, `Câmeras · ${on} de ${cams.length} no ar`), camLista),
     el("section", {}, el("h3", {}, "Máquina do cliente"), maquina),
     el("section", {}, el("h3", {}, "Últimos alertas"), alertLista),
@@ -273,7 +284,7 @@ function conectarPainel() {
     } else if (m.tipo === "pareamento_recusado") {
       msgPar("O pareamento foi recusado na tela do cliente.", "err");
     } else if (m.tipo === "estado") {
-      const td = document.querySelector(`[data-estado="${m.agente_id}"] td`);
+      const td = document.querySelector(`[data-estado="${m.agente_id}"]`);
       if (td) td.replaceChildren(visaoAgente(m.estado, new Date().toISOString(), true));
     } else if (["agente_online", "agente_offline", "despareado"].includes(m.tipo) && !$("#agentes").hidden) {
       carregarAgentes();
@@ -426,10 +437,8 @@ async function main() {
   garantirDispositivo().catch(() => {});
   conectarPainel();
   if (location.pathname === "/parear") { telaParear(); return; }
-  // Sem agente pareado ainda: abre no passo a passo.
-  let inicial = "agentes";
-  try { const { agentes } = await api("/api/agentes"); if (!agentes.length) inicial = "comecar"; } catch (_) { /* segue */ }
-  mostrar(inicial);
+  // Logado, vai direto ao painel. Sem cliente ainda, o próprio painel mostra o primeiro passo.
+  mostrar("agentes");
 }
 
 main();

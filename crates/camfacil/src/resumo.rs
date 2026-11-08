@@ -1,5 +1,7 @@
 //! Resumo do que este computador está vendo, para o site (Agente-Cam-Elo-IA).
 //! Sem imagem, sem senha, sem endereço RTSP: só nomes, situação e números.
+//! O único endereço é o do Tailscale (100.x), que só abre dentro da rede
+//! Tailscale do técnico.
 
 use crate::App;
 use serde_json::{json, Value};
@@ -52,6 +54,7 @@ pub fn montar(app: Weak<App>) -> crate::elo::Resumo {
                     .map(|k| k.estado())
                     .unwrap_or_default();
                 json!({
+                    "id": c.id,
                     "nome": c.nome,
                     "online": e.online,
                     "fps": e.fps,
@@ -96,6 +99,10 @@ pub fn montar(app: Weak<App>) -> crate::elo::Resumo {
         .into_iter()
         .filter_map(|(n, on)| on.then_some(n))
         .collect();
+        let tailscale = app
+            .tailscale
+            .escutando()
+            .map(|ip| json!({ "url": crate::api::url_tailscale(&app, ip) }));
         json!({
             "cameras": cameras,
             "alertas": alertas,
@@ -108,6 +115,9 @@ pub fn montar(app: Weak<App>) -> crate::elo::Resumo {
             "versao": cf_core::VERSION,
             "ligado_s": inicio.elapsed().as_secs(),
             "modulos": modulos,
+            // Endereço para ver ao vivo de fora, só quando já está escutando no
+            // IP Tailscale. O vídeo vai direto do cliente ao celular, sem nuvem.
+            "tailscale": tailscale,
         })
     })
 }

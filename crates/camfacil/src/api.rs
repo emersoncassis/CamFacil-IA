@@ -353,7 +353,7 @@ async fn post_elo_desparear(State(app): State<Shared>) -> ApiResult {
 
 // ---------- Acesso de fora pelo Tailscale (ADR-0005) ----------
 
-fn url_tailscale(app: &Shared, ip: std::net::Ipv4Addr) -> String {
+pub(crate) fn url_tailscale(app: &Shared, ip: std::net::Ipv4Addr) -> String {
     let porta = app
         .store
         .get("port")
