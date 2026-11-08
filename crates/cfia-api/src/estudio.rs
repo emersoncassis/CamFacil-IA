@@ -9,6 +9,7 @@
 //! - `GET  /api/estudio/receitas/minhas` (logado): as do técnico, inclusive privadas.
 //! - `GET  /api/estudio/receitas/{id}/receita.json` (público): baixa e conta o download.
 //! - `DELETE /api/estudio/receitas/{id}` (dono): apaga.
+//! - `POST /api/estudio/validar`: confere a receita montada no assistente (nada é gravado).
 //! - `POST /api/estudio/notebook`: gera o notebook do Colab a partir de uma receita.
 
 use crate::auth::Tecnico;
@@ -297,6 +298,20 @@ pub async fn apagar(
     Ok(Json(json!({ "apagada": true })))
 }
 
+/// POST /api/estudio/validar — mesma validação do núcleo (`cf_core::receita`),
+/// com as mensagens em pt-BR. Devolve a receita canônica e o SHA-256.
+pub async fn validar(Json(p): Json<PedidoNotebook>) -> Res {
+    let r = receita::de_valor(p.receita).map_err(invalida)?;
+    let canonico: Value = serde_json::from_str(&r.canonico()).map_err(interno)?;
+    Ok(Json(json!({
+        "ok": true,
+        "receita": canonico,
+        "sha256": r.sha256(),
+        "classes": r.nomes_classes(),
+        "aviso": AVISO_ESTUDO,
+    })))
+}
+
 #[derive(Deserialize)]
 pub struct PedidoNotebook {
     receita: Value,
@@ -344,6 +359,27 @@ mod tests {
         );
         assert!(limpar_autor(Some("ze@x.com".into())).is_err());
         assert_eq!(limpar_autor(Some("a".repeat(90))).unwrap().len(), 40);
+    }
+
+    #[tokio::test]
+    async fn validar_devolve_canonica_ou_erros_em_portugues() {
+        let v: Value = serde_json::from_str(&receita::exemplo().canonico()).unwrap();
+        let Json(ok) = validar(Json(PedidoNotebook { receita: v.clone() }))
+            .await
+            .unwrap();
+        assert_eq!(ok["ok"], true);
+        assert_eq!(ok["sha256"], receita::exemplo().sha256());
+        assert_eq!(ok["classes"], json!(["caixa de banana"]));
+        let mut ruim = v;
+        ruim["objetos"][0]["nome"] = json!("rosto do cliente");
+        ruim["id"] = json!("X");
+        let Err((st, Json(e))) = validar(Json(PedidoNotebook { receita: ruim })).await else {
+            panic!("devia recusar");
+        };
+        assert_eq!(st, StatusCode::BAD_REQUEST);
+        let erros = e["erros"].as_array().unwrap();
+        assert!(erros.len() >= 2, "{erros:?}");
+        assert!(e["erro"].as_str().unwrap().contains("LGPD"));
     }
 
     #[tokio::test]
