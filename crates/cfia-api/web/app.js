@@ -257,7 +257,7 @@ function visaoAgente(e, em, online, aba = "cams") {
   const camLista = listaPaginada("cams", cams, (c) =>
     el("li", {}, el("span", { class: "dot " + (c.online ? "on" : "off") }),
       ts && c.id != null ? aoVivo(`?camera=${c.id}`, c.nome || "Câmera", "cam-link") : el("span", {}, c.nome || "Câmera"),
-      el("span", { class: "tiny" }, c.online ? `${c.fps ?? 0} q/s${c.regras ? ` · ${c.regras} ${c.regras === 1 ? "regra" : "regras"}` : ""}${c.saude ? ` · ${c.saude}` : ""}` : (c.erro || "sem sinal"))),
+      el("span", { class: "tiny" }, c.online ? `${Math.round((c.fps ?? 0) * 10) / 10} q/s${c.regras ? ` · ${c.regras} ${c.regras === 1 ? "regra" : "regras"}` : ""}${c.saude ? ` · ${c.saude}` : ""}` : (c.erro || "sem sinal"))),
   "Nenhuma câmera ligada ainda.");
   const ramPct = e.ram_total_mb ? (e.ram_usada_mb * 100) / e.ram_total_mb : 0;
   const maquina = el("div", { class: "maq-agente" },
