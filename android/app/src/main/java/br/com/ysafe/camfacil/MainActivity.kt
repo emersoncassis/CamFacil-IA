@@ -96,7 +96,9 @@ class MainActivity : Activity() {
         override fun shouldOverrideUrlLoading(view: WebView, req: WebResourceRequest): Boolean {
             val u = req.url
             val mesmo = u.scheme + "://" + u.authority == Uri.parse(base).let { it.scheme + "://" + it.authority }
-            if (mesmo) return false
+            // Câmeras do cliente pelo Tailscale (100.64/10, *.ts.net) ou pela rede
+            // da loja abrem aqui dentro, sem jogar para o navegador.
+            if (mesmo || redeDoCliente(u)) return false
             abrirFora(u.toString())
             return true
         }
@@ -110,6 +112,16 @@ class MainActivity : Activity() {
             erroTexto.text = getString(R.string.erro_texto, base)
             erro.visibility = View.VISIBLE
         }
+    }
+
+    private fun redeDoCliente(u: Uri): Boolean {
+        val h = u.host ?: return false
+        if (u.scheme != "http" && u.scheme != "https") return false
+        if (h.endsWith(".ts.net")) return true
+        val p = h.split('.').mapNotNull { it.toIntOrNull() }
+        if (p.size != 4) return false
+        return (p[0] == 100 && p[1] in 64..127) || p[0] == 10 ||
+            (p[0] == 192 && p[1] == 168) || (p[0] == 172 && p[1] in 16..31)
     }
 
     private fun abrirFora(url: String) {

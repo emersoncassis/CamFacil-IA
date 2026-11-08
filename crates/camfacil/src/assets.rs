@@ -27,6 +27,8 @@ pub const ASSETS: &[Asset] = &[
         "i18n/pt-BR.json"
     ),
     asset!("/icon.svg", "image/svg+xml", "icon.svg"),
+    asset!("/ao-vivo", "text/html; charset=utf-8", "aovivo.html"),
+    asset!("/aovivo.js", "text/javascript; charset=utf-8", "aovivo.js"),
 ];
 
 pub fn find(path: &str) -> Option<&'static Asset> {
