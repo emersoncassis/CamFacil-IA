@@ -1,6 +1,6 @@
 //! Rotas HTTP da fase 1.
 
-use crate::{assets, integracoes, Shared};
+use crate::{arquivo, assets, integracoes, termos, Shared};
 use axum::{
     extract::Path,
     extract::State,
@@ -107,6 +107,17 @@ pub fn router(app: Shared) -> Router {
             "/api/webhook/testar",
             post(integracoes::post_webhook_testar),
         )
+        .route(
+            "/api/arquivo",
+            get(arquivo::get_arquivo).post(arquivo::post_arquivo),
+        )
+        .route("/api/arquivo/{nome}", get(arquivo::get_foto_arquivo))
+        .route("/api/termos", get(termos::get_termos))
+        .route("/api/termos/tecnico", post(termos::post_termos_tecnico))
+        .route("/api/termos/cliente", post(termos::post_termos_cliente))
+        .route("/api/termos/cliente.md", get(termos::get_termos_cliente_md))
+        .route("/api/termos/placa.md", get(termos::get_termos_placa_md))
+        .route("/api/termos/apagar", post(termos::post_termos_apagar))
         .route("/api/tailscale", get(get_tailscale))
         .route("/api/tailscale/qr.svg", get(get_tailscale_qr))
         .fallback(static_file)
@@ -974,6 +985,7 @@ struct TokenReq {
 
 /// Salva o token (cifrado) depois de confirmar com o Telegram que ele vale.
 async fn post_telegram(State(app): State<Shared>, Json(r): Json<TokenReq>) -> ApiResult {
+    termos::exigir_tecnico(&app)?;
     let tg = telegram(&app)?;
     let eu = tg
         .definir_token(&r.token)

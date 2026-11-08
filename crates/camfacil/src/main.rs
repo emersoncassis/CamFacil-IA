@@ -4,6 +4,7 @@
 //! e expõe a API da fase 1. Ver `docs/sdd/SDD-01-nucleo.md`.
 
 mod api;
+mod arquivo;
 mod assets;
 mod autoinicio;
 mod elo;
@@ -13,6 +14,7 @@ mod notificacoes;
 mod painel;
 mod resumo;
 mod tailscale;
+mod termos;
 mod video;
 
 use cf_core::{paths, ports, store::Store};
@@ -27,6 +29,7 @@ pub struct App {
     pub telegram: std::sync::OnceLock<Arc<cf_notify::Telegram>>,
     pub whatsapp: std::sync::OnceLock<Arc<cf_notify::WhatsApp>>,
     pub webhook: std::sync::OnceLock<Arc<cf_notify::Webhook>>,
+    pub arquivo: std::sync::OnceLock<Arc<arquivo::Arquivo>>,
     pub ia: Arc<ia::Ia>,
 }
 
@@ -116,6 +119,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         telegram: std::sync::OnceLock::new(),
         whatsapp: std::sync::OnceLock::new(),
         webhook: std::sync::OnceLock::new(),
+        arquivo: std::sync::OnceLock::new(),
         ia: Arc::new(ia::Ia::new(&dir)),
     });
     // Nível médio: a thread do detector dorme até haver módulo médio ligado e
@@ -143,9 +147,24 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(w) = &wh {
         let _ = app.webhook.set(w.clone());
     }
+    // Arquivo de alertas: foto guardada no PC (+ canal do Telegram, se houver);
+    // o webhook recebe o link dela.
+    let arq = arquivo::Arquivo::iniciar(app.store.clone());
+    if let Some(t) = &tg {
+        arq.definir_telegram(t.clone());
+    }
+    let _ = app.arquivo.set(arq.clone());
+    let app_fraco = Arc::downgrade(&app);
     video::definir_notificador(Arc::new(move |a: cf_notify::Alerta| {
+        let foto_url = arq.registrar(&a).and_then(|id| {
+            let app = app_fraco.upgrade()?;
+            Some(format!(
+                "{}/api/arquivo/{id}.jpg",
+                integracoes::url_base_local(&app)
+            ))
+        });
         if let Some(w) = &wh {
-            w.notificar(&a, None);
+            w.notificar(&a, foto_url);
         }
         if let Some(w) = &wa {
             w.notificar(a.clone());

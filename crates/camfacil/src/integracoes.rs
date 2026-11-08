@@ -59,6 +59,7 @@ pub struct ConfigWa {
 }
 
 pub async fn post_whatsapp(State(app): State<Shared>, Json(c): Json<ConfigWa>) -> ApiResult {
+    crate::termos::exigir_tecnico(&app)?;
     let wa = whatsapp(&app)?;
     let conexao = wa
         .configurar(&c.url, &c.apikey, &c.instancia)
@@ -213,6 +214,7 @@ pub struct ConfigWh {
 }
 
 pub async fn post_webhook(State(app): State<Shared>, Json(c): Json<ConfigWh>) -> ApiResult {
+    crate::termos::exigir_tecnico(&app)?;
     webhook(&app)?
         .configurar(&c.url, &c.cabecalho)
         .map_err(|e| bad(StatusCode::UNPROCESSABLE_ENTITY, e))?;

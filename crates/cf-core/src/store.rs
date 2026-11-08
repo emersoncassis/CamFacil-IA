@@ -617,6 +617,28 @@ impl Store {
         v
     }
 
+    /// Um alerta do arquivo pelo id.
+    pub fn arquivo_alerta(&self, id: i64) -> Result<Option<AlertaArquivado>> {
+        self.lock()
+            .query_row(
+                "SELECT id, camera_id, regra_id, chave, quando, arquivo, chat_id, message_id FROM arquivo_alertas WHERE id = ?1",
+                params![id],
+                |r| {
+                    Ok(AlertaArquivado {
+                        id: r.get(0)?,
+                        camera_id: r.get(1)?,
+                        regra_id: r.get(2)?,
+                        chave: r.get(3)?,
+                        quando: r.get(4)?,
+                        arquivo: r.get(5)?,
+                        chat_id: r.get(6)?,
+                        message_id: r.get(7)?,
+                    })
+                },
+            )
+            .optional()
+    }
+
     /// Nomes dos arquivos de foto que saem da retenção de uma câmera (mantém os
     /// `manter` mais recentes) e já apaga as linhas correspondentes.
     pub fn arquivo_excedentes(&self, camera_id: i64, manter: i64) -> Result<Vec<String>> {

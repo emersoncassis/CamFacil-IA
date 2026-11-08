@@ -365,6 +365,43 @@
           </div>
           <p class="msg" id="ts-msg" role="status"></p>
         </div>
+        <div class="block" id="termos">
+          <h2 data-i18n="lg.titulo"></h2>
+          <p class="hint" data-i18n="lg.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="lg.tecnico"></dt><dd><span class="state"><span class="dot" id="lg-dot"></span><span id="lg-status"></span></span></dd>
+            <dt data-i18n="lg.cliente"></dt><dd id="lg-cliente-status">—</dd>
+          </dl>
+          <details class="avancado mt" id="lg-texto-wrap">
+            <summary data-i18n="lg.ler_termo"></summary>
+            <pre class="termo-texto" id="lg-texto"></pre>
+          </details>
+          <div class="actions mt">
+            <button class="btn primary" id="lg-aceitar" type="button"><span data-i18n="lg.aceitar"></span></button>
+          </div>
+          <h3 class="sub" data-i18n="lg.cliente_titulo"></h3>
+          <p class="hint" data-i18n="lg.cliente_dica"></p>
+          <form class="form-grid" id="lg-form" autocomplete="off">
+            <input name="cliente" data-i18n-ph="lg.ph_cliente" required>
+            <input name="documento" data-i18n-ph="lg.ph_documento">
+            <input name="tecnico" data-i18n-ph="lg.ph_tecnico" required>
+            <input name="contato" data-i18n-ph="lg.ph_contato">
+            <input name="local" data-i18n-ph="lg.ph_local">
+            <input name="prazo_dias" type="number" min="0" max="3650" inputmode="numeric" data-i18n-ph="lg.ph_prazo">
+            <button class="btn primary" type="submit"><span data-i18n="lg.salvar_cliente"></span></button>
+          </form>
+          <div class="actions mt">
+            <a class="btn sm" href="/api/termos/cliente.md" download data-i18n="lg.baixar_termo"></a>
+            <a class="btn sm" href="/api/termos/placa.md" download data-i18n="lg.baixar_placa"></a>
+          </div>
+          <p class="tiny mt" data-i18n="lg.imprimir_dica"></p>
+          <h3 class="sub" data-i18n="lg.apagar_titulo"></h3>
+          <p class="hint" data-i18n="lg.apagar_dica"></p>
+          <div class="actions mt">
+            <button class="btn sm perigo" id="lg-apagar" type="button"><span data-i18n="lg.apagar"></span></button>
+          </div>
+          <p class="msg" id="lg-msg" role="status"></p>
+        </div>
         <div class="block" id="tg">
           <h2>Telegram</h2>
           <p class="hint" data-i18n="tg.desc"></p>
@@ -471,6 +508,28 @@
             <p class="hint" data-i18n="wh.exemplo_dica"></p>
             <pre class="json-exemplo mono" id="wh-exemplo"></pre>
           </details>
+        </div>
+        <div class="block" id="arquivo">
+          <h2 data-i18n="arq.titulo"></h2>
+          <p class="hint" data-i18n="arq.desc"></p>
+          <p class="aviso-fixo" role="note"><svg class="ico sm"><use href="#i-info"/></svg><span data-i18n="arq.aviso"></span></p>
+          <dl class="rows mt">
+            <dt data-i18n="arq.situacao"></dt><dd><span class="state"><span class="dot" id="arq-dot"></span><span id="arq-status"></span></span></dd>
+          </dl>
+          <form class="form-grid" id="arq-form" autocomplete="off">
+            <label class="som-regra"><span class="switch"><input type="checkbox" name="ligado"><span></span></span><span class="tiny" data-i18n="arq.ligar"></span></label>
+            <input name="manter" type="number" min="1" max="5000" inputmode="numeric" data-i18n-ph="arq.ph_manter">
+            <input name="chat_id" class="mono" inputmode="numeric" autocapitalize="off" spellcheck="false" data-i18n-ph="arq.ph_chat">
+            <button class="btn primary" type="submit"><span data-i18n="arq.salvar"></span></button>
+          </form>
+          <p class="tiny mt" data-i18n="arq.chat_dica"></p>
+          <p class="msg" id="arq-msg" role="status"></p>
+          <div class="table-wrap mt">
+            <table class="table">
+              <thead><tr><th data-i18n="arq.col_quando"></th><th data-i18n="arq.col_camera"></th><th data-i18n="arq.col_regra"></th><th class="right"></th></tr></thead>
+              <tbody id="arq-lista"></tbody>
+            </table>
+          </div>
         </div>
         <div class="block">
           <ul class="list">
