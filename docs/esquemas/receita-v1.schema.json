@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cfia.ysafe.com.br/esquemas/receita-v1.schema.json",
+  "title": "Receita de módulo do modo estúdio (CamFácil IA)",
+  "description": "Descreve uma inteligência criada no modo estúdio: objetos (classes do modelo), regras de cena e metadados do estudo. Nunca leva fotos. A validação oficial é a do núcleo em Rust (crates/cf-core/src/receita.rs), que também bloqueia reconhecimento facial e biometria. Ver ADR 0013.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formato", "versao", "id", "nome", "somente_estudo", "aviso", "modelo", "objetos", "estudo"],
+  "properties": {
+    "formato": { "const": "camfacil-receita" },
+    "versao": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,59}$" },
+    "nome": { "type": "string", "minLength": 3, "maxLength": 80 },
+    "descricao": { "type": "string", "maxLength": 1000, "default": "" },
+    "somente_estudo": { "const": true },
+    "aviso": { "const": "Somente para estudo e aprendizagem. Não use em produção: para uso real, procure soluções homologadas (câmeras e gravadores com IA de borda ou plataformas corporativas de IA)." },
+    "modelo": { "$ref": "#/$defs/modelo" },
+    "objetos": {
+      "type": "array", "minItems": 1, "maxItems": 20,
+      "items": { "$ref": "#/$defs/objeto" }
+    },
+    "zonas": { "type": "array", "items": { "$ref": "#/$defs/zona" }, "default": [] },
+    "linhas": { "type": "array", "items": { "$ref": "#/$defs/linha" }, "default": [] },
+    "trajetorias": { "type": "array", "items": { "$ref": "#/$defs/trajetoria" }, "default": [] },
+    "contagens": { "type": "array", "items": { "$ref": "#/$defs/contagem" }, "default": [] },
+    "estudo": { "$ref": "#/$defs/estudo" }
+  },
+  "$defs": {
+    "idCurto": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,39}$" },
+    "ponto": {
+      "type": "object", "additionalProperties": false, "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "listaObjetos": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/idCurto" } },
+    "modelo": {
+      "type": "object", "additionalProperties": false, "required": ["base", "classes"],
+      "properties": {
+        "base": { "enum": ["yolo11n", "yolov8n"] },
+        "lado": { "type": "integer", "minimum": 320, "maximum": 1280, "multipleOf": 32, "default": 640 },
+        "classes": {
+          "description": "Ids dos objetos na ordem dos índices do modelo (classe 0, 1, ...). Todos os objetos, sem repetir.",
+          "type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/idCurto" }
+        },
+        "confianca": { "type": "number", "minimum": 0.05, "maximum": 0.95, "default": 0.35 }
+      }
+    },
+    "objeto": {
+      "type": "object", "additionalProperties": false, "required": ["id", "nome"],
+      "properties": {
+        "id": { "$ref": "#/$defs/idCurto" },
+        "nome": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "descricao": { "type": "string", "maxLength": 200, "default": "" }
+      }
+    },
+    "zona": {
+      "type": "object", "additionalProperties": false, "required": ["id", "nome", "objetos", "pontos"],
+      "properties": {
+        "id": { "$ref": "#/$defs/idCurto" },
+        "nome": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "objetos": { "$ref": "#/$defs/listaObjetos" },
+        "pontos": { "type": "array", "minItems": 3, "maxItems": 32, "items": { "$ref": "#/$defs/ponto" } },
+        "permanencia_s": { "type": ["integer", "null"], "minimum": 1, "maximum": 86400 }
+      }
+    },
+    "linha": {
+      "type": "object", "additionalProperties": false, "required": ["id", "nome", "objetos", "pontos"],
+      "properties": {
+        "id": { "$ref": "#/$defs/idCurto" },
+        "nome": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "objetos": { "$ref": "#/$defs/listaObjetos" },
+        "pontos": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "$ref": "#/$defs/ponto" } },
+        "sentido": { "enum": ["entrada", "saida", "ambos"], "default": "ambos" }
+      }
+    },
+    "trajetoria": {
+      "type": "object", "additionalProperties": false, "required": ["id", "nome", "objetos", "pontos"],
+      "properties": {
+        "id": { "$ref": "#/$defs/idCurto" },
+        "nome": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "objetos": { "$ref": "#/$defs/listaObjetos" },
+        "pontos": { "type": "array", "minItems": 2, "maxItems": 32, "items": { "$ref": "#/$defs/ponto" } },
+        "tolerancia": { "type": "number", "minimum": 0.01, "maximum": 0.5, "default": 0.1 }
+      }
+    },
+    "contagem": {
+      "description": "Conta quem cruza uma linha OU entra numa zona (exatamente um dos dois).",
+      "type": "object", "additionalProperties": false, "required": ["id", "nome", "objetos"],
+      "properties": {
+        "id": { "$ref": "#/$defs/idCurto" },
+        "nome": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "objetos": { "$ref": "#/$defs/listaObjetos" },
+        "linha": { "type": ["string", "null"] },
+        "zona": { "type": ["string", "null"] },
+        "janela": { "enum": ["hora", "turno", "dia"], "default": "dia" }
+      }
+    },
+    "estudo": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "autor": { "type": "string", "maxLength": 40, "description": "Apelido público; nunca e-mail." },
+        "local": { "type": "string", "maxLength": 80, "description": "Tipo de lugar, sem endereço nem nome do cliente." },
+        "fotos": { "type": "integer", "minimum": 0, "maximum": 100000, "description": "Só a quantidade; as fotos ficam no Drive do técnico." },
+        "epocas": { "type": "integer", "minimum": 0, "maximum": 300, "description": "0 = padrão (60)." },
+        "metricas": {
+          "type": ["object", "null"], "additionalProperties": false,
+          "properties": {
+            "map50": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "map50_95": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "precisao": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "revocacao": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+          }
+        },
+        "notas": { "type": "string", "maxLength": 2000 }
+      }
+    }
+  }
+}
