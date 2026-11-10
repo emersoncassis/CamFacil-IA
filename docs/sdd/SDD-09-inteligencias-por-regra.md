@@ -10,7 +10,7 @@ Até a 0.8.x o módulo (contagem, permanência, calor) era **global**: ligou, va
 
 1. **Uma regra, uma inteligência.** Escolhida ao criar. Não dá para juntar permanência com densidade na mesma zona; para isso, duas regras.
 2. **A regra diz quem observa.** Pessoa, carro, moto, bicicleta, ônibus, caminhão (vários ao mesmo tempo). O que não foi marcado é ignorado pela regra.
-3. **Só deixa escolher o que está disponível.** Cada inteligência depende de um módulo ligado; sem ele a opção aparece apagada, dizendo qual módulo ligar. O servidor também recusa (409).
+3. **Mostra o que está disponível.** Cada inteligência depende de um módulo ligado; sem ele a opção aparece apagada, dizendo qual módulo ligar. Desde a 0.9.6 a regra **é criada mesmo assim**, salva **desligada** e com aviso (`espera_modulo`), e liga sozinha quando o módulo for ligado.
 4. **Mostra o peso** (leve, médio, pesado) para o técnico saber o que o PC velho aguenta.
 5. **Cor e som por regra**, escolhidos na criação e trocáveis depois.
 
@@ -25,7 +25,7 @@ Até a 0.8.x o módulo (contagem, permanência, calor) era **global**: ligou, va
 | Permanência | zona | médio | Pessoas e veículos | segundos (5–3600, padrão 60) | parado dentro por N segundos (uma vez por objeto) |
 | Mapa de calor | zona | pesado | Pessoas e veículos | — | acumula por onde passa, só dentro da zona e só das classes marcadas |
 
-"Pesado" aqui é o custo no PC: a grade fica acumulando e a tela consulta; nenhuma delas roda modelo a mais, o detector é um só (YOLO nano) e todas leem o que ele já viu.
+O peso da inteligência (tela de regra) e o nível do módulo (lista de módulos, SDD-02) são coisas diferentes: o módulo "Mapa de calor" consta como nível médio, e a inteligência de calor por regra aparece como "pesado" na escolha. "Pesado" aqui é o custo no PC: a grade fica acumulando e a tela consulta; nenhuma delas roda modelo a mais, o detector é um só (YOLO nano) e todas leem o que ele já viu.
 
 Combinações que a tela e a API recusam: densidade/permanência/presença/calor em linha; passagem em zona; classe fora do catálogo (a não ser classe de modelo de estudo, quando há um ligado); cor ou som fora da lista.
 
@@ -74,6 +74,10 @@ A observação passa a usar as classes do detector (quando ele está olhando) e 
 - Sem detector, cai no comportamento antigo (movimento, tudo conta como pessoa).
 - Ao aceitar, a regra já nasce com inteligência, classes e tempo.
 
+## Ligar e desligar a regra (0.9.4)
+
+A lista de regras tem um botão para **desligar sem excluir** (`ajustes.ativa`): regra desligada some do ao vivo e da TV e não alerta. A permanência fica na regra (campo de segundos), e não mais na tela de Módulos (`/api/ia/permanencia` só vale para regras antigas `legado`).
+
 ## Editar depois de criada
 
 Botão **Editar** na lista de regras abre o mesmo formulário já preenchido: nome, textos, classes, tempo, cor e som mudam (`PATCH /api/regras/{id}`). A inteligência fica fixa.
@@ -104,6 +108,6 @@ Densidade por área (pessoas por metro quadrado), placas e reconhecimento de mod
 
 - Linha só de carro ignora pessoa; densidade só dispara com o limite e só da classe; permanência só do carro e sem aviso de entrada; calor só da classe dentro da zona (testes em `cf-core`).
 - IA sugira: carro que estaciona vira permanência de carro; pessoa que passa vira passagem de pessoa.
-- API recusa módulo desligado (409), forma errada, classe/cor/som inválidos (400).
+- API cria a regra desligada, com aviso, quando o módulo está desligado (desde a 0.9.6; antes recusava com 409), e recusa forma errada, classe/cor/som inválidos (400).
 - Regra criada sem os campos novos segue como antes.
 - Formulário sem rolagem em 360×640, 390×844, 768×1024, 1366×768 e 1920×1080.

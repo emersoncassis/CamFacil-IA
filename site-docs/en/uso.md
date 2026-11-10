@@ -22,12 +22,12 @@ The customer never sees AI boxes or lines. They only see the **balloon with the 
 | Feature | What it does |
 |---|---|
 | **Live** | 1 to 4 camera mosaic with status below: device, AI, alerts and services |
-| **Network diagnostics** | Finds cameras that changed IP by MAC, IP conflicts and default passwords |
-| **Network diagram** | Draws the installation's single-line diagram and explains it by voice |
+| **Network diagnostics** | Finds cameras that changed IP by MAC and IP conflicts, and tells you what to do |
+| **Network diagram** | Draws the installation's single-line diagram (SVG to download) |
 | **Telegram and WhatsApp** | Alerts and commands with a QR code (WhatsApp via Evolution API, on a dedicated SIM) |
 | **TV mode** | Kiosk screen for the customer, with your logo |
 | **Android app** | Becomes the camera server or watches a customer remotely through Tailscale |
-| **Validation report** | PDF with your brand to close the sale |
+| **Validation report** | PDF with your name and the customer's, photos and the week's alerts to close the sale |
 | **MCP** | Configure everything by chatting with an AI (off by default) |
 | **Studio mode** *(basic)* | Describe a new model, label, train on Colab and share it (study only) |
 

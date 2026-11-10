@@ -1,6 +1,6 @@
 # SDD-04 — Integrações (Telegram, WhatsApp, webhook, LLM, MCP)
 
-Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implementado** (fase 3b); webhook **implementado** (fase 3b); MCP **implementado** (fase 6); LLM proposto
+Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implementado** (fase 3b); webhook **implementado** (fase 3b); MCP **implementado** (fase 6) e por HTTPS (ADR 0015); arquivo de alertas **em parte**; clipes, descrição por IA e provedores LLM **não implementados** · revisado em 2026-11-10
 
 ## Telegram (padrão) — status: implementado
 - Bot API oficial via HTTPS (long polling `getUpdates` com timeout de 30 s, só enquanto há token; sem porta aberta). Cliente próprio com `reqwest` (rustls, provedor `ring` já usado pelo binário; sem `aws-lc`), multipart do `sendPhoto` montado à mão. Crate `cf-notify`.
@@ -8,7 +8,7 @@ Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implement
 - **Vínculo**: o contato manda `/start` ao bot; ele aparece em Integrações → Telegram → "Contatos autorizados" e o técnico liga a chave. Só autorizados recebem alertas e usam comandos. (O link `t.me/<bot>?start=<token>` fica para depois; a aprovação manual na dashboard é mais simples de explicar.)
 - **Alertas**: linha cruzada, zona ocupada e mudança de saúde (escura/coberta/desfocada/sem sinal), com a foto do instante (`canal.ultimo`, JPEG do stream secundário) e o texto `HH:MM — <regra>: passagem (entrada) · <câmera>`. Antirrepique por regra: 30 s (`regra:<id>`, `saude:<camera_id>`). Foto opcional ("Mandar foto junto").
 - **Offline**: fila em memória de 40 alertas; o mais velho sai; reenvio com espera crescente (10 s → 2 min) quando a internet volta. Sem token ou sem contato autorizado, a fila é descartada.
-- **Comandos**: `/status`, `/foto <nome ou nº>`, `/resumo` (alertas de hoje no fuso do técnico, informado pela dashboard em `settings.fuso_min`), `/liga <módulo>`, `/desliga <módulo>` (registra evento `comando`), `/ajuda`.
+- **Comandos**: `/status`, `/foto <nome ou nº>`, `/resumo` (alertas de hoje no fuso do técnico, informado pela dashboard em `settings.fuso_min`), `/liga <módulo>`, `/desliga <módulo>` (registra evento `comando`), `/backup <senha>` (só no Telegram: manda o backup cifrado e tenta apagar a mensagem com a senha), `/ajuda`. O relatório de validação em PDF também pode ser enviado pelo Telegram (botão na tela de relatório).
 - **API local**: `GET/POST/DELETE /api/telegram`, `POST /api/telegram/testar`, `POST /api/telegram/fotos`, `POST/DELETE /api/telegram/chats/{id}`, `POST /api/fuso`.
 - Testado contra um servidor Bot API simulado (`CAMFACIL_TELEGRAM_API`); falta validar com um bot real (@BotFather) numa máquina com internet.
 
@@ -27,7 +27,7 @@ Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implement
   Depois aponte a dashboard para `http://<ip-do-servidor>:8080` com essa chave. Para produção, use o `docker-compose` oficial da Evolution (com Postgres e Redis) e HTTPS pelo mesmo proxy do painel.
 - Testado contra um servidor HTTP simulado (testes em `whatsapp.rs`); falta validar contra uma Evolution real e um chip dedicado.
 
-## Comandos v1 (iguais nos dois canais)
+## Comandos v1 (iguais nos dois canais, exceto `backup`, só no Telegram)
 | Comando | Ação |
 |---|---|
 | `foto <câmera>` | snapshot atual |
@@ -39,8 +39,10 @@ Status: Telegram **implementado** (fase 3); WhatsApp (Evolution API) **implement
 Só contatos autorizados na dashboard. Ações registradas no log.
 
 ## Formato do alerta (por regra)
-- Texto simples (padrão): `22:14 — 2 pessoas na Cerca Portão (Câmera 3)`.
-- Foto, clipe (~10 s), ou descrição por IA (provedor LLM ou modelo local pequeno).
+- **Texto simples (padrão), implementado**: `22:14 — Cerca Portão: passou carro — entrada · Câmera 3`. Desde a 0.9.2 o texto diz a classe e o que aconteceu (`… : carro parado há 65 s · …`, `… : 3 carros ao mesmo tempo · …`).
+- **Foto do instante, implementada** (opcional, "Mandar foto junto"; JPEG cru do stream secundário, sem caixas).
+- **Clipe (~10 s) e descrição por IA (provedor LLM ou modelo local): não implementados.**
+- **Alertas da própria câmera** (módulo `camera`, SDD-09) também seguem para o Telegram como "recebido da câmera".
 
 ## Telegram como arquivo de alertas — status: implementado em parte (fase 3b)
 - **Implementado** (`crates/camfacil/src/arquivo.rs`): desligado por padrão, só liga com o termo do técnico aceito. Guarda a foto de cada alerta em `fotos/cam_<id>/` com índice na tabela `arquivo_alertas` e retenção por câmera (padrão 200 fotos, as mais velhas saem do disco). Com o ID de um canal privado configurado, o mesmo bot manda a foto para lá e guarda o `message_id` (link `t.me/c/…` na tela). O webhook recebe `foto_url` da foto guardada. API: `GET/POST /api/arquivo`, `GET /api/arquivo/<id>.jpg`.
@@ -62,7 +64,9 @@ Só contatos autorizados na dashboard. Ações registradas no log.
 - Retentativa 3× (1 s, 3 s) por evento, antirrepique de 30 s por regra, fila em memória de 64; falhas e último erro aparecem na tela. Botão "Enviar teste" manda um evento `tipo: teste` na hora e mostra o status HTTP devolvido.
 - API local: `GET/POST/DELETE /api/webhook`, `POST /api/webhook/testar`.
 
-## Provedores LLM
+## Provedores LLM (proposto, nada implementado)
+Não há interface `LlmProvider` nem chamada a OpenRouter/OpenAI/Google/Anthropic no programa local. A conversa com IA existe hoje só pelo **MCP** (o assistente do técnico, como Claude, fala com o programa) e está prevista no modo estúdio (SDD-07, pendente).
+
 OpenRouter (modelos gratuitos, padrão), OpenAI, Google, Anthropic. Interface única `LlmProvider`. Aviso: gratuitos sem garantia e podem usar dados para treino — não enviar imagens do cliente por eles sem consentimento.
 
 ## Servidor MCP (opcional) — implementado (ADR 0012)

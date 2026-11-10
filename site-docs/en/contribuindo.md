@@ -33,7 +33,7 @@ If it helped you learn, sell or save time, buy me a coffee. Every bit of support
 
 ## Roadmap
 
-Current version: **0.6.0** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
+Current version: **0.9.7** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
 
 - [x] Core, virtual fence, course with badge
 - [x] Telegram, WhatsApp, network and diagram, TV mode, report and backup

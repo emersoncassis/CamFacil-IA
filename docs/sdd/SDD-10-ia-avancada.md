@@ -1,6 +1,18 @@
 # SDD-10 — Módulo IA avançada
 
-Status: **proposta** (nada implementado) · complementa o [SDD-02](SDD-02-modulos-ia.md) e o [SDD-09](SDD-09-inteligencias-por-regra.md)
+Status: **proposta** (o módulo "IA avançada" em si não existe) · complementa o [SDD-02](SDD-02-modulos-ia.md) e o [SDD-09](SDD-09-inteligencias-por-regra.md) · revisado em 2026-11-10: parte do problema já tem solução vizinha, listada abaixo
+
+## O que já existe e chega perto (2026-11-10)
+
+| Seção desta proposta | O que já está no programa | Lacuna |
+|---|---|---|
+| A. Diagnóstico da imagem | Saúde da câmera (`cf-core/src/saude.rs`, `visao.rs`): brilho, contraste e nitidez classificam `ok`, `escura`, `coberta`, `desfocada` e `sem sinal`, com histerese de 4 s e alerta só na mudança confirmada (SDD-02) | Não há botão "Avaliar imagem", nem estouro/contraluz, ruído, câmera movida (referência salva) ou tamanho do objeto em pixels |
+| C. Teste ao vivo da regra | **"IA, avalie a minha regra"** (`cf-core/src/avaliacao.rs`, SDD-09): observa 1 minuto e diz, com tom `ok`/`atencao`/`problema`, quantos passaram/cruzaram, se a regra pega pouco do fluxo, se o limite ou o tempo estão certos e quem a regra ignora | Não mede confiança média, trilhas perdidas nem ms por quadro, e não exporta aviso técnico |
+| C. Relatório exportável | **Relatório de validação em PDF** (`relatorio.rs`, SDD-05): capa, resumo das câmeras, módulos ligados, uma página por câmera com foto, alertas de 7 dias, saúde e máquina, próximo passo, proposta | É um relatório geral do cliente, não o "aviso técnico" por câmera com semáforo e recomendação em uma frase; sem logo no PDF |
+| D. Stream por câmera | Em Câmeras e Ao vivo o técnico vê a câmera no **stream extra (padrão) ou principal** (`visor.rs`: segundo ffmpeg sob demanda, até 1280 px, sem análise, encerra sozinho) | A **análise** da IA continua sempre no stream extra; não há stream por regra, taxa de análise, confiança mínima, tamanho mínimo, agenda nem cooldown por câmera |
+| E. Saúde como alerta | Já é alerta (evento `saude`, Telegram, balão, som opcional) e vem **ligada ao módulo "Saúde das câmeras"**, desligado por padrão | "Câmera movida" |
+
+Nada disso muda o desenho abaixo; serve para a Fase 1 não refazer o que existe. O que foi decidido continua valendo.
 
 ## Problema
 

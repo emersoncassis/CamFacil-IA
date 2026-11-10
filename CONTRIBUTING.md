@@ -19,13 +19,17 @@ Não programa? Testar em campo, relatar problemas e compartilhar com outro técn
 ## Fluxo
 ```sh
 cargo fmt --all
-cargo clippy --workspace -- -D warnings
+cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 Commits em [Conventional Commits](https://www.conventionalcommits.org/pt-br/) em português: `feat(cerca): estados editáveis`.
 
-## Criando um módulo de IA
-Siga o contrato em [SDD-02](docs/sdd/SDD-02-modulos-ia.md). Todo módulo traz uma aula (SDD-03). Se você usa Claude Code, a skill `novo-modulo-ia` faz o esqueleto.
+## Criando uma inteligência ou um módulo de IA
+O contrato de módulo por pasta (`module.toml`) do [SDD-02](docs/sdd/SDD-02-modulos-ia.md) é proposta e ainda não existe. Hoje há dois caminhos:
+- **Dentro do programa:** nova inteligência por regra ([SDD-09](docs/sdd/SDD-09-inteligencias-por-regra.md), `crates/cf-core/src/inteligencias.rs` e `deteccao.rs`) ou novo módulo (lista `MODULOS` em `crates/camfacil/src/video.rs`). Se a capacidade merece lição, ela vai na Formação do site ([SDD-03](docs/sdd/SDD-03-educacao.md)). Se você usa Claude Code, a skill `novo-modulo-ia` guia os passos.
+- **Sem compilar nada:** uma receita do modo estúdio ([SDD-07](docs/sdd/SDD-07-modo-estudio.md)), publicada na galeria do site.
+
+Suporte a uma marca nova de câmera ou gravador: skill `novo-fabricante-rtsp`.
 
 ## Licença
 Ao contribuir, você concorda em licenciar sua contribuição sob a [AGPL-3.0](LICENSE).

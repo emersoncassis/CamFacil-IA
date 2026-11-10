@@ -24,6 +24,8 @@ cd android && ./gradlew assembleRelease
 # saída: android/app/build/outputs/apk/release/app-release.apk (~136 KB)
 ```
 
+> **Atualização em 2026-11-10.** O que era pendência desta fase e já foi feito depois: **botões personalizáveis** (portão e relé, com PIN, confirmação e log; SDD-06, aberto pelo menu "Portão e relé" do app), **servidor no próprio aparelho** (ADR 0011) e **IA de pessoas no Android** (ADR 0014). Continuam pendentes: a keystore de release e os secrets, e os perfis técnico/cliente.
+
 ## Pendências (não deu nesta fase)
 
 - **Criar a keystore de release e os secrets.** Sem isso, cada execução do CI assina com uma chave de debug diferente e o Android **não atualiza por cima** (precisa desinstalar a versão anterior).

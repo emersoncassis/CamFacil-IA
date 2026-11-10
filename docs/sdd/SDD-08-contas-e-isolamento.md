@@ -1,6 +1,6 @@
 # SDD-08 — Contas de técnico, pareamento e isolamento (web)
 
-Status: implementado (login, pareamento, isolamento; WebRTC na fase 6) · Domínio: **https://cfia.ysafe.com.br**
+Status: **implementado** (login Google, contas, pareamento por QR com confirmação local, isolamento por técnico com RLS, resumo do agente no site) · **WebRTC de vídeo: NÃO implementado** (só o relé de sinalização no servidor) · Domínio: **https://cfia.ysafe.com.br** · revisado em 2026-11-10
 
 ## Objetivo
 Vários técnicos usam o web app no mesmo domínio, e cada um só enxerga e controla os próprios Agentes-Cam-Elo-IA. O servidor do projeto **nunca recebe vídeo, senha de câmera nem endereço RTSP**.
@@ -10,6 +10,13 @@ Vários técnicos usam o web app no mesmo domínio, e cada um só enxerga e cont
 2. Vídeo e comandos vão **direto** entre a rede do cliente e o navegador do técnico (WebRTC). O servidor só apresenta um ao outro (sinalização).
 3. O agente só obedece a navegadores que ele mesmo autorizou no pareamento. **Nem o servidor consegue se passar pelo técnico.**
 4. Toda consulta da API filtra pelo técnico da sessão.
+
+## Situação real do vídeo (leia antes do resto)
+O desenho abaixo (WebRTC direto entre navegador e agente, com assinatura das impressões DTLS) é o **alvo**. Hoje:
+- **Existe**: o servidor repassa mensagens `sinal` do agente para o técnico dono (`hub.rs`), a chave ECDSA P-256 não exportável do navegador (`app.js`, IndexedDB) e a lista de dispositivos por técnico.
+- **Não existe**: sessão WebRTC, ponte RTSP→WebRTC, biblioteca WebRTC no agente (`webrtc-rs`/`str0m`), desafio assinado sobre o canal de dados. Nenhum cliente usa o relé de sinalização ainda.
+- **O que o técnico usa hoje para ver o vídeo à distância**: o painel mostra o resumo (câmeras, máquina, alertas; ADR 0007) e o botão **Ver ao vivo** abre a página leve do próprio programa do cliente pelo endereço Tailscale (`estado.tailscale.url`), com o Tailscale ligado nos dois lados. O vídeo nunca passa pelo servidor do projeto.
+Os critérios de aceite de WebRTC no fim deste documento ficam como **pendentes**.
 
 ## Por que WebRTC
 Um site HTTPS não pode chamar `http://192.168.x.x` (conteúdo misto e as proteções de acesso à rede local dos navegadores). Com WebRTC:
@@ -97,6 +104,8 @@ Resultado: mesmo um servidor comprometido não consegue comandar câmeras nem ve
 | `sessoes` | `token_hash`, `tecnico_id`, `expira_em`, `criado_em`, `ip`, `agente_usuario` |
 | `auditoria` | `id`, `tecnico_id`, `tipo` (login, pareamento, sessão, revogação), `alvo`, `ip`, `quando` |
 
+Tabelas adicionais criadas por migração: `oauth_estados` (estado e PKCE do login, 0001), coluna `agentes.estado` com o último resumo (0002, ADR 0007), `selos_escola` (0003) e `receitas_estudo` (0004). Todas têm RLS ligada: `selos_escola` isola por técnico; `receitas_estudo` deixa **qualquer pessoa ler as públicas** e só o dono inserir, alterar e apagar; `pareamentos` e `oauth_estados` só o próprio servidor (papel de sistema) acessa.
+
 O `apelido_cliente` é um texto livre e curto, que o técnico escolhe (ex.: "Bar do centro"). A orientação é não colocar nome de pessoa.
 
 ## Isolamento (defesa em camadas)
@@ -118,7 +127,9 @@ O `apelido_cliente` é um texto livre e curto, que o técnico escolhe (ex.: "Bar
 | PATCH | `/api/agentes/:id` | muda o apelido do cliente |
 | POST | `/api/parear` | envia código do QR + chave do dispositivo |
 | WS | `/ws/painel` | sinalização do navegador |
-| WS | `/ws/agente` | sinalização do agente (autenticado por assinatura Ed25519 a cada conexão) |
+| WS | `/ws/agente` | sinalização do agente (autenticado por assinatura Ed25519 a cada conexão); também leva o resumo (ADR 0007), o pedido de pareamento e o despareamento |
+
+Rotas que existem além das acima: `GET /api/saude` (saúde do servidor), `POST /api/escola/selo` e `GET /api/escola/selo/{codigo}` (selo da Formação, SDD-03), `/api/estudio/*` (receitas, validar, notebook; SDD-07), `GET /baixar/{arquivo}` (download com a versão no nome) e `GET /esquemas/receita-v1.schema.json`.
 
 ## Hospedagem (Dokploy)
 | Serviço | Detalhe |
@@ -140,8 +151,9 @@ Cabeçalhos: `Strict-Transport-Security`, `Content-Security-Policy` (scripts só
 - Login com Google funcionando em `https://cfia.ysafe.com.br`.
 - Pareamento por QR com confirmação local; código expirado ou reutilizado é recusado.
 - Técnico B recebe 404 em qualquer recurso do técnico A (teste automatizado).
-- Sessão WebRTC na rede local, com vídeo e comandos, sem tráfego de mídia pelo servidor (verificado pelo consumo de banda do `cfia-api`).
-- Agente recusa navegador fora da lista local, mesmo com a sinalização liberada pelo servidor.
+- **Pendente:** sessão WebRTC na rede local, com vídeo e comandos, sem tráfego de mídia pelo servidor (verificado pelo consumo de banda do `cfia-api`).
+- **Pendente:** agente recusa navegador fora da lista local, mesmo com a sinalização liberada pelo servidor (depende da sessão WebRTC).
+- **Feito:** o vídeo à distância sem passar pelo servidor, pelo Tailscale do técnico; resumo do agente no painel.
 
 ## Questões em aberto
 - Biblioteca WebRTC no agente: `webrtc-rs` ou `str0m` (avaliar tamanho e consumo; ver orçamento do SDD-01).

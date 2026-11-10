@@ -2,9 +2,11 @@
 
 | Campo | Valor |
 |---|---|
-| Versão | 0.1 (rascunho) |
+| Versão do documento | 0.2 (revisado contra o código da versão 0.9.7) |
 | Autor | Emerson de Carvalho Assis |
-| Data | 2026-11-07 |
+| Data | 2026-11-07 · revisão 2026-11-10 |
+
+> **Como ler os status.** Onde aparece **[feito]**, está no código e testado; **[parcial]** tem uma parte feita; **[pendente]** ainda não existe. O texto original do PRD é a intenção do produto; os SDDs dizem como cada parte ficou.
 | Licença | AGPL-3.0 |
 
 ## 1. Resumo
@@ -39,12 +41,12 @@ O CamFácil IA permite que instaladores de CFTV, mesmo leigos, rodem inteligênc
 ## 5. Escopo
 
 ### 5.1 Núcleo (v0.1)
-- Binário único em Rust; instalação por comando ou release do GitHub (Windows, Linux x86_64, Linux ARM64; Android ARM64 depois).
-- Servidor web local com a dashboard.
-- Benchmark na instalação → libera níveis de IA (leve, médio, pesado).
-- Teste de stress opcional → limite real (ex.: 4 câmeras com cerca).
-- Câmeras: busca ONVIF na rede, gerador de RTSP por fabricante (Intelbras/Dahua, Hikvision e outros), stream principal/secundário/extra, botão de testar.
-- Fontes alternativas: webcam, arquivo de vídeo, link de vídeo público, modo demonstração.
+- Binário único em Rust; instalação por comando ou release do GitHub (Windows, Linux x86_64, Linux ARM64) **[feito]**; Android ARM64 e ARMv7 pelo APK **[feito]**.
+- Servidor web local com a dashboard **[feito]**, numa porta livre que não conflita com PDV/NVR.
+- Benchmark na instalação → libera níveis de IA (leve, médio, pesado) **[parcial]**: o teste é uma estimativa por ponto flutuante; a inferência real de referência está pendente (SDD-01).
+- Teste de stress opcional → limite real (ex.: 4 câmeras com cerca) **[feito]**.
+- Câmeras: busca ONVIF na rede, gerador de RTSP por fabricante (Intelbras/Dahua e Hikvision/HiLook **[feito]**; outras marcas pendentes), stream principal/secundário/extra, botão de testar **[feito]**. Gravador DVR/NVR com escolha de canais e nome real do canal **[feito]**.
+- Fontes alternativas: webcam, arquivo de vídeo e modo demonstração (a loja da Formação) **[feito]**; link de vídeo público/YouTube **[pendente]** como fonte dedicada.
 
 ### 5.2 Módulos de IA (liga/desliga, download sob demanda)
 | Nível | Módulos |
@@ -52,42 +54,43 @@ O CamFácil IA permite que instaladores de CFTV, mesmo leigos, rodem inteligênc
 | Leve | Movimento inteligente; cerca/linha virtual |
 | Médio | Pessoas e veículos (YOLO nano); contagem; permanência |
 | Pesado | Leitura de placas; reconhecimento facial |
-| Transversal | Saúde das câmeras (tapada, desfocada, girada, offline); mapa de calor; regras por horário; modo LGPD (borrar rostos no que sai da máquina) |
+| Transversal | Saúde das câmeras (tapada, escura, desfocada, sem sinal **[feito]**; girada/movida **[pendente]**); mapa de calor **[feito]**; regras por horário **[pendente]**; modo LGPD (borrar rostos no que sai da máquina) **[pendente]**; alertas da própria câmera (Intelbras/Dahua e Hikvision) **[feito]** |
+
+Na prática, a IA de nível médio é **um módulo só** ("Pessoas e veículos", YOLO11n ONNX) e o técnico escolhe, **por regra**, uma inteligência (passagem, presença, densidade, permanência, mapa de calor) e quais classes observar (pessoa, carro, moto, bicicleta, ônibus, caminhão), com cor e som próprios ([SDD-09](sdd/SDD-09-inteligencias-por-regra.md)). Nada vem ligado por padrão. "IA, sugira para mim" e "IA, avalie a minha regra" ajudam o técnico a desenhar e conferir as regras.
 
 - **Cerca virtual genérica**: áreas com nome e estados editáveis (ex.: módulo Bar com mesas vazias/cheias).
 - **Visual limpo**: sem caixas/máscaras do YOLO; só o **balão** com o nome da regra, que pisca e muda de cor no alerta.
 
 ### 5.3 Educação (o diferencial)
-- Agente guia que destaca botões e explica em voz (áudios pré-gerados com a voz do autor, empacotados por módulo, funcionam offline).
-- Toda configuração é uma aula: exemplo certo, erro comum, prática na câmera do técnico.
-- Mini desafio + selo por módulo; ranking opcional; certificado "Instalador CamFácil IA".
-- Ao fechar a instalação: **diagrama unifilar** da rede (roteador, switch, máquina, gravador, câmeras, IP/MAC) explicado em voz.
+- **Decisão de 2026-11-07 (ADR 0008):** a instrução vive no site, na **Formação de IA para CFTV** (`/aprender`, com a voz do autor, exercícios no navegador e selo **[feito]**). O programa local é só operação, sem agente guia com voz embutido; os botões **Aprender** abrem a lição certa no site. O agente guia com voz dentro do programa, a aula por módulo e o `desafio.toml` ficaram de lado.
+- Selo da Formação **[feito]**; selo de operação (`cerca`) **[feito]**; ranking e certificado "Instalador CamFácil IA" **[pendente]**.
+- Ao fechar a instalação: **diagrama unifilar** da rede (roteador, switch, máquina, gravador, câmeras, IP/MAC) em SVG **[feito]**, sem narração em voz **[pendente]**.
 
 ### 5.4 Rede e manutenção
 - Inventário (IP, MAC, fabricante, modelo, firmware).
-- Foto da rede saudável (IP+MAC); diagnóstico detecta câmera que trocou de IP e oferece corrigir o RTSP.
-- Conflito de IP, câmera instável, senha padrão, banda por câmera; sugestão de plano de IPs.
-- Monitor de hardware com log (o que pesou e quando), para justificar máquina nova ou câmeras de borda.
-- Backup criptografado da configuração (manual, agendado, ou enviado ao Telegram/WhatsApp); instalação offline; atualização com rollback.
+- Foto da rede saudável (IP+MAC); diagnóstico detecta câmera que trocou de IP e oferece corrigir o RTSP **[feito]**; **autocorreção de IP pelo MAC** (opção por câmera, com conferência da imagem) **[feito]**.
+- Conflito de IP e câmera instável **[feito]**; senha padrão de fábrica e banda por câmera **[pendente]**; sugestão de plano de IPs **[pendente]**.
+- Monitor de hardware com log (CPU, RAM, temperatura, disco e quadros por câmera, 30 dias) e alertas **[feito]**; "por que travou" com o processo responsável **[pendente]**.
+- Backup criptografado da configuração (manual e pelo Telegram `/backup`) **[feito]**; agendado e por WhatsApp **[pendente]**; instalação offline em pacote e atualização com rollback **[pendente]**.
 
 ### 5.5 Comunicação e integrações
-- **Telegram** (padrão, oficial) e **WhatsApp** (QR code, biblioteca não oficial, com aviso de banimento e recomendação de chip dedicado).
-- Comandos v1: `foto <câmera>`, `status`, `liga/desliga <módulo>`, `resumo`, `backup` — só contatos autorizados.
-- Alertas como texto simples (padrão), foto, clipe de ~10 s, ou descrição por IA (nuvem ou modelo local).
-- Webhook por alerta (v1); MQTT como módulo futuro da comunidade.
-- Provedores LLM: OpenRouter (gratuito, padrão, sem garantia), OpenAI, Google, Anthropic.
-- **Servidor MCP** opcional: desligado por padrão, só via Tailscale, com token, leitura por padrão.
+- **Telegram** (padrão, oficial) **[feito]** e **WhatsApp** pela **Evolution API** (ADR 0010, que substituiu a biblioteca não oficial; QR code, aviso de banimento e chip dedicado) **[feito]**.
+- Comandos v1: `foto <câmera>`, `status`, `liga/desliga <módulo>`, `resumo` nos dois canais e `backup` no Telegram — só contatos autorizados **[feito]**.
+- Alertas como texto simples (padrão) e foto **[feito]**; clipe de ~10 s e descrição por IA (nuvem ou modelo local) **[pendente]**. Arquivo de alertas num canal privado do Telegram **[parcial]**.
+- Webhook por alerta **[feito]**; MQTT como módulo futuro da comunidade.
+- Provedores LLM (OpenRouter, OpenAI, Google, Anthropic) **[pendente]**: não há integração direta; a conversa com IA acontece pelo MCP.
+- **Servidor MCP** opcional **[feito]**: desligado por padrão, com token, leitura por padrão e escrita só se o técnico permitir (ADR 0012); endereço HTTPS para o Claude por Tailscale Serve/Funnel, ou ngrok só para testes (ADR 0015).
 
 ### 5.6 Saídas para o cliente
-- **Módulo TV (quiosque)**: página em tela cheia com o que os módulos ativos produzem (ex.: status das mesas).
-- **App Android** (técnico e cliente, permissões distintas): pareamento por QR, ao vivo, alertas com foto, liga/desliga, monitor de hardware, botões personalizáveis que disparam ações na rede local (portão, relé, webhook) com PIN/biometria e registro; modo snapshot automático em conexão fraca.
-- **Marca do técnico**: logo no canto da dashboard e do quiosque + QR code para o WhatsApp dele.
-- Relatório de validação em PDF e gerador de proposta.
+- **Módulo TV (quiosque)** **[feito]**: página em tela cheia com o mosaico das câmeras e os balões das regras, relógio, logo e QR do WhatsApp do técnico.
+- **App Android** **[feito, sem perfis]**: servidor no próprio aparelho ou visualizador à distância, pareamento por QR, ao vivo com modo foto automático em conexão fraca, alertas com foto, botões de portão e relé com PIN e registro. **Perfis técnico e cliente com permissões distintas [pendente]**; biometria [pendente]; monitor de hardware no app [pendente].
+- **Marca do técnico** **[parcial]**: logo e QR do WhatsApp na TV; o PDF leva o nome do técnico e do cliente, sem logo.
+- Relatório de validação em PDF com proposta na última seção **[feito]**.
 
 ### 5.7 Web app e instalação progressiva
-1. Só navegador (WASM + ONNX Runtime Web): webcam, vídeo, demonstração.
-2. **Agente-Cam-Elo-IA** (instalação mínima): ponte com a rede local, RTSP → WebRTC + busca ONVIF. Nome amplo para poder evoluir para ferramentas mais complexas na rede local.
-3. Instalação completa 24/7.
+1. Só navegador (WASM + ONNX Runtime Web): webcam, vídeo, demonstração **[pendente]**. No navegador existem a Formação (simulação) e o modo estúdio.
+2. **Agente-Cam-Elo-IA** **[parcial]**: existe **dentro do programa local** (pareia por QR com confirmação local e manda ao painel só um resumo sem imagem, ADR 0007). A ponte RTSP → WebRTC **[pendente]**; o "ver ao vivo" do painel abre a página do programa do cliente pelo Tailscale.
+3. Instalação completa 24/7 **[feito]**.
 
 Web app em **https://cfia.ysafe.com.br** (Dokploy), com login Google e isolamento por técnico: [SDD-08](sdd/SDD-08-contas-e-isolamento.md).
 
@@ -117,7 +120,7 @@ Painel multicliente, busca inteligente em gravações, ronda virtual, gravação
 ## 7. Requisitos não funcionais
 - **Leveza** é requisito número 1: toda dependência nova precisa justificar o custo em MB e CPU.
 - Offline-first: nada depende de nuvem para funcionar.
-- Segurança: segredos criptografados em repouso; dashboard exige senha; acesso remoto só via Tailscale.
+- Segurança: segredos criptografados em repouso (cofre ChaCha20-Poly1305) **[feito]**; a dashboard escuta só em `127.0.0.1` por padrão e **não tem senha própria [pendente]**; acesso remoto por Tailscale, com ngrok temporário (basic-auth) só para testes.
 - i18n: pt-BR primeiro; textos em arquivos de tradução.
 - Acessibilidade: contraste AA, `prefers-reduced-motion`.
 
@@ -132,6 +135,8 @@ Painel multicliente, busca inteligente em gravações, ronda virtual, gravação
 | 6 — App e web | App Android, web app + Agente-Cam-Elo-IA, MCP |
 | 7 — Modo estúdio | Conversa com IA, vocabulário aberto, Colab |
 
+**Situação em 2026-11-10 (versão 0.9.7):** fases 1 a 6 entregues, com as lacunas marcadas em cada seção acima (clipes, perfis no app, WebRTC, WASM, senha padrão, plano de IPs, atualização com rollback). Fase 7: versão básica (descrever, coletar, rotular, treinar no Colab, importar, rodar e compartilhar receitas); faltam a conversa com a IA, o vocabulário aberto e a pré-marcação. Depois das fases: inteligências por regra (SDD-09, 0.9.x, feito) e IA avançada (SDD-10, proposta).
+
 ## 9. Riscos
 | Risco | Mitigação |
 |---|---|
@@ -144,6 +149,8 @@ Painel multicliente, busca inteligente em gravações, ronda virtual, gravação
 | Concorrer com parceiros | Seção "Fora do escopo" como regra de revisão |
 
 ## 10. Questões em aberto
-- Gravação dos áudios do agente: lista final de falas por módulo.
+- Gravação dos áudios: as lições atuais da Formação já têm narração; lições novas (rede, regras por classe) precisam de falas novas.
 - Fabricantes adicionais no gerador RTSP além de Intelbras/Dahua e Hikvision.
-- Formato do contrato de módulo para a comunidade (ver SDD-02).
+- Formato do contrato de módulo para a comunidade (ver SDD-02): o contrato por pasta não foi implementado; a via atual é a receita do modo estúdio.
+- Senha própria para a dashboard local e perfis técnico/cliente no app.
+- Validação em campo: autocorreção de IP, DVR/NVR, alertas da câmera, Tailscale, Telegram real, WhatsApp com Evolution real, Windows e TV Box.

@@ -33,6 +33,7 @@ O núcleo (`camfacil`) já é um binário Rust sem dependências de sistema alé
 
 - **APK de ~136 KB para ~7,1 MB** (arm64 + armv7 no mesmo APK; instalado ocupa ~7,4 MB num aparelho arm64). Continua abaixo da meta de 10 MB do SDD-06 e é o preço de fazer tudo o que o PC faz sem baixar nada depois (offline-first). Se crescer, a saída é dividir por ABI (`splits.abi`) — cada APK cairia para ~4 MB.
 - RAM/CPU no aparelho: as mesmas do PC (núcleo ocioso < 50 MB) mais um ffmpeg por câmera; decodificar H.264 em software no subfluxo (D1/640 px) é leve, mas **use o subfluxo** em TV Box fraca.
+- **Atualização (ADR 0014): o nível médio já roda no Android.** O texto abaixo é o estado de quando esta ADR foi escrita.
 - **Nível médio da IA (YOLO/ONNX) não roda no Android ainda:** não há pacote oficial do ONNX Runtime para Android no formato que o núcleo baixa; o painel mostra o aviso que já existe ("não há ONNX Runtime oficial para android"). Regras de linha/zona (nível leve) funcionam.
 - **Webcam** (`v4l2`/`dshow`) não existe no Android; fontes válidas lá: RTSP, arquivo e demo.
 - **Android 12+ "phantom process killer"**: o sistema pode matar processos filhos (núcleo e ffmpeg) se passarem de 32 no total ou gastarem muita CPU. O serviço religa o núcleo e o núcleo religa o ffmpeg; em aparelho dedicado, desligar em Opções do desenvolvedor → "Desativar restrições de processos filhos" (Android 14+) ou `adb shell settings put global settings_enable_monitor_phantom_procs false`.

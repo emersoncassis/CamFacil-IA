@@ -1,6 +1,6 @@
 # SDD-07 — Modo estúdio
 
-Status: em desenvolvimento (fase 7) · versão básica funcionando de ponta a ponta (sem conversa com IA)
+Status: em desenvolvimento (fase 7) · versão básica funcionando de ponta a ponta (sem conversa com IA, sem vocabulário aberto) · conferido contra o código em 2026-11-10 · a página `/estudio` abre com dois blocos: **Treine sua IA** (os seis passos, funcionando) e **VMS sob medida** (só desenho)
 
 > **Somente para estudo e aprendizagem.** Modelos criados no modo estúdio não devem ser usados em produção. Para uso real, o técnico deve procurar soluções homologadas: câmeras e gravadores com IA de borda (ex.: Intelbras) ou plataformas corporativas de IA em nuvem (ex.: Zion, 3dEYE). O aviso aparece ao abrir o modo estúdio e em todo modelo exportado.
 
@@ -9,7 +9,7 @@ O técnico descreve em linguagem natural uma inteligência nova ("detectar caixa
 
 ## Fluxo
 1. **Conversa** com a IA (Anthropic como padrão; outros provedores do SDD-04 opcionais).
-2. A IA **não escreve código**: gera uma configuração de módulo (`module.toml` + regras) em JSON validado por esquema pelo núcleo — objetos, zonas, linhas, trajetória, contagem.
+2. A IA **não escreve código**: gera uma **receita** (JSON, `cf-core/src/receita.rs`: modelo, objetos, zonas, linhas) validada por esquema pelo núcleo — objetos, zonas, linhas, trajetória, contagem.
 3. **Objetos novos sem treino**: modelo de vocabulário aberto (ex.: YOLO-World) exportado para ONNX, rodando no núcleo Rust.
 4. **Trajetória, contagem e zonas**: utilidades inspiradas no Supervision, reimplementadas em Rust. Sem Python na máquina do cliente.
 

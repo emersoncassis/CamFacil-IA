@@ -22,12 +22,12 @@ O cliente nunca vê caixas ou riscos da IA. Ele vê só o **balão com o nome da
 | Recurso | O que faz |
 |---|---|
 | **Ao vivo** | Mosaico de 1 a 4 câmeras e, embaixo, o status: aparelho, IA, alertas e serviços |
-| **Diagnóstico de rede** | Acha câmera que trocou de IP pelo MAC, conflito de IP e senha padrão |
-| **Diagrama da rede** | Desenha o unifilar da instalação e explica em voz |
+| **Diagnóstico de rede** | Acha câmera que trocou de IP pelo MAC e conflito de IP, e diz o que fazer |
+| **Diagrama da rede** | Desenha o unifilar da instalação (SVG para baixar) |
 | **Telegram e WhatsApp** | Alertas e comandos com QR code (WhatsApp pela Evolution API, num chip dedicado) |
 | **Modo TV** | Tela de quiosque para o cliente, com a sua logo |
 | **App Android** | Vira o servidor das câmeras ou vê um cliente à distância pelo Tailscale |
-| **Relatório de validação** | PDF com a sua marca para fechar a venda |
+| **Relatório de validação** | PDF com o seu nome e o do cliente, fotos e alertas da semana para fechar a venda |
 | **MCP** | Configure tudo conversando com uma IA (desligado por padrão) |
 | **Modo estúdio** *(básico)* | Descreva uma inteligência nova, rotule, treine no Colab e compartilhe (só estudo) |
 

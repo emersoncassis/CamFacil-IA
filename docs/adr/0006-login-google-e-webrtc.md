@@ -1,6 +1,6 @@
 # ADR-0006 — Login só com Google e vídeo por WebRTC direto
 
-Status: aceito · 2026-11-07
+Status: aceito · 2026-11-07 · **parcialmente implementado** (revisado em 2026-11-10): login só com Google, chave de dispositivo no navegador e pareamento por QR com confirmação local estão no ar; o **WebRTC direto não foi implementado** (o servidor só tem o relé de sinalização, sem cliente). O vídeo à distância hoje passa pelo Tailscale do técnico, abrindo a página do próprio programa do cliente. Detalhes no [SDD-08](../sdd/SDD-08-contas-e-isolamento.md).
 
 ## Contexto
 O web app fica em `https://cfia.ysafe.com.br`, usado por muitos técnicos. Um técnico não pode acessar o agente de outro, e o servidor do projeto não deve tocar em vídeo nem em senhas de câmera (LGPD e custo).

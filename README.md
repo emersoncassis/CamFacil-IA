@@ -78,10 +78,10 @@ flowchart LR
   subgraph N[CamFácil IA · binário Rust na máquina do cliente]
     I[Ingestão<br/>stream secundário, poucos fps]
     M[Módulos de IA<br/>liga/desliga por nível]
-    E[Eventos e regras<br/>cercas, horários]
-    G[Agente guia<br/>aulas em voz]
+    E[Eventos e regras<br/>cercas e inteligências por regra]
     D[Diagnóstico de rede<br/>IP · MAC · conflitos]
   end
+  G[Formação no site<br/>aulas em voz]
   subgraph S[Saídas]
     W[Dashboard<br/>balões de inteligência]
     T[Modo TV<br/>quiosque]
@@ -168,7 +168,7 @@ O CamFácil IA testa a sua máquina e libera só o que ela aguenta.
 
 | Nível | Módulos | Roda em |
 |:---:|---|---|
-| <img src="docs/assets/icons/nivel-leve.svg" width="12" alt=""/> **Leve** | Movimento inteligente · Cerca e linha virtual · Saúde das câmeras | Quase qualquer PC |
+| <img src="docs/assets/icons/nivel-leve.svg" width="12" alt=""/> **Leve** | Movimento inteligente · Cerca e linha virtual · Saúde das câmeras · Alertas da própria câmera | Quase qualquer PC |
 | <img src="docs/assets/icons/nivel-medio.svg" width="12" alt=""/> **Médio** | Pessoas e veículos · Contagem · Permanência · Mapa de calor | PC de 4 núcleos, mini PC |
 | <img src="docs/assets/icons/nivel-pesado.svg" width="12" alt=""/> **Pesado** | Leitura de placas · Reconhecimento facial | Máquinas mais fortes |
 
@@ -191,17 +191,17 @@ Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também 
 
 | | | |
 |:---:|---|---|
-| <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Aula em cada clique** | Agente guia com voz explica cada botão, mostra o certo e o erro comum, e propõe um desafio |
+| <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Aula em cada passo** | A [Formação de IA para CFTV](https://cfia.ysafe.com.br/aprender) fica no site, com a voz do autor, animações Errado × Certo e exercícios; no programa, os botões **Aprender** abrem a lição certa, e a câmera de demonstração usa a mesma loja do curso |
 | <img src="docs/assets/icons/lupa.svg" width="20" alt=""/> | **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante; login salvo (cifrado) para as câmeras que usam o mesmo usuário e senha; editar e remover câmera; reconhece gravador (DVR/NVR) e deixa escolher um ou vários canais |
 | <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Ao vivo** | Mosaico de 1, 2, 3 ou 4 câmeras e, embaixo, o status: aparelho, IA (regras ativas, modelos rodando), alertas, para quem vai cada alerta e serviços ativos |
-| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP e senha padrão |
+| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP, câmera instável, gateway ou DNS fora e rede lenta (senha de fábrica ainda não) |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Autocorreção de IP** | Opção por câmera: se o DHCP mudar o IP, o programa reconhece a câmera pelo MAC, troca o endereço sozinho, confere a imagem e avisa |
-| <img src="docs/assets/icons/diagrama.svg" width="20" alt=""/> | **Diagrama da rede** | Desenha o unifilar da instalação e explica em voz |
+| <img src="docs/assets/icons/diagrama.svg" width="20" alt=""/> | **Diagrama da rede** | Desenha o unifilar da instalação em SVG, com IP e MAC, para baixar |
 | <img src="docs/assets/icons/mensagem.svg" width="20" alt=""/> | **Telegram e WhatsApp** | Alertas e comandos com QR code |
 | | ↳ WhatsApp usa uma [Evolution API](https://github.com/EvolutionAPI/evolution-api) que você sobe no mesmo servidor Docker do painel: `docker run -d -p 8080:8080 -e AUTHENTICATION_API_KEY=troque atendai/evolution-api:v2.2.3` e aponte a URL na dashboard (chip dedicado, nunca o seu número) | SDD-04 |
 | <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Modo TV** | Tela de quiosque para o cliente, com a sua logo |
 | <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Servidor no próprio celular ou TV Box (com IA de pessoas, YOLO), endereço da rede da loja com QR e botão do Tailscale; ou visualizador à distância, com alertas |
-| <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com a sua marca para fechar a venda |
+| <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com o seu nome e o do cliente, foto de cada câmera, alertas da semana, saúde da máquina e proposta, para fechar a venda |
 | <img src="docs/assets/icons/robo.svg" width="20" alt=""/> | **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
 | <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** *(versão básica)* | **Treine sua IA**: descreva uma inteligência nova, rotule no navegador, treine no Colab, rode no programa e compartilhe com outros técnicos (só estudo). **VMS sob medida**: em breve |
 | <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Agente-Cam-Elo-IA** | O elo entre o programa do cliente e o seu painel: pareia por QR e manda só o resumo (o vídeo nunca passa pela nuvem) |
@@ -219,7 +219,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 
 ## <img src="docs/assets/icons/mapa.svg" width="22" alt=""/> Roadmap
 
-Versão atual: **0.8.2** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
+Versão atual: **0.9.7** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
 
 - [x] **Fase 1** — Núcleo: binário, dashboard, benchmark, ONVIF, gerador RTSP
 - [x] **Fase 2** — Cerca virtual com balões e aula guiada · Formação de IA para CFTV no site, com narração e selo
@@ -318,6 +318,8 @@ Versão atual: **0.8.2** ([releases](https://github.com/emersoncassis/CamFacil-I
 Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular ao monitor. O que não cabe vira aba, seção que abre ou página (regra 9 do [`CLAUDE.md`](CLAUDE.md), detalhes no [`DESIGN.md`](DESIGN.md)).
 
 ### Em desenvolvimento / próximos passos
+- Desenhado, ainda **não** implementado: dashboard com senha própria; perfis técnico e cliente no app; vídeo à distância por WebRTC (hoje é pelo Tailscale); IA no navegador (WASM); clipes de 10 s nos alertas; plano de IPs; atualização com rollback e pacote offline; benchmark pela inferência real; contrato de módulo da comunidade (hoje a via é a receita do estúdio)
+- IA avançada: diagnóstico da imagem, veredito por inteligência e aviso técnico para o cliente ([SDD-10](docs/sdd/SDD-10-ia-avancada.md), proposta)
 - Modo estúdio: conversa com a IA montando a receita, pré-marcação das fotos (vocabulário aberto) e posição da linha/zona vinda da receita (fase 7)
 - Mosaico ao vivo com mais de 4 câmeras (6, 9, 16)
 - Rede: senha de fábrica, quedas por hora e banda por câmera (conflito de IP já avisa na tela Rede)
