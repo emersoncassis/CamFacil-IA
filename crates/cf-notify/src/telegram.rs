@@ -319,14 +319,10 @@ mod tests {
 
     #[test]
     fn valida_formato_do_token() {
-        assert!(Bot::token_parece_valido(
-            &fake_token("123456789")
-        ));
+        assert!(Bot::token_parece_valido(&fake_token("123456789")));
         assert!(!Bot::token_parece_valido("abc"));
         assert!(!Bot::token_parece_valido("12:curto"));
-        assert!(!Bot::token_parece_valido(
-            &fake_token("x123")
-        ));
+        assert!(!Bot::token_parece_valido(&fake_token("x123")));
     }
 
     #[test]
