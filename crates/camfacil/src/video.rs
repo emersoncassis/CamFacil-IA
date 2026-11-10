@@ -137,8 +137,30 @@ pub fn comando_instalar() -> &'static str {
     }
 }
 
-/// Cena sintética de demonstração: uma "pessoa" atravessa a loja, passa pela
-/// porta e para no balcão. Não precisa de câmera nem de vídeo baixado.
+/// Vídeo da câmera de demonstração: a mesma loja da Formação de IA para CFTV
+/// (site), com as mesmas passagens dos exercícios — duas pessoas entram, uma
+/// sai, um cliente para no balcão. Gerado por `scripts/gerar-video-demo.py`
+/// e embutido no binário (~200 KB); toca em laço.
+const VIDEO_DEMO: &[u8] = include_bytes!("../assets/demo-loja.mp4");
+
+/// Grava o vídeo de demonstração na pasta de dados (só se faltar ou mudou) e
+/// devolve o caminho. `None` se não deu para gravar: aí usa a cena sintética.
+fn video_demo() -> Option<PathBuf> {
+    let dir = cf_core::paths::data_dir().join("demo");
+    let arq = dir.join("demo-loja.mp4");
+    let igual = std::fs::metadata(&arq)
+        .map(|m| m.len() == VIDEO_DEMO.len() as u64)
+        .unwrap_or(false);
+    if !igual {
+        std::fs::create_dir_all(&dir).ok()?;
+        let tmp = dir.join("demo-loja.mp4.tmp");
+        std::fs::write(&tmp, VIDEO_DEMO).ok()?;
+        std::fs::rename(&tmp, &arq).ok()?;
+    }
+    Some(arq)
+}
+
+/// Reserva: cena sintética, usada só se não der para gravar o vídeo da loja.
 /// (`overlay` recalcula a posição a cada quadro; `drawbox` não.)
 const CENA_DEMO: &str = concat!(
     "color=c=0x16181a:s=640x360:r=10,",
@@ -157,6 +179,13 @@ fn argumentos(fonte: &str, url: &str) -> Vec<String> {
         .map(|s| s.to_string())
         .collect();
     let entrada: Vec<String> = match fonte {
+        "demo" if !url.is_empty() => vec![
+            "-re".into(),
+            "-stream_loop".into(),
+            "-1".into(),
+            "-i".into(),
+            url.into(),
+        ],
         "demo" => vec![
             "-re".into(),
             "-f".into(),
@@ -848,7 +877,14 @@ fn laco(canal: Arc<Canal>, store: Arc<Store>, fonte: String, url: String) {
         };
         let mut cmd = Command::new(ff);
         crate::filhos::morrer_com_o_programa(&mut cmd);
-        cmd.args(argumentos(&fonte, &url))
+        let entrada = if fonte == "demo" {
+            video_demo()
+                .map(|p| p.display().to_string())
+                .unwrap_or_default()
+        } else {
+            url.clone()
+        };
+        cmd.args(argumentos(&fonte, &entrada))
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
@@ -1172,6 +1208,10 @@ mod tests {
         assert!(a.windows(2).any(|w| w == ["-rtsp_transport", "tcp"]));
         assert!(a.ends_with(&["pipe:1".to_string()]));
         assert!(argumentos("demo", "").iter().any(|s| s == "lavfi"));
+        let d = argumentos("demo", "/dados/demo/demo-loja.mp4");
+        assert!(d.iter().any(|s| s == "-stream_loop"));
+        assert!(!d.iter().any(|s| s == "lavfi"));
+        assert!(!VIDEO_DEMO.is_empty());
         assert!(argumentos("arquivo", "/v.mp4")
             .iter()
             .any(|s| s == "-stream_loop"));
