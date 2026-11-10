@@ -2,7 +2,7 @@
 
 Histórico de cada versão do CamFácil IA. A versão atual e os arquivos para baixar estão nas [releases](https://github.com/emersoncassis/CamFacil-IA/releases). Voltar ao [README](../README.md).
 
-## Na próxima versão (0.9.9)
+## Novidades da 0.9.9
 
 - **Tela travada ao desinstalar ou apagar os dados:** depois de **Desinstalar** ou **Apagar todos os dados**, a dashboard escurece e bloqueia tudo, dizendo para fechar a página (desinstalou) ou abrir o programa de novo (apagou os dados).
 - **Regra só liga com a inteligência ligada:** ligar uma regra cujo módulo está desligado agora avisa "nenhuma inteligência ligada" e oferece ligar o módulo, levando direto para a tela Módulos. Desligar um módulo desliga as regras que dependem dele, e elas voltam sozinhas quando o módulo for ligado de novo.
