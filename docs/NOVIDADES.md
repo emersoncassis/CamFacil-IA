@@ -9,6 +9,7 @@ Histórico de cada versão do CamFácil IA. A versão atual e os arquivos para b
 - **MCP blindado contra abuso por IA:** limite de pedidos por minuto, trava por token errado, resultado marcado como dado (contra injeção de prompt) e registro de cada cliente de IA.
 - **Proteção do navegador:** um site aberto no navegador do técnico não consegue mais mandar pedidos para a dashboard (CSRF) nem se passar por ela (DNS rebinding).
 - **Documento de segurança** em [docs/seguranca/SEGURANCA.md](seguranca/SEGURANCA.md) e política de relato em [SECURITY.md](../SECURITY.md).
+- **Site (cfia.ysafe.com.br):** título com a frase que se digita (como no README), botão **Baixar grátis** sempre no topo, menu que vira botão quando as abas não cabem (nada de nome cortado no celular) e a seção **Por dentro**, para quem programa: mapa interativo, GitHub, documentação, diagrama de como funciona e de segurança, como contribuir e como relatar falha. SEO: título e descrição novos, URL canônica, dados estruturados, `robots.txt` e `sitemap.xml`.
 - **Ao atualizar:** quem abria a dashboard pela rede precisa liberar o aparelho uma vez (PIN da aba Segurança ou "Pedir à máquina").
 
 ## Novidades da 0.9.6

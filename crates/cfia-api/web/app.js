@@ -585,9 +585,9 @@ async function prepararNarracao(guia) {
 }
 
 // ---------- Site do visitante: uma seção por vez ----------
-const SECOES = ["inicio", "baixar", "ferramentas", "formacao", "quem", "painel", "apoiar"];
+const SECOES = ["inicio", "baixar", "ferramentas", "dentro", "formacao", "quem", "painel", "apoiar"];
 // Âncoras antigas e de fora (/#baixar, /#site-t, /#ferramentas…) abrem a seção certa.
-const ANCORAS = { "baixar-t": "baixar", como: "baixar", "como-t": "baixar", "ferr-t": "ferramentas", "form-t": "formacao", "quem-t": "quem", "site-t": "painel", "painel-t": "painel", proprio: "painel", entrar: "painel" };
+const ANCORAS = { "baixar-t": "baixar", como: "baixar", "como-t": "baixar", "ferr-t": "ferramentas", "form-t": "formacao", "quem-t": "quem", "site-t": "painel", "painel-t": "painel", proprio: "painel", entrar: "painel", "dentro-t": "dentro", "por-dentro": "dentro", codigo: "dentro" };
 const largo = matchMedia("(min-width: 1000px) and (min-height: 560px)");
 
 function secaoDaAncora(h) {
@@ -610,7 +610,110 @@ function abrirSecao(nome, { detalhe, focar } = {}) {
   if (["proprio", "painel-t"].includes(detalhe)) $("#proprio").open = true;
   const url = nome === "inicio" ? location.pathname + location.search : `#${nome}`;
   history.replaceState(null, "", url);
+  menuFechar();
   vozTopo();
+}
+
+// ---------- Menu: abas quando cabem; quando não cabem, vira menu ----------
+// Mede de verdade (texto, zoom da tela grande, idioma) em vez de chutar
+// uma largura: se as abas não cabem na barra, o site passa a usar o botão
+// de menu e nunca corta o nome de uma seção.
+function menuFechar(focarBotao) {
+  const b = document.querySelector("#entrar .menu-btn");
+  const site = $("#entrar");
+  if (!b || !site.classList.contains("menu-aberto")) return;
+  site.classList.remove("menu-aberto");
+  b.setAttribute("aria-expanded", "false");
+  b.setAttribute("aria-label", "Abrir o menu");
+  b.querySelector("use").setAttribute("href", "#i-menu");
+  if (focarBotao) b.focus();
+}
+
+function ajustarMenu() {
+  const site = $("#entrar");
+  const nav = $("#menu-secoes");
+  if (!site || !nav || site.hidden) return;
+  // 1º tenta as abas com ícone; 2º sem ícone; 3º vira menu.
+  site.classList.remove("menu-compacto", "abas-sem-icone");
+  const lista = nav.querySelector("ul");
+  const estoura = () => lista.scrollWidth > nav.clientWidth + 1;
+  if (matchMedia("(max-width: 760px)").matches) { site.classList.add("menu-compacto"); return; }
+  if (estoura()) site.classList.add("abas-sem-icone");
+  const naoCabe = estoura();
+  site.classList.toggle("menu-compacto", naoCabe);
+  if (!naoCabe) menuFechar();
+}
+
+function ligarMenu() {
+  const site = $("#entrar");
+  const b = site.querySelector(".menu-btn");
+  b.onclick = () => {
+    const abrir = !site.classList.contains("menu-aberto");
+    if (!abrir) { menuFechar(); return; }
+    site.classList.add("menu-aberto");
+    b.setAttribute("aria-expanded", "true");
+    b.setAttribute("aria-label", "Fechar o menu");
+    b.querySelector("use").setAttribute("href", "#i-x");
+    const sel = site.querySelector('#menu-secoes [aria-selected="true"]') || site.querySelector("#menu-secoes [data-secao]");
+    if (sel) sel.focus();
+  };
+  addEventListener("keydown", (ev) => { if (ev.key === "Escape") menuFechar(true); });
+  document.addEventListener("click", (ev) => {
+    if (!site.classList.contains("menu-aberto")) return;
+    if (ev.target.closest("#menu-secoes, .menu-btn")) return;
+    menuFechar();
+  });
+  ajustarMenu();
+  new ResizeObserver(ajustarMenu).observe(site.querySelector(".topo-site") ? site : document.body);
+  addEventListener("resize", ajustarMenu);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarMenu);
+}
+
+// ---------- Título: frases que se digitam (as mesmas do README) ----------
+function ligarDigitar() {
+  const alvo = document.querySelector("#entrar .digita-txt");
+  if (!alvo || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const frases = [
+    "IA de vídeo em qualquer máquina, com um comando.",
+    "Aprenda IA e rede IP fazendo.",
+    "Valide no cliente. Venda a câmera com IA.",
+    "Feito por instalador, para instalador.",
+  ];
+  let f = 0, n = frases[0].length, apagando = true;
+  const passo = () => {
+    const frase = frases[f];
+    if (apagando) {
+      n -= 1;
+      if (n <= 0) { apagando = false; f = (f + 1) % frases.length; n = 0; }
+    } else {
+      n += 1;
+      if (n >= frases[f].length) { apagando = true; alvo.textContent = frases[f]; setTimeout(passo, 2600); return; }
+    }
+    alvo.textContent = (apagando ? frase : frases[f]).slice(0, Math.max(n, 0));
+    setTimeout(passo, apagando ? 28 : 55);
+  };
+  setTimeout(passo, 3200);
+}
+
+// ---------- Por dentro: cada tópico mostra o seu diagrama ----------
+function ligarDentro() {
+  const img = $("#dentro-img");
+  if (!img) return;
+  const link = img.closest("a");
+  const legenda = $("#dentro-legenda");
+  const padrao = { src: img.getAttribute("src"), alt: img.alt, href: link.getAttribute("href"), legenda: legenda.textContent, w: 1200, h: 320 };
+  const mostrar = (v) => {
+    img.src = v.src; img.alt = v.alt; link.href = v.href; legenda.textContent = v.legenda;
+    img.width = v.w; img.height = v.h;
+  };
+  document.querySelectorAll("#dentro details[name='dentro']").forEach((d) => {
+    d.addEventListener("toggle", () => {
+      const aberto = [...document.querySelectorAll("#dentro details[name='dentro']")].find((x) => x.open && x.dataset.visual);
+      if (!aberto) { mostrar(padrao); return; }
+      mostrar({ src: aberto.dataset.visual, alt: aberto.dataset.alt || "", href: aberto.dataset.visual,
+        legenda: "Clique para ver o diagrama em tamanho grande.", w: 1400, h: 700 });
+    });
+  });
 }
 
 // "Como funciona": na tela larga fica sempre aberto ao lado do download;
@@ -646,6 +749,9 @@ function iniciarVisitante(erro) {
   document.querySelectorAll("#entrar [data-baixar]").forEach(montarDownload);
   ligarCopiar($("#entrar"));
   ligarFerramentas();
+  ligarMenu();
+  ligarDigitar();
+  ligarDentro();
   ajustarComo();
   largo.addEventListener("change", ajustarComo);
   $("#como").querySelector("summary").addEventListener("click", (ev) => { if ($("#como").classList.contains("fixo")) ev.preventDefault(); });

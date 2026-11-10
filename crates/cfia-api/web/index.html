@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#000000">
-  <title>CamFácil IA</title>
-  <meta name="description" content="Ferramenta livre e gratuita para libertar os técnicos de CFTV e ajudá-los a conquistar o seu lugar na IA de vídeo. Aprenda no navegador e valide no PC que você já tem.">
+  <title>CamFácil IA: IA de vídeo grátis para câmeras e CFTV</title>
+  <meta name="description" content="Programa livre e gratuito de IA de vídeo para quem instala câmeras: linha, zona, contagem de pessoas e veículos e alerta no Telegram. Windows, Linux e Android.">
+  <link rel="canonical" href="https://cfia.ysafe.com.br/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="CamFácil IA">
   <meta property="og:url" content="https://cfia.ysafe.com.br/">
@@ -17,6 +18,7 @@
   <meta property="og:image:alt" content="CamFácil IA: a IA de vídeo também é do técnico">
   <meta property="og:locale" content="pt_BR">
   <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"CamFácil IA","description":"Programa livre e gratuito de IA de vídeo para instaladores de CFTV: liga nas câmeras IP, cria linha e zona, conta pessoas e veículos e avisa no Telegram e no WhatsApp, rodando no PC do cliente.","url":"https://cfia.ysafe.com.br/","downloadUrl":"https://github.com/emersoncassis/CamFacil-IA/releases/latest","applicationCategory":"SecurityApplication","operatingSystem":"Windows, Linux, Android","inLanguage":"pt-BR","isAccessibleForFree":true,"license":"https://www.gnu.org/licenses/agpl-3.0.html","offers":{"@type":"Offer","price":"0","priceCurrency":"BRL"},"image":"https://cfia.ysafe.com.br/img/manifesto-og.png","softwareHelp":{"@type":"CreativeWork","url":"https://emersoncassis.github.io/CamFacil-IA/"},"author":{"@type":"Person","name":"Emerson de Carvalho Assis"},"sameAs":["https://github.com/emersoncassis/CamFacil-IA"]}</script>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tokens.css">
   <link rel="stylesheet" href="/app.css">
@@ -46,6 +48,12 @@
       <symbol id="i-ant" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
       <symbol id="i-prox" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
       <symbol id="i-cafe" viewBox="0 0 24 24"><path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 9.5h1.5a2.5 2.5 0 0 1 0 5H16M8 3v2.5M12 3v2.5"/></symbol>
+      <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+      <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="i-git" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 8v8M18 11c0 4-6 3-11 6"/></symbol>
+      <symbol id="i-livro" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M9 7h6"/></symbol>
       <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></symbol>
     </defs>
   </svg>
@@ -54,20 +62,24 @@
   <div class="site tela" id="entrar" hidden>
     <header class="topo-site">
       <a class="brand" href="#inicio"><img src="/icon.svg" width="22" height="22" alt=""><span>CamFácil IA</span></a>
-      <nav class="secoes" aria-label="Seções do site">
+      <nav class="secoes" id="menu-secoes" aria-label="Seções do site">
         <ul role="tablist">
           <li><button role="tab" type="button" data-secao="inicio" aria-controls="inicio"><svg class="ico"><use href="#i-home"/></svg><span>Início</span></button></li>
           <li><button role="tab" type="button" data-secao="baixar" aria-controls="baixar"><svg class="ico"><use href="#i-down"/></svg><span>Baixar</span></button></li>
           <li><button role="tab" type="button" data-secao="ferramentas" aria-controls="ferramentas"><svg class="ico"><use href="#i-tools"/></svg><span>Ferramentas</span></button></li>
+          <li><button role="tab" type="button" data-secao="dentro" aria-controls="dentro"><svg class="ico"><use href="#i-code"/></svg><span>Por dentro</span></button></li>
           <li><button role="tab" type="button" data-secao="formacao" aria-controls="formacao"><svg class="ico"><use href="#i-curso"/></svg><span>Formação</span></button></li>
           <li><button role="tab" type="button" data-secao="quem" aria-controls="quem"><svg class="ico"><use href="#i-user"/></svg><span>Quem fez</span></button></li>
           <li><button role="tab" type="button" data-secao="painel" aria-controls="painel"><svg class="ico"><use href="#i-painel"/></svg><span>Painel</span></button></li>
           <li><button role="tab" type="button" data-secao="apoiar" aria-controls="apoiar"><svg class="ico"><use href="#i-cafe"/></svg><span>Apoiar</span></button></li>
         </ul>
+        <a class="menu-entrar" href="/api/auth/google"><svg class="ico sm"><use href="#i-google"/></svg><span>Entrar com Google</span></a>
       </nav>
       <div class="topo-acoes">
         <button class="btn ghost sm voz-topo" type="button" id="voz-topo" hidden><svg class="ico sm"><use href="#i-pause"/></svg><span>Pausar a voz</span></button>
-        <a class="btn sm" href="/api/auth/google"><svg class="ico sm"><use href="#i-google"/></svg><span>Entrar</span></a>
+        <a class="btn primary sm cta-baixar" href="#baixar"><svg class="ico sm"><use href="#i-down"/></svg><span>Baixar grátis</span></a>
+        <a class="btn sm topo-entrar" href="/api/auth/google"><svg class="ico sm"><use href="#i-google"/></svg><span>Entrar</span></a>
+        <button class="btn ghost sm menu-btn" type="button" aria-expanded="false" aria-controls="menu-secoes" aria-label="Abrir o menu"><svg class="ico"><use href="#i-menu"/></svg></button>
       </div>
     </header>
 
@@ -77,6 +89,7 @@
         <div class="hero-texto">
           <p class="kicker">Gratuito · código aberto · roda em PC velho</p>
           <h1>Ligue as câmeras do cliente e veja a IA funcionando em minutos.</h1>
+          <p class="digita" aria-hidden="true"><span class="digita-txt">IA de vídeo em qualquer máquina, com um comando.</span><span class="digita-cursor"></span></p>
           <p class="lede">Baixe, abra no computador da rede, digite a senha da câmera e pronto. Quer aprender antes? A formação ensina no navegador, sem instalar nada.</p>
           <div class="escolha" aria-label="Por onde começar">
             <a class="escolha-card aprender" href="/aprender">
@@ -97,6 +110,7 @@
             </div>
             <a class="tiny" href="/manifesto">Por que isso existe: o manifesto →</a>
             <a class="tiny" href="#apoiar">Apoie o projeto pelo Pix →</a>
+            <a class="tiny" href="#dentro">É desenvolvedor? Veja por dentro →</a>
           </div>
         </div>
         <div class="cena-hero">
@@ -171,6 +185,40 @@
             <article class="ferr ferr-dev" data-ferr="estudio" role="tabpanel" hidden><p class="ferr-tag">Versão básica</p><h3>Modo estúdio</h3><p>Você descreve uma inteligência nova, coleta fotos, rotula, treina no Google Colab e compartilha o que aprendeu com outros técnicos.</p><a class="btn sm" href="/estudio">Abrir o estúdio</a></article>
           </div>
         </div>
+      </section>
+
+      <!-- Por dentro: para quem programa -->
+      <section class="secao dentro" id="dentro" role="tabpanel" aria-labelledby="dentro-t" hidden>
+        <div class="dentro-texto">
+          <p class="kicker">Código aberto · AGPL-3.0 · Rust e HTML puro</p>
+          <h2 id="dentro-t">Por dentro: como tudo funciona</h2>
+          <p>Para quem programa ou quer evoluir o projeto: cada parte, arquivo e rota explicados em português, as decisões registradas e um caminho claro para mandar a sua melhoria.</p>
+          <div class="actions dentro-acoes">
+            <a class="btn primary" href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><svg class="ico sm"><use href="#i-code"/></svg><span>Abrir o mapa interativo</span></a>
+            <a class="btn" href="https://github.com/emersoncassis/CamFacil-IA"><svg class="ico sm"><use href="#i-git"/></svg><span>Código no GitHub</span></a>
+            <a class="btn" href="https://emersoncassis.github.io/CamFacil-IA/"><svg class="ico sm"><use href="#i-livro"/></svg><span>Documentação</span></a>
+          </div>
+          <details class="acord" name="dentro" data-visual="/img/diagrama-como.svg" data-alt="Diagrama: das câmeras à IA no PC do cliente, às regras e às saídas, passando pela camada de segurança">
+            <summary><span>Como funciona</span><svg class="ico sm"><use href="#i-prox"/></svg></summary>
+            <p>Um binário Rust na máquina do cliente lê as câmeras com o ffmpeg, roda o YOLO11n (ONNX) e aplica as regras. O vídeo não sai da loja; a nuvem só recebe um resumo.</p>
+          </details>
+          <details class="acord" name="dentro" data-visual="/img/diagrama-seguranca.svg" data-alt="Diagrama de segurança: quem chega, as barreiras do CamFácil IA, o que é recusado e o registro">
+            <summary><span><svg class="ico sm"><use href="#i-escudo"/></svg> Seguro por padrão</span><svg class="ico sm"><use href="#i-prox"/></svg></summary>
+            <p>Na máquina abre direto; de fora, só aparelho liberado com PIN ou autorizado na máquina. A IA conectada pelo MCP lê, mas não abusa nem aciona portão. Detalhes no <a href="https://github.com/emersoncassis/CamFacil-IA/blob/main/docs/seguranca/SEGURANCA.md">documento de segurança</a>.</p>
+          </details>
+          <details class="acord" name="dentro">
+            <summary><span>Contribua</span><svg class="ico sm"><use href="#i-prox"/></svg></summary>
+            <p>Rust no núcleo, HTML, CSS e JS puro na tela (sem build), Kotlin no Android. Comece pelo <a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/">mapa</a>, leia as <a href="https://github.com/emersoncassis/CamFacil-IA/tree/main/docs/adr">decisões (ADRs)</a> e o <a href="https://github.com/emersoncassis/CamFacil-IA/blob/main/CONTRIBUTING.md">guia de contribuição</a>, e abra um <a href="https://github.com/emersoncassis/CamFacil-IA/pulls">pull request</a>. AGPL-3.0: estude, adapte e melhore; se distribuir uma versão sua, ela também fica aberta.</p>
+          </details>
+          <details class="acord" name="dentro">
+            <summary><span>Encontrou uma falha?</span><svg class="ico sm"><use href="#i-prox"/></svg></summary>
+            <p>Não abra issue pública: use o <a href="https://github.com/emersoncassis/CamFacil-IA/security/advisories/new">relato privado de vulnerabilidade</a> do GitHub. Resposta em até 3 dias úteis. Veja a <a href="https://github.com/emersoncassis/CamFacil-IA/blob/main/SECURITY.md">política de segurança</a>.</p>
+          </details>
+        </div>
+        <figure class="dentro-visual">
+          <a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/" class="dentro-link"><img id="dentro-img" src="/img/mapa-interativo.svg" width="1200" height="320" alt="Como tudo funciona por dentro: mapa interativo do CamFácil IA com cinco fluxos guiados" decoding="async"></a>
+          <figcaption class="tiny" id="dentro-legenda">Clique para abrir o mapa interativo: cada parte, arquivo e rota, com cinco fluxos guiados.</figcaption>
+        </figure>
       </section>
 
       <!-- Formação -->

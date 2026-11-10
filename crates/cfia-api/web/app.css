@@ -500,14 +500,10 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px soli
   .formacao-licoes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
-  /* Celular: barra de seções embaixo, um assunto por vez */
-  .site { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "brand acoes" "main main" "foot foot" "nav nav"; }
+  /* Celular: as seções ficam no menu (botão no topo), sem barra espremida */
+  .site { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "brand acoes" "main main" "foot foot"; }
   .topo-site > .brand, .topo-acoes { padding: 0 var(--s4); min-height: 48px; }
-  .secoes { border-bottom: 0; border-top: 1px solid var(--line); min-height: 0; }
-  .secoes ul { width: 100%; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
-  .secoes button { width: 100%; flex-direction: column; gap: 2px; padding: 7px 0 6px; font-size: calc(var(--fs-xs) - 1px); letter-spacing: -0.01em; border-bottom: 0; border-top: 2px solid transparent; }
-  .secoes button .ico { display: block; width: 18px; height: 18px; }
-  .secoes button[aria-selected="true"] { border-top-color: var(--accent); }
+  .site.menu-compacto .secoes { top: 48px; }
   .site-foot { padding: var(--s1) var(--s4); border-top: 1px solid var(--line); }
   .foot-aviso { display: none; }
   .voz-topo span { display: none; }
@@ -684,3 +680,82 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px soli
 @keyframes mv-surge { from { opacity: 0; transform: translateY(4px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
 @media (prefers-reduced-motion: reduce) { .mural-vivo.mv-entra * { animation: none !important; } }
 @media (max-width: 760px) { .mural-vivo { padding: 7px 12px 8px; } .mv-nome { font-size: var(--fs-md); } .mv-pediu { font-size: var(--fs-xs); } }
+
+/* ---------- Menu que vira botão quando as abas não cabem ---------- */
+.site { position: relative; }
+.menu-btn, .menu-entrar { display: none; }
+.site.menu-compacto .menu-btn { display: inline-flex; width: 40px; padding: 0; justify-content: center; }
+.site.menu-compacto .secoes { position: absolute; top: 52px; left: 0; right: 0; z-index: 40; display: none; flex-direction: column; min-height: 0; padding: var(--s2) var(--s4) var(--s4); background: var(--bg); border-bottom: 1px solid var(--line-strong); box-shadow: 0 18px 32px rgba(0, 0, 0, .55); }
+.site.menu-compacto.menu-aberto .secoes { display: flex; }
+.site.menu-compacto .secoes ul { flex-direction: column; gap: 0; width: 100%; max-width: 520px; margin: 0 auto; }
+.site.menu-compacto .secoes li { display: block; }
+.site.menu-compacto .secoes button { width: 100%; justify-content: flex-start; gap: var(--s3); padding: 12px var(--s3); font-size: var(--fs-md); color: var(--text-2); border-bottom: 0; border-left: 2px solid transparent; border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.site.menu-compacto .secoes button .ico { display: block; }
+.site.menu-compacto .secoes button[aria-selected="true"] { color: var(--text); border-left-color: var(--accent); background: var(--surface); }
+.site.menu-compacto .menu-entrar { display: flex; align-items: center; gap: var(--s2); width: 100%; max-width: 520px; margin: var(--s2) auto 0; padding: 12px var(--s3); border-top: 1px solid var(--line); color: var(--text-2); text-decoration: none; font-size: var(--fs-md); }
+.site.menu-compacto .menu-entrar:hover { color: var(--text); }
+.cta-baixar { white-space: nowrap; }
+@media (max-width: 520px) {
+  .site.menu-compacto .topo-entrar { display: none; }
+}
+@media (max-width: 360px) {
+  .cta-baixar span { font-size: var(--fs-sm); }
+}
+
+/* ---------- Título: frase que se digita ---------- */
+.digita { min-height: 1.5em; font-family: var(--font-mono); font-size: clamp(var(--fs-sm), 1.5vw, var(--fs-lg)); color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.digita-cursor { display: inline-block; width: .55em; height: 1.05em; margin-left: 2px; vertical-align: -0.15em; background: var(--accent); animation: digita-pisca 1s steps(1) infinite; }
+@keyframes digita-pisca { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .digita-cursor { animation: none; } }
+
+/* ---------- Por dentro (para quem programa) ---------- */
+.dentro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(var(--s5), 4vw, 56px); align-items: center; }
+.dentro-texto { min-width: 0; display: flex; flex-direction: column; gap: var(--s3); }
+.dentro-texto > * { margin: 0; }
+.dentro-texto h2 { margin: 0; }
+.dentro-acoes { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.dentro-texto .acord p { margin: 0 0 var(--s2); font-size: var(--fs-sm); }
+.dentro-texto .acord summary .ico:first-child { vertical-align: -3px; color: var(--accent); }
+.dentro-visual { margin: 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.dentro-link { display: block; border-radius: 12px; }
+.dentro-visual img { display: block; width: 100%; height: auto; max-height: min(60vh, 560px); object-fit: contain; border-radius: 12px; }
+@media (max-width: 900px) {
+  .dentro { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: var(--s3); align-items: start; align-content: start; }
+  .dentro-visual { order: -1; }
+  .dentro-visual img { max-height: 22vh; }
+  .dentro-visual figcaption { display: none; }
+}
+@media (max-width: 760px) {
+  .dentro-texto { gap: var(--s2); }
+  .dentro-texto > p:not(.kicker) { font-size: var(--fs-sm); }
+  .dentro-acoes .btn { height: 36px; }
+}
+@media (max-height: 700px) and (max-width: 760px) {
+  .dentro-texto > p:not(.kicker) { display: none; }
+}
+
+/* Abas apertadas: some o ícone antes de virar menu */
+.site.abas-sem-icone:not(.menu-compacto) .secoes button { padding: 0 var(--s2); }
+.site.abas-sem-icone:not(.menu-compacto) .secoes button .ico { display: none; }
+/* Menu compacto: a linha do cabeçalho passa a ser do palco, sem falha no meio */
+.site.menu-compacto .topo-site > .brand, .site.menu-compacto .topo-acoes { border-bottom: 0; }
+.site.menu-compacto .secoes-palco { border-top: 1px solid var(--line); }
+/* Por dentro: tópico aberto recolhe a introdução em tela baixa */
+@media (max-height: 900px) {
+  .dentro-texto:has(details[open]) > p:not(.kicker) { display: none; }
+}
+@media (max-width: 900px) {
+  .dentro:has(details[open]:not([data-visual])) .dentro-visual { display: none; }
+}
+@media (max-width: 760px) {
+  .dentro-texto:has(details[open]) > .kicker { display: none; }
+}
+@media (max-width: 760px) and (max-height: 700px) {
+  .dentro-visual img { max-height: 18vh; }
+}
+@media (max-width: 760px) {
+  .digita { font-size: var(--fs-sm); }
+}
+@media (max-width: 480px) {
+  .digita { font-size: var(--fs-xs); white-space: normal; min-height: 3em; line-height: 1.5; }
+}

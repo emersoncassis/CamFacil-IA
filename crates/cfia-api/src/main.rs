@@ -132,6 +132,8 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/api/saude", get(api::saude))
         .route("/baixar/{arquivo}", get(web::baixar))
+        .route("/robots.txt", get(web::robots))
+        .route("/sitemap.xml", get(web::sitemap))
         .route("/api/auth/google", get(auth::iniciar))
         .route("/api/auth/google/callback", get(auth::retorno))
         .route("/api/auth/sair", post(auth::sair))

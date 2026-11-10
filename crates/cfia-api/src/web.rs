@@ -235,6 +235,22 @@ const ARQUIVOS: &[Arquivo] = &[
         "text/javascript; charset=utf-8",
         "web/estudio.js"
     ),
+    // Seção "Por dentro" da landing: cartão do mapa e diagramas (SVG puro).
+    arq!(
+        "/img/mapa-interativo.svg",
+        "image/svg+xml",
+        "../../docs/assets/mapa-interativo.svg"
+    ),
+    arq!(
+        "/img/diagrama-como.svg",
+        "image/svg+xml",
+        "web/img/diagrama-como.svg"
+    ),
+    arq!(
+        "/img/diagrama-seguranca.svg",
+        "image/svg+xml",
+        "web/img/diagrama-seguranca.svg"
+    ),
     // Instaladores de um comando (curl | sh, irm | iex).
     arq!(
         "/instalar.sh",
@@ -295,6 +311,45 @@ pub async fn baixar(axum::extract::Path(arquivo): axum::extract::Path<String>) -
             (header::LOCATION, url),
             (header::CACHE_CONTROL, "no-store".to_string()),
         ],
+    )
+        .into_response()
+}
+
+/// Páginas públicas do site, na ordem em que aparecem no sitemap.
+const PUBLICAS: &[&str] = &[
+    "/",
+    "/aprender",
+    "/manifesto",
+    "/estudio",
+    "/privacidade",
+    "/termos",
+];
+
+/// `GET /robots.txt`: o site é público; a API não precisa ser indexada.
+pub async fn robots(
+    axum::extract::State(state): axum::extract::State<crate::AppState>,
+) -> Response {
+    let corpo = format!(
+        "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /ws/\n\nSitemap: {}/sitemap.xml\n",
+        state.base_url
+    );
+    ([(header::CONTENT_TYPE, "text/plain; charset=utf-8")], corpo).into_response()
+}
+
+/// `GET /sitemap.xml`: páginas públicas com o endereço deste servidor.
+pub async fn sitemap(
+    axum::extract::State(state): axum::extract::State<crate::AppState>,
+) -> Response {
+    let urls: String = PUBLICAS
+        .iter()
+        .map(|p| format!("  <url><loc>{}{}</loc></url>\n", state.base_url, p))
+        .collect();
+    let corpo = format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n{urls}</urlset>\n"
+    );
+    (
+        [(header::CONTENT_TYPE, "application/xml; charset=utf-8")],
+        corpo,
     )
         .into_response()
 }
