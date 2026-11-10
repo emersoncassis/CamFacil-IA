@@ -2,6 +2,9 @@
 
 Tudo roda na máquina do cliente, sem nuvem obrigatória. A IA analisa só o stream leve da câmera.
 
+!!! tip "Veja por dentro: mapa interativo"
+    O **[mapa interativo](https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/)** mostra cada parte, arquivo e rota do CamFácil IA explicados em português, com cinco fluxos guiados: *Da câmera ao alerta*, *Ver ao vivo de qualquer lugar*, *Quem pode abrir a dashboard*, *IA conectada, com rédea* e *Do download à primeira regra*.
+
 ```mermaid
 flowchart LR
   subgraph F[Fontes de vídeo]
@@ -42,3 +45,23 @@ flowchart LR
 - **Offline primeiro:** nada essencial depende de internet.
 
 Detalhes técnicos: [PRD](https://github.com/emersoncassis/CamFacil-IA/blob/main/docs/PRD.md) · [SDDs](https://github.com/emersoncassis/CamFacil-IA/tree/main/docs/sdd) · [ADRs](https://github.com/emersoncassis/CamFacil-IA/tree/main/docs/adr).
+
+## Segurança por padrão
+
+Na própria máquina tudo abre direto. De fora (celular, TV, Tailscale, ngrok), cada aparelho é liberado uma vez: com o **PIN** gerado pelo programa, que aparece só na tela da máquina, ou **autorizado na máquina**, conferindo o mesmo código dos dois lados. A IA conectada pelo MCP lê, mas não abusa, não vê segredo e nunca aciona portão.
+
+```mermaid
+flowchart LR
+  M[Na própria máquina] --> D[Dashboard]
+  R[Celular · TV · Tailscale · ngrok] --> P1{Host e Origin<br/>da dashboard?}
+  X[Site malicioso] --> P1
+  P1 -- não --> N[Recusado]
+  P1 -- sim --> P2{Aparelho<br/>liberado?}
+  P2 -- sim --> D
+  P2 -- não --> E[PIN ou pedir à máquina] --> K[Máquina confere o código] --> D
+  IA[Assistente de IA] --> T{Token e limite<br/>por minuto}
+  T -- sim --> S[Só leitura · nunca portão]
+  T -- não --> N
+```
+
+PIN fraco (123456, datas, repetições) é recusado com explicação, e os erros travam a entrada aos poucos. Tudo fica no registro da aba **Segurança**. Detalhes no [documento de segurança](https://github.com/emersoncassis/CamFacil-IA/blob/main/docs/seguranca/SEGURANCA.md).

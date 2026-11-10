@@ -23,7 +23,10 @@
 
 <p>
   <a href="https://cfia.ysafe.com.br"><img src="https://img.shields.io/badge/COMECE%20PELO%20SITE-cfia.ysafe.com.br-06CB3F?style=for-the-badge&labelColor=000000" alt="Comece pelo site: cfia.ysafe.com.br" height="44"/></a>
+  <a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><img src="https://img.shields.io/badge/COMO%20FUNCIONA%20POR%20DENTRO-mapa%20interativo-06CB3F?style=for-the-badge&labelColor=000000" alt="Como funciona por dentro: mapa interativo" height="44"/></a>
 </p>
+
+<a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><img src="docs/assets/mapa-interativo.svg" width="100%" alt="Como tudo funciona por dentro: mapa interativo do CamFácil IA com cinco fluxos guiados. Clique para abrir."/></a>
 <p>
   <a href="https://emersoncassis.github.io/CamFacil-IA/"><img src="https://img.shields.io/badge/manifesto%20e%20docs-PT%20%C2%B7%20EN%20%C2%B7%20ES-06CB3F?style=flat-square&labelColor=000000" alt="Manifesto e documentação em português, inglês e espanhol"/></a>
   <a href="https://cfia.ysafe.com.br/#apoiar"><img src="https://img.shields.io/badge/apoie%20o%20projeto-pague%20um%20caf%C3%A9-06CB3F?style=flat-square&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoie o projeto: pague um café"/></a>
@@ -67,6 +70,8 @@ Técnico bom trava em duas coisas: **inteligência artificial** e **rede IP**. O
 
 ## <img src="docs/assets/icons/fluxo.svg" width="22" alt=""/> Como funciona
 
+> **Quer ver tudo funcionando?** Abra o **[mapa interativo](https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/)**: clique em qualquer parte para ver os arquivos e as rotas, ou siga um dos fluxos guiados (*Da câmera ao alerta*, *Ver ao vivo de qualquer lugar*, *Quem pode abrir a dashboard*, *IA conectada, com rédea* e *Do download à primeira regra*).
+
 ```mermaid
 %%{init: {"theme":"base","themeVariables":{"primaryColor":"#163134","primaryTextColor":"#EFEFED","primaryBorderColor":"#06CB3F","lineColor":"#06CB3F","fontFamily":"system-ui","clusterBkg":"#0B1516","clusterBorder":"#035144","edgeLabelBackground":"#163134"}}}%%
 flowchart LR
@@ -82,6 +87,7 @@ flowchart LR
     R[Inteligências por regra<br/>passagem · presença · densidade<br/>permanência · mapa de calor]
     B[(SQLite<br/>eventos e configuração)]
     D[Rede<br/>IP · MAC · diagrama]
+    G{{Segurança<br/>PIN · aparelhos · registro}}
   end
   subgraph S[Saídas]
     W[Dashboard e Ao vivo<br/>balões das regras]
@@ -91,11 +97,14 @@ flowchart LR
     P[Portão e relé<br/>PIN + log]
   end
   C1 & C2 & C3 --> I --> L & Y --> R --> B
-  B --> W & T & A & Z
+  B --> Z
+  B --> G --> W & T & A
   D -.diagnóstico.-> W
   A -.botões.-> P
   classDef saida fill:#035144,stroke:#06CB3F,color:#EFEFED
+  classDef seg fill:#06CB3F,stroke:#06CB3F,color:#000000
   class W,T,A,Z,P saida
+  class G seg
 ```
 
 Tudo roda localmente, sem nuvem obrigatória. A IA só analisa o stream leve da câmera, e o cliente nunca vê caixas ou riscos: só o balão com o nome da regra, que pisca no alerta. Nada vem ligado: o técnico escolhe cada módulo.
@@ -115,7 +124,7 @@ flowchart LR
   T[Técnico<br/>celular ou PC]
   P -- resumo sem imagem a cada 30 s --> S
   T -- login e painel --> S
-  T -. ver ao vivo pelo Tailscale .-> P
+  T -. ver ao vivo pelo Tailscale<br/>aparelho liberado com PIN .-> P
   T -- aprende --> F
   classDef nuvem fill:#035144,stroke:#06CB3F,color:#EFEFED
   class S,F nuvem
@@ -139,9 +148,52 @@ sequenceDiagram
   Note over Out: o cliente vê só o balão com o nome da regra
 ```
 
-<a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><img src="https://img.shields.io/badge/mapa%20interativo%20do%20c%C3%B3digo-floorplan-06CB3F?style=for-the-badge&labelColor=000000" alt="Mapa interativo do código"/></a>
+**Seguro por padrão.** Na própria máquina tudo abre direto. De fora, cada aparelho é liberado uma vez: com o PIN gerado pelo programa ou autorizado na máquina, conferindo o mesmo código dos dois lados. A IA conectada lê, mas não abusa, não vê segredo e nunca aciona nada físico.
 
-Quer ver por dentro? O **[mapa interativo do código](https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/)** mostra cada parte do projeto, arquivo e rota com um nome e uma descrição em português, ligados pelas chamadas entre eles, com um passeio guiado. Gerado com o [floorplan](https://github.com/haydenschmitty/floorplan).
+```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#163134","primaryTextColor":"#EFEFED","primaryBorderColor":"#06CB3F","lineColor":"#06CB3F","fontFamily":"system-ui","clusterBkg":"#0B1516","clusterBorder":"#035144","edgeLabelBackground":"#163134"}}}%%
+flowchart LR
+  subgraph Q[Quem chega]
+    M[Na própria máquina]
+    R[Celular · TV · Tailscale · ngrok]
+    X[Site malicioso<br/>no navegador]
+    IA[Assistente de IA<br/>pelo MCP]
+  end
+  subgraph B[Barreiras do CamFácil IA]
+    P1{Host e Origin<br/>da dashboard?}
+    P2{Aparelho<br/>liberado?}
+    E[Tela de entrada<br/>PIN ou pedir à máquina]
+    K[A máquina confere<br/>o mesmo código e autoriza]
+    T{Token certo e<br/>dentro do limite?}
+  end
+  D[Dashboard]
+  S[Só leitura · resultado marcado como dado<br/>portão e relé nunca]
+  N[Recusado]
+  L[(Registro de segurança)]
+  M --> D
+  X --> P1
+  R --> P1
+  P1 -- não --> N
+  P1 -- sim --> P2
+  P2 -- sim --> D
+  P2 -- não --> E --> K --> D
+  IA --> T
+  T -- sim --> S
+  T -- não --> N
+  E & K & N & S -.-> L
+  classDef seg fill:#06CB3F,stroke:#06CB3F,color:#000000
+  classDef ruim fill:#3A1414,stroke:#FF4D4D,color:#EFEFED
+  classDef saida fill:#035144,stroke:#06CB3F,color:#EFEFED
+  class P1,P2,T seg
+  class N ruim
+  class D,S saida
+```
+
+PIN fraco (123456, datas, repetições) é recusado com explicação; erros travam a entrada aos poucos; PIN e aparelhos se administram só na máquina, na aba **Segurança**. Detalhes no **[documento de segurança](docs/seguranca/SEGURANCA.md)** e na [ADR 0017](docs/adr/0017-acesso-pela-rede-com-pin-e-aparelhos.md).
+
+<a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><img src="https://img.shields.io/badge/ABRIR%20O%20MAPA%20INTERATIVO-como%20tudo%20funciona%20por%20dentro-06CB3F?style=for-the-badge&labelColor=000000" alt="Abrir o mapa interativo: como tudo funciona por dentro" height="44"/></a>
+
+O **[mapa interativo](https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/)** mostra cada parte do projeto, arquivo e rota com um nome e uma descrição em português, ligados pelas chamadas entre eles, com cinco fluxos guiados e um passeio de um minuto. Gerado com o [floorplan](https://github.com/haydenschmitty/floorplan).
 
 ## <img src="docs/assets/icons/raio.svg" width="22" alt=""/> Instale em um comando
 
@@ -252,6 +304,7 @@ Versão atual: **0.9.7** ([releases](https://github.com/emersoncassis/CamFacil-I
   - [x] Botões de portão e relé no app, com PIN, confirmação e log
   - [x] Autocorreção de IP da câmera pelo MAC (opção por câmera, com conferência da imagem e antirrepique)
   - [x] Gravador (DVR/NVR): escolher os canais ao ligar, trocar o canal no Editar e corrigir o IP de todos os canais juntos
+- [x] **Segurança** — aba Segurança, acesso pela rede com PIN e aparelhos liberados, MCP com rédea para IA · [ADR 0017](docs/adr/0017-acesso-pela-rede-com-pin-e-aparelhos.md) · [documento](docs/seguranca/SEGURANCA.md)
 - [ ] **Fase 7** — Modo estúdio · [versão básica](https://cfia.ysafe.com.br/estudio)
   - [x] Receita de módulo validada (biometria bloqueada), gerador do notebook do Colab, importar modelo de estudo, compartilhar receitas no site
   - [x] Assistente no site, de ponta a ponta e sem rolagem: descrever (receita conferida pelo núcleo), coletar, rotular no navegador (fotos nunca vão ao servidor, exporta .zip YOLO), notebook do Colab, importar e galeria de receitas

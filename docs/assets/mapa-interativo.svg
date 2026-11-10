@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="Como funciona por dentro: mapa interativo do CamFácil IA com cinco fluxos guiados">
+  <style>
+    .k { font: 500 13px ui-monospace, 'Cascadia Mono', Consolas, monospace; fill: #06cb3f; letter-spacing: 1.5px; }
+    .t { font: 700 46px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #ededed; letter-spacing: -1.5px; }
+    .t tspan { fill: #06cb3f; }
+    .s { font: 400 17px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #b4b4b4; }
+    .b { font: 700 16px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #000; }
+    .n { font: 600 14px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #ededed; }
+    .d { font: 400 11px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #8a8a8a; }
+    .c { font: 500 12px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #cfcfcf; }
+  </style>
+  <defs>
+    <pattern id="grade" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#06cb3f" stroke-opacity=".07"/>
+    </pattern>
+    <radialGradient id="luz" cx=".75" cy=".5" r=".5">
+      <stop offset="0" stop-color="#06cb3f" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#06cb3f" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="quadro"><rect width="1200" height="320" rx="18"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#quadro)">
+    <rect width="1200" height="320" fill="#000"/>
+    <rect width="1200" height="320" fill="url(#grade)"/>
+    <rect width="1200" height="320" fill="url(#luz)"/>
+
+    <!-- Texto -->
+    <text class="k" x="48" y="62">MAPA INTERATIVO · POR DENTRO</text>
+    <text class="t" x="46" y="118">Como tudo</text>
+    <text class="t" x="46" y="166"><tspan>funciona</tspan> por dentro</text>
+    <text class="s" x="48" y="204">Cada parte, arquivo e rota, explicados em português,</text>
+    <text class="s" x="48" y="228">com 5 fluxos guiados e um passeio de um minuto.</text>
+    <rect x="48" y="252" width="236" height="44" rx="22" fill="#06cb3f"/>
+    <text class="b" x="74" y="280">Abrir o mapa interativo →</text>
+
+    <!-- Ligações -->
+    <g fill="none" stroke="#06cb3f" stroke-opacity=".45" stroke-width="2">
+      <path id="l1" d="M748 70 H812"/>
+      <path id="l2" d="M962 70 H1026"/>
+      <path id="l3" d="M1101 92 V202"/>
+      <path id="l4" d="M887 92 V128"/>
+      <path id="l5" d="M812 158 H748 V202"/>
+      <path id="l6" d="M887 188 V202"/>
+    </g>
+    <g fill="#06cb3f">
+      <circle r="4"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#l1"/></animateMotion></circle>
+      <circle r="4"><animateMotion dur="2.4s" begin=".6s" repeatCount="indefinite"><mpath href="#l2"/></animateMotion></circle>
+      <circle r="4"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite"><mpath href="#l3"/></animateMotion></circle>
+      <circle r="4"><animateMotion dur="1.8s" begin=".3s" repeatCount="indefinite"><mpath href="#l4"/></animateMotion></circle>
+      <circle r="4"><animateMotion dur="2.2s" begin=".9s" repeatCount="indefinite"><mpath href="#l5"/></animateMotion></circle>
+    </g>
+
+    <!-- Nós -->
+    <g>
+      <rect x="598" y="48" width="150" height="44" rx="10" fill="#0b1516" stroke="#06cb3f" stroke-opacity=".5"/>
+      <text class="n" x="616" y="68">Câmeras</text><text class="d" x="616" y="84">RTSP · ONVIF</text>
+      <rect x="812" y="48" width="150" height="44" rx="10" fill="#0b1516" stroke="#06cb3f" stroke-opacity=".5"/>
+      <text class="n" x="830" y="68">Vídeo e IA</text><text class="d" x="830" y="84">ffmpeg · YOLO11n</text>
+      <rect x="1026" y="48" width="150" height="44" rx="10" fill="#0b1516" stroke="#06cb3f" stroke-opacity=".5"/>
+      <text class="n" x="1044" y="68">Regras</text><text class="d" x="1044" y="84">linha · área · calor</text>
+
+      <rect x="812" y="128" width="150" height="60" rx="10" fill="#06cb3f" fill-opacity=".12" stroke="#06cb3f" stroke-width="2"/>
+      <path d="M832 142 l9 -4 9 4 v7 c0 6 -4 10 -9 12 c-5 -2 -9 -6 -9 -12z" fill="none" stroke="#06cb3f" stroke-width="1.8"/>
+      <path d="M837 150 l3 3 5 -5" fill="none" stroke="#06cb3f" stroke-width="1.8"/>
+      <text class="n" x="858" y="155">Segurança</text><text class="d" x="830" y="176">PIN · aparelhos · log</text>
+
+      <rect x="598" y="202" width="150" height="44" rx="10" fill="#0b1516" stroke="#06cb3f" stroke-opacity=".5"/>
+      <text class="n" x="616" y="222">Dashboard</text><text class="d" x="616" y="238">celular · TV · app</text>
+      <rect x="812" y="202" width="150" height="44" rx="10" fill="#0b1516" stroke="#06cb3f" stroke-opacity=".5"/>
+      <text class="n" x="830" y="222">IA conectada</text><text class="d" x="830" y="238">MCP com rédea</text>
+      <rect x="1026" y="202" width="150" height="44" rx="10" fill="#0b1516" stroke="#06cb3f" stroke-opacity=".5"/>
+      <text class="n" x="1044" y="222">Alertas</text><text class="d" x="1044" y="238">Telegram · WhatsApp</text>
+    </g>
+
+    <!-- Fluxos -->
+    <g>
+      <text class="c" x="598" y="282">▸ Da câmera ao alerta   ▸ Ver ao vivo de qualquer lugar   ▸ Quem pode abrir a dashboard</text>
+      <text class="c" x="598" y="302">▸ IA conectada, com rédea   ▸ Do download à primeira regra</text>
+    </g>
+  </g>
+  <rect x=".5" y=".5" width="1199" height="319" rx="18" fill="none" stroke="#06cb3f" stroke-opacity=".35"/>
+</svg>
