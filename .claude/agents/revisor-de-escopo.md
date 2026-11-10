@@ -1,6 +1,6 @@
 ---
 name: revisor-de-escopo
-description: Verifica se uma funcionalidade proposta cabe no escopo do CamFácil IA (educar e validar) ou concorre com parceiros. Use ao avaliar issues e PRs de novas funções.
+description: Verifica se uma funcionalidade proposta cabe no escopo do CamFácil IA (educar e validar). Use ao avaliar issues e PRs de novas funções.
 tools: Read, Grep
 ---
 

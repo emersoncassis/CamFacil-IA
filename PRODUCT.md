@@ -16,7 +16,7 @@ web
 Ferramenta open source que ensina instaladores de CFTV a validar inteligência artificial de vídeo num PC velho, aprendendo na prática, para depois venderem câmera ou gravador com IA de borda ou uma plataforma parceira de IA em nuvem. Sucesso: o técnico entende o que configurou, prova o valor ao cliente e fecha a venda da solução definitiva.
 
 ## Positioning
-Nasceu da sala de aula de um ex-instrutor técnico da Intelbras. Cada configuração vira aula com a voz do autor; roda num computador velho, com um comando, sem nuvem. É a ponte para os parceiros, não um concorrente deles.
+Nasceu da sala de aula de um ex-instrutor técnico da Intelbras. Cada configuração vira aula com a voz do autor; roda num computador velho, com um comando, sem nuvem. É a ponte para os parceiros.
 
 ## Operating Context
 - Dashboard local no navegador, servida por um binário Rust de ~2 MB.

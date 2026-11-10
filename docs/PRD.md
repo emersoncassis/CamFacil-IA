@@ -114,7 +114,7 @@ Criar inteligências novas conversando com a IA (Anthropic por padrão), com tre
 ### 5.10 LGPD e responsabilidades
 Modelos de termo, placa e isenção em [`docs/legal/`](legal/README.md). Aceites registrados com data, hora e versão.
 
-## 6. Fora do escopo (não competir com parceiros)
+## 6. Fora do escopo
 Painel multicliente, busca inteligente em gravações, ronda virtual, gravação contínua (NVR), monitoramento profissional 24h. Propostas nessa linha são recusadas em revisão.
 
 ## 7. Requisitos não funcionais
@@ -146,7 +146,6 @@ Painel multicliente, busca inteligente em gravações, ronda virtual, gravação
 | Termos do YouTube | Priorizar vídeos próprios ou com permissão |
 | LGPD | Modo LGPD, placa, termos de autorização e responsabilidade, dados ficam locais, projeto não hospeda imagens |
 | Modelos de estudo usados em produção | Aviso em todo modelo exportado e no modo estúdio |
-| Concorrer com parceiros | Seção "Fora do escopo" como regra de revisão |
 
 ## 10. Questões em aberto
 - Gravação dos áudios: as lições atuais da Formação já têm narração; lições novas (rede, regras por classe) precisam de falas novas.

@@ -8,7 +8,7 @@ Não era falta de capacidade. Era falta de um lugar para errar, testar e entende
 
 O CamFácil IA existe para fechar essa lacuna. Ele ensina fazendo: cada câmera adicionada, cada conflito de IP detectado e cada regra de IA criada vira uma aula, explicada em voz e no ritmo do técnico. Ele é gratuito, aberto e roda em qualquer máquina, porque o conhecimento não pode depender do hardware ou do bolso.
 
-Ele não é o fim do caminho. É a ponte. O técnico aprende, valida no cliente e então oferece a solução certa: uma câmera ou gravador com IA de borda, ou uma plataforma profissional de IA em nuvem. Por isso o CamFácil IA não compete com quem fabrica e vende essas soluções. Ele prepara o terreno para elas.
+Ele não é o fim do caminho. É a ponte. O técnico aprende, valida no cliente e então oferece a solução certa: uma câmera ou gravador com IA de borda, ou uma plataforma profissional de IA em nuvem. Ele prepara o terreno para elas.
 
 Nosso objetivo é dar **liberdade** ao técnico: entender a tecnologia, confiar no que vende e crescer com ela.
 

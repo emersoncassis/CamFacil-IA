@@ -52,7 +52,7 @@ hide:
 </details>
 <details class="parte">
 <summary data-n="03">Primeiro a confiança, depois o investimento</summary>
-<p>Você instala, prova que funciona e mostra valor com custo quase zero. Quando o cliente passa a acreditar em você, aí sim é hora de evoluir: câmera com IA de borda, gravador com IA, plataforma de mercado. O CamFácil IA não compete com o fabricante. É a ponte que leva o técnico até lá, com conhecimento e com cliente na mão.</p>
+<p>Você instala, prova que funciona e mostra valor com custo quase zero. Quando o cliente passa a acreditar em você, aí sim é hora de evoluir: câmera com IA de borda, gravador com IA, plataforma de mercado. O CamFácil IA é a ponte que leva o técnico até lá, com conhecimento e com cliente na mão.</p>
 </details>
 <details class="parte">
 <summary data-n="04">O lugar é nosso</summary>

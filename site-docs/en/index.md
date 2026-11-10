@@ -53,7 +53,7 @@ hide:
 </details>
 <details class="parte">
 <summary data-n="03">Trust first, investment later</summary>
-<p>You install it, prove it works and show value at almost zero cost. Once the customer believes in you, that's the time to step up: a camera with edge AI, an AI recorder, a commercial platform. CamFácil IA doesn't compete with manufacturers. It is the bridge that takes the installer there, with knowledge and with a customer in hand.</p>
+<p>You install it, prove it works and show value at almost zero cost. Once the customer believes in you, that's the time to step up: a camera with edge AI, an AI recorder, a commercial platform. CamFácil IA is the bridge that takes the installer there, with knowledge and with a customer in hand.</p>
 </details>
 <details class="parte">
 <summary data-n="04">This place is ours</summary>
