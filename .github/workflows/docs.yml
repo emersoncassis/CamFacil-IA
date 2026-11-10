@@ -7,6 +7,10 @@ on:
     branches: [main]
   pull_request:
 
+# Menor privilégio: só leitura por padrão; jobs que publicam pedem mais no próprio bloco.
+permissions:
+  contents: read
+
 jobs:
   links:
     runs-on: ubuntu-latest

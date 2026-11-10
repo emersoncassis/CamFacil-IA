@@ -10,6 +10,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# Menor privilégio: só leitura por padrão; jobs que publicam pedem mais no próprio bloco.
+permissions:
+  contents: read
+
 jobs:
   check:
     name: fmt · clippy · testes
