@@ -1554,6 +1554,11 @@ pub(crate) struct NovaRegra {
     pub cor: String,
     #[serde(default)]
     pub som: String,
+    /// Veio do "IA, sugira para mim". A sugestão é feita pelo movimento (sem
+    /// rede neural), então roda no módulo leve de cerca quando a IA média não
+    /// está ligada e pronta.
+    #[serde(default)]
+    pub sugestao: bool,
 }
 
 /// Valida e grava uma regra (usado pela dashboard e pelo MCP).
@@ -1608,25 +1613,28 @@ pub(crate) fn criar_regra(
     } else {
         cf_core::visao::Forma::Zona
     };
-    let intel = cf_core::visao::Intel::de_texto(&r.intel)
+    let mut intel = cf_core::visao::Intel::de_texto(&r.intel)
         .ok_or_else(|| erro(StatusCode::BAD_REQUEST, "inteligência desconhecida"))?;
+    let mut classes = r.classes.clone();
+    let mut parametro = r.parametro;
+    // Sugestão aceita sem a IA média ligada e pronta: usa a cerca leve, que
+    // é a mesma base (trilhas de movimento) em que a sugestão foi feita.
+    if r.sugestao && intel != cf_core::visao::Intel::Legado && !ia_media_pronta(app, intel) {
+        intel = cf_core::visao::Intel::Legado;
+        classes.clear();
+        parametro = 0;
+    }
     let estudo = app.ia.estudo.lock().unwrap().is_some();
     if let Some(m) = cf_core::inteligencias::validar(
-        &forma_v,
-        intel,
-        &r.classes,
-        r.parametro,
-        &r.cor,
-        &r.som,
-        estudo,
+        &forma_v, intel, &classes, parametro, &r.cor, &r.som, estudo,
     ) {
         return Err((StatusCode::BAD_REQUEST, m));
     }
     let modulo_desligado = modulo_desligado(app, intel);
     let ajustes = cf_core::visao::AjustesRegra {
         intel,
-        classes: r.classes.clone(),
-        parametro: r.parametro,
+        classes,
+        parametro,
         cor: r.cor.clone(),
         som: r.som.clone(),
         ativa: modulo_desligado.is_none(),
@@ -1671,11 +1679,7 @@ pub(crate) fn ligar_regras_em_espera(app: &crate::App, modulo: &str) -> usize {
             if !r.ajustes.espera_modulo || modulo_desligado(app, r.ajustes.intel).is_some() {
                 continue;
             }
-            let quer = cf_core::inteligencias::INTELIGENCIAS
-                .iter()
-                .find(|i| cf_core::visao::Intel::de_texto(i.id) == Some(r.ajustes.intel))
-                .map(|i| i.modulo);
-            if quer != Some(modulo) {
+            if modulo_da_intel(r.ajustes.intel) != Some(modulo) {
                 continue;
             }
             let mut a = r.ajustes.clone();
@@ -1695,19 +1699,32 @@ pub(crate) fn ligar_regras_em_espera(app: &crate::App, modulo: &str) -> usize {
 
 /// Nome do módulo que a inteligência precisa, se ele estiver desligado.
 fn modulo_desligado(app: &crate::App, intel: cf_core::visao::Intel) -> Option<&'static str> {
-    if intel == cf_core::visao::Intel::Legado {
-        return None;
-    }
-    let i = cf_core::inteligencias::INTELIGENCIAS
-        .iter()
-        .find(|i| cf_core::visao::Intel::de_texto(i.id) == Some(intel))?;
-    if crate::video::modulos(&app.store).ligado(i.modulo) {
+    let modulo = modulo_da_intel(intel)?;
+    if crate::video::modulos(&app.store).ligado(modulo) {
         return None;
     }
     crate::video::MODULOS
         .iter()
-        .find(|(id, ..)| *id == i.modulo)
+        .find(|(id, ..)| *id == modulo)
         .map(|(_, nome, ..)| *nome)
+}
+
+/// Módulo que faz a inteligência rodar. Regra simples (linha/zona por
+/// movimento) é da cerca leve.
+fn modulo_da_intel(intel: cf_core::visao::Intel) -> Option<&'static str> {
+    if intel == cf_core::visao::Intel::Legado {
+        return Some("cerca");
+    }
+    cf_core::inteligencias::INTELIGENCIAS
+        .iter()
+        .find(|i| cf_core::visao::Intel::de_texto(i.id) == Some(intel))
+        .map(|i| i.modulo)
+}
+
+/// A IA média que a inteligência usa está ligada e com o modelo pronto?
+fn ia_media_pronta(app: &crate::App, intel: cf_core::visao::Intel) -> bool {
+    modulo_da_intel(intel).is_some_and(|m| crate::video::modulos(&app.store).ligado(m))
+        && app.ia.pronto()
 }
 
 async fn post_regra(
@@ -2186,6 +2203,7 @@ pub(crate) mod tests {
             parametro: 0,
             cor: String::new(),
             som: String::new(),
+            sugestao: false,
         };
         // Módulo desligado: cria mesmo assim, desligada, com aviso.
         let (id, aviso) = criar_regra(&app, cam, &nova("passagem")).unwrap();
@@ -2213,6 +2231,52 @@ pub(crate) mod tests {
         // Com o módulo ligado, nasce ligada e sem aviso.
         let (_, aviso) = criar_regra(&app, cam, &nova("passagem")).unwrap();
         assert!(aviso.is_none());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn sugestao_aceita_roda_na_cerca_leve_sem_ia_media() {
+        let (app, dir) = app_teste("sugestao-leve");
+        let cam = app.store.criar_camera("Loja", "demo", "").unwrap();
+        let sug = NovaRegra {
+            nome: "Entrada".into(),
+            forma: "linha".into(),
+            pontos: vec![
+                cf_core::visao::Ponto { x: 0.3, y: 0.6 },
+                cf_core::visao::Ponto { x: 0.7, y: 0.6 },
+            ],
+            rotulo_on: String::new(),
+            rotulo_off: String::new(),
+            intel: "passagem".into(),
+            classes: vec![0],
+            parametro: 0,
+            cor: String::new(),
+            som: String::new(),
+            sugestao: true,
+        };
+        let achar = |id: i64| {
+            app.store
+                .regras(cam)
+                .unwrap()
+                .into_iter()
+                .find(|r| r.id == id)
+                .unwrap()
+        };
+        // Sem máquina testada e sem modelo: vira regra da cerca leve.
+        crate::video::definir_modulo(&app.store, "cerca", true).unwrap();
+        let (id, aviso) = criar_regra(&app, cam, &sug).unwrap();
+        assert!(aviso.is_none(), "cerca ligada: nasce ligada");
+        let r = achar(id);
+        assert_eq!(r.ajustes.intel, cf_core::visao::Intel::Legado);
+        assert!(r.ajustes.ativa && !r.ajustes.espera_modulo);
+        // Cerca desligada: nasce esperando a cerca e liga junto com ela.
+        crate::video::definir_modulo(&app.store, "cerca", false).unwrap();
+        let (id, aviso) = criar_regra(&app, cam, &sug).unwrap();
+        assert!(aviso.unwrap().contains("Cerca e linha virtual"));
+        assert!(!achar(id).ajustes.ativa);
+        crate::video::definir_modulo(&app.store, "cerca", true).unwrap();
+        assert_eq!(ligar_regras_em_espera(&app, "cerca"), 1);
+        assert!(achar(id).ajustes.ativa);
         let _ = std::fs::remove_dir_all(dir);
     }
 

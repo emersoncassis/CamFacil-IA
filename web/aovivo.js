@@ -298,15 +298,23 @@
     const total = Object.values(regras).reduce((x, r) => x + r.length, 0);
     const comRegra = Object.values(regras).filter((r) => r.length).length;
     const det = ia && ia.detector || {};
+    // Nível da máquina (teste da tela Início) e módulo de IA (nível médio).
+    const nivel = sys && sys.nivel;
+    const nivelLin = nivel
+      ? lin("on", t("vivo.nivel"), t("nivel." + nivel))
+      : lin("warn", t("vivo.nivel"), t("vivo.nivel.nao_verificado"));
     let pessoas;
-    if (ia && !ia.suportado) pessoas = lin("off", t("vivo.ia.pessoas"), t("vivo.ia.sem_suporte"));
-    else if (ia && !ia.pronto) pessoas = lin("off", t("vivo.ia.pessoas"), t("vivo.ia.nao_baixado"));
-    else if (det.carregado) pessoas = lin("on", `${t("vivo.ia.pessoas")} · ${ia.modelo.nome.replace(".onnx", "")}`, `${det.ultimo_ms} ms`);
-    else pessoas = lin("warn", t("vivo.ia.pessoas"), t("vivo.ia.parado"));
+    if (mod && !mod.pessoas) pessoas = lin("off", t("vivo.ia.modulo"), t("vivo.desligado"));
+    else if (ia && !ia.suportado) pessoas = lin("off", t("vivo.ia.modulo"), t("vivo.ia.sem_suporte"));
+    else if (ia && !ia.pronto) pessoas = lin("warn", t("vivo.ia.modulo"), t("vivo.ia.nao_baixado"));
+    else if (det.carregado) pessoas = lin("on", `${t("vivo.ia.modulo")} · ${ia.modelo.nome.replace(".onnx", "")}`, `${t("vivo.ligado")} · ${det.ultimo_ms} ms`);
+    else pessoas = lin("warn", t("vivo.ia.modulo"), `${t("vivo.ligado")} · ${t("vivo.ia.parado")}`);
+    const leve = on.includes("movimento") || on.includes("cerca");
     caber($("#c-ia"), [
       lin(total ? "on" : "off", t("vivo.ia.regras_ativas"), t("vivo.ia.regras_valor", { n: total, c: comRegra })),
+      nivelLin,
       pessoas,
-      lin(on.includes("movimento") ? "on" : "off", t("vivo.ia.leve"), t(on.includes("movimento") || on.includes("cerca") ? "vivo.rodando" : "vivo.desligado")),
+      lin(leve ? "on" : "off", t("vivo.ia.leve"), t(leve ? "vivo.rodando" : "vivo.desligado")),
       el("div", { class: "chips" }, ...(on.length ? on.map((k) => el("span", {}, t("vivo.mod." + k))) : [el("span", {}, t("vivo.nenhum_modulo"))])),
       det.inferencias ? lin(null, t("vivo.ia.inferencias"), det.inferencias.toLocaleString("pt-BR")) : null,
     ].filter(Boolean));

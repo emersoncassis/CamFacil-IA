@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/camfacil", "crates/cf-core", "crates/cf-notify", "crates/cfia-api"]
 
 [workspace.package]
-version = "0.9.6"
+version = "0.9.7"
 edition = "2021"
 license = "AGPL-3.0-only"
 repository = "https://github.com/emersoncassis/CamFacil-IA"

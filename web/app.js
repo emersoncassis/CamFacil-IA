@@ -1541,6 +1541,7 @@ async function sugAceitar(sg, pct, botao) {
     const criada = await api(`/api/cameras/${camAberta}/regras`, {
       nome: sg.nome, forma: sg.forma, pontos: sg.pontos, rotulo_on: "", rotulo_off: "",
       intel: sg.intel || "", classes: sg.classes || [], parametro: sg.parametro || 0,
+      sugestao: true,
     });
     await sugParar();
     await carregarRegras();
