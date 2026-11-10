@@ -606,6 +606,8 @@ function abrirSecao(nome, { detalhe, focar } = {}) {
     if (sel && focar) b.focus();
   });
   document.querySelectorAll("#entrar .secao").forEach((s) => { s.hidden = s.id !== nome; });
+  // O botão "Baixar grátis" do topo é o único caminho do menu para o download: fica marcado na tela de download.
+  document.querySelectorAll("#entrar .cta-baixar").forEach((c) => { if (nome === "baixar") c.setAttribute("aria-current", "page"); else c.removeAttribute("aria-current"); });
   if (["como", "como-t"].includes(detalhe)) $("#como").open = true;
   if (["proprio", "painel-t"].includes(detalhe)) $("#proprio").open = true;
   const url = nome === "inicio" ? location.pathname + location.search : `#${nome}`;

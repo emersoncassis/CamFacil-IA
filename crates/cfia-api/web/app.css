@@ -695,6 +695,7 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px soli
 .site.menu-compacto .menu-entrar { display: flex; align-items: center; gap: var(--s2); width: 100%; max-width: 520px; margin: var(--s2) auto 0; padding: 12px var(--s3); border-top: 1px solid var(--line); color: var(--text-2); text-decoration: none; font-size: var(--fs-md); }
 .site.menu-compacto .menu-entrar:hover { color: var(--text); }
 .cta-baixar { white-space: nowrap; }
+.cta-baixar[aria-current="page"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
 @media (max-width: 520px) {
   .site.menu-compacto .topo-entrar { display: none; }
 }
