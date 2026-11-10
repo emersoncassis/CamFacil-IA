@@ -12,12 +12,10 @@ O CamFácil IA é livre e gratuito, e vai continuar assim. Cada apoio volta todo
     <div class="pix">
       <img class="pix__qr" src="../assets/img/pix-qr.svg" alt="QR code do Pix para apoiar o CamFácil IA" width="200" height="200">
       <div class="pix__dados">
-        <p class="pix__rotulo">Chave Pix (CPF)</p>
-        <p class="pix__chave"></p>
+        <p class="pix__rotulo">Pix: aponte a câmera do app do banco ou use o copia e cola</p>
         <p class="pix__nome">Emerson de Carvalho Assis</p>
         <div class="pix__acoes">
-          <button class="md-button md-button--primary" type="button" data-copiar="" data-copiado="Chave copiada">Copiar chave</button>
-          <button class="md-button" type="button" data-copiar="00020101021126580014br.gov.bcb.pix0136da7f151d-b2f6-4269-ba5a-75cfac24f1425204000053039865802BR5918EMERSON DE C ASSIS6013FLORIANOPOLIS62070503***63040AEC DE CARVALHO ASSIS6015SAO JOSE DO RIO62140510CAMFACILIA6304FBB7" data-copiado="Código copiado">Pix copia e cola</button>
+          <button class="md-button md-button--primary" type="button" data-copiar="00020101021126580014br.gov.bcb.pix0136da7f151d-b2f6-4269-ba5a-75cfac24f1425204000053039865802BR5918EMERSON DE C ASSIS6013FLORIANOPOLIS62070503***63040AEC DE CARVALHO ASSIS6015SAO JOSE DO RIO62140510CAMFACILIA6304FBB7" data-copiado="Código copiado">Pix copia e cola</button>
         </div>
         <p class="pix__nota">Você escolhe o valor no app do banco. Fora do Brasil? Use o <a href="https://buymeacoffee.com/emersoncarvalho" target="_blank" rel="noopener">Buy Me a Coffee</a>.</p>
       </div>

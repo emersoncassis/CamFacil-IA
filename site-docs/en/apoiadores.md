@@ -12,12 +12,10 @@ CamFácil IA is free and open source, and it will stay that way. Every bit of su
     <div class="pix">
       <img class="pix__qr" src="../../assets/img/pix-qr.svg" alt="Pix QR code to support CamFácil IA" width="200" height="200">
       <div class="pix__dados">
-        <p class="pix__rotulo">Pix key (Brazil · CPF)</p>
-        <p class="pix__chave"></p>
+        <p class="pix__rotulo">Pix (Brazil): scan the QR code with your bank app</p>
         <p class="pix__nome">Emerson de Carvalho Assis</p>
         <div class="pix__acoes">
           <a class="md-button md-button--primary" href="https://buymeacoffee.com/emersoncarvalho" target="_blank" rel="noopener">Buy Me a Coffee</a>
-          <button class="md-button" type="button" data-copiar="" data-copiado="Key copied">Copy Pix key</button>
         </div>
         <p class="pix__nota">Outside Brazil, use Buy Me a Coffee (card). In Brazil, Pix is the fastest way.</p>
       </div>

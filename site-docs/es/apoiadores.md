@@ -12,12 +12,10 @@ CamFácil IA es libre y gratuito, y va a seguir así. Cada apoyo vuelve entero a
     <div class="pix">
       <img class="pix__qr" src="../../assets/img/pix-qr.svg" alt="Código QR de Pix para apoyar CamFácil IA" width="200" height="200">
       <div class="pix__dados">
-        <p class="pix__rotulo">Clave Pix (Brasil · CPF)</p>
-        <p class="pix__chave"></p>
+        <p class="pix__rotulo">Pix (Brasil): escanee el código QR con la app del banco</p>
         <p class="pix__nome">Emerson de Carvalho Assis</p>
         <div class="pix__acoes">
           <a class="md-button md-button--primary" href="https://buymeacoffee.com/emersoncarvalho" target="_blank" rel="noopener">Buy Me a Coffee</a>
-          <button class="md-button" type="button" data-copiar="" data-copiado="Clave copiada">Copiar clave Pix</button>
         </div>
         <p class="pix__nota">Fuera de Brasil, usa Buy Me a Coffee (tarjeta). En Brasil, Pix es lo más rápido.</p>
       </div>
