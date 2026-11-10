@@ -4,7 +4,7 @@ Um comando e o programa abre sozinho no navegador. Funciona em PC velho, mini PC
 
 === "Windows 10 e 11"
 
-    Cole no **PowerShell**. O instalador baixa o programa, instala o ffmpeg, cria o atalho e abre:
+    Cole no **PowerShell**. O instalador baixa o programa, instala o ffmpeg, cria o atalho (com o ícone do CamFácil IA) e abre:
 
     ```powershell
     irm https://cfia.ysafe.com.br/instalar.ps1 | iex

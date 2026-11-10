@@ -24,6 +24,21 @@ if ! command -v ffmpeg >/dev/null 2>&1; then
   else echo "Instale o ffmpeg pelo gerenciador de pacotes do seu sistema."; fi
 fi
 
+# Atalho no menu de aplicativos, com ícone (se o sistema tiver ambiente gráfico).
+ICONE="$HOME/.local/share/icons/hicolor/256x256/apps/camfacil.png"
+mkdir -p "$(dirname "$ICONE")" "$HOME/.local/share/applications"
+if curl -fsSL "https://raw.githubusercontent.com/$REPO/main/scripts/icones/camfacil.png" -o "$ICONE"; then ICONE_LINHA="Icon=$ICONE"; else ICONE_LINHA="Icon=camera-video"; fi
+cat > "$HOME/.local/share/applications/camfacil.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=CamFácil IA
+Comment=IA de vídeo para quem instala câmeras
+Exec="$DEST/camfacil"
+$ICONE_LINHA
+Terminal=true
+Categories=Utility;Network;
+EOF
+
 case ":$PATH:" in *":$DEST:"*) ;; *) echo "Dica: para abrir depois, rode $DEST/camfacil" ;; esac
 "$DEST/camfacil" --autoiniciar || true
 echo "Pronto. Abrindo o CamFácil IA no navegador…"

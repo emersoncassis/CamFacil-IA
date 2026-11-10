@@ -4,7 +4,7 @@ One command and the program opens by itself in the browser. Works on old PCs, mi
 
 === "Windows 10 and 11"
 
-    Paste into **PowerShell**. The installer downloads the program, installs ffmpeg, creates the shortcut and opens it:
+    Paste into **PowerShell**. The installer downloads the program, installs ffmpeg, creates the shortcut (with the CamFácil IA icon) and opens it:
 
     ```powershell
     irm https://cfia.ysafe.com.br/instalar.ps1 | iex

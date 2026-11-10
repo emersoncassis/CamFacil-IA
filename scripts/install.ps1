@@ -27,6 +27,12 @@ $atalho = Join-Path ([Environment]::GetFolderPath('Desktop')) 'CamFacil IA.lnk'
 $s = (New-Object -ComObject WScript.Shell).CreateShortcut($atalho)
 $s.TargetPath = $exe
 $s.WorkingDirectory = $dir
+# Icone do atalho (camera com ponto verde). Se nao baixar, o atalho segue sem ele.
+$ico = Join-Path $dir 'camfacil.ico'
+try {
+  Invoke-WebRequest "https://raw.githubusercontent.com/$repo/main/scripts/icones/camfacil.ico" -OutFile $ico -UseBasicParsing
+  $s.IconLocation = "$ico,0"
+} catch { Write-Host 'Nao consegui baixar o icone; o atalho fica com o icone padrao.' }
 $s.Save()
 
 & $exe --autoiniciar | Out-Null

@@ -4,7 +4,7 @@ Un comando y el programa se abre solo en el navegador. Funciona en PC vieja, min
 
 === "Windows 10 y 11"
 
-    Pega en **PowerShell**. El instalador descarga el programa, instala ffmpeg, crea el acceso directo y lo abre:
+    Pega en **PowerShell**. El instalador descarga el programa, instala ffmpeg, crea el acceso directo (con el ícono de CamFácil IA) y lo abre:
 
     ```powershell
     irm https://cfia.ysafe.com.br/instalar.ps1 | iex
