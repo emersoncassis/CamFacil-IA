@@ -169,7 +169,9 @@ impl Anfitriao for Ponte {
     fn modulo(&self, nome: &str, ligado: bool) -> Result<String, String> {
         let app = self.app.upgrade().ok_or("Programa encerrando.")?;
         let (id, nome_bonito) = crate::video::definir_modulo(&app.store, nome, ligado)?;
-        let _ = id;
+        if ligado {
+            crate::api::ligar_regras_em_espera(&app, id);
+        }
         Ok(format!(
             "{nome_bonito}: {}.",
             if ligado { "ligado" } else { "desligado" }

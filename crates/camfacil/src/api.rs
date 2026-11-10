@@ -1557,11 +1557,14 @@ pub(crate) struct NovaRegra {
 }
 
 /// Valida e grava uma regra (usado pela dashboard e pelo MCP).
+/// Cria a regra. Se o módulo da inteligência estiver desligado, a regra é
+/// criada mesmo assim, desligada, e liga sozinha quando o módulo for ligado.
+/// Devolve o id e, nesse caso, o aviso para o técnico.
 pub(crate) fn criar_regra(
     app: &crate::App,
     cam: i64,
     r: &NovaRegra,
-) -> Result<i64, (StatusCode, String)> {
+) -> Result<(i64, Option<String>), (StatusCode, String)> {
     let erro = |s: StatusCode, m: &str| (s, m.to_string());
     if app
         .store
@@ -1619,26 +1622,15 @@ pub(crate) fn criar_regra(
     ) {
         return Err((StatusCode::BAD_REQUEST, m));
     }
-    if intel != cf_core::visao::Intel::Legado {
-        let i = cf_core::inteligencias::INTELIGENCIAS
-            .iter()
-            .find(|i| cf_core::visao::Intel::de_texto(i.id) == Some(intel));
-        if let Some(i) = i {
-            if !crate::video::modulos(&app.store).ligado(i.modulo) {
-                return Err(erro(
-                    StatusCode::CONFLICT,
-                    "ligue o módulo dessa inteligência antes de usá-la",
-                ));
-            }
-        }
-    }
+    let modulo_desligado = modulo_desligado(app, intel);
     let ajustes = cf_core::visao::AjustesRegra {
         intel,
         classes: r.classes.clone(),
         parametro: r.parametro,
         cor: r.cor.clone(),
         som: r.som.clone(),
-        ativa: true,
+        ativa: modulo_desligado.is_none(),
+        espera_modulo: modulo_desligado.is_some(),
     };
     let id = app
         .store
@@ -1657,7 +1649,65 @@ pub(crate) fn criar_regra(
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     }
     app.video.recarregar_regras(cam);
-    Ok(id)
+    let aviso = modulo_desligado.map(|m| {
+        format!("Regra criada desligada: ligue o módulo {m} na tela Módulos e ela liga sozinha.")
+    });
+    Ok((id, aviso))
+}
+
+/// Depois de ligar um módulo: liga as regras que foram criadas desligadas
+/// esperando por ele. Devolve quantas ligou.
+pub(crate) fn ligar_regras_em_espera(app: &crate::App, modulo: &str) -> usize {
+    let Ok(cams) = app.store.cameras() else {
+        return 0;
+    };
+    let mut n = 0;
+    for cam in cams {
+        let Ok(regras) = app.store.regras(cam.id) else {
+            continue;
+        };
+        let mut mudou = false;
+        for r in regras {
+            if !r.ajustes.espera_modulo || modulo_desligado(app, r.ajustes.intel).is_some() {
+                continue;
+            }
+            let quer = cf_core::inteligencias::INTELIGENCIAS
+                .iter()
+                .find(|i| cf_core::visao::Intel::de_texto(i.id) == Some(r.ajustes.intel))
+                .map(|i| i.modulo);
+            if quer != Some(modulo) {
+                continue;
+            }
+            let mut a = r.ajustes.clone();
+            a.ativa = true;
+            a.espera_modulo = false;
+            if app.store.definir_ajustes(r.id, &a).unwrap_or(false) {
+                n += 1;
+                mudou = true;
+            }
+        }
+        if mudou {
+            app.video.recarregar_regras(cam.id);
+        }
+    }
+    n
+}
+
+/// Nome do módulo que a inteligência precisa, se ele estiver desligado.
+fn modulo_desligado(app: &crate::App, intel: cf_core::visao::Intel) -> Option<&'static str> {
+    if intel == cf_core::visao::Intel::Legado {
+        return None;
+    }
+    let i = cf_core::inteligencias::INTELIGENCIAS
+        .iter()
+        .find(|i| cf_core::visao::Intel::de_texto(i.id) == Some(intel))?;
+    if crate::video::modulos(&app.store).ligado(i.modulo) {
+        return None;
+    }
+    crate::video::MODULOS
+        .iter()
+        .find(|(id, ..)| *id == i.modulo)
+        .map(|(_, nome, ..)| *nome)
 }
 
 async fn post_regra(
@@ -1665,8 +1715,8 @@ async fn post_regra(
     Path(cam): Path<i64>,
     Json(r): Json<NovaRegra>,
 ) -> ApiResult {
-    let id = criar_regra(&app, cam, &r).map_err(|(s, m)| bad(s, m))?;
-    Ok(Json(json!({ "id": id })))
+    let (id, aviso) = criar_regra(&app, cam, &r).map_err(|(s, m)| bad(s, m))?;
+    Ok(Json(json!({ "id": id, "aviso": aviso })))
 }
 
 #[derive(Deserialize)]
@@ -1722,6 +1772,8 @@ async fn patch_regra(
         let mut a = atual.ajustes.clone();
         if let Some(v) = r.ativa {
             a.ativa = v;
+            // O técnico decidiu na mão: não liga mais sozinha.
+            a.espera_modulo = false;
         }
         if let Some(c) = r.classes {
             a.classes = c;
@@ -1964,9 +2016,16 @@ struct ModuloReq {
 }
 
 async fn post_modulos(State(app): State<Shared>, Json(r): Json<ModuloReq>) -> ApiResult {
-    crate::video::definir_modulo(&app.store, &r.modulo, r.ligado)
+    let (id, _) = crate::video::definir_modulo(&app.store, &r.modulo, r.ligado)
         .map_err(|e| bad(StatusCode::BAD_REQUEST, e))?;
-    Ok(Json(json!({ "modulo": r.modulo, "ligado": r.ligado })))
+    let regras_ligadas = if r.ligado {
+        ligar_regras_em_espera(&app, id)
+    } else {
+        0
+    };
+    Ok(Json(
+        json!({ "modulo": r.modulo, "ligado": r.ligado, "regras_ligadas": regras_ligadas }),
+    ))
 }
 
 // ---------- Telegram (SDD-04) ----------
@@ -2107,6 +2166,54 @@ pub(crate) mod tests {
             coleta: Arc::default(),
         });
         (app, dir)
+    }
+
+    #[test]
+    fn regra_com_modulo_desligado_nasce_desligada_e_liga_sozinha() {
+        let (app, dir) = app_teste("espera-modulo");
+        let cam = app.store.criar_camera("Loja", "demo", "").unwrap();
+        let nova = |intel: &str| NovaRegra {
+            nome: "Entrada".into(),
+            forma: "linha".into(),
+            pontos: vec![
+                cf_core::visao::Ponto { x: 0.3, y: 0.6 },
+                cf_core::visao::Ponto { x: 0.7, y: 0.6 },
+            ],
+            rotulo_on: String::new(),
+            rotulo_off: String::new(),
+            intel: intel.into(),
+            classes: vec![0],
+            parametro: 0,
+            cor: String::new(),
+            som: String::new(),
+        };
+        // Módulo desligado: cria mesmo assim, desligada, com aviso.
+        let (id, aviso) = criar_regra(&app, cam, &nova("passagem")).unwrap();
+        assert!(aviso.unwrap().contains("Pessoas e veículos"));
+        let r = app
+            .store
+            .regras(cam)
+            .unwrap()
+            .into_iter()
+            .find(|r| r.id == id)
+            .unwrap();
+        assert!(!r.ajustes.ativa && r.ajustes.espera_modulo);
+        // Ligou o módulo: a regra liga sozinha.
+        app.store.set("bench_level", "medio").unwrap();
+        crate::video::definir_modulo(&app.store, "pessoas", true).unwrap();
+        assert_eq!(ligar_regras_em_espera(&app, "pessoas"), 1);
+        let r = app
+            .store
+            .regras(cam)
+            .unwrap()
+            .into_iter()
+            .find(|r| r.id == id)
+            .unwrap();
+        assert!(r.ajustes.ativa && !r.ajustes.espera_modulo);
+        // Com o módulo ligado, nasce ligada e sem aviso.
+        let (_, aviso) = criar_regra(&app, cam, &nova("passagem")).unwrap();
+        assert!(aviso.is_none());
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

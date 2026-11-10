@@ -1286,6 +1286,7 @@ mod tests {
             cor: "ambar".into(),
             som: "sino".into(),
             ativa: false,
+            espera_modulo: false,
         };
         s.definir_ajustes(nova, &a).unwrap();
         let rs = s.regras(cam).unwrap();

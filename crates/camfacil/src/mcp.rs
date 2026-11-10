@@ -215,12 +215,12 @@ fn chamar(app: &App, nome: &str, args: &Value) -> Result<Value, String> {
             let cam = num("camera_id")?;
             let r: crate::api::NovaRegra = serde_json::from_value(args.clone())
                 .map_err(|e| format!("argumentos inválidos: {e}"))?;
-            let id = crate::api::criar_regra(app, cam, &r).map_err(|(_, m)| m)?;
+            let (id, aviso) = crate::api::criar_regra(app, cam, &r).map_err(|(_, m)| m)?;
             registrar(
                 app,
                 &format!("criar_regra {} (id {id}) na câmera {cam}", r.nome),
             );
-            json!({ "id": id })
+            json!({ "id": id, "aviso": aviso })
         }
         "remover_regra" => {
             let id = num("regra_id")?;
@@ -253,6 +253,9 @@ fn chamar(app: &App, nome: &str, args: &Value) -> Result<Value, String> {
                 .and_then(Value::as_bool)
                 .ok_or("informe ligado (true/false)")?;
             let (id, bonito) = crate::video::definir_modulo(&app.store, m, l)?;
+            if l {
+                crate::api::ligar_regras_em_espera(app, id);
+            }
             registrar(app, &format!("ligar_modulo {id}={l}"));
             json!({ "modulo": id, "nome": bonito, "ligado": l })
         }

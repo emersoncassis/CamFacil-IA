@@ -101,6 +101,7 @@ impl Default for AjustesRegra {
             parametro: 0,
             cor: String::new(),
             som: String::new(),
+            espera_modulo: false,
         }
     }
 }
@@ -127,6 +128,10 @@ pub struct AjustesRegra {
     /// Som do alerta (bipe, sino…); vazio = padrão.
     #[serde(default)]
     pub som: String,
+    /// Criada desligada porque o módulo da inteligência estava desligado.
+    /// Liga sozinha quando o técnico ligar o módulo.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub espera_modulo: bool,
 }
 
 /// Regra desenhada pelo técnico.

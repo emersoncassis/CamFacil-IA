@@ -153,10 +153,11 @@ async function renderLevels() {
       if (id && ligados[id]) input.checked = true;
       input.onchange = async () => {
         try {
-          await api("/api/modulos", { modulo: id, ligado: input.checked });
+          const res = await api("/api/modulos", { modulo: id, ligado: input.checked });
           // Primeiro módulo médio ligado sem modelo: começa o download.
           if (input.checked && lv === "medio" && !ligados.ia_pronta) { await api("/api/ia/baixar", {}); }
           renderLevels(); renderIa();
+          if (res && res.regras_ligadas) alert(t("mod.regras_ligadas").replace("{n}", res.regras_ligadas));
         } catch (e) { input.checked = !input.checked; alert(e.message); }
       };
       const sw = el("label", { class: "switch", title: stateText }, input, el("span"));
@@ -859,7 +860,9 @@ async function montarFormRegra(forma = desenho.modo, regra = null) {
   const primeira = atual || (itens.find((i) => i.disponivel) || itens[itens.length - 1]).id;
   $("#intel-lista").replaceChildren(...itens.map((i) => {
     const radio = el("input", { type: "radio", name: "intel", value: i.id });
-    radio.disabled = !i.disponivel || (atual !== null && i.id !== atual);
+    // Módulo desligado não impede: a regra nasce desligada e liga sozinha
+    // quando o módulo for ligado.
+    radio.disabled = atual !== null && i.id !== atual;
     radio.checked = i.id === primeira;
     radio.onchange = atualizarParametro;
     const chave = i.id === "legado" ? "legado" : i.id;
@@ -935,7 +938,7 @@ async function salvarRegra(ev) {
   const cor = (document.querySelector('#cores-lista input:checked') || {}).value || CORES_PADRAO;
   const p = Number(f.get("parametro"));
   try {
-    await api(`/api/cameras/${camAberta}/regras`, {
+    const r = await api(`/api/cameras/${camAberta}/regras`, {
       nome: f.get("nome"), forma: desenho.modo, pontos: desenho.pontos,
       rotulo_on: f.get("rotulo_on") || "", rotulo_off: f.get("rotulo_off") || "",
       intel: intel === "legado" ? "" : intel,
@@ -945,6 +948,7 @@ async function salvarRegra(ev) {
     });
     definirModo("ver");
     await carregarRegras();
+    if (r.aviso) alert(r.aviso);
   } catch (e) { alert(e.message); }
 }
 
@@ -1534,13 +1538,15 @@ async function sugAceitar(sg, pct, botao) {
   document.querySelectorAll("#sug-lista button").forEach((b) => { b.disabled = true; });
   clearTimeout(sugTimer); sugTimer = null;
   try {
-    await api(`/api/cameras/${camAberta}/regras`, {
+    const criada = await api(`/api/cameras/${camAberta}/regras`, {
       nome: sg.nome, forma: sg.forma, pontos: sg.pontos, rotulo_on: "", rotulo_off: "",
       intel: sg.intel || "", classes: sg.classes || [], parametro: sg.parametro || 0,
     });
     await sugParar();
     await carregarRegras();
-    $("#sug-lista").replaceChildren(el("li", {}, el("span", { class: "msg ok" }, `${sg.nome} ${t("sug.criada")}`)));
+    $("#sug-lista").replaceChildren(el("li", {}, criada.aviso
+      ? el("span", { class: "msg" }, `${sg.nome}: ${criada.aviso}`)
+      : el("span", { class: "msg ok" }, `${sg.nome} ${t("sug.criada")}`)));
     $("#sug-iniciar").querySelector("span").textContent = t("sug.de_novo");
   } catch (e) {
     document.querySelectorAll("#sug-lista button").forEach((b) => { b.disabled = false; });
