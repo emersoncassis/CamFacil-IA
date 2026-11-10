@@ -2,7 +2,7 @@
 
 Histórico de cada versão do CamFácil IA. A versão atual e os arquivos para baixar estão nas [releases](https://github.com/emersoncassis/CamFacil-IA/releases). Voltar ao [README](../README.md).
 
-## Próxima versão
+## Novidades da 0.9.8
 
 - **Aba Segurança:** acesso pela rede, aparelhos liberados, registro de segurança, IA conectada (MCP) e LGPD num lugar só.
 - **Acesso pela rede com PIN:** na própria máquina abre direto; pela rede da loja, Tailscale ou ngrok, cada aparelho é liberado uma vez com o PIN gerado pelo programa (mostrado só na máquina) ou autorizado na máquina conferindo o mesmo código dos dois lados. Fica liberado por 30 dias sem uso. PIN fraco é recusado com explicação; tentativas erradas travam aos poucos. Ver [ADR 0017](adr/0017-acesso-pela-rede-com-pin-e-aparelhos.md).

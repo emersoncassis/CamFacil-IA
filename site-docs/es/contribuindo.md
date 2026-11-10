@@ -33,7 +33,7 @@ Si te ayudó a aprender, a vender o a ganar tiempo, invítame un café. Cada apo
 
 ## Hoja de ruta
 
-Versión actual: **0.9.7** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
+Versión actual: **0.9.8** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
 
 - [x] Núcleo, cerca virtual, formación con sello
 - [x] Telegram, WhatsApp, red y diagrama, modo TV, informe y backup

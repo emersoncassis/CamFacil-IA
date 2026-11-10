@@ -33,7 +33,7 @@ Se ele te ajudou a aprender, a vender ou a ganhar tempo, pague um café. Cada ap
 
 ## Roteiro
 
-Versão atual: **0.9.7** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
+Versão atual: **0.9.8** ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)).
 
 - [x] Núcleo, cerca virtual, formação com selo
 - [x] Telegram, WhatsApp, rede e diagrama, modo TV, relatório e backup
