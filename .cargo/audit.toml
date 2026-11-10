@@ -1,0 +1,11 @@
+# Alertas avaliados e aceitos (parecer em docs/seguranca/PARECER-2026-11-10.md).
+[advisories]
+ignore = [
+    # rsa 0.9 (Marvin Attack): exige operações com chave privada RSA. O projeto
+    # só VERIFICA o ID token do Google (RS256, chave pública) via jsonwebtoken.
+    # Sem versão corrigida compatível com o jsonwebtoken 11. Rever ao atualizá-lo.
+    "RUSTSEC-2023-0071",
+    # crypto-bigint 0.5 (tempo variável): chega por p256/p384 do jsonwebtoken,
+    # só para verificação com chave pública. Rever ao atualizar o jsonwebtoken.
+    "RUSTSEC-2026-0387",
+]

@@ -255,6 +255,8 @@ pub fn router(app: Shared) -> Router {
             post(crate::botoes::post_acionar),
         )
         .fallback(static_file)
+        // Contra DNS rebinding e CSRF de sites de terceiros (ver protecao.rs).
+        .layer(axum::middleware::from_fn(crate::protecao::navegador))
         .with_state(app)
 }
 

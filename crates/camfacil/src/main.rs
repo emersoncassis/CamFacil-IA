@@ -24,6 +24,7 @@ mod mcp_https;
 mod ngrok;
 mod notificacoes;
 mod painel;
+mod protecao;
 mod rede;
 mod relatorio;
 mod resumo;
