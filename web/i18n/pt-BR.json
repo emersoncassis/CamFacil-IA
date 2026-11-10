@@ -109,7 +109,7 @@
   "cam.col_nome": "Nome",
   "cam.col_fonte": "Fonte",
   "cam.col_situacao": "Situação",
-  "cam.sem_cameras": "Nenhuma câmera ainda. Comece pela demonstração: ela simula uma loja e não precisa de câmera.",
+  "cam.sem_cameras": "Nenhuma câmera ainda. Comece pela demonstração: ela mostra a loja da Formação e não precisa de câmera.",
   "cam.abrir": "Abrir",
   "cam.remover": "Remover",
   "cam.confirma_remover": "Remover esta câmera e as regras dela?",

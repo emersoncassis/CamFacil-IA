@@ -244,6 +244,10 @@ Versão atual: **0.8.2** ([releases](https://github.com/emersoncassis/CamFacil-I
   - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
   - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
 
+### Novidades da 0.9.5
+
+- **Demonstração com a loja da Formação:** "Adicionar demonstração" agora mostra a mesma loja e as mesmas pessoas do curso no site (duas entram, uma sai, um cliente para no balcão), em vez dos blocos cinzas. Dá para treinar linha e zona no programa com a imagem que o técnico já viu na aula.
+
 ### Novidades da 0.9.4
 
 - **Ligar e desligar regra** sem excluir (botão na lista de regras); desligada some do ao vivo e da TV e não alerta.
