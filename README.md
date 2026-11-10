@@ -26,7 +26,7 @@
 </p>
 <p>
   <a href="https://emersoncassis.github.io/CamFacil-IA/"><img src="https://img.shields.io/badge/manifesto%20e%20docs-PT%20%C2%B7%20EN%20%C2%B7%20ES-06CB3F?style=flat-square&labelColor=000000" alt="Manifesto e documentação em português, inglês e espanhol"/></a>
-  <a href="https://emersoncassis.github.io/CamFacil-IA/apoiadores/"><img src="https://img.shields.io/badge/apoie%20o%20projeto-pague%20um%20caf%C3%A9-06CB3F?style=flat-square&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoie o projeto: pague um café"/></a>
+  <a href="https://cfia.ysafe.com.br/#apoiar"><img src="https://img.shields.io/badge/apoie%20o%20projeto-pague%20um%20caf%C3%A9-06CB3F?style=flat-square&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoie o projeto: pague um café"/></a>
 </p>
 
 </div>
@@ -68,38 +68,80 @@ Técnico bom trava em duas coisas: **inteligência artificial** e **rede IP**. O
 ## <img src="docs/assets/icons/fluxo.svg" width="22" alt=""/> Como funciona
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"primaryColor":"#163134","primaryTextColor":"#EFEFED","primaryBorderColor":"#06CB3F","lineColor":"#06CB3F","fontFamily":"system-ui"}}}%%
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#163134","primaryTextColor":"#EFEFED","primaryBorderColor":"#06CB3F","lineColor":"#06CB3F","fontFamily":"system-ui","clusterBkg":"#0B1516","clusterBorder":"#035144","edgeLabelBackground":"#163134"}}}%%
 flowchart LR
   subgraph F[Fontes de vídeo]
-    C1[Câmeras IP<br/>RTSP / ONVIF]
+    C1[Câmeras IP e DVR/NVR<br/>RTSP · ONVIF]
     C2[Webcam]
-    C3[Vídeo ou<br/>modo demonstração]
+    C3[Arquivo ou<br/>demonstração]
   end
-  subgraph N[CamFácil IA · binário Rust na máquina do cliente]
-    I[Ingestão<br/>stream secundário, poucos fps]
-    M[Módulos de IA<br/>liga/desliga por nível]
-    E[Eventos e regras<br/>cercas e inteligências por regra]
-    D[Diagnóstico de rede<br/>IP · MAC · conflitos]
+  subgraph N[CamFácil IA · um binário Rust na máquina do cliente]
+    I[ffmpeg<br/>stream extra, quadro reduzido]
+    L[Nível leve<br/>movimento · cerca · saúde]
+    Y[Nível médio<br/>YOLO11n ONNX · pessoas e veículos]
+    R[Inteligências por regra<br/>passagem · presença · densidade<br/>permanência · mapa de calor]
+    B[(SQLite<br/>eventos e configuração)]
+    D[Rede<br/>IP · MAC · diagrama]
   end
-  G[Formação no site<br/>aulas em voz]
   subgraph S[Saídas]
-    W[Dashboard<br/>balões de inteligência]
-    T[Modo TV<br/>quiosque]
-    A[App Android<br/>via Tailscale]
-    Z[Telegram / WhatsApp<br/>webhook]
+    W[Dashboard e Ao vivo<br/>balões das regras]
+    T[Modo TV]
+    A[App Android]
+    Z[Telegram · WhatsApp<br/>webhook]
+    P[Portão e relé<br/>PIN + log]
   end
-  C1 & C2 & C3 --> I --> M --> E
-  E --> W & T & A & Z
-  G -.ensina.-> W
-  D -.mapa e alertas.-> W
-  A -.botões: portão, relé.-> E
+  C1 & C2 & C3 --> I --> L & Y --> R --> B
+  B --> W & T & A & Z
+  D -.diagnóstico.-> W
+  A -.botões.-> P
   classDef saida fill:#035144,stroke:#06CB3F,color:#EFEFED
-  classDef guia fill:#163134,stroke:#31BFEB,color:#EFEFED
-  class W,T,A,Z saida
-  class G guia
+  class W,T,A,Z,P saida
 ```
 
-Tudo roda localmente, sem nuvem obrigatória. A IA só analisa o stream leve da câmera, e o cliente nunca vê caixas ou riscos: só o balão com o nome da regra, que pisca no alerta.
+Tudo roda localmente, sem nuvem obrigatória. A IA só analisa o stream leve da câmera, e o cliente nunca vê caixas ou riscos: só o balão com o nome da regra, que pisca no alerta. Nada vem ligado: o técnico escolhe cada módulo.
+
+**O programa, a nuvem e o técnico.** O vídeo nunca sai da loja. O site recebe só um resumo, e o "ver ao vivo" passa pelo Tailscale, direto entre o celular do técnico e o programa do cliente.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#163134","primaryTextColor":"#EFEFED","primaryBorderColor":"#06CB3F","lineColor":"#06CB3F","fontFamily":"system-ui","clusterBkg":"#0B1516","clusterBorder":"#035144","edgeLabelBackground":"#163134"}}}%%
+flowchart LR
+  subgraph L[Loja do cliente]
+    P[CamFácil IA<br/>+ Agente-Cam-Elo-IA]
+  end
+  subgraph C[Nuvem · cfia.ysafe.com.br ou o seu servidor]
+    S[Site e API<br/>login Google · Postgres com RLS]
+    F[Formação e<br/>modo estúdio]
+  end
+  T[Técnico<br/>celular ou PC]
+  P -- resumo sem imagem a cada 30 s --> S
+  T -- login e painel --> S
+  T -. ver ao vivo pelo Tailscale .-> P
+  T -- aprende --> F
+  classDef nuvem fill:#035144,stroke:#06CB3F,color:#EFEFED
+  class S,F nuvem
+```
+
+**Do quadro ao alerta.**
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#163134","primaryTextColor":"#EFEFED","primaryBorderColor":"#06CB3F","lineColor":"#06CB3F","fontFamily":"system-ui","clusterBkg":"#0B1516","clusterBorder":"#035144","edgeLabelBackground":"#163134","actorBkg":"#163134","actorTextColor":"#EFEFED","actorBorder":"#06CB3F","signalColor":"#06CB3F","signalTextColor":"#EFEFED","noteBkgColor":"#035144","noteTextColor":"#EFEFED"}}}%%
+sequenceDiagram
+  participant Cam as Câmera
+  participant Vid as Vídeo (ffmpeg)
+  participant IA as Detector YOLO
+  participant Reg as Regras
+  participant Out as Telegram · TV · app
+  Cam->>Vid: stream extra (RTSP)
+  Vid->>IA: quadro reduzido, poucos por segundo
+  IA->>Reg: pessoas e veículos com rastreio
+  Reg->>Reg: cruzou a linha? ficou parado? 3 ou mais?
+  Reg->>Out: "carro passou — entrada" + foto crua
+  Note over Out: o cliente vê só o balão com o nome da regra
+```
+
+<a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><img src="https://img.shields.io/badge/mapa%20interativo%20do%20c%C3%B3digo-floorplan-06CB3F?style=for-the-badge&labelColor=000000" alt="Mapa interativo do código"/></a>
+
+Quer ver por dentro? O **[mapa interativo do código](https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/)** mostra cada parte do projeto, arquivo e rota com um nome e uma descrição em português, ligados pelas chamadas entre eles, com um passeio guiado. Gerado com o [floorplan](https://github.com/haydenschmitty/floorplan).
 
 ## <img src="docs/assets/icons/raio.svg" width="22" alt=""/> Instale em um comando
 
@@ -142,35 +184,17 @@ O painel web (login com Google, pareamento dos agentes, lista de clientes) é um
 curl -fsSL https://cfia.ysafe.com.br/instalar-painel.sh | sudo sh
 ```
 
-**2. DNS:** crie um registro **A** do seu domínio (ex.: `painel.suaempresa.com.br`) apontando para o IP da VPS. As portas 80 e 443 precisam estar livres.
-
-**3. Login com Google:** em [console.cloud.google.com](https://console.cloud.google.com) → APIs e serviços → Credenciais → Criar credenciais → **ID do cliente OAuth** → tipo **Aplicativo da Web**. Em *URIs de redirecionamento autorizados* coloque `https://SEU-DOMINIO/api/auth/google/callback`. Copie o ID e a chave secreta para `/opt/camfacil-painel/.env` e rode `cd /opt/camfacil-painel && docker compose up -d`.
-
-**4. Apontar os agentes para o seu painel:** no computador do cliente, abra o programa com a variável `CAMFACIL_SITE=https://SEU-DOMINIO` (Windows: `setx CAMFACIL_SITE https://SEU-DOMINIO` e abra de novo).
-
-<details>
-<summary>Testar no seu PC (Docker Desktop) ou instalar à mão</summary>
-
-```sh
-mkdir camfacil-painel && cd camfacil-painel
-curl -fsSL https://raw.githubusercontent.com/emersoncassis/CamFacil-IA/main/deploy/docker-compose.vps.yml -o docker-compose.yml
-printf 'DOMINIO=localhost\nPOSTGRES_PASSWORD=%s\n' "$(openssl rand -hex 20)" > .env
-docker compose up -d     # abre em https://localhost
-```
-
-Imagem pronta: `ghcr.io/emersoncassis/camfacil-ia-painel:latest`. Para usar com Dokploy, Coolify ou Portainer, aponte para `deploy/docker-compose.dokploy.yml` (detalhes em [docs/DEPLOY.md](docs/DEPLOY.md)). Atualizar: rode o instalador de novo.
-
-</details>
+Depois aponte o DNS, configure o login com Google e indique o seu painel aos agentes: passo a passo em **[Painel no seu servidor](docs/PAINEL-NO-SEU-SERVIDOR.md)**.
 
 ## <img src="docs/assets/icons/chip.svg" width="22" alt=""/> Níveis de IA
 
-O CamFácil IA testa a sua máquina e libera só o que ela aguenta.
+O CamFácil IA testa a sua máquina e libera só o que ela aguenta. Todo módulo começa desligado.
 
 | Nível | Módulos | Roda em |
 |:---:|---|---|
 | <img src="docs/assets/icons/nivel-leve.svg" width="12" alt=""/> **Leve** | Movimento inteligente · Cerca e linha virtual · Saúde das câmeras · Alertas da própria câmera | Quase qualquer PC |
 | <img src="docs/assets/icons/nivel-medio.svg" width="12" alt=""/> **Médio** | Pessoas e veículos · Contagem · Permanência · Mapa de calor | PC de 4 núcleos, mini PC |
-| <img src="docs/assets/icons/nivel-pesado.svg" width="12" alt=""/> **Pesado** | Leitura de placas · Reconhecimento facial | Máquinas mais fortes |
+| <img src="docs/assets/icons/nivel-pesado.svg" width="12" alt=""/> **Pesado** | Leitura de placas · Reconhecimento facial | Não roda aqui: fica para a câmera ou o gravador com IA de borda |
 
 ## <img src="docs/assets/icons/caixa.svg" width="22" alt=""/> As ferramentas
 
@@ -189,22 +213,15 @@ Leia o [manifesto](https://cfia.ysafe.com.br/manifesto): a IA de vídeo também 
 
 ## <img src="docs/assets/icons/caixa.svg" width="22" alt=""/> O que vem na caixa
 
-| | | |
-|:---:|---|---|
-| <img src="docs/assets/icons/aula.svg" width="20" alt=""/> | **Aula em cada passo** | A [Formação de IA para CFTV](https://cfia.ysafe.com.br/aprender) fica no site, com a voz do autor, animações Errado × Certo e exercícios; no programa, os botões **Aprender** abrem a lição certa, e a câmera de demonstração usa a mesma loja do curso |
-| <img src="docs/assets/icons/lupa.svg" width="20" alt=""/> | **Acha as câmeras sozinho** | Busca ONVIF na rede e gerador de RTSP por fabricante; login salvo (cifrado) para as câmeras que usam o mesmo usuário e senha; editar e remover câmera; reconhece gravador (DVR/NVR) e deixa escolher um ou vários canais |
-| <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Ao vivo** | Mosaico de 1, 2, 3 ou 4 câmeras e, embaixo, o status: aparelho, IA (regras ativas, modelos rodando), alertas, para quem vai cada alerta e serviços ativos |
-| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Diagnóstico de rede** | Descobre câmera que trocou de IP pelo MAC, conflito de IP, câmera instável, gateway ou DNS fora e rede lenta (senha de fábrica ainda não) |
-| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Autocorreção de IP** | Opção por câmera: se o DHCP mudar o IP, o programa reconhece a câmera pelo MAC, troca o endereço sozinho, confere a imagem e avisa |
-| <img src="docs/assets/icons/diagrama.svg" width="20" alt=""/> | **Diagrama da rede** | Desenha o unifilar da instalação em SVG, com IP e MAC, para baixar |
-| <img src="docs/assets/icons/mensagem.svg" width="20" alt=""/> | **Telegram e WhatsApp** | Alertas e comandos com QR code |
-| | ↳ WhatsApp usa uma [Evolution API](https://github.com/EvolutionAPI/evolution-api) que você sobe no mesmo servidor Docker do painel: `docker run -d -p 8080:8080 -e AUTHENTICATION_API_KEY=troque atendai/evolution-api:v2.2.3` e aponte a URL na dashboard (chip dedicado, nunca o seu número) | SDD-04 |
-| <img src="docs/assets/icons/tv.svg" width="20" alt=""/> | **Modo TV** | Tela de quiosque para o cliente, com a sua logo |
-| <img src="docs/assets/icons/celular.svg" width="20" alt=""/> | **App Android** | Servidor no próprio celular ou TV Box (com IA de pessoas, YOLO), endereço da rede da loja com QR e botão do Tailscale; ou visualizador à distância, com alertas |
-| <img src="docs/assets/icons/relatorio.svg" width="20" alt=""/> | **Relatório de validação** | PDF com o seu nome e o do cliente, foto de cada câmera, alertas da semana, saúde da máquina e proposta, para fechar a venda |
-| <img src="docs/assets/icons/robo.svg" width="20" alt=""/> | **MCP e IA** | Configure tudo conversando com uma IA (opcional) |
-| <img src="docs/assets/icons/chip.svg" width="20" alt=""/> | **Modo estúdio** *(versão básica)* | **Treine sua IA**: descreva uma inteligência nova, rotule no navegador, treine no Colab, rode no programa e compartilhe com outros técnicos (só estudo). **VMS sob medida**: em breve |
-| <img src="docs/assets/icons/rede.svg" width="20" alt=""/> | **Agente-Cam-Elo-IA** | O elo entre o programa do cliente e o seu painel: pareia por QR e manda só o resumo (o vídeo nunca passa pela nuvem) |
+- **Acha as câmeras sozinho**: ONVIF, RTSP por fabricante, DVR/NVR com escolha de canais e autocorreção de IP pelo MAC
+- **Regras com IA**: linha, zona, densidade, permanência e mapa de calor, por pessoa ou veículo, com "IA, sugira" e "IA, avalie"
+- **Alertas** no Telegram, WhatsApp e webhook, com a foto crua e o nome da regra
+- **Ao vivo, Modo TV e app Android**, com botões de portão e relé protegidos por PIN
+- **Rede**: diagnóstico, inventário e diagrama unifilar em SVG
+- **Manutenção**: relatório de validação em PDF, backup cifrado, monitor de hardware e teste de estresse
+- **MCP** para configurar conversando com uma IA, e **modo estúdio** para treinar o seu próprio modelo
+
+Tudo, com detalhes: **[O que vem na caixa](docs/RECURSOS.md)**.
 
 ## <img src="docs/assets/icons/chave.svg" width="22" alt=""/> Para você, técnico
 
@@ -216,6 +233,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 - Produto: [`docs/PRD.md`](docs/PRD.md) · Arquitetura: [`docs/sdd/`](docs/sdd) · Decisões: [`docs/adr/`](docs/adr) · Visual: [`DESIGN.md`](DESIGN.md)
 - Desenvolvido com [Claude Code](https://claude.com/claude-code): veja [`CLAUDE.md`](CLAUDE.md), os agentes em `.claude/agents/` e as skills em `.claude/skills/`.
 - Quer criar um módulo de IA? Comece por [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- [Mapa interativo do código](https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/) · [O que vem na caixa](docs/RECURSOS.md) · [Novidades](docs/NOVIDADES.md)
 
 ## <img src="docs/assets/icons/mapa.svg" width="22" alt=""/> Roadmap
 
@@ -244,88 +262,7 @@ Versão atual: **0.9.7** ([releases](https://github.com/emersoncassis/CamFacil-I
   - Com um assistente de código (Claude Code, Codex ou outro do mercado) ligado ao CamFácil IA por MCP, o técnico monta o próprio VMS, do jeito dele
   - Base: a IA local do CamFácil IA e a integração nativa com as APIs dos fabricantes (Intelbras, Hikvision, Dahua e outros), para construir algo que funciona e não falha
 
-### Novidades da 0.9.6
-
-- **Regra sempre é criada:** com o módulo da inteligência desligado, a regra (sugerida pela IA ou desenhada) fica salva **desligada** e com um aviso dizendo qual módulo ligar. Ao ligar o módulo, ela liga sozinha.
-- **Tela de regra não trava mais** a escolha da inteligência quando o módulo está desligado.
-
-### Novidades da 0.9.5
-
-- **Demonstração com a loja da Formação:** "Adicionar demonstração" agora mostra a mesma loja e as mesmas pessoas do curso no site (duas entram, uma sai, um cliente para no balcão), em vez dos blocos cinzas. Dá para treinar linha e zona no programa com a imagem que o técnico já viu na aula.
-
-### Novidades da 0.9.4
-
-- **Ligar e desligar regra** sem excluir (botão na lista de regras); desligada some do ao vivo e da TV e não alerta.
-- **Permanência fica na regra** (editar a regra, campo de segundos); saiu da tela de Módulos.
-- **Linha conta carro rápido:** o rastreio aceita mais deslocamento quando o PC demora entre leituras.
-
-### Novidades da 0.9.3
-
-- **Um módulo só liga a IA:** "Pessoas e veículos". Contagem, permanência e mapa de calor deixaram de ser interruptores separados na tela; viraram tipos de regra. Filtro de classe (pessoa, carro, moto, ônibus, caminhão, bicicleta) funciona sem ligar mais nada.
-
-### Novidades da 0.9.2
-- **Alertas dizem o que passou**: o balão e a mensagem do Telegram trazem "carro passou — entrada", "pessoa parada há 65 s", "3 carros ao mesmo tempo".
-- **IA, avalie a minha regra**: ao lado de "Observar e sugerir" há "Avaliar uma regra". Você escolhe a regra criada, ela observa 1 minuto e diz em frases curtas se está bem posicionada (quantos passaram e quantos cruzaram a linha, quem entrou na área), se o limite de densidade ou o tempo de permanência estão certos (e sugere o número) e quem a regra está ignorando.
-
-### Novidades da 0.9.1
-- **Nada vem ligado**: movimento, cerca, saúde e os demais módulos começam desligados. Você escolhe quais alertas quer, inclusive ficar só com IA de vídeo e sem o movimento por pixel (que enche o histórico).
-- **Alertas da própria câmera** (módulo novo, desligado por padrão): o programa escuta os eventos que a câmera ou o gravador manda (Intelbras/Dahua e Hikvision: movimento, cruzou a linha, invadiu a área…) e registra cada um como "recebido da câmera". Ligue e desligue em Módulos de IA.
-- **Editar a regra depois de criada**: botão Editar na lista de regras (nome, textos, quem observa, tempo, cor e som). O que a regra faz não muda; para outra coisa, crie outra regra.
-
-### Novidades da 0.9.0
-- **Uma inteligência por regra** ([SDD-09](docs/sdd/SDD-09-inteligencias-por-regra.md)): passagem (linha), presença, densidade, permanência e mapa de calor (zona). Cada uma mostra o peso (leve, médio, pesado) e só pode ser escolhida se o módulo dela estiver ligado.
-- **Quem a regra observa**: pessoa, carro, moto, bicicleta, ônibus e caminhão, em qualquer combinação. "Linha só de carro e moto", "zona que avisa com 3 ou mais carros", "permanência só de moto".
-- **Densidade** (N ou mais ao mesmo tempo) e **permanência** com tempo próprio por regra; o aviso diz o que é ("carro parado há 65 s").
-- **Cor da linha** (6 opções) e **som do alerta** (bipe, sino, alarme, gota, sem som) por regra, no Ao vivo, em Câmeras e no Modo TV.
-- **IA, sugira para mim** agora vê o que passa: se mais carros e pessoas passam, sugere **passagem** das classes certas; se alguém ou um carro chega e fica parado, sugere **permanência** daquela classe, com o tempo sugerido.
-- Formulário da regra em 3 abas (O que faz, Quem, Alerta), sem rolagem em nenhum tamanho de tela. Regras antigas continuam como eram.
-
-### Novidades da 0.8.2
-- **Nada fica rodando escondido**: ngrok e ffmpeg morrem junto com o programa, mesmo se ele for fechado à força (janela fechada, Gerenciador de Tarefas). No Windows, por Job Object; no Linux/Android, por sinal do sistema. Ao abrir, derruba um ngrok que uma versão anterior tenha deixado.
-- **Desinstalar** (Manutenção > Dados): para ngrok, endereço HTTPS do Tailscale e o abrir com o computador, tira o atalho e o programa e, se marcado, apaga os dados.
-- **Versão no nome do arquivo baixado**: o site baixa `camfacil-0.8.2-windows-x86_64.exe` (e o mesmo para Linux, ARM e Android).
-
-### Novidades da 0.8.1
-- **MCP por HTTPS** (o Claude exige): pelo **Tailscale Serve** (só sua rede Tailscale) ou **Tailscale Funnel** (internet, para os conectores do claude.ai, com confirmação forte e token). Para Claude Desktop e Claude Code na mesma máquina, configuração por stdio pronta para colar (ADR 0015).
-- **ngrok temporário** no Acesso de fora e no MCP: o programa baixa o agente oficial e sobe o túnel; aviso obrigatório de que é só para testes, pode cair e não é seguro (para mais de um dia, Tailscale); painel protegido por senha aleatória; opção de desligar sozinho após 24 h.
-
-### Novidades da 0.8.0
-- **Ao vivo completo**: balões das regras sobre cada câmera (alinhados à imagem, piscam no alerta), som do alerta (com "Ligar som" e mudo) e escolha de stream **extra** (padrão) ou **principal** por câmera, com aviso de que o principal é da gravação e pesa mais.
-- **Nome real do canal** do DVR/NVR (Intelbras/Dahua e Hikvision, via Digest) vira o nome da câmera; nomes genéricos são descartados.
-- **Nome padrão sem IP**: "Câmera 1", "Gravador 1"; os nomes antigos com IP são trocados sozinhos.
-- **IA, sugira para mim** com textos curtos e confiança só em "% · boa/baixa".
-- Botões de portão e relé também com HTTP Digest.
-
-### Novidades da 0.7.1
-- **IA, sugira para mim** consertado: botão **Cancelar**; **uma regra por pesquisa** (aceitar pede confirmação, cria a regra e para a pesquisa); o traçado tracejado sai da imagem; confiança **70% ou mais = boa**, abaixo disso aviso para observar de novo.
-- **Dados numa pasta só, ao lado do programa** (`camfacil-dados`): nada em pasta escondida nem no registro. Em Manutenção > Dados, **Apagar todos os dados** zera o programa, inclusive a pasta antiga das versões até 0.7.
-- **Mostrar linhas e zonas**: interruptor no ao vivo da câmera para mostrar o desenho das regras além do balão (desligado por padrão).
-
-### Novidades da 0.7.0
-- **Autocorreção de IP pelo MAC**: chave por câmera (Ligar e Editar), desligada por padrão. Confere porta RTSP e MAC no IP novo, troca só o host, confere a imagem em até 15 s e desfaz se não voltar. Não corrige com conflito de IP; no máximo uma correção a cada 10 min. Avisa no Início, no Ao vivo e no Telegram/WhatsApp/webhook. Histórico na tela Rede e no backup.
-- **Gravador (DVR/NVR)**: reconhece o gravador (ONVIF, modelo ou teste dos canais) e deixa escolher um ou vários canais; cada canal vira uma câmera "Gravador · Canal N", no substream por padrão. Troca de canal no Editar; se o gravador mudar de IP, todos os canais corrigem juntos.
-- **Estúdio**: abre com dois blocos fechados, *Treine sua IA* (os seis passos, funcionando) e *VMS sob medida* (só desenho).
-- **Celular estreito**: ações do cabeçalho das telas viram só ícone, para não passar da borda.
-- Ainda falta validar autocorreção e DVR/NVR com equipamento real (testados com rede simulada e gravador falso de 4 canais).
-
-### Novidades da 0.5 e 0.6
-- **Ao vivo**: mosaico de 1 a 4 câmeras e, embaixo, aparelho, IA, alertas, para quem vai e serviços ativos.
-- **Login salvo das câmeras**, editar e remover câmera, zero rolagem em todas as telas.
-- **Android**: IA de pessoas (YOLO) no aparelho, tela do servidor com o endereço da rede da loja e QR, botão do Tailscale.
-- **Estúdio básico** de ponta a ponta e **manifesto narrado** no site.
-
-### Regra de tela
-Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular ao monitor. O que não cabe vira aba, seção que abre ou página (regra 9 do [`CLAUDE.md`](CLAUDE.md), detalhes no [`DESIGN.md`](DESIGN.md)).
-
-### Em desenvolvimento / próximos passos
-- Desenhado, ainda **não** implementado: dashboard com senha própria; perfis técnico e cliente no app; vídeo à distância por WebRTC (hoje é pelo Tailscale); IA no navegador (WASM); clipes de 10 s nos alertas; plano de IPs; atualização com rollback e pacote offline; benchmark pela inferência real; contrato de módulo da comunidade (hoje a via é a receita do estúdio)
-- IA avançada: diagnóstico da imagem, veredito por inteligência e aviso técnico para o cliente ([SDD-10](docs/sdd/SDD-10-ia-avancada.md), proposta)
-- Modo estúdio: conversa com a IA montando a receita, pré-marcação das fotos (vocabulário aberto) e posição da linha/zona vinda da receita (fase 7)
-- Mosaico ao vivo com mais de 4 câmeras (6, 9, 16)
-- Rede: senha de fábrica, quedas por hora e banda por câmera (conflito de IP já avisa na tela Rede)
-- Telegram: backup agendado; foto do alerta com a linha/zona desenhada (`/backup <senha>` já existe)
-- Android: câmera do próprio celular como fonte, chave de assinatura fixa do APK, APK por arquitetura (hoje ~20 MB com a IA)
-- Testes em campo: rede real, Windows, TV Box com controle remoto, autocorreção de IP e canais de DVR/NVR com equipamento de verdade
+O que mudou em cada versão e o que ainda falta: **[Novidades e próximos passos](docs/NOVIDADES.md)**.
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Gratidão ao mestre Sandeco
 
@@ -339,34 +276,7 @@ Professor, obrigado de coração por compartilhar tanto e de forma tão generosa
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Apoie o projeto
 
-O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem tempo, estudo, anos de sala de aula e dinheiro do próprio bolso: só para começar, foram mais de R$ 10 mil.
-
-Se ele te ajudou a aprender, a vender ou a ganhar tempo, **pague um café**. Cada apoio mantém o projeto vivo e aberto para o próximo técnico.
-
-<table>
-  <tr>
-    <td><img src="docs/assets/pix-qr.png" width="170" alt="QR code do Pix"/></td>
-    <td>
-      <b>Pix (CPF)</b><br/>
-      <code></code><br/>
-      Emerson de Carvalho Assis<br/><br/>
-      Fora do Brasil: <a href="https://buymeacoffee.com/emersoncarvalho">Buy Me a Coffee</a>
-    </td>
-  </tr>
-</table>
-
-| Apoio | O que você recebe |
-|---|---|
-| **Doação livre** · qualquer valor | Seu nome e recado no mural |
-| **Até R$ 500** · pedido de funcionalidade | Sua sugestão é lida e avaliada por mim |
-| **A partir de R$ 1.000** · conversa | Uma hora de conversa comigo pelo Google Meet |
-| **A partir de R$ 5.000** · desenvolvimento | Desenvolvemos juntos uma aplicação para você, com base no CamFácil IA |
-
-Os **10 primeiros** apoiadores viram **Apoiadores Fundadores**, com selo para sempre no mural. Já estão lá **Marcone (Mar Câmeras)**, que criou o [Contagem Inteligente](https://contagem.marcameras.com.br/), e o **Alexandre (Papo Segurança)**.
-
-Ideias e pedidos de funcionalidade passam pelo apoio. Prefere fazer você mesmo? O código é aberto: abra um pull request, que eu avalio quando possível.
-
-Depois do Pix, **[entre no mural de apoiadores](https://emersoncassis.github.io/CamFacil-IA/apoiadores/)**: mande o comprovante, um recado e o que você gostaria que fosse desenvolvido.
+O CamFácil IA é livre e gratuito, e vai continuar assim. Se ele te ajudou, **[apoie o projeto](https://cfia.ysafe.com.br/#apoiar)**.
 
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Contribua
 
