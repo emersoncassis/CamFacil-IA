@@ -13,6 +13,7 @@ Thumbs.db
 client_secret*.json
 *.pem
 .env.*
+!.env.example
 
 # Site de documentação (mkdocs)
 /site/

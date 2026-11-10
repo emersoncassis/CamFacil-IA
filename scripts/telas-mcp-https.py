@@ -16,11 +16,15 @@ tamanhos confere, sem rolar a página e sem erro de console:
   usuário e senha na tela.
 """
 import json
+import os
 import sys
 from playwright.sync_api import sync_playwright
 
 TAMANHOS = [(360, 640), (390, 844), (768, 1024), (1366, 768), (1920, 1080)]
-TOKEN = "REMOVIDO-TOKEN-MCP"
+try:
+    TOKEN = os.environ["CFIA_TEST_MCP_TOKEN"]
+except KeyError:
+    sys.exit("Defina CFIA_TEST_MCP_TOKEN (qualquer texto de teste, ex.: um valor aleatório) antes de rodar.")
 
 MCP = {"ligado": True, "escrita": False, "url": "http://localhost:7070/mcp", "token": TOKEN,
        "exemplo": json.dumps({"mcpServers": {"camfacil": {"command": "/opt/camfacil/camfacil", "args": ["--mcp"]}}}, indent=2),

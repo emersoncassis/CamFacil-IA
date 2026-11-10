@@ -311,15 +311,21 @@ pub fn multipart(limite: &str, campos: &[Campo<'_>]) -> Vec<u8> {
 mod tests {
     use super::*;
 
+    /// Token só com o formato do Telegram (id numérico + segredo de 35 caracteres),
+    /// montado em tempo de execução. Não é um segredo de verdade.
+    fn fake_token(id: &str) -> String {
+        format!("{id}:{}", "A".repeat(35))
+    }
+
     #[test]
     fn valida_formato_do_token() {
         assert!(Bot::token_parece_valido(
-            "REMOVIDO-TOKEN-TELEGRAM"
+            &fake_token("123456789")
         ));
         assert!(!Bot::token_parece_valido("abc"));
         assert!(!Bot::token_parece_valido("12:curto"));
         assert!(!Bot::token_parece_valido(
-            "x123:REMOVIDO-CORPO-TOKEN"
+            &fake_token("x123")
         ));
     }
 
