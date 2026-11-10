@@ -470,7 +470,7 @@ fn exigir_termo(app: &Shared) -> Result<(), (StatusCode, Json<Value>)> {
     } else {
         Err(bad(
             StatusCode::PRECONDITION_FAILED,
-            "Antes de usar o modo estúdio (coletar fotos ou importar modelo), aceite o Termo de Responsabilidade do Técnico em Integrações → Termos e LGPD.",
+            "Antes de usar o modo estúdio (coletar fotos ou importar modelo), aceite o Termo de Responsabilidade do Técnico em Segurança → LGPD.",
         ))
     }
 }

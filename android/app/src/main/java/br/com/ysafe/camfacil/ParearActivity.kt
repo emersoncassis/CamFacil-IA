@@ -95,10 +95,14 @@ class ParearActivity : Activity() {
         }
         aviso.setText(R.string.parear_testando)
         Thread {
-            val saude = Config.get("$end/api/saude", 6000)
-            val local = saude != null && Config.get("$end/api/estado", 6000) != null
+            // 401 = o programa está no ar e pede o PIN (acesso pela rede, ADR 0017):
+            // a tela de entrada aparece dentro do painel.
+            val saude = Config.codigo("$end/api/saude", 6000)
+            val noAr = saude in 200..299 || saude == 401
+            val estado = Config.codigo("$end/api/estado", 6000)
+            val local = noAr && (estado in 200..299 || estado == 401)
             runOnUiThread {
-                if (saude == null) {
+                if (!noAr) {
                     aviso.text = getString(R.string.parear_falhou, end)
                 } else {
                     Config.salvar(this, end, local)

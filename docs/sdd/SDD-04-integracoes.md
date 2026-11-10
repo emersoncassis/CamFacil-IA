@@ -54,7 +54,7 @@ Só contatos autorizados na dashboard. Ações registradas no log.
 - Aceite obrigatório do [termo de responsabilidade do técnico](../legal/TERMO-RESPONSABILIDADE-TECNICO.md) antes de ativar (vale também para WhatsApp e provedores de IA).
 
 ## Termos e LGPD no programa — status: implementado (fase 3b)
-- Integrações → Termos e LGPD (`crates/camfacil/src/termos.rs`). Sem o aceite do termo do técnico (versão gravada em `acceptances`), `POST /api/telegram`, `/api/whatsapp`, `/api/webhook` e ligar o arquivo respondem 412.
+- Segurança → LGPD (`crates/camfacil/src/termos.rs`). Sem o aceite do termo do técnico (versão gravada em `acceptances`), `POST /api/telegram`, `/api/whatsapp`, `/api/webhook` e ligar o arquivo respondem 412.
 - Autorização do cliente: dados gravados localmente; `GET /api/termos/cliente.md` devolve o termo preenchido (canais ligados marcados) para imprimir e assinar; `GET /api/termos/placa.md`, a placa de ambiente monitorado.
 - "Apagar dados deste cliente" (`POST /api/termos/apagar`, exige digitar `APAGAR`): eventos, índice do arquivo e fotos; câmeras, regras e configurações ficam. Cada aceite e limpeza vira evento `lgpd` no log.
 
@@ -78,6 +78,13 @@ OpenRouter (modelos gratuitos, padrão), OpenAI, Google, Anthropic. Interface ú
 - Portão e relé **não** são acionáveis pelo MCP (ação física exige PIN + confirmação de uma pessoa; SDD-06).
 - JSON-RPC implementado à mão (sem `rmcp`) para não trazer dependências; ver ADR 0012.
 - API da dashboard: `GET/POST /api/mcp` (`{ligado, escrita}`), `POST /api/mcp/token`.
+
+### Defesas contra abuso por IA (ADR 0017) — implementado
+- 60 pedidos por minuto (todos os clientes); acima, `429` + `Retry-After` e evento `mcp_negado`.
+- 10 tokens errados em 10 min **pela rede** travam o MCP pela rede por 15 min; uso local (ponte stdio) não trava; gerar outro token ou religar destrava.
+- Todo `tools/call` devolve primeiro um aviso de que o conteúdo é dado, não instrução; textos sem caracteres de controle e com até 300 caracteres; as `instructions` do servidor dizem o mesmo (contra injeção indireta de prompt).
+- `ver_alertas` não entrega eventos `acesso*` nem `mcp*`; `GET /api/mcp` mostra `limite_por_minuto` e `travado_s`.
+- Evento `mcp` quando um cliente se conecta (`clientInfo.name`) e a cada escrita; aparecem na aba Segurança → Registro.
 
 ### MCP por HTTPS (ADR 0015) — implementado
 - **Por quê:** os conectores remotos do Claude (claude.ai e app) só aceitam HTTPS com certificado válido e chamam da nuvem.

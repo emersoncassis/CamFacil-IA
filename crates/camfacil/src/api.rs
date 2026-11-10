@@ -238,6 +238,30 @@ pub fn router(app: Shared) -> Router {
             get(crate::mcp::get_config).post(crate::mcp::post_config),
         )
         .route("/api/mcp/token", post(crate::mcp::post_token))
+        // Acesso pela rede e aba Segurança (ADR 0017).
+        .route("/entrar", get(crate::acesso::pagina))
+        .route("/api/acesso", get(crate::acesso::get_acesso))
+        .route("/api/acesso/eu", get(crate::acesso::get_eu))
+        .route("/api/acesso/entrar", post(crate::acesso::post_entrar))
+        .route("/api/acesso/pedir", post(crate::acesso::post_pedir))
+        .route("/api/acesso/pedido/{id}", get(crate::acesso::get_pedido))
+        .route("/api/acesso/sair", post(crate::acesso::post_sair))
+        .route("/api/acesso/pin", post(crate::acesso::post_pin))
+        .route("/api/acesso/bloqueio", post(crate::acesso::post_bloqueio))
+        .route(
+            "/api/acesso/desconectar",
+            post(crate::acesso::post_desconectar),
+        )
+        .route("/api/acesso/qr.svg", get(crate::acesso::get_qr))
+        .route("/api/acesso/registro", get(crate::acesso::get_registro))
+        .route(
+            "/api/acesso/aparelhos/{id}",
+            post(crate::acesso::post_aparelho).delete(crate::acesso::delete_aparelho),
+        )
+        .route(
+            "/api/acesso/pedidos/{id}",
+            post(crate::acesso::post_decidir),
+        )
         .route("/botoes", get(crate::botoes::pagina))
         .route(
             "/api/botoes",
@@ -255,6 +279,11 @@ pub fn router(app: Shared) -> Router {
             post(crate::botoes::post_acionar),
         )
         .fallback(static_file)
+        // Quem não está na própria máquina precisa de aparelho autorizado (acesso.rs).
+        .layer(axum::middleware::from_fn_with_state(
+            app.clone(),
+            crate::acesso::exigir,
+        ))
         // Contra DNS rebinding e CSRF de sites de terceiros (ver protecao.rs).
         .layer(axum::middleware::from_fn(crate::protecao::navegador))
         .with_state(app)

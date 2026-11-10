@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/integracoes-extra.css">
   <link rel="stylesheet" href="/externo.css">
   <link rel="stylesheet" href="/rede.css">
+  <link rel="stylesheet" href="/seguranca.css">
   <link rel="stylesheet" href="/tela.css">
 </head>
 <body>
@@ -49,6 +50,7 @@
           <li><button role="tab" data-tab="modulos"><svg class="ico"><use href="#i-chip"/></svg><span class="nav-longo" data-i18n="tab.modulos"></span><span class="nav-curto" data-i18n="tabc.modulos"></span></button></li>
           <li><button role="tab" data-tab="rede"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg><span class="nav-longo" data-i18n="tab.rede"></span><span class="nav-curto" data-i18n="tabc.rede"></span></button></li>
           <li><button role="tab" data-tab="integracoes"><svg class="ico"><use href="#i-plug"/></svg><span class="nav-longo" data-i18n="tab.integracoes"></span><span class="nav-curto" data-i18n="tabc.integracoes"></span></button></li>
+          <li><button role="tab" data-tab="seguranca" id="nav-seguranca"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg><span class="nav-longo" data-i18n="tab.seguranca"></span><span class="nav-curto" data-i18n="tabc.seguranca"></span><span class="nav-badge" id="seg-badge" hidden></span></button></li>
           <li><button role="tab" data-tab="manutencao"><svg class="ico" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 0 0-5 5l-6 6a1.5 1.5 0 0 0 2 2l6-6a4 4 0 0 0 5-5l-2.5 2.5-2-2z"/></svg><span class="nav-longo" data-i18n="tab.manutencao"></span><span class="nav-curto" data-i18n="tabc.manutencao"></span></button></li>
         </ul>
       </nav>
@@ -747,43 +749,6 @@
           </div>
           <p class="msg" id="ngrok-msg" role="status"></p>
         </div>
-        <div class="block" id="termos" data-sub="lgpd">
-          <h2 data-i18n="lg.titulo"></h2>
-          <p class="hint" data-i18n="lg.desc"></p>
-          <dl class="rows mt">
-            <dt data-i18n="lg.tecnico"></dt><dd><span class="state"><span class="dot" id="lg-dot"></span><span id="lg-status"></span></span></dd>
-            <dt data-i18n="lg.cliente"></dt><dd id="lg-cliente-status">—</dd>
-          </dl>
-          <details class="avancado mt" id="lg-texto-wrap">
-            <summary data-i18n="lg.ler_termo"></summary>
-            <pre class="termo-texto" id="lg-texto"></pre>
-          </details>
-          <div class="actions mt">
-            <button class="btn primary" id="lg-aceitar" type="button"><span data-i18n="lg.aceitar"></span></button>
-          </div>
-          <h3 class="sub" data-i18n="lg.cliente_titulo"></h3>
-          <p class="hint" data-i18n="lg.cliente_dica"></p>
-          <form class="form-grid" id="lg-form" autocomplete="off">
-            <input name="cliente" data-i18n-ph="lg.ph_cliente" required>
-            <input name="documento" data-i18n-ph="lg.ph_documento">
-            <input name="tecnico" data-i18n-ph="lg.ph_tecnico" required>
-            <input name="contato" data-i18n-ph="lg.ph_contato">
-            <input name="local" data-i18n-ph="lg.ph_local">
-            <input name="prazo_dias" type="number" min="0" max="3650" inputmode="numeric" data-i18n-ph="lg.ph_prazo">
-            <button class="btn primary" type="submit"><span data-i18n="lg.salvar_cliente"></span></button>
-          </form>
-          <div class="actions mt">
-            <a class="btn sm" href="/api/termos/cliente.md" download data-i18n="lg.baixar_termo"></a>
-            <a class="btn sm" href="/api/termos/placa.md" download data-i18n="lg.baixar_placa"></a>
-          </div>
-          <p class="tiny mt" data-i18n="lg.imprimir_dica"></p>
-          <h3 class="sub" data-i18n="lg.apagar_titulo"></h3>
-          <p class="hint" data-i18n="lg.apagar_dica"></p>
-          <div class="actions mt">
-            <button class="btn sm perigo" id="lg-apagar" type="button"><span data-i18n="lg.apagar"></span></button>
-          </div>
-          <p class="msg" id="lg-msg" role="status"></p>
-        </div>
         <div class="block" id="tg" data-sub="telegram">
           <h2>Telegram</h2>
           <p class="hint" data-i18n="tg.desc"></p>
@@ -1027,6 +992,138 @@
         </div>
       </section>
 
+      <!-- Segurança: acesso pela rede, aparelhos, registro, IA conectada e LGPD (ADR 0017) -->
+      <section id="seguranca" class="page" role="tabpanel" hidden>
+        <header class="pagehead">
+          <div>
+            <h1 data-i18n="tab.seguranca"></h1>
+            <p class="lede" data-i18n="guia.seguranca"></p>
+          </div>
+        </header>
+
+        <div class="block" id="seg-remoto" data-sub="*" hidden>
+          <h2 data-i18n="seg.remoto_titulo"></h2>
+          <p class="hint" data-i18n="seg.remoto_dica"></p>
+          <dl class="rows mt">
+            <dt data-i18n="seg.este_aparelho"></dt><dd id="seg-remoto-nome">—</dd>
+            <dt data-i18n="seg.vale_ate"></dt><dd id="seg-remoto-validade">—</dd>
+          </dl>
+          <div class="actions mt">
+            <button class="btn sm" id="seg-sair" type="button"><span data-i18n="seg.sair"></span></button>
+          </div>
+        </div>
+
+        <div class="block seg-local" id="seg-acesso" data-sub="acesso">
+          <h2 data-i18n="seg.acesso_titulo"></h2>
+          <p class="hint" data-i18n="seg.acesso_dica"></p>
+          <div class="seg-pin">
+            <span class="tiny" data-i18n="seg.pin_atual"></span>
+            <code class="mono seg-pin-valor" id="seg-pin">••••••</code>
+            <button class="btn ghost sm" id="seg-pin-ver" type="button"><span data-i18n="seg.ver"></span></button>
+          </div>
+          <p class="tiny" data-i18n="seg.pin_regra"></p>
+          <div class="actions mt">
+            <button class="btn sm" id="seg-pin-novo" type="button"><span data-i18n="seg.gerar_outro"></span></button>
+            <label class="som-regra"><span class="switch"><input type="checkbox" id="seg-bloqueio"><span></span></span><span class="tiny" data-i18n="seg.bloquear_tudo"></span></label>
+          </div>
+          <h3 class="sub" data-i18n="seg.pedidos_titulo" data-aberta></h3>
+          <p class="hint" data-i18n="seg.pedidos_dica"></p>
+          <ul class="list mt" id="seg-pedidos"></ul>
+          <h3 class="sub" data-i18n="seg.qr_titulo"></h3>
+          <p class="hint" data-i18n="seg.qr_dica"></p>
+          <div class="seg-qr">
+            <img id="seg-qr" width="160" height="160" alt="" hidden>
+            <div>
+              <select id="seg-endereco" aria-label=""></select>
+              <p class="tiny mt" id="seg-qr-url"></p>
+              <p class="tiny" id="seg-sem-rede" data-i18n="seg.sem_rede" hidden></p>
+            </div>
+          </div>
+          <h3 class="sub" data-i18n="seg.pin_proprio_titulo"></h3>
+          <p class="hint" data-i18n="seg.pin_proprio_dica"></p>
+          <form class="form-grid" id="seg-pin-form" autocomplete="off">
+            <input name="pin" type="password" inputmode="numeric" pattern="[0-9]*" minlength="6" maxlength="8" required data-i18n-ph="seg.ph_pin">
+            <button class="btn primary" type="submit"><span data-i18n="seg.usar_pin"></span></button>
+          </form>
+          <p class="msg" id="seg-msg" role="status"></p>
+        </div>
+
+        <div class="block seg-local" id="seg-aparelhos-bloco" data-sub="aparelhos">
+          <div class="block-head">
+            <h2 data-i18n="seg.aparelhos_titulo"></h2>
+            <button class="btn ghost sm perigo" id="seg-desconectar" type="button"><span data-i18n="seg.desconectar_todos"></span></button>
+          </div>
+          <p class="hint" data-i18n="seg.aparelhos_dica"></p>
+          <ul class="list mt" id="seg-aparelhos"></ul>
+          <p class="msg" id="seg-ap-msg" role="status"></p>
+        </div>
+
+        <div class="block" id="seg-registro-bloco" data-sub="registro">
+          <h2 data-i18n="seg.registro_titulo"></h2>
+          <p class="hint" data-i18n="seg.registro_dica"></p>
+          <ul class="list eventos mt" id="seg-registro"></ul>
+        </div>
+
+        <div class="block seg-local" id="seg-ia" data-sub="ia">
+          <h2 data-i18n="seg.ia_titulo"></h2>
+          <p class="hint" data-i18n="seg.ia_dica"></p>
+          <dl class="rows mt">
+            <dt data-i18n="seg.ia_estado"></dt><dd id="seg-ia-estado">—</dd>
+            <dt data-i18n="seg.ia_escrita"></dt><dd id="seg-ia-escrita">—</dd>
+            <dt data-i18n="seg.ia_limite"></dt><dd id="seg-ia-limite">—</dd>
+          </dl>
+          <h3 class="sub" data-i18n="seg.ia_protecoes"></h3>
+          <ul class="seg-protecoes">
+            <li data-i18n="seg.ia_p1"></li>
+            <li data-i18n="seg.ia_p2"></li>
+            <li data-i18n="seg.ia_p3"></li>
+            <li data-i18n="seg.ia_p4"></li>
+            <li data-i18n="seg.ia_p5"></li>
+          </ul>
+          <div class="actions mt">
+            <button class="btn sm" id="seg-ia-config" type="button"><span data-i18n="seg.ia_configurar"></span></button>
+          </div>
+        </div>
+
+        <div class="block seg-local" id="termos" data-sub="lgpd">
+          <h2 data-i18n="lg.titulo"></h2>
+          <p class="hint" data-i18n="lg.desc"></p>
+          <dl class="rows mt">
+            <dt data-i18n="lg.tecnico"></dt><dd><span class="state"><span class="dot" id="lg-dot"></span><span id="lg-status"></span></span></dd>
+            <dt data-i18n="lg.cliente"></dt><dd id="lg-cliente-status">—</dd>
+          </dl>
+          <details class="avancado mt" id="lg-texto-wrap">
+            <summary data-i18n="lg.ler_termo"></summary>
+            <pre class="termo-texto" id="lg-texto"></pre>
+          </details>
+          <div class="actions mt">
+            <button class="btn primary" id="lg-aceitar" type="button"><span data-i18n="lg.aceitar"></span></button>
+          </div>
+          <h3 class="sub" data-i18n="lg.cliente_titulo"></h3>
+          <p class="hint" data-i18n="lg.cliente_dica"></p>
+          <form class="form-grid" id="lg-form" autocomplete="off">
+            <input name="cliente" data-i18n-ph="lg.ph_cliente" required>
+            <input name="documento" data-i18n-ph="lg.ph_documento">
+            <input name="tecnico" data-i18n-ph="lg.ph_tecnico" required>
+            <input name="contato" data-i18n-ph="lg.ph_contato">
+            <input name="local" data-i18n-ph="lg.ph_local">
+            <input name="prazo_dias" type="number" min="0" max="3650" inputmode="numeric" data-i18n-ph="lg.ph_prazo">
+            <button class="btn primary" type="submit"><span data-i18n="lg.salvar_cliente"></span></button>
+          </form>
+          <div class="actions mt">
+            <a class="btn sm" href="/api/termos/cliente.md" download data-i18n="lg.baixar_termo"></a>
+            <a class="btn sm" href="/api/termos/placa.md" download data-i18n="lg.baixar_placa"></a>
+          </div>
+          <p class="tiny mt" data-i18n="lg.imprimir_dica"></p>
+          <h3 class="sub" data-i18n="lg.apagar_titulo"></h3>
+          <p class="hint" data-i18n="lg.apagar_dica"></p>
+          <div class="actions mt">
+            <button class="btn sm perigo" id="lg-apagar" type="button"><span data-i18n="lg.apagar"></span></button>
+          </div>
+          <p class="msg" id="lg-msg" role="status"></p>
+        </div>
+      </section>
+
       <footer class="foot" data-i18n="rodape"></footer>
     </main>
   </div>
@@ -1099,6 +1196,7 @@
   <script src="/fase6.js"></script>
   <script src="/estudio.js"></script>
   <script src="/rede.js" defer></script>
+  <script src="/seguranca.js"></script>
   <script src="/tela.js"></script>
 </body>
 </html>

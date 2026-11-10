@@ -3,6 +3,7 @@
 //! Sobe a dashboard local numa porta livre (sem conflitar com PDV/NVR do cliente)
 //! e expõe a API da fase 1. Ver `docs/sdd/SDD-01-nucleo.md`.
 
+mod acesso;
 mod alertas_camera;
 mod api;
 mod arquivo;
@@ -108,6 +109,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     filhos::limpar_orfaos(&dir);
     let store = Arc::new(Store::open(&dir.join("camfacil.db"))?);
     api::tirar_ip_dos_nomes(&store);
+    // PIN do acesso pela rede (aba Segurança), criado na primeira vez.
+    acesso::garantir_pin(&store);
 
     // Só na própria máquina, por padrão. Expor na rede é opção explícita.
     let lan = args.iter().any(|a| a == "--lan");

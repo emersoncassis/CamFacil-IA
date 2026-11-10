@@ -11,6 +11,8 @@ async function api(path, body, method) {
     : { method: method || "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
   const r = await fetch(path, opt);
   const data = await r.json().catch(() => ({}));
+  // Acesso pela rede vencido ou removido: volta para a tela de entrada.
+  if (r.status === 401 && data.entrar) { location.href = `${data.entrar}?volta=${encodeURIComponent(location.pathname)}`; }
   if (!r.ok) throw new Error(data.erro || r.statusText);
   return data;
 }
@@ -61,6 +63,7 @@ function showTab(id) {
   redeAtivar(id === "rede");
   ligarAtivar(id === "cameras");
   manutencaoAtivar(id === "manutencao");
+  if (typeof segurancaAtivar === "function") segurancaAtivar(id === "seguranca");
   telaMostrouPagina(id);
 }
 
@@ -1634,6 +1637,7 @@ async function main() {
   iniciarAutoinicio();
   iniciarIntegracoesExtra();
   iniciarFase6();
+  if (typeof iniciarSeguranca === "function") iniciarSeguranca();
   iniciarEstudioLocal();
   // rede.js é "defer": pode carregar depois deste arquivo.
   if (typeof iniciarRede === "function") iniciarRede(); else addEventListener("DOMContentLoaded", () => iniciarRede());

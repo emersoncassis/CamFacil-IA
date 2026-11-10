@@ -38,6 +38,15 @@ pub const ASSETS: &[Asset] = &[
         "i18n/pt-BR.json"
     ),
     asset!("/icon.svg", "image/svg+xml", "icon.svg"),
+    asset!("/entrar.html", "text/html; charset=utf-8", "entrar.html"),
+    asset!("/entrar.js", "text/javascript; charset=utf-8", "entrar.js"),
+    asset!("/entrar.css", "text/css; charset=utf-8", "entrar.css"),
+    asset!(
+        "/seguranca.js",
+        "text/javascript; charset=utf-8",
+        "seguranca.js"
+    ),
+    asset!("/seguranca.css", "text/css; charset=utf-8", "seguranca.css"),
     // Fase 5: Modo TV e tela Manutenção.
     asset!("/tv.html", "text/html; charset=utf-8", "tv.html"),
     asset!("/tv.css", "text/css; charset=utf-8", "tv.css"),

@@ -25,6 +25,11 @@ Status: **implementado em grande parte** (fases 5 e 6; revisado em 2026-11-10). 
   - Tela para o celular: `GET /botoes` (HTML/CSS/JS puro embutido).
   - O MCP só lista botões, nunca aciona.
 
+## Acesso pela rede no app, na TV e no celular (ADR 0017)
+- **TV** (`/tv` pela rede): na primeira vez abre `/entrar`; "Pedir à máquina" mostra um código e alguém autoriza na aba Segurança. Depois fica liberada por 30 dias sem uso (cada uso renova).
+- **App Android**: a WebView mostra `/entrar` ao parear com um programa remoto; as chamadas em segundo plano (`AlertasService`, câmeras) mandam o cookie da WebView. Ao parear, `401` conta como "programa no ar pedindo PIN".
+- **Botões de portão** pelo celular: além do aparelho liberado, seguem pedindo o PIN dos botões e a confirmação.
+
 ## Web app e Agente-Cam-Elo-IA — situação real
 O desenho original previa três degraus (navegador puro com IA em WebAssembly, agente mínimo RTSP→WebRTC, instalação completa). O que existe:
 1. **Navegador puro (WASM + ONNX Runtime Web): não implementado.** No navegador roda a Formação (simulação) e o Modo estúdio (rotular fotos); a IA de vídeo real roda no programa local.

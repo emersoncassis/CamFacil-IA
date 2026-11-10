@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="robots" content="noindex">
+  <title>Entrar · CamFácil IA</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/tokens.css">
+  <link rel="stylesheet" href="/entrar.css">
+</head>
+<body>
+  <header>
+    <img src="/icon.svg" width="20" height="20" alt="">
+    <strong>CamFácil IA</strong>
+  </header>
+  <main>
+    <h1 data-i18n="ent.titulo"></h1>
+    <p class="dica" data-i18n="ent.dica"></p>
+
+    <div class="abas" role="tablist">
+      <button type="button" role="tab" id="aba-pin" aria-selected="true" data-i18n="ent.aba_pin"></button>
+      <button type="button" role="tab" id="aba-pedir" aria-selected="false" data-i18n="ent.aba_pedir"></button>
+    </div>
+
+    <label class="campo"><span data-i18n="ent.nome"></span><input id="nome" maxlength="40" autocomplete="off" data-i18n-ph="ent.ph_nome"></label>
+
+    <form id="f-pin" class="painel" role="tabpanel">
+      <label class="campo"><span data-i18n="ent.pin"></span><input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" minlength="6" maxlength="8" autocomplete="one-time-code" required></label>
+      <button type="submit" class="btn primario" data-i18n="ent.entrar"></button>
+      <p class="tiny" data-i18n="ent.pin_onde"></p>
+    </form>
+
+    <div id="f-pedir" class="painel" role="tabpanel" hidden>
+      <div id="pedir-inicio">
+        <p class="tiny" data-i18n="ent.pedir_dica"></p>
+        <button type="button" class="btn primario" id="pedir" data-i18n="ent.pedir"></button>
+      </div>
+      <div id="pedir-espera" hidden>
+        <p class="tiny" data-i18n="ent.codigo_dica"></p>
+        <p class="codigo mono" id="codigo" aria-live="polite"></p>
+        <p class="tiny" id="espera"></p>
+        <button type="button" class="btn" id="cancelar" data-i18n="ent.cancelar"></button>
+      </div>
+    </div>
+
+    <p class="msg" id="msg" role="status"></p>
+    <p class="porque tiny" data-i18n="ent.porque"></p>
+  </main>
+  <script src="/entrar.js"></script>
+</body>
+</html>

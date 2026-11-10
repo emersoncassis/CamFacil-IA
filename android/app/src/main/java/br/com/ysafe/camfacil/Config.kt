@@ -89,12 +89,34 @@ object Config {
         }
     }
 
+    /**
+     * Cookie do aparelho liberado (ADR 0017): a WebView o recebe ao entrar com o
+     * PIN ou ao ser autorizada na máquina; as chamadas em segundo plano
+     * (alertas, câmeras) mandam o mesmo cookie.
+     */
+    private fun acesso(c: HttpURLConnection, url: String) {
+        val cookie = try { android.webkit.CookieManager.getInstance().getCookie(url) } catch (_: Throwable) { null }
+        if (!cookie.isNullOrBlank()) c.setRequestProperty("Cookie", cookie)
+    }
+
+    /** Código HTTP de um GET (ou -1 sem resposta). 401 = programa no ar pedindo PIN. */
+    fun codigo(url: String, timeoutMs: Int = 5000): Int = try {
+        val c = URL(url).openConnection() as HttpURLConnection
+        c.connectTimeout = timeoutMs
+        c.readTimeout = timeoutMs
+        acesso(c, url)
+        try { c.responseCode } finally { c.disconnect() }
+    } catch (_: Exception) {
+        -1
+    }
+
     /** GET simples; devolve o corpo ou null. Roda fora da thread principal. */
     fun get(url: String, timeoutMs: Int = 5000): String? = try {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = timeoutMs
         c.readTimeout = timeoutMs
         c.setRequestProperty("Accept", "application/json")
+        acesso(c, url)
         try {
             if (c.responseCode in 200..299) c.inputStream.bufferedReader().use { it.readText() } else null
         } finally {
@@ -108,6 +130,7 @@ object Config {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = timeoutMs
         c.readTimeout = timeoutMs
+        acesso(c, url)
         try {
             if (c.responseCode in 200..299 && c.contentLength <= limite) {
                 c.inputStream.use { it.readBytes() }.takeIf { it.size <= limite }

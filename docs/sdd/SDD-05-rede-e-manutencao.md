@@ -49,6 +49,20 @@ Ao ligar um aparelho, depois que a senha confere no canal 1, `cf_core::gravador:
 - **Atualização com rollback: não implementada.** Hoje atualiza-se rodando o instalador de novo (o `install.sh`/`install.ps1` trocam o binário) ou baixando a release; o `SHA256SUMS.txt` da release permite conferir o arquivo. Assinatura e rollback com um clique seguem como proposta.
 - **Pacote offline: não implementado** como zip único. O modelo de IA pode ser copiado por pendrive para `data_dir/modelos/` (SDD-02) e o runtime ONNX aceita `CAMFACIL_ORT_LIB`.
 
+## Acesso pela rede com PIN e aparelhos autorizados (status: implementado · ADR 0017)
+Na própria máquina a dashboard abre direto; de fora (rede da loja com `--lan`, IP do Tailscale, Tailscale Serve/Funnel, ngrok) só aparelho autorizado. Código em `crates/camfacil/src/acesso.rs`; tela na aba **Segurança** e em `/entrar`.
+
+- **Local** = conexão de `127.0.0.1` sem `X-Forwarded-For`/`Forwarded`/`X-Forwarded-Host`/`X-Real-IP`/`Tailscale-User-Login` (túneis conectam em loopback, mas marcam o pedido).
+- **PIN** de 6 dígitos gerado ao iniciar (cofre), mostrado só na máquina; "gerar outro" e PIN próprio de 6 a 8 dígitos se passar em `pin_fraco` (sequência, repetição, padrão, data, lista dos mais usados).
+- **Confirmação dos dois lados**: `POST /api/acesso/pedir` devolve código de 6 dígitos e um segredo; a máquina vê o mesmo código em `GET /api/acesso` e decide em `POST /api/acesso/pedidos/{id}`; o aparelho recebe o cookie uma vez em `GET /api/acesso/pedido/{id}?s=…`. QR em `GET /api/acesso/qr.svg?e=N` leva o celular a `/entrar`.
+- **Aparelho**: cookie `cf_acesso` (`HttpOnly; SameSite=Strict`, `Secure` por HTTPS) ou cabeçalho `X-CamFacil-Acesso`; 30 dias sem uso, renovado a cada 5 min de uso; até 50; bloquear/liberar (`POST /api/acesso/aparelhos/{id}`), remover (`DELETE`), desconectar todos (`POST /api/acesso/desconectar`), bloqueio geral (`POST /api/acesso/bloqueio`).
+- **Só na máquina**: PIN, pedidos, aparelhos e bloqueio geral (403 de fora). De fora, `GET /api/acesso` só mostra o próprio aparelho; `POST /api/acesso/sair` abre mão do acesso.
+- **Livre sem aparelho**: `/entrar`, `/api/acesso/{entrar,pedir,eu,pedido/*}`, arquivos da interface fora de `/api/`, `/mcp` (token próprio) e o webhook do WhatsApp (token na URL).
+- **Força bruta**: 5 erros → 5 min, depois 10, 20… até 24 h; 0,8 s por erro; até 5 pedidos pendentes (um por endereço, 3 min).
+- **Registro**: `acesso`, `acesso_negado`, `acesso_config` em `GET /api/acesso/registro` (junto com `mcp` e `mcp_negado`).
+- **Backup**: chaves `acesso_*` não entram (`chave_local`).
+- Custo: sem dependência nova; dois cabeçalhos por pedido e, de fora, um SHA-256.
+
 ## Acesso de fora pelo Tailscale (status: implementado · fase 3)
 Primeira opção da ADR-0005: usar o cliente Tailscale já instalado na máquina (sem nó embutido, sem porta no roteador).
 

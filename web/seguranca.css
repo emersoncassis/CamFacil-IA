@@ -1,0 +1,13 @@
+/* Aba Segurança (ADR 0017). Só tokens de tokens.css. */
+.seg-pin { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s3); }
+.seg-pin-valor { font-size: var(--fs-xl); letter-spacing: .2em; color: var(--text); padding: var(--s1) var(--s3); border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); }
+.seg-qr { display: flex; gap: var(--s3); align-items: flex-start; flex-wrap: wrap; margin-top: var(--s2); }
+.seg-qr img { background: var(--c-white); border-radius: var(--r-sm); padding: var(--s1); }
+.seg-qr select { max-width: 100%; }
+.seg-pedido, .seg-aparelho { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; justify-content: space-between; }
+.seg-pedido .actions, .seg-aparelho .actions { margin: 0; }
+.seg-codigo { font-size: var(--fs-lg); letter-spacing: .2em; color: var(--accent); }
+.seg-aparelho.bloqueado strong { color: var(--c-danger); }
+.seg-protecoes { margin: var(--s2) 0 0; padding-left: var(--s4); font-size: var(--fs-sm); color: var(--text-2); display: grid; gap: var(--s1); }
+.ev-alerta { color: var(--c-warn); }
+.nav-badge { min-width: 18px; height: 18px; padding: 0 5px; margin-left: auto; display: inline-grid; place-items: center; font-size: var(--fs-xs); font-weight: 600; color: var(--primary-fg); background: var(--c-warn); border-radius: var(--r-pill); box-sizing: border-box; }

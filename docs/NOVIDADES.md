@@ -2,6 +2,15 @@
 
 Histórico de cada versão do CamFácil IA. A versão atual e os arquivos para baixar estão nas [releases](https://github.com/emersoncassis/CamFacil-IA/releases). Voltar ao [README](../README.md).
 
+## Próxima versão
+
+- **Aba Segurança:** acesso pela rede, aparelhos liberados, registro de segurança, IA conectada (MCP) e LGPD num lugar só.
+- **Acesso pela rede com PIN:** na própria máquina abre direto; pela rede da loja, Tailscale ou ngrok, cada aparelho é liberado uma vez com o PIN gerado pelo programa (mostrado só na máquina) ou autorizado na máquina conferindo o mesmo código dos dois lados. Fica liberado por 30 dias sem uso. PIN fraco é recusado com explicação; tentativas erradas travam aos poucos. Ver [ADR 0017](adr/0017-acesso-pela-rede-com-pin-e-aparelhos.md).
+- **MCP blindado contra abuso por IA:** limite de pedidos por minuto, trava por token errado, resultado marcado como dado (contra injeção de prompt) e registro de cada cliente de IA.
+- **Proteção do navegador:** um site aberto no navegador do técnico não consegue mais mandar pedidos para a dashboard (CSRF) nem se passar por ela (DNS rebinding).
+- **Documento de segurança** em [docs/seguranca/SEGURANCA.md](seguranca/SEGURANCA.md) e política de relato em [SECURITY.md](../SECURITY.md).
+- **Ao atualizar:** quem abria a dashboard pela rede precisa liberar o aparelho uma vez (PIN da aba Segurança ou "Pedir à máquina").
+
 ## Novidades da 0.9.6
 
 - **Regra sempre é criada:** com o módulo da inteligência desligado, a regra (sugerida pela IA ou desenhada) fica salva **desligada** e com um aviso dizendo qual módulo ligar. Ao ligar o módulo, ela liga sozinha.

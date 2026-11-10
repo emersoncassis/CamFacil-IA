@@ -52,7 +52,7 @@ pub fn exigir_tecnico(app: &Shared) -> Result<(), Falha> {
     } else {
         Err(bad(
             StatusCode::PRECONDITION_FAILED,
-            "Antes de ligar notificações, aceite o Termo de Responsabilidade do Técnico em Integrações → Termos e LGPD.",
+            "Antes de ligar notificações, aceite o Termo de Responsabilidade do Técnico em Segurança → LGPD.",
         ))
     }
 }

@@ -1,21 +1,28 @@
-# Security Policy
+# Política de segurança
 
-## Supported Versions
+Como o CamFácil IA protege câmeras, acessos e dados: [docs/seguranca/SEGURANCA.md](docs/seguranca/SEGURANCA.md).
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+## Versões com correção de segurança
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Versão | Recebe correção |
+| ------ | --------------- |
+| a mais recente da linha 0.9 ([releases](https://github.com/emersoncassis/CamFacil-IA/releases)) | sim |
+| anteriores | não: atualize para a mais recente |
 
-## Reporting a Vulnerability
+## Como relatar uma vulnerabilidade
 
-Use this section to tell people how to report a vulnerability.
+**Não abra issue pública.** Use o relato privado do GitHub: aba **Security → Report a vulnerability** neste repositório ([link direto](https://github.com/emersoncassis/CamFacil-IA/security/advisories/new)).
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Inclua, se puder: versão, sistema (Windows, Linux, Android), passos para reproduzir e o impacto que você enxerga. Não teste em instalação de terceiros nem acesse câmeras de outras pessoas.
+
+O que esperar:
+
+- confirmação de recebimento em até **3 dias úteis**;
+- avaliação e plano de correção em até **10 dias úteis**;
+- correção publicada numa release nova, com crédito a quem relatou (se quiser).
+
+Tokens, senhas e dados pessoais encontrados por engano: avise pelo mesmo canal; trocamos a credencial e limpamos o histórico.
+
+---
+
+**English:** please report vulnerabilities privately through GitHub (Security → Report a vulnerability). Only the latest 0.9.x release receives security fixes. We acknowledge within 3 business days.

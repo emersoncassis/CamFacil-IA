@@ -716,6 +716,9 @@ pub fn chave_local(k: &str) -> bool {
         || k == "estresse_resultado"
         // MCP liga por máquina: restaurar um backup não abre a porta para a IA.
         || k.starts_with("mcp_")
+        // Acesso pela rede (PIN e aparelhos) é desta máquina: o backup não libera
+        // aparelhos em outra (ADR 0017).
+        || k.starts_with("acesso_")
         // Registro das correções automáticas de IP: histórico, como os eventos.
         || k == "rede.autoip_log"
 }

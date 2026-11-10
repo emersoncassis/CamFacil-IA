@@ -9,7 +9,7 @@ Versão atual: ver `version` no `Cargo.toml` da raiz (a release sai sozinha quan
 - Núcleo: `docs/sdd/SDD-01-nucleo.md` · Módulos: `SDD-02` · Educação: `SDD-03` · Integrações: `SDD-04` · Rede: `SDD-05` · App/TV/Web: `SDD-06` · Modo estúdio: `SDD-07` · Contas e isolamento: `SDD-08` · Inteligências por regra: `SDD-09` · IA avançada (proposta): `SDD-10` · LGPD: `docs/legal/`
 - Web app e API: **https://cfia.ysafe.com.br** (Dokploy, ver `docs/DEPLOY.md`)
 - Escolinha (instrução) fica no site em `crates/cfia-api/web/escola.*`; programa local é só operação (ADR 0008)
-- Decisões: `docs/adr/` (0001 a 0016) · Visual: `DESIGN.md` e `web/tokens.css` (redesign com a skill `impeccable`)
+- Decisões: `docs/adr/` (0001 a 0017) · Visual: `DESIGN.md` e `web/tokens.css` (redesign com a skill `impeccable`)
 - Relatórios de fase (histórico): `docs/RELATORIO-FASE3.md`, `docs/RELATORIO-FASE6-ANDROID.md`
 
 ## Mapa do código
@@ -34,7 +34,7 @@ Não existem `cf-modules`, `modules/<id>/module.toml` nem `guide/`: o contrato d
 4. **Visual limpo.** Nunca desenhar caixas/máscaras do YOLO para o cliente; só o balão com o nome da regra. A ferramenta de rotular do estúdio (do técnico) é a exceção.
 5. **CSS só com tokens** de `web/tokens.css`. Base preta, verde só em detalhes (ver `DESIGN.md`).
 6. **Escopo**: não implementar painel multicliente, busca em gravações, ronda virtual nem gravação contínua (PRD §6).
-7. **Segurança**: segredos cifrados no cofre; MCP desligado por padrão; ações físicas (portão/relé) exigem PIN, confirmação e log; o MCP nunca aciona portão.
+7. **Segurança**: segredos cifrados no cofre; MCP desligado por padrão, com limite por minuto e resultado marcado como dado; ações físicas (portão/relé) exigem PIN, confirmação e log; o MCP nunca aciona portão. Fora da própria máquina, só aparelho autorizado (PIN ou confirmação na máquina; ADR 0017); rota nova que não deve exigir isso entra em `acesso::livre` com justificativa. Ver `docs/seguranca/SEGURANCA.md`.
 8. Textos de interface em **pt-BR**, em arquivos de tradução (`web/i18n/pt-BR.json`; no site, `crates/cfia-api/web`).
 9. **Zero rolagem.** Nenhuma tela (programa local, app Android, site, curso) rola a página. Tudo cabe numa tela só, do celular ao monitor (layout em `100dvh`, adaptado ao tamanho da tela). Informação a mais vira seção que abre (acordeão), aba, menu ou submenu, nunca página comprida. "Rolou a página, perdeu o cliente." Listas longas paginam ou filtram dentro do espaço fixo. Ver `DESIGN.md`.
 10. **Nada vem ligado.** Todo módulo de IA começa desligado; o técnico escolhe. Regra criada com o módulo desligado fica salva desligada e liga junto com o módulo.
@@ -45,7 +45,7 @@ Não existem `cf-modules`, `modules/<id>/module.toml` nem `guide/`: o contrato d
 - Rode `cargo fmt --all`, `cargo clippy --workspace --all-targets -- -D warnings` e `cargo test --workspace` antes de cada commit.
 - Commits: Conventional Commits em português (`feat(rtsp): gerador para Hikvision`).
 - Um PR por item do roadmap; descreva impacto em RAM/CPU.
-- Mudou uma decisão de arquitetura → nova ADR em `docs/adr/` (a próxima é a 0017).
+- Mudou uma decisão de arquitetura → nova ADR em `docs/adr/` (a próxima é a 0018).
 - Mudou comportamento visível → atualize o SDD da área, o `README.md` (Novidades) e, se for o caso, `site-docs/pt|en|es`.
 - Subir a versão no `Cargo.toml` da raiz publica uma release nova (inclui o APK, que usa a mesma versão).
 
