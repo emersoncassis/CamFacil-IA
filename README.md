@@ -26,7 +26,7 @@
   <a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><img src="https://img.shields.io/badge/COMO%20FUNCIONA%20POR%20DENTRO-mapa%20interativo-06CB3F?style=for-the-badge&labelColor=000000" alt="Como funciona por dentro: mapa interativo" height="44"/></a>
 </p>
 
-<a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><img src="docs/assets/mapa-interativo.svg" width="100%" alt="Como tudo funciona por dentro: mapa interativo do CamFácil IA com cinco fluxos guiados. Clique para abrir."/></a>
+<a href="https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/"><img src="site-docs/assets/img/mapa-interativo.svg" width="100%" alt="Como tudo funciona por dentro: mapa interativo do CamFácil IA com cinco fluxos guiados. Clique para abrir."/></a>
 <p>
   <a href="https://emersoncassis.github.io/CamFacil-IA/"><img src="https://img.shields.io/badge/manifesto%20e%20docs-PT%20%C2%B7%20EN%20%C2%B7%20ES-06CB3F?style=flat-square&labelColor=000000" alt="Manifesto e documentação em português, inglês e espanhol"/></a>
   <a href="https://cfia.ysafe.com.br/#apoiar"><img src="https://img.shields.io/badge/apoie%20o%20projeto-pague%20um%20caf%C3%A9-06CB3F?style=flat-square&logo=buymeacoffee&logoColor=white&labelColor=000000" alt="Apoie o projeto: pague um café"/></a>

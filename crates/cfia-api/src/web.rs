@@ -239,7 +239,7 @@ const ARQUIVOS: &[Arquivo] = &[
     arq!(
         "/img/mapa-interativo.svg",
         "image/svg+xml",
-        "../../docs/assets/mapa-interativo.svg"
+        "../../site-docs/assets/img/mapa-interativo.svg"
     ),
     arq!(
         "/img/diagrama-como.svg",
