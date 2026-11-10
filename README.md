@@ -327,6 +327,16 @@ Nenhuma tela rola: programa, app, site e curso cabem numa tela só, do celular a
 - Android: câmera do próprio celular como fonte, chave de assinatura fixa do APK, APK por arquitetura (hoje ~20 MB com a IA)
 - Testes em campo: rede real, Windows, TV Box com controle remoto, autocorreção de IP e canais de DVR/NVR com equipamento de verdade
 
+## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Gratidão ao mestre Sandeco
+
+O coração do CamFácil IA é o [núcleo](docs/sdd/SDD-01-nucleo.md), e foi ali que o "milagre" nasceu. Ele só existe por causa de tudo o que aprendi com o professor **Sandeco Macedo** ([@sandeco](https://github.com/sandeco)).
+
+Eu vim do suporte, da sala de aula e da segurança eletrônica, e a inteligência artificial parecia um mundo distante. O Sandeco ensinou coisa difícil de um jeito leve e tranquilo, sem pressa e sem fazer ninguém se sentir pequeno. Foi assim que eu deixei de achar que IA não era para mim e comecei a treinar os meus próprios modelos.
+
+Cada decisão de arquitetura deste projeto tem um pouco do que aprendi com ele. Quem conhece o trabalho do mestre bate o olho no código e reconhece a assinatura de quem eu sou filho.
+
+Professor, obrigado de coração por compartilhar tanto e de forma tão generosa. Este reconhecimento também é seu. 🙏
+
 ## <img src="docs/assets/icons/maos.svg" width="22" alt=""/> Apoie o projeto
 
 O CamFácil IA é livre e gratuito, e vai continuar assim. Por trás dele tem tempo, estudo, anos de sala de aula e dinheiro do próprio bolso: só para começar, foram mais de R$ 10 mil.
