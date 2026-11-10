@@ -928,6 +928,7 @@ fn limpar_depois_de_sair(
         let mut passos = vec![
             "timeout /t 3 /nobreak >nul".to_string(),
             format!("del /f /q {}", q(exe)),
+            format!("del /f /q {}", q(&exe.with_file_name("camfacil.ico"))),
         ];
         if let Some(d) = std::env::var_os("USERPROFILE") {
             let atalho = std::path::Path::new(&d)
@@ -953,6 +954,10 @@ fn limpar_depois_de_sair(
             passos.push(format!(
                 "rm -f {}",
                 q(&h.join(".local/share/applications/camfacil.desktop"))
+            ));
+            passos.push(format!(
+                "rm -f {}",
+                q(&h.join(".local/share/icons/hicolor/256x256/apps/camfacil.png"))
             ));
         }
         for d in [dados, antiga].into_iter().flatten() {
@@ -1740,6 +1745,38 @@ fn modulo_desligado(app: &crate::App, intel: cf_core::visao::Intel) -> Option<&'
         .map(|(_, nome, ..)| *nome)
 }
 
+/// Depois de desligar um módulo: as regras que dependem dele ficam desligadas
+/// e em espera (voltam sozinhas quando o módulo for ligado de novo). Devolve
+/// quantas desligou.
+pub(crate) fn desligar_regras_do_modulo(app: &crate::App, modulo: &str) -> usize {
+    let Ok(cams) = app.store.cameras() else {
+        return 0;
+    };
+    let mut n = 0;
+    for cam in cams {
+        let Ok(regras) = app.store.regras(cam.id) else {
+            continue;
+        };
+        let mut mudou = false;
+        for r in regras {
+            if !r.ajustes.ativa || modulo_da_intel(r.ajustes.intel) != Some(modulo) {
+                continue;
+            }
+            let mut a = r.ajustes.clone();
+            a.ativa = false;
+            a.espera_modulo = true;
+            if app.store.definir_ajustes(r.id, &a).unwrap_or(false) {
+                n += 1;
+                mudou = true;
+            }
+        }
+        if mudou {
+            app.video.recarregar_regras(cam.id);
+        }
+    }
+    n
+}
+
 /// Módulo que faz a inteligência rodar. Regra simples (linha/zona por
 /// movimento) é da cerca leve.
 fn modulo_da_intel(intel: cf_core::visao::Intel) -> Option<&'static str> {
@@ -1818,6 +1855,20 @@ async fn patch_regra(
             .find(|x| x.id == id)
             .ok_or_else(|| bad(StatusCode::NOT_FOUND, "regra não encontrada"))?;
         let mut a = atual.ajustes.clone();
+        if r.ativa == Some(true) {
+            if let Some(nome_mod) = modulo_desligado(&app, a.intel) {
+                let id_mod = modulo_da_intel(a.intel).unwrap_or("");
+                return Err((
+                    StatusCode::CONFLICT,
+                    Json(json!({
+                        "erro": format!("Nenhuma inteligência ligada para esta regra: ligue {nome_mod} nos Módulos."),
+                        "codigo": "inteligencia_desligada",
+                        "modulo": id_mod,
+                        "modulo_nome": nome_mod,
+                    })),
+                ));
+            }
+        }
         if let Some(v) = r.ativa {
             a.ativa = v;
             // O técnico decidiu na mão: não liga mais sozinha.
@@ -2071,9 +2122,17 @@ async fn post_modulos(State(app): State<Shared>, Json(r): Json<ModuloReq>) -> Ap
     } else {
         0
     };
-    Ok(Json(
-        json!({ "modulo": r.modulo, "ligado": r.ligado, "regras_ligadas": regras_ligadas }),
-    ))
+    let regras_desligadas = if r.ligado {
+        0
+    } else {
+        desligar_regras_do_modulo(&app, id)
+    };
+    Ok(Json(json!({
+        "modulo": r.modulo,
+        "ligado": r.ligado,
+        "regras_ligadas": regras_ligadas,
+        "regras_desligadas": regras_desligadas,
+    })))
 }
 
 // ---------- Telegram (SDD-04) ----------
@@ -2262,6 +2321,16 @@ pub(crate) mod tests {
         // Com o módulo ligado, nasce ligada e sem aviso.
         let (_, aviso) = criar_regra(&app, cam, &nova("passagem")).unwrap();
         assert!(aviso.is_none());
+        // Desligou o módulo: as regras que dependem dele desligam e esperam.
+        crate::video::definir_modulo(&app.store, "pessoas", false).unwrap();
+        assert_eq!(desligar_regras_do_modulo(&app, "pessoas"), 2);
+        let todas = app.store.regras(cam).unwrap();
+        assert!(todas
+            .iter()
+            .all(|r| !r.ajustes.ativa && r.ajustes.espera_modulo));
+        // Voltou o módulo: elas voltam sozinhas.
+        crate::video::definir_modulo(&app.store, "pessoas", true).unwrap();
+        assert_eq!(ligar_regras_em_espera(&app, "pessoas"), 2);
         let _ = std::fs::remove_dir_all(dir);
     }
 

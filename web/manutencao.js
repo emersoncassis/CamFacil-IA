@@ -376,8 +376,21 @@ async function dadosIniciar() {
       await api("/api/dados/apagar-tudo", { confirmar: "APAGAR" });
       $("#dados-msg").className = "msg ok";
       $("#dados-msg").textContent = t("dados.apagado");
+      encerrarTela("apagado");
     } catch (e) { $("#dados-msg").className = "msg err"; $("#dados-msg").textContent = e.message; }
   };
+}
+
+// Programa encerrado: escurece a tela e trava tudo. O programa fechou, então
+// nada mais funciona até a pessoa fechar esta página (desinstalou) ou abrir
+// o programa de novo (apagou os dados).
+function encerrarTela(motivo) {
+  const e = $("#encerrado");
+  $("#encerrado-t").textContent = t(`encerrado.${motivo}.titulo`);
+  $("#encerrado-d").textContent = t(`encerrado.${motivo}.texto`);
+  e.hidden = false;
+  document.querySelectorAll("body > *:not(#encerrado)").forEach((n) => { n.inert = true; });
+  document.title = t(`encerrado.${motivo}.titulo`);
 }
 
 function desinstalarIniciar() {
@@ -390,6 +403,7 @@ function desinstalarIniciar() {
       await api("/api/desinstalar", { confirmar: "DESINSTALAR", apagar_dados: dados });
       $("#dados-msg").className = "msg ok";
       $("#dados-msg").textContent = t("desinst.ok");
+      encerrarTela("desinstalado");
     } catch (e) { $("#dados-msg").className = "msg err"; $("#dados-msg").textContent = e.message; }
   };
 }

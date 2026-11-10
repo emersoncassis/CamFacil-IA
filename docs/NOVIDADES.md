@@ -2,6 +2,13 @@
 
 Histórico de cada versão do CamFácil IA. A versão atual e os arquivos para baixar estão nas [releases](https://github.com/emersoncassis/CamFacil-IA/releases). Voltar ao [README](../README.md).
 
+## Na próxima versão (0.9.9)
+
+- **Tela travada ao desinstalar ou apagar os dados:** depois de **Desinstalar** ou **Apagar todos os dados**, a dashboard escurece e bloqueia tudo, dizendo para fechar a página (desinstalou) ou abrir o programa de novo (apagou os dados).
+- **Regra só liga com a inteligência ligada:** ligar uma regra cujo módulo está desligado agora avisa "nenhuma inteligência ligada" e oferece ligar o módulo, levando direto para a tela Módulos. Desligar um módulo desliga as regras que dependem dele, e elas voltam sozinhas quando o módulo for ligado de novo.
+- **"Como funciona" nos módulos:** o botão **?** ao lado de **Aprender**, em Movimento inteligente e Módulo de IA, explica a diferença entre os dois e que podem ficar ligados juntos (não se atrapalham: com a IA ligada, zonas e linhas passam para ela e o movimento não conta em dobro).
+- **Ícone no atalho:** o instalador do Windows e o do Linux agora criam o atalho com o ícone do CamFácil IA (câmera com ponto verde). Os arquivos estão em `scripts/icones/`.
+
 ## Novidades da 0.9.8
 
 - **Aba Segurança:** acesso pela rede, aparelhos liberados, registro de segurança, IA conectada (MCP) e LGPD num lugar só.

@@ -231,3 +231,14 @@ dialog { max-height: calc(100dvh - 32px); overflow: auto; }
   .pagehead .actions .btn > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 .canal-sug .btn, .canal-sug .btn.sm { height: 28px; padding: 0 var(--s2); }
+
+/* ---------- Programa encerrado: tela escurecida e travada ---------- */
+#encerrado { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: var(--s4); background: rgba(0, 0, 0, .96); }
+#encerrado[hidden] { display: none; }
+.encerrado-caixa { max-width: 440px; text-align: center; }
+.encerrado-caixa h2 { margin: 0 0 var(--s3); font-size: var(--fs-lg); }
+.encerrado-caixa p { margin: 0; color: var(--text-2); }
+#info-dlg h2 { font-size: var(--fs-lg); }
+#info-dlg .hint { margin: var(--s3) 0 0; }
+.como-btn { gap: 6px; }
+@media (max-width: 760px) { .como-txt { display: none; } }

@@ -13,7 +13,7 @@ async function api(path, body, method) {
   const data = await r.json().catch(() => ({}));
   // Acesso pela rede vencido ou removido: volta para a tela de entrada.
   if (r.status === 401 && data.entrar) { location.href = `${data.entrar}?volta=${encodeURIComponent(location.pathname)}`; }
-  if (!r.ok) throw new Error(data.erro || r.statusText);
+  if (!r.ok) { const e = new Error(data.erro || r.statusText); e.dados = data; throw e; }
   return data;
 }
 
@@ -138,6 +138,13 @@ const RANK = { leve: 0, medio: 1, pesado: 2 };
 const ESCOLA_LICAO = { cerca: "linha", movimento: "visao", saude: "saude" };
 let modulosInfo = {};
 
+// Liga/desliga um módulo. O primeiro módulo médio ligado sem modelo começa o download.
+async function ligarModulo(id, ligado, nivel) {
+  const res = await api("/api/modulos", { modulo: id, ligado });
+  if (ligado && nivel === "medio" && !modulosInfo.ia_pronta) await api("/api/ia/baixar", {});
+  return res;
+}
+
 async function renderLevels() {
   let ligados = {};
   try { ligados = await api("/api/modulos"); } catch (_) { /* segue */ }
@@ -156,15 +163,19 @@ async function renderLevels() {
       if (id && ligados[id]) input.checked = true;
       input.onchange = async () => {
         try {
-          const res = await api("/api/modulos", { modulo: id, ligado: input.checked });
-          // Primeiro módulo médio ligado sem modelo: começa o download.
-          if (input.checked && lv === "medio" && !ligados.ia_pronta) { await api("/api/ia/baixar", {}); }
+          const res = await ligarModulo(id, input.checked, lv);
           renderLevels(); renderIa();
           if (res && res.regras_ligadas) alert(t("mod.regras_ligadas").replace("{n}", res.regras_ligadas));
+          if (res && res.regras_desligadas) alert(t("mod.regras_desligadas").replace("{n}", res.regras_desligadas));
         } catch (e) { input.checked = !input.checked; alert(e.message); }
       };
       const sw = el("label", { class: "switch", title: stateText }, input, el("span"));
       const acoes = el("div", { class: "actions end" });
+      if (id === "movimento" || lv === "medio") {
+        const c = el("button", { class: "btn ghost sm como-btn", type: "button", title: t("mod.como_dica"), "aria-label": t("mod.como") }, "?", el("span", { class: "como-txt" }, t("mod.como")));
+        c.onclick = () => infoDialog(t("mod.como_titulo"), [t("mod.como_p1"), t("mod.como_p2"), t("mod.como_p3")]);
+        acoes.append(c);
+      }
       if (id && ESCOLA_LICAO[id]) {
         const b = el("button", { class: "btn sm", type: "button", title: t("mod.aprender_dica") }, t("mod.aprender"));
         b.onclick = () => abrirEscola(ESCOLA_LICAO[id]);
@@ -711,7 +722,18 @@ function renderBaloes(estadoCam) {
     const ligada = !(r.ajustes && r.ajustes.ativa === false);
     const lig = el("button", { class: "btn ghost sm", type: "button", "aria-pressed": String(ligada) }, t(ligada ? "regra.desligar" : "regra.ligar"));
     lig.onclick = async () => {
-      try { await api(`/api/regras/${r.id}`, { camera_id: camAberta, nome: r.nome, rotulo_on: r.rotulo_on || "", rotulo_off: r.rotulo_off || "", ativa: !ligada }, "PATCH"); carregarRegras(); } catch (e) { alert(e.message); }
+      try { await api(`/api/regras/${r.id}`, { camera_id: camAberta, nome: r.nome, rotulo_on: r.rotulo_on || "", rotulo_off: r.rotulo_off || "", ativa: !ligada }, "PATCH"); carregarRegras(); } catch (e) {
+        const d = e.dados || {};
+        if (d.codigo !== "inteligencia_desligada") { alert(e.message); return; }
+        // Nenhuma inteligência ligada para esta regra: oferece ligar e leva ao módulo.
+        if (!(await confirmar(t("regra.sem_ia"), t("regra.sem_ia_sim"), t("regra.sem_ia_dica").replace("{modulo}", d.modulo_nome)))) return;
+        try {
+          const nivel = (MODULES.find(([, ms]) => ms.some(([m]) => m === d.modulo)) || [])[0];
+          if (!modulosInfo.ia_pronta && !Object.keys(modulosInfo).length) modulosInfo = await api("/api/modulos");
+          await ligarModulo(d.modulo, true, nivel);
+          showTab("modulos"); renderLevels(); renderIa();
+        } catch (e2) { alert(e2.message); }
+      }
     };
     return el("tr", { class: ligada ? "" : "regra-off" }, el("td", {}, r.nome, ligada ? null : el("span", { class: "tiny" }, " · " + t("regra.desligada"))), el("td", {}, tipoDaRegra(r)), el("td", {}, agora), el("td", {}, som), el("td", { class: "right" }, lig, edt, rem));
   });

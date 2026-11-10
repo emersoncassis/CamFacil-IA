@@ -47,6 +47,7 @@ Não existem `cf-modules`, `modules/<id>/module.toml` nem `guide/`: o contrato d
 - Um PR por item do roadmap; descreva impacto em RAM/CPU.
 - Mudou uma decisão de arquitetura → nova ADR em `docs/adr/` (a próxima é a 0018).
 - Mudou comportamento visível → atualize o SDD da área, o `README.md` (Novidades) e, se for o caso, `site-docs/pt|en|es`.
+- **A cada 5 commits** (no máximo), revise e atualize toda a documentação: SDDs das áreas tocadas, `docs/NOVIDADES.md`, `README.md`, `site-docs/pt|en|es` e o mapa do código. Mudança de comportamento já entra com a doc no mesmo PR; esta revisão pega o que escapou.
 - Subir a versão no `Cargo.toml` da raiz publica uma release nova (inclui o APK, que usa a mesma versão).
 
 ## Economia de tokens

@@ -10,7 +10,7 @@ Até a 0.8.x o módulo (contagem, permanência, calor) era **global**: ligou, va
 
 1. **Uma regra, uma inteligência.** Escolhida ao criar. Não dá para juntar permanência com densidade na mesma zona; para isso, duas regras.
 2. **A regra diz quem observa.** Pessoa, carro, moto, bicicleta, ônibus, caminhão (vários ao mesmo tempo). O que não foi marcado é ignorado pela regra.
-3. **Mostra o que está disponível.** Cada inteligência depende de um módulo ligado; sem ele a opção aparece apagada, dizendo qual módulo ligar. Desde a 0.9.6 a regra **é criada mesmo assim**, salva **desligada** e com aviso (`espera_modulo`), e liga sozinha quando o módulo for ligado.
+3. **Mostra o que está disponível.** Cada inteligência depende de um módulo ligado; sem ele a opção aparece apagada, dizendo qual módulo ligar. Desde a 0.9.6 a regra **é criada mesmo assim**, salva **desligada** e com aviso (`espera_modulo`), e liga sozinha quando o módulo for ligado. Ligar a regra **na mão** com o módulo desligado é recusado (`409`); a tela pergunta se quer ligar a inteligência e leva para **Módulos**. Desligar o módulo põe as regras dele em espera de novo (ver [SDD-02](SDD-02-modulos-ia.md)).
 4. **Mostra o peso** (leve, médio, pesado) para o técnico saber o que o PC velho aguenta.
 5. **Cor e som por regra**, escolhidos na criação e trocáveis depois.
 

@@ -1180,6 +1180,23 @@
     </div>
   </dialog>
 
+  <dialog id="info-dlg" aria-labelledby="info-titulo">
+    <h2 id="info-titulo"></h2>
+    <div id="info-corpo"></div>
+    <div class="dlg-acoes">
+      <span class="espaco"></span>
+      <button type="button" class="btn" id="info-ok" data-i18n="info.ok"></button>
+    </div>
+  </dialog>
+
+  <!-- Programa encerrado (desinstalou ou apagou tudo): escurece e trava a tela. -->
+  <div id="encerrado" role="alertdialog" aria-modal="true" aria-labelledby="encerrado-t" aria-describedby="encerrado-d" hidden>
+    <div class="encerrado-caixa">
+      <h2 id="encerrado-t"></h2>
+      <p id="encerrado-d"></p>
+    </div>
+  </div>
+
   <dialog id="disclaimer" aria-labelledby="disc-title">
     <h2 id="disc-title" data-i18n="isencao.titulo"></h2>
     <ol class="disc" id="disc-list"></ol>

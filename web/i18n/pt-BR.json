@@ -1347,5 +1347,20 @@
   "ent.recusado": "O pedido foi recusado na máquina.",
   "ent.expirou": "O pedido venceu. Peça de novo.",
   "ent.bloqueado_geral": "O acesso pela rede está bloqueado na máquina.",
-  "ent.porque": "Por que isso? Câmera aberta na rede é porta de entrada para invasores, e hoje muitos ataques são robôs com IA testando senhas fracas. Aqui o PIN é forte, as tentativas são limitadas e tudo fica registrado."
+  "ent.porque": "Por que isso? Câmera aberta na rede é porta de entrada para invasores, e hoje muitos ataques são robôs com IA testando senhas fracas. Aqui o PIN é forte, as tentativas são limitadas e tudo fica registrado.",
+  "mod.como": "Como funciona",
+  "mod.como_dica": "Entenda a diferença entre Movimento inteligente e Módulo de IA",
+  "mod.como_titulo": "Movimento inteligente × Módulo de IA",
+  "mod.como_p1": "Movimento inteligente é a visão leve: compara um quadro com o outro e avisa que algo se mexeu, sem rede neural. Roda em qualquer PC, mas não sabe o que se mexeu (pode ser pessoa, carro, sombra ou inseto).",
+  "mod.como_p2": "Módulo de IA (Pessoas e veículos, Contagem, Permanência e Mapa de calor) usa uma rede neural: reconhece pessoa, veículo e animal. Por isso precisa do modelo baixado e de uma máquina mais forte.",
+  "mod.como_p3": "Os dois podem ficar ligados juntos e não se atrapalham: com o Módulo de IA ligado, as zonas e as linhas passam para ele (que sabe o que é cada coisa) e o movimento não conta em dobro. Uma regra só liga se a inteligência dela estiver ligada; ao desligar um módulo, as regras dele desligam sozinhas e voltam quando você ligar de novo.",
+  "mod.regras_desligadas": "{n} regra(s) que dependiam deste módulo foram desligadas. Elas ligam sozinhas quando você ligar o módulo de novo.",
+  "regra.sem_ia": "Nenhuma inteligência ligada para esta regra. Quer ligar agora?",
+  "regra.sem_ia_sim": "Ligar e ir para os módulos",
+  "regra.sem_ia_dica": "A regra precisa do módulo {modulo}. Se você ligar, a regra liga junto e você vai para a tela Módulos.",
+  "info.ok": "Entendi",
+  "encerrado.desinstalado.titulo": "CamFácil IA desinstalado",
+  "encerrado.desinstalado.texto": "O programa foi encerrado e removido deste computador. Feche esta página: nada mais funciona aqui.",
+  "encerrado.apagado.titulo": "Dados apagados, programa encerrado",
+  "encerrado.apagado.texto": "Todos os dados foram apagados e o programa fechou. Abra o CamFácil IA de novo para começar do zero; esta página não funciona mais."
 }

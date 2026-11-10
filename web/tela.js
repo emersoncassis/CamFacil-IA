@@ -229,6 +229,16 @@ function confirmar(texto, botao = telaT("confirma.sim"), dica = "") {
   });
 }
 
+// Caixa de explicação (só leitura): título e parágrafos.
+function infoDialog(titulo, paragrafos) {
+  const d = document.getElementById("info-dlg");
+  document.getElementById("info-titulo").textContent = titulo;
+  document.getElementById("info-corpo").replaceChildren(...paragrafos.map((x) => { const p = document.createElement("p"); p.className = "hint"; p.textContent = x; return p; }));
+  document.getElementById("info-ok").onclick = () => d.close();
+  d.showModal();
+  document.getElementById("info-ok").focus();
+}
+
 // ---------- Início ----------
 function iniciarTela() {
   document.querySelectorAll("main > .page").forEach(montarPagina);

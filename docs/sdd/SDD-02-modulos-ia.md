@@ -63,6 +63,11 @@ pub trait Module: Send {
 | Saúde da câmera | brilho, contraste, nitidez (Laplaciano), sem sinal | leve · **implementado** |
 | Mapa de calor | acumulação de posições | médio · **implementado** |
 
+## Movimento inteligente × Módulo de IA (dependências)
+- **Movimento inteligente** (leve) compara quadros e avisa que algo se mexeu; não sabe o quê. **Módulo de IA** (médio: Pessoas e veículos, Contagem, Permanência, Mapa de calor) usa o detector ONNX e sabe a classe.
+- **Podem ficar ligados juntos:** não se excluem. Com o detector ativo, Pessoas assume as zonas e Contagem assume as linhas, e o analisador por movimento deixa essas regras de lado para não contar em dobro (`analisar` em `video.rs`). Por isso a dashboard **não** desliga um ao ligar o outro; a explicação fica no botão **?** (Como funciona) ao lado de **Aprender**.
+- **Dependência real = regra → módulo.** Uma regra só roda com o módulo da sua inteligência ligado. `PATCH /api/regras/{id}` com `ativa: true` e módulo desligado responde `409` (`codigo: inteligencia_desligada`, `modulo`, `modulo_nome`) e a tela oferece ligar o módulo e abre **Módulos**. `POST /api/modulos` com `ligado: false` desliga as regras do módulo e as deixa em espera (`regras_desligadas`); ao ligar de novo, voltam sozinhas.
+
 ## Cerca virtual genérica
 - Regra (`RegraSalva` em `cf-core/src/store.rs`) = `{ nome, camera, forma: zona|linha, pontos normalizados 0–1, rotulo_on, rotulo_off, ajustes }`, com `ajustes` = `{ intel, classes, parametro, cor, som, ativa, espera_modulo }` ([SDD-09](SDD-09-inteligencias-por-regra.md)). Regra pode ser ligada e desligada sem excluir.
 - Estados editáveis: os dois textos (ex.: `vazia`/`cheia`), mais cor e som por regra.
