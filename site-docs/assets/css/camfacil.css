@@ -219,3 +219,26 @@ code, kbd, pre { font-family: var(--md-code-font-family); }
 .apoio-aviso.ok { color: var(--c-green); }
 .apoio-aviso.erro { color: #f06a55; }
 .md-typeset .apoio-botoes .md-button[disabled] { opacity: 0.6; cursor: wait; }
+
+/* ---------- Página do CamFácil IA Builder ---------- */
+.builder {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: clamp(1rem, 4vw, 2.6rem); align-items: center; margin: 0.4rem 0 1.6rem;
+}
+.builder__arte img { display: block; width: 100%; height: auto; border: 1px solid var(--c-line); border-radius: 12px; }
+.md-typeset .builder__titulo {
+  font-size: clamp(1.4rem, 3.4vw, 2.1rem); line-height: 1.08; margin: 0.6rem 0 0.7rem;
+  font-weight: 650; letter-spacing: -0.03em; color: var(--c-100);
+}
+.builder__titulo em { font-style: normal; color: var(--c-green); }
+.md-typeset .builder__texto p { color: var(--c-300); }
+.md-typeset .builder__texto p.builder__titulo { color: var(--c-100); }
+.md-typeset .builder__texto .md-button { margin: 0.2rem 0.3rem 0 0; font-size: 0.7rem; padding: 0.45em 1.1em; }
+.md-typeset .builder__creditos {
+  margin-top: 2.4rem; padding: 0.9rem 1rem; border: 1px solid var(--c-line); border-radius: 8px;
+  background: var(--c-900); font-size: 0.68rem; color: var(--c-300);
+}
+.md-typeset .builder__creditos p { margin: 0; }
+@media (max-width: 760px) {
+  .builder { grid-template-columns: 1fr; }
+}

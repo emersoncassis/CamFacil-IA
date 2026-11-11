@@ -36,6 +36,22 @@
 
 ---
 
+## <img src="docs/assets/icons/robo.svg" width="22" alt=""/> CamFácil IA Builder: monte a sua versão
+
+<a href="https://emersoncassis.github.io/CamFacil-IA/builder/"><img src="site-docs/assets/img/builder.svg" width="360" align="right" alt="CamFácil IA Builder: um robô técnico de CFTV, com uma câmera dome na cabeça e uma chave de fenda na mão, escreve código num notebook."/></a>
+
+O **Builder** é o mestre de obras deste projeto: todo desenvolvimento, seu ou da comunidade, começa por ele. É uma skill para assistentes de código (Claude Code, Codex e outros) que conversa com quem **nunca programou**. Você diz o que quer, ele muda telas, cria funções e inteligências, e explica cada passo.
+
+1. Faça o **[fork](https://github.com/emersoncassis/CamFacil-IA/fork)** e clone a sua cópia.
+2. Abra a pasta no seu assistente de código.
+3. Chame `/camfacil-ia-builder` e diga o que você quer.
+
+Ele trabalha com o método do **[Reversa](https://github.com/sandeco/reversa)**, do professor Sandeco Macedo (primeiro o combinado, depois o código), e respeita a LGPD, a licença AGPL-3.0, a segurança e as regras do projeto. Pedido que fere uma delas é recusado, com o motivo e uma alternativa.
+
+**[Conheça o Builder](https://emersoncassis.github.io/CamFacil-IA/builder/)** · [a skill](.claude/skills/camfacil-ia-builder/SKILL.md) · [o que ele não faz e por quê](.claude/skills/camfacil-ia-builder/referencias/limites.md)
+
+<br clear="right"/>
+
 ## <img src="docs/assets/icons/raio.svg" width="22" alt=""/> Comece pelo site: **[cfia.ysafe.com.br](https://cfia.ysafe.com.br)**
 
 Tudo começa lá. Abre, ouve as boas-vindas, baixa e pronto.
@@ -284,7 +300,7 @@ Você não precisa ser programador. Você precisa de um computador velho, uma c�
 - Documentação em português, inglês e espanhol, com o manifesto narrado: **[emersoncassis.github.io/CamFacil-IA](https://emersoncassis.github.io/CamFacil-IA/)** (fonte em `site-docs/`, gerado com MkDocs)
 - Produto: [`docs/PRD.md`](docs/PRD.md) · Arquitetura: [`docs/sdd/`](docs/sdd) · Decisões: [`docs/adr/`](docs/adr) · Visual: [`DESIGN.md`](DESIGN.md)
 - Desenvolvido com [Claude Code](https://claude.com/claude-code): veja [`CLAUDE.md`](CLAUDE.md), os agentes em `.claude/agents/` e as skills em `.claude/skills/`.
-- Quer criar um módulo de IA? Comece por [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- Quer mudar ou criar algo? Comece pelo **[CamFácil IA Builder](.claude/skills/camfacil-ia-builder/SKILL.md)** (outros assistentes: [`AGENTS.md`](AGENTS.md)) e por [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - [Mapa interativo do código](https://emersoncassis.github.io/CamFacil-IA/mapa-do-codigo/) · [O que vem na caixa](docs/RECURSOS.md) · [Novidades](docs/NOVIDADES.md)
 
 ## <img src="docs/assets/icons/mapa.svg" width="22" alt=""/> Roadmap
