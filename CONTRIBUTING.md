@@ -4,6 +4,9 @@ Obrigado por querer ajudar técnicos de todo o Brasil a aprender IA de vídeo.
 
 Não programa? Testar em campo, relatar problemas e compartilhar com outro técnico já ajuda muito. E, se quiser apoiar com dinheiro, [apoie pelo Pix ou cartão](https://emersoncassis.github.io/CamFacil-IA/apoiadores/).
 
+## Não programa e quer mudar algo?
+Use o **[CamFácil IA Builder](https://emersoncassis.github.io/CamFacil-IA/builder/)**: faça o fork, abra a pasta num assistente de código (Claude Code, Codex ou outro) e chame `/camfacil-ia-builder`. Ele guia do pedido ao código, com o método do [Reversa](https://github.com/sandeco/reversa), e avisa quando um pedido fere a LGPD, a licença ou a segurança.
+
 ## Antes de começar
 1. Leia o [PRD](docs/PRD.md), principalmente a seção **6 — Fora do escopo**. O CamFácil IA ensina e valida; não concorre com câmeras de borda nem com plataformas de IA em nuvem.
 2. Leia o SDD da área que você vai mexer em [`docs/sdd/`](docs/sdd).

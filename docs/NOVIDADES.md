@@ -4,6 +4,7 @@ Histórico de cada versão do CamFácil IA. A versão atual e os arquivos para b
 
 ## Novidades da 0.9.9
 
+- **CamFácil IA Builder:** skill para assistentes de código que ajuda quem não programa a montar a própria versão (telas, funções, inteligências, integrações). Usa o [Reversa](https://github.com/sandeco/reversa) como método e recusa, com o motivo e uma alternativa, o pedido que fere a LGPD, a licença AGPL-3.0 ou a segurança. Skill em `.claude/skills/camfacil-ia-builder/`, entrada para outros assistentes em `AGENTS.md` e [página no site](https://emersoncassis.github.io/CamFacil-IA/builder/) em português, inglês e espanhol.
 - **Tela travada ao desinstalar ou apagar os dados:** depois de **Desinstalar** ou **Apagar todos os dados**, a dashboard escurece e bloqueia tudo, dizendo para fechar a página (desinstalou) ou abrir o programa de novo (apagou os dados).
 - **Regra só liga com a inteligência ligada:** ligar uma regra cujo módulo está desligado agora avisa "nenhuma inteligência ligada" e oferece ligar o módulo, levando direto para a tela Módulos. Desligar um módulo desliga as regras que dependem dele, e elas voltam sozinhas quando o módulo for ligado de novo.
 - **"Como funciona" nos módulos:** o botão **?** ao lado de **Aprender**, em Movimento inteligente e Módulo de IA, explica a diferença entre os dois e que podem ficar ligados juntos (não se atrapalham: com a IA ligada, zonas e linhas passam para ela e o movimento não conta em dobro).

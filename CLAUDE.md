@@ -54,7 +54,8 @@ Não existem `cf-modules`, `modules/<id>/module.toml` nem `guide/`: o contrato d
 - Não leia arquivos inteiros sem necessidade; use busca.
 - Não reescreva docs que não fazem parte da tarefa.
 - Prefira scripts em `scripts/` para tarefas repetitivas (build, medir orçamento, gerar release).
-- Use os agentes em `.claude/agents/` (`guardiao-da-leveza`, `revisor-de-escopo`, `autor-de-aulas`) e as skills em `.claude/skills/` (`abrir-pr`, `novo-modulo-ia`, `novo-fabricante-rtsp`, `impeccable`) quando a tarefa casar com eles.
+- Use os agentes em `.claude/agents/` (`guardiao-da-leveza`, `revisor-de-escopo`, `autor-de-aulas`) e as skills em `.claude/skills/` (`camfacil-ia-builder`, `abrir-pr`, `novo-modulo-ia`, `novo-fabricante-rtsp`, `impeccable`) quando a tarefa casar com eles.
+- **Quem chega para mudar ou criar algo e não programa** (fork, versão própria, função nova): comece pela skill `camfacil-ia-builder`. Ela é o ponto de partida do desenvolvimento, usa o Reversa como método e confere o pedido contra lei, licença, segurança e regras (`.claude/skills/camfacil-ia-builder/referencias/limites.md`). Página: `site-docs/pt|en|es/builder.md`.
 
 ## Comandos
 ```sh

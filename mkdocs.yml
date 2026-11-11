@@ -94,6 +94,7 @@ plugins:
 
 nav:
   - Início: index.md
+  - CamFácil IA Builder: builder.md
   - Instalação: instalacao.md
   - Primeiros passos: uso.md
   - Formação de IA para CFTV: formacao.md
