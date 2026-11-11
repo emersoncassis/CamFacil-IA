@@ -28,7 +28,7 @@ Três compromissos, nesta ordem:
 3. Confira as ferramentas, sem assustar: `git --version`, `cargo --version`, `ffmpeg -version`, `node --version` (o Node é só para o instalador do Reversa, não entra no programa). Faltou alguma? Instale ou guie a instalação, uma por vez.
 4. Rode `cargo run -p camfacil` uma vez para a pessoa ver o programa original abrindo. É o "antes".
 5. Confira o Reversa: existe a pasta `.reversa/`? Se não, siga `referencias/reversa.md` para instalar. Se o Reversa não puder ser instalado agora, siga o mesmo ciclo à mão (a referência explica) e avise a pessoa.
-6. Crie uma área de trabalho segura: `git checkout -b minha-versao/<nome-curto>`. Explique que nada do original se perde.
+6. Crie uma área de trabalho segura: escolha um nome curto para o pedido, só com letras minúsculas, números e hífen (por exemplo `aviso-portao`), e rode `git checkout -b minha-versao/aviso-portao` com o nome escolhido no lugar. Explique que nada do original se perde.
 
 ## Passo 1 — Entender o pedido
 
