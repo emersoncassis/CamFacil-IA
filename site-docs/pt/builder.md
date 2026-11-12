@@ -1,6 +1,8 @@
 ---
-title: CamFácil IA Builder
-description: O técnico-robô que ajuda você a montar a sua versão do CamFácil IA, mesmo sem saber programar, dentro da LGPD e da licença.
+title: "CamFácil IA Builder: monte a sua versão sem saber programar"
+description: "O técnico-robô do CamFácil IA: você diz o que quer e ele constrói telas, funções e inteligências na sua versão, dentro da LGPD e da licença. Feito com o Reversa."
+image: "assets/img/builder-og-pt.png"
+image_alt: "Robô técnico de CFTV com câmera dome na cabeça escrevendo código num notebook, ao lado da frase: Você diz o que quer. Ele constrói."
 ---
 
 # CamFácil IA Builder

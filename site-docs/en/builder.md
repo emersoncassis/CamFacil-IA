@@ -1,6 +1,8 @@
 ---
-title: CamFácil IA Builder
-description: The robot technician that helps you build your own version of CamFácil IA, even if you can't code, within privacy law and the license.
+title: "CamFácil IA Builder: build your own version without coding"
+description: "The CamFácil IA robot technician: you say what you want and it builds screens, features and detections in your version, within privacy law and the license. Made with Reversa."
+image: "assets/img/builder-og-en.png"
+image_alt: "CCTV technician robot with a dome camera on its head writing code on a laptop, next to the line: You say what you want. It builds."
 ---
 
 # CamFácil IA Builder
