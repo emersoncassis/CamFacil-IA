@@ -1,4 +1,5 @@
-/* CamFácil IA — tokens de design.
+/* MarCameras Viveiro IA (baseado no CamFácil IA) — tokens de design.
+ * Versão MarCameras: azul do logo (#2b8ff0) no lugar do verde, base azul-marinho.
  * Base preta, verde só em detalhes (ponto ao vivo, item ativo, foco, chave ligada).
  * Verde de origem inspirado na paleta Intelbras; sem marca nem logo da Intelbras.
  * Regra: todo CSS do projeto usa apenas estas variáveis. */
@@ -7,20 +8,20 @@
   color-scheme: dark;
 
   /* Neutros */
-  --c-black: #000000;       /* chão */
-  --c-900: #0a0a0a;         /* superfícies */
-  --c-850: #111111;         /* superfície elevada, hover */
-  --c-800: #171717;         /* campos */
-  --c-line: #232323;        /* linhas finas */
-  --c-line-strong: #2e2e2e; /* bordas de controle */
-  --c-500: #8a8a8a;         /* texto secundário (5,9:1 sobre preto) */
-  --c-300: #b4b4b4;         /* texto de apoio */
-  --c-100: #ededed;         /* texto principal */
+  --c-black: #04070c;       /* chão */
+  --c-900: #08101a;         /* superfícies */
+  --c-850: #0d1726;         /* superfície elevada, hover */
+  --c-800: #111c2c;         /* campos */
+  --c-line: #1a2638;        /* linhas finas */
+  --c-line-strong: #24334a; /* bordas de controle */
+  --c-500: #8193a8;         /* texto secundário (5,9:1 sobre preto) */
+  --c-300: #b3c2d3;         /* texto de apoio */
+  --c-100: #eef3f8;         /* texto principal */
   --c-white: #ffffff;
 
   /* Detalhe verde */
-  --c-green: #06cb3f;
-  --c-green-dim: rgba(6, 203, 63, 0.14);
+  --c-green: #2b8ff0;
+  --c-green-dim: rgba(43, 143, 240, 0.16);
 
   /* Estados (só onde carregam significado) */
   --c-warn: #e0b341;

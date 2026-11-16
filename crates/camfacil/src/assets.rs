@@ -38,6 +38,7 @@ pub const ASSETS: &[Asset] = &[
         "i18n/pt-BR.json"
     ),
     asset!("/icon.svg", "image/svg+xml", "icon.svg"),
+    asset!("/logo-mar.png", "image/png", "logo-mar.png"),
     asset!("/entrar.html", "text/html; charset=utf-8", "entrar.html"),
     asset!("/entrar.js", "text/javascript; charset=utf-8", "entrar.js"),
     asset!("/entrar.css", "text/css; charset=utf-8", "entrar.css"),

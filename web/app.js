@@ -603,7 +603,7 @@ function calorDesenhar(c) {
     const v = c.celulas[y * c.colunas + x];
     if (!v) continue;
     const a = Math.min(0.75, 0.12 + 0.63 * (v / c.maximo));
-    svg.append(svgEl("rect", { class: "calor", x: x * cw, y: y * ch, width: cw, height: ch, fill: `rgba(6, 203, 63, ${a.toFixed(2)})` }));
+    svg.append(svgEl("rect", { class: "calor", x: x * cw, y: y * ch, width: cw, height: ch, fill: `rgba(43, 143, 240, ${a.toFixed(2)})` }));
   }
 }
 
