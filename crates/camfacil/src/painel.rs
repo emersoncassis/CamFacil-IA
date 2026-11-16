@@ -9,7 +9,8 @@ use std::fmt::Write as _;
 use std::io::{IsTerminal, Write};
 use std::time::{Duration, Instant};
 
-const VERDE: &str = "\x1b[92m";
+// Versão MarCameras: o "verde" do painel do console vira o azul da marca.
+const VERDE: &str = "\x1b[38;2;43;143;240m";
 const CINZA: &str = "\x1b[90m";
 const BRANCO: &str = "\x1b[97m";
 const VERMELHO: &str = "\x1b[91m";
@@ -38,7 +39,7 @@ fn laco(app: Shared, url: String, rede: Option<String>) {
     let pid = sysinfo::get_current_pid().ok();
     let mut out = std::io::stdout();
     // Título da janela e tela limpa uma vez; depois só reescreve por cima.
-    let _ = write!(out, "\x1b]0;CamFácil IA\x07\x1b[2J\x1b[?25l");
+    let _ = write!(out, "\x1b]0;MarCameras Viveiro IA\x07\x1b[2J\x1b[?25l");
     let mut tique = 0u64;
     loop {
         let (cpu, ram_usada, ram_total, minha) = match sys.as_mut() {
@@ -104,8 +105,8 @@ fn desenhar(d: &Dados) -> String {
     let giro = girar(d.tique);
     let linhas_arte = [
         format!("{VERDE}      ________________{FIM}"),
-        format!("{VERDE}     |  .--.          |\\{FIM}       {BRANCO}CamFácil IA{FIM}  {CINZA}v{v}{FIM}"),
-        format!("{VERDE}     | ( {BRANCO}(){VERDE} )  {rec}{VERDE} REC  | >{FIM}      {CINZA}IA de vídeo para quem instala câmeras{FIM}"),
+        format!("{VERDE}     |  .--.          |\\{FIM}       {BRANCO}MarCameras Viveiro IA{FIM}  {CINZA}v{v}{FIM}"),
+        format!("{VERDE}     | ( {BRANCO}(){VERDE} )  {rec}{VERDE} REC  | >{FIM}      {CINZA}IA de vídeo para fazendas de camarão{FIM}"),
         format!("{VERDE}     |  '--'          |/{FIM}"),
         format!("{VERDE}     |________________|{FIM}        {VERDE}▸ rodando{FIM} {CINZA}{giro}{FIM}"),
         format!("{VERDE}            ||{FIM}"),
@@ -154,7 +155,7 @@ fn desenhar(d: &Dados) -> String {
     if let Some(m) = d.minha {
         linha(
             &mut s,
-            &format!("  {CINZA}CamFácil IA{FIM} {} MB de memória", m / 1_048_576),
+            &format!("  {CINZA}Viveiro IA{FIM}  {} MB de memória", m / 1_048_576),
         );
     }
     if let Some(t) = crate::hardware::monitor()

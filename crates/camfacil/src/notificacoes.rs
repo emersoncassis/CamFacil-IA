@@ -43,7 +43,7 @@ impl Anfitriao for Ponte {
         };
         let cams = app.store.cameras().unwrap_or_default();
         let mut linhas = vec![format!(
-            "CamFácil IA {} · {}",
+            "MarCameras Viveiro IA {} · {}",
             cf_core::VERSION,
             hora_local(&app)
         )];

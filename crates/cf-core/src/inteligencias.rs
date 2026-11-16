@@ -76,6 +76,8 @@ pub const CLASSES_ESCOLHA: &[(usize, &str)] = &[
     (1, "bicicleta"),
     (5, "onibus"),
     (7, "caminhao"),
+    (14, "ave"),
+    (8, "barco"),
 ];
 
 pub fn achar(id: &str) -> Option<&'static Inteligencia> {

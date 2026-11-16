@@ -21,6 +21,8 @@ pub const CLASSES: &[(usize, &str)] = &[
     (3, "moto"),
     (5, "ônibus"),
     (7, "caminhão"),
+    (8, "barco"),
+    (14, "ave"),
 ];
 
 /// Classes de um **modelo de estudo** (SDD-07) entram a partir deste índice,
@@ -61,6 +63,8 @@ pub fn plural(c: usize, n: usize) -> String {
             "moto" => "motos",
             "ônibus" => "ônibus",
             "caminhão" => "caminhões",
+            "barco" => "barcos",
+            "ave" => "aves",
             _ => "objetos",
         };
         format!("{n} {p}")

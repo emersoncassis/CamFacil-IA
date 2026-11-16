@@ -63,7 +63,7 @@ fn main() {
         .build()
         .expect("não foi possível iniciar o runtime");
     if let Err(e) = rt.block_on(run()) {
-        eprintln!("CamFácil IA: erro: {e}");
+        eprintln!("MarCameras Viveiro IA: erro: {e}");
         std::process::exit(1);
     }
 }
@@ -83,7 +83,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
     if args.iter().any(|a| a == "--autoiniciar") {
         match autoinicio::definir(true) {
-            Ok(()) => println!("O CamFácil IA vai abrir junto com o computador."),
+            Ok(()) => println!("O MarCameras Viveiro IA vai abrir junto com o computador."),
             Err(e) => println!("Não deu para ligar a inicialização automática: {e}"),
         }
         return Ok(());
@@ -103,7 +103,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     filhos::iniciar();
     let dir = paths::data_dir();
     if paths::apagar_se_pedido() {
-        println!("Todos os dados do CamFácil IA foram apagados. Começando do zero.");
+        println!("Todos os dados do MarCameras Viveiro IA foram apagados. Começando do zero.");
     }
     std::fs::create_dir_all(&dir)?;
     filhos::limpar_orfaos(&dir);
@@ -127,7 +127,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let listener = tokio::net::TcpListener::from_std(chosen.listener)?;
 
     let url = format!("http://localhost:{}", chosen.port);
-    println!("CamFácil IA {} — dashboard em {url}", cf_core::VERSION);
+    println!(
+        "MarCameras Viveiro IA {} (base CamFácil IA) — dashboard em {url}",
+        cf_core::VERSION
+    );
     if chosen.moved {
         println!(
             "A porta preferida estava ocupada por outro programa. Usando a {} para não conflitar.",
